@@ -135,11 +135,11 @@
     position: relative;
     will-change: transform;
   }
-  .menu a:hover {
+  .menu a:not(.btn):hover {
     color: #000b3a;
     transform: translateY(-2px);
   }
-  .menu a::before { 
+  .menu a:not(.btn)::before { 
     content: ""; 
     position: absolute; 
     inset: 0; 
@@ -148,8 +148,8 @@
     opacity: 0; 
     transition: opacity .3s ease; 
   }
-  .menu a:hover::before { opacity: 1; }
-  .menu a::after { 
+  .menu a:not(.btn):hover::before { opacity: 1; }
+  .menu a:not(.btn)::after { 
     content: ""; 
     position: absolute; 
     left: 12px; 
@@ -162,14 +162,14 @@
     transform-origin: left; 
     transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .3s ease; 
   }
-  .menu a:hover::after { opacity: 1; transform: scaleX(1); }
-  .menu a.active {
+  .menu a:not(.btn):hover::after { opacity: 1; transform: scaleX(1); }
+  .menu a:not(.btn).active {
     background: linear-gradient(135deg, rgba(253,87,1,0.14), rgba(253,87,1,0.10));
     color: var(--brand-orange);
     box-shadow: 0 4px 12px rgba(253,87,1,0.18), 0 2px 6px rgba(0,17,81,0.06);
     transform: translateY(-1px);
   }
-  .menu a.active::after { opacity: 0; }
+  .menu a:not(.btn).active::after { opacity: 0; }
 
   /* Moving active pill highlight */
   .active-pill {
@@ -245,12 +245,35 @@
     border-radius: 8px;
     color: var(--brand-blue);
     transition: transform .25s ease, background-color .25s ease;
+    position: relative; /* anchor for X bars */
+    line-height: 0;
   }
   .toggle:hover { background: rgba(0,17,81,.06); transform: scale(1.05); }
   .toggle:active { transform: scale(.95); }
   .toggle:focus-visible { outline: 2px solid rgba(0,17,81,.25); }
-  .toggle svg { width: 28px; height: 28px; transition: transform .3s ease; }
-  header.nav.open .toggle svg { transform: rotate(90deg); }
+  .toggle svg { width: 28px; height: 28px; transition: transform .25s ease, opacity .2s ease, visibility .2s; }
+  /* Cross icon built with pseudo elements (hidden by default) */
+  .toggle::before,
+  .toggle::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+    top: 50%; left: 50%;
+    transform-origin: center;
+    transform: translate(-50%, -50%) rotate(0deg);
+    opacity: 0;
+    transition: transform .22s ease, opacity .2s ease;
+  }
+  /* start at 0deg so the bars rotate precisely into an X */
+  .toggle::before { }
+  .toggle::after { }
+  /* When menu opens: hide burger svg and show X */
+  header.nav.open .toggle svg { opacity: 0; visibility: hidden; transform: scale(.92); }
+  header.nav.open .toggle::before { opacity: 1; transform: translate(-50%, -50%) rotate(45deg); }
+  header.nav.open .toggle::after  { opacity: 1; transform: translate(-50%, -50%) rotate(-45deg); }
 
   @media (max-width: 768px) {
     nav.primary { 
@@ -295,14 +318,21 @@
       width: 100%;
       padding-top: 6px;
     }
-    .actions-mobile .btn { flex: 1 1 0; height: 48px; font-size: 15px; }
-    /* Animate buttons when menu opens */
-    header.nav.open .actions-mobile .btn { 
-      animation: btnIn .35s cubic-bezier(.34,1.56,.64,1) both;
+    /* Smaller buttons inside hamburger and no inline sheen/hover lift */
+    .actions-mobile .btn { 
+      flex: 1 1 0; 
+      height: 40px; 
+      font-size: 14px; 
+      padding: 0 12px;
+      transition: none; /* remove inline animations */
     }
-    header.nav.open .actions-mobile .btn:nth-child(1) { animation-delay: .05s; }
-    header.nav.open .actions-mobile .btn:nth-child(2) { animation-delay: .1s; }
-    @keyframes btnIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .actions-mobile .btn::after { display: none; }
+    .actions-mobile .btn:hover { transform: none; }
+    .actions-mobile .btn:active { transform: none; }
+    /* Kill any menu underline/hover pseudo elements inside actions-mobile */
+    .actions-mobile a::before,
+    .actions-mobile a::after { content: none !important; }
+    .actions-mobile a:hover { transform: none !important; }
     .menu a { font-size: 18px; padding: 14px 16px; }
     .caret { width: 16px; height: 16px; }
     .menu li { 
