@@ -1,0 +1,62 @@
+---
+import CircularGallery from "../../components/CircularGallery.jsx";
+
+const items = [
+  { image: '/asset/umkm/umkm1.png', text: 'UMKM 1' },
+  { image: '/asset/umkm/umkm2.jpg', text: 'UMKM 2' },
+  { image: '/asset/umkm/umkm3.jpeg', text: 'UMKM 3' },
+  { image: '/asset/umkm/umkm4.jpeg', text: 'UMKM 4' },
+  { image: '/asset/umkm/umkm5.jpg', text: 'UMKM 5' },
+  { image: '/asset/umkm/umkm6.jpg', text: 'UMKM 6' },
+];
+---
+
+<section class="hero">
+  <div class="hero-inner">
+    <CircularGallery client:load items={items} bend={8} />
+  </div>
+</section>
+
+<style>
+  .hero {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+  .hero-inner {
+    width: 100%;
+    height: 100vh; /* full height for maximum downward */
+    position: relative;
+  }
+  .circular-gallery {
+    width: 100vw;
+    height: 100%;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  /* Responsive adjustments for smaller frames */
+  @media (max-width: 768px) {
+    .hero-inner {
+      height: 90vh; /* increased for tablet */
+    }
+    .circular-gallery {
+      width: 100vw;
+      height: 100%;
+    }
+  }
+  @media (max-width: 480px) {
+    .hero-inner {
+      height: 80vh; /* increased for mobile */
+    }
+    .circular-gallery {
+      width: 100vw;
+      height: 100%;
+    }
+  }
+</style>
+
+
