@@ -488,8 +488,10 @@
 
   function applyIntroVisibility() {
     if (!header) return;
+    const introSeen = localStorage.getItem('introSeen');
+    const isFirstVisit = !introSeen;
     const active = isIntroActive();
-    if (active) {
+    if (active && isFirstVisit) {
       header.style.opacity = '0';
       header.style.visibility = 'hidden';
       header.style.pointerEvents = 'none';
@@ -498,12 +500,16 @@
       header.style.opacity = '';
       header.style.visibility = '';
       header.style.pointerEvents = '';
-      // add entrance only once when intro finished
+      // add entrance only once when intro finished or not shown
       if (!header.classList.contains('enter')) header.classList.add('enter');
-      // show idle stroke immediately after intro ends
+      // show idle stroke immediately after intro ends or if no intro
       header.classList.add('idle');
       if (!introDone) {
         introDone = true;
+        // Set flag that intro has been seen after it ends
+        if (isFirstVisit) {
+          localStorage.setItem('introSeen', 'true');
+        }
         // Kick ScrollTrigger to compute positions after intro removed
         if (typeof ScrollTrigger !== 'undefined') {
           try { ScrollTrigger.refresh(true); } catch {}
