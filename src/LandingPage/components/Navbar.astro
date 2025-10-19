@@ -37,6 +37,9 @@
     will-change: transform, background-color;
     /* create a stacking context for the stroke pseudo-element */
     isolation: isolate;
+    /* Ensure no margin or padding on header for desktop */
+    margin: 0;
+    padding: 0;
   }
   /* Bottom stroke that fades in when idle */
   header.nav::after {
@@ -81,6 +84,43 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    /* Ensure proper positioning for desktop */
+    justify-content: flex-start;
+  }
+
+  /* Desktop-specific adjustments for logo positioning */
+  @media (min-width: 769px) {
+    header.nav {
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      padding-left: 20px; /* Add some left padding for logo */
+      padding-right: 20px; /* Add some right padding for buttons */
+      justify-content: space-between; /* Logo left, nav center, actions right */
+      margin-left: 0;
+      max-width: 1200px; /* Set reasonable max-width */
+      width: 100%;
+      margin: 0 auto; /* Center the container */
+    }
+    .brand {
+      padding: 0;
+      margin: 0;
+      flex-shrink: 0; /* Prevent logo from shrinking */
+    }
+    nav.primary {
+      flex: 1; /* Take up available space */
+      display: flex;
+      justify-content: center; /* Center the navigation menu */
+    }
+    ul.menu {
+      justify-content: center; /* Center menu items within nav */
+      margin: 0 auto; /* Center the menu list */
+    }
+    .actions {
+      flex-shrink: 0; /* Prevent buttons from shrinking */
+      margin-left: 0; /* Remove left margin */
+    }
   }
 
   .brand {
@@ -93,6 +133,9 @@
     text-decoration: none;
     letter-spacing: .2px;
     white-space: nowrap;
+    /* Ensure logo stays at top-left corner for desktop */
+    flex-shrink: 0;
+    order: -1; /* Ensure it comes first in flex layout */
   }
   .brand img {
     height: var(--logo-h);
@@ -111,6 +154,8 @@
   nav.primary {
     margin-left: auto;
   }
+  /* Flexible spacer to create breathing room like the reference */
+  .spacer { flex: 1 1 auto; }
   ul.menu {
     list-style: none;
     display: flex;
@@ -197,7 +242,25 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    /* Reserve fixed space so longer buttons don't shift the menu */
+    flex: 0 0 300px; /* basis width */
+    justify-content: flex-end; /* extend to the right inside reserved space */
   }
+  /* Search icon button (desktop only) */
+  .search {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    border: 0;
+    background: rgba(0,17,81,.06);
+    color: var(--brand-blue);
+    transition: background-color .2s ease, transform .2s ease, box-shadow .25s ease;
+  }
+  .search:hover { background: rgba(0,17,81,.10); transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,17,81,.10); }
+  .search:active { transform: translateY(0); }
+  .search svg { width: 18px; height: 18px; }
   .btn {
     display: inline-flex;
     align-items: center;
@@ -227,13 +290,15 @@
     pointer-events: none;
   }
   .btn:hover::after { transform: skewX(-18deg) translateX(260%); }
-  .btn--ghost { color: var(--brand-blue); background: rgba(0,17,81,.06); box-shadow: inset 0 0 0 1px rgba(0,17,81,.10); }
+  .btn--ghost { color: var(--brand-blue); background: rgba(0,17,81,.06); box-shadow: inset 0 0 0 1px rgba(0,17,81,.10); min-width: 140px; }
   .btn--ghost:hover { background: rgba(0,17,81,.10); box-shadow: inset 0 0 0 1px rgba(0,17,81,.18); }
-  .btn--primary { color: white; background: var(--brand-orange); box-shadow: 0 8px 20px rgba(253,87,1,.22), 0 2px 6px rgba(0,0,0,.06); }
-  .btn--primary:hover { box-shadow: 0 12px 28px rgba(253,87,1,.30), 0 4px 10px rgba(0,0,0,.08); filter: saturate(1.05); }
+  .btn--primary { color: #fff; background: var(--brand-orange); box-shadow: 0 8px 20px rgba(253,87,1,.22), 0 2px 6px rgba(0,0,0,.06); min-width: 160px; }
+  .btn--primary:hover { color: #fff; box-shadow: 0 12px 28px rgba(253,87,1,.30), 0 4px 10px rgba(0,0,0,.08); filter: saturate(1.05); }
+  .btn--primary:focus, .btn--primary:focus-visible, .btn--primary:visited { color: #fff; }
 
   /* Hide mobile-only action row on desktop */
   .actions-mobile { display: none; }
+
 
   /* Mobile */
   .toggle {
@@ -303,9 +368,10 @@
 
     .container { flex-wrap: wrap; }
     nav.primary { width: 100%; }
+    .search { display: none; }
     ul.menu { 
       flex-direction: column; 
-      align-items: flex-start; 
+      align-items: center; 
       gap: 12px; 
       padding: 14px 8px 12px; 
     }
@@ -316,24 +382,31 @@
       display: flex; 
       gap: 10px; 
       width: 100%;
+      justify-content: center;
       padding-top: 6px;
     }
     /* Smaller buttons inside hamburger and no inline sheen/hover lift */
     .actions-mobile .btn { 
       flex: 1 1 0; 
-      height: 40px; 
-      font-size: 14px; 
+      height: 44px; 
+      font-size: 15px; 
       padding: 0 12px;
       transition: none; /* remove inline animations */
     }
     .actions-mobile .btn::after { display: none; }
     .actions-mobile .btn:hover { transform: none; }
     .actions-mobile .btn:active { transform: none; }
+    /* Ensure Daftar (primary) text is white inside hamburger */
+    .actions-mobile .btn--primary,
+    .actions-mobile .btn--primary:hover,
+    .actions-mobile .btn--primary:focus,
+    .actions-mobile .btn--primary:active,
+    .actions-mobile .btn--primary:visited { color: #fff !important; }
     /* Kill any menu underline/hover pseudo elements inside actions-mobile */
     .actions-mobile a::before,
     .actions-mobile a::after { content: none !important; }
     .actions-mobile a:hover { transform: none !important; }
-    .menu a { font-size: 18px; padding: 14px 16px; }
+    .menu a { font-size: 18px; padding: 14px 16px; text-align: center; }
     .caret { width: 16px; height: 16px; }
     .menu li { 
       opacity: 0;
