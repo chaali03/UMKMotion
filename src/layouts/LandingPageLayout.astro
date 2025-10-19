@@ -1,4 +1,5 @@
 ---
+import Navbar from '../LandingPage/components/Navbar.astro';
 const { title = 'UMKMotion' } = Astro.props;
 ---
 <html lang="en" class="intro-lock">
@@ -209,6 +210,7 @@ const { title = 'UMKMotion' } = Astro.props;
     </style>
   </head>
   <body class="intro-lock">
+    <Navbar />
     <div id="intro" class="intro" aria-hidden="true">
       <div class="intro__stage">
         
