@@ -246,11 +246,23 @@ const { title = 'UMKMotion' } = Astro.props;
     <script type="module">
       import gsap from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/index.js';
 
-      // Always run intro animation on load
-      // lock scroll during intro
-      document.documentElement.classList.add('intro-lock');
-      document.body.classList.add('intro-lock');
-      const intro = document.getElementById('intro');
+      // Check if intro has been seen before
+      const introSeen = document.cookie.split('; ').find(row => row.startsWith('introSeen='));
+      if (introSeen) {
+        // Skip intro if already seen, immediately unlock scroll and show content
+        document.documentElement.classList.remove('intro-lock');
+        document.body.classList.remove('intro-lock');
+        const content = document.getElementById('content');
+        if (content) content.style.opacity = '1';
+        const intro = document.getElementById('intro');
+        if (intro) intro.style.display = 'none'; // hide intro if already seen
+        // Do not run the rest of the script
+      } else {
+        // Run intro animation if not seen
+        // lock scroll during intro
+        document.documentElement.classList.add('intro-lock');
+        document.body.classList.add('intro-lock');
+        const intro = document.getElementById('intro');
         const logo = document.getElementById('introLogo');
         const content = document.getElementById('content');
         const circles = document.querySelectorAll('.circle');
@@ -439,14 +451,17 @@ const { title = 'UMKMotion' } = Astro.props;
           duration: 1,
           ease: 'power3.out'
         }, '-=0.6')
-        // 11) Fade out intro
+        // 11) Fade out intro and set cookie
         .to([intro, grid], { opacity: 0, duration: 1, ease: 'power2.inOut' }, '-=0.3')
         .set(intro, { display: 'none' })
         .add(() => {
           // restore scroll
           document.documentElement.classList.remove('intro-lock');
           document.body.classList.remove('intro-lock');
+          // Set permanent cookie that intro has been seen
+          document.cookie = 'introSeen=true; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/';
         });
+      }
     </script>
   </body>
 </html>

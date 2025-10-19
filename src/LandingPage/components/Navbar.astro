@@ -488,7 +488,7 @@
 
   function applyIntroVisibility() {
     if (!header) return;
-    const introSeen = localStorage.getItem('introSeen');
+    const introSeen = document.cookie.split('; ').find(row => row.startsWith('introSeen='));
     const isFirstVisit = !introSeen;
     const active = isIntroActive();
     if (active && isFirstVisit) {
@@ -508,7 +508,7 @@
         introDone = true;
         // Set flag that intro has been seen after it ends
         if (isFirstVisit) {
-          localStorage.setItem('introSeen', 'true');
+          // Cookie is now set in the layout script
         }
         // Kick ScrollTrigger to compute positions after intro removed
         if (typeof ScrollTrigger !== 'undefined') {
