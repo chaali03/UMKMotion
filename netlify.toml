@@ -1,0 +1,25 @@
+# Netlify configuration for Astro
+# Docs: https://docs.netlify.com/frameworks/astro/
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Ensure Node 18+ (Netlify default images already provide this)
+[build.environment]
+  NODE_VERSION = "18"
+
+# Basic security headers (optional)
+[[headers]]
+  for = "/**"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "interest-cohort=()"
+
+# Redirects example (uncomment if needed)
+# [[redirects]]
+#   from = "/api/*"
+#   to = "/.netlify/functions/:splat"
+#   status = 200
