@@ -208,14 +208,29 @@
     font-weight: 700;
     font-size: 14px;
     text-decoration: none;
-    transition: transform .2s ease, box-shadow .25s ease, background-color .25s ease, color .2s ease;
+    transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease, background-color .25s ease, color .2s ease;
     will-change: transform;
+    position: relative;
+    overflow: hidden;
   }
-  .btn:active { transform: scale(.98); }
-  .btn--ghost { color: var(--brand-blue); background: rgba(0,17,81,.06); }
-  .btn--ghost:hover { background: rgba(0,17,81,.10); }
-  .btn--primary { color: white; background: var(--brand-orange); box-shadow: 0 6px 18px rgba(253,87,1,.22); }
-  .btn--primary:hover { box-shadow: 0 8px 24px rgba(253,87,1,.28); }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(0) scale(.985); }
+  .btn:focus-visible { outline: 2px solid rgba(0,17,81,.28); outline-offset: 2px; }
+  .btn::after {
+    content: "";
+    position: absolute;
+    left: -40%; top: 0; bottom: 0;
+    width: 40%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,.35), transparent);
+    transform: skewX(-18deg) translateX(-120%);
+    transition: transform .6s cubic-bezier(.34,1.56,.64,1);
+    pointer-events: none;
+  }
+  .btn:hover::after { transform: skewX(-18deg) translateX(260%); }
+  .btn--ghost { color: var(--brand-blue); background: rgba(0,17,81,.06); box-shadow: inset 0 0 0 1px rgba(0,17,81,.10); }
+  .btn--ghost:hover { background: rgba(0,17,81,.10); box-shadow: inset 0 0 0 1px rgba(0,17,81,.18); }
+  .btn--primary { color: white; background: var(--brand-orange); box-shadow: 0 8px 20px rgba(253,87,1,.22), 0 2px 6px rgba(0,0,0,.06); }
+  .btn--primary:hover { box-shadow: 0 12px 28px rgba(253,87,1,.30), 0 4px 10px rgba(0,0,0,.08); filter: saturate(1.05); }
 
   /* Hide mobile-only action row on desktop */
   .actions-mobile { display: none; }
@@ -281,6 +296,13 @@
       padding-top: 6px;
     }
     .actions-mobile .btn { flex: 1 1 0; height: 48px; font-size: 15px; }
+    /* Animate buttons when menu opens */
+    header.nav.open .actions-mobile .btn { 
+      animation: btnIn .35s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    header.nav.open .actions-mobile .btn:nth-child(1) { animation-delay: .05s; }
+    header.nav.open .actions-mobile .btn:nth-child(2) { animation-delay: .1s; }
+    @keyframes btnIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
     .menu a { font-size: 18px; padding: 14px 16px; }
     .caret { width: 16px; height: 16px; }
     .menu li { 
