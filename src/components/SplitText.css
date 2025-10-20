@@ -1,0 +1,73 @@
+/* SplitText Mobile Optimizations */
+.split-parent {
+  /* Mobile-specific optimizations */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Character and word animations */
+.split-char,
+.split-word {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .split-parent {
+    /* Reduce animation complexity on mobile */
+    transform: translateZ(0);
+  }
+  
+  .split-char,
+  .split-word {
+    /* Optimize for mobile performance */
+    will-change: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .split-parent {
+    /* Further mobile optimizations */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  
+  .split-char,
+  .split-word {
+    /* Reduce GPU usage on small screens */
+    transform: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .split-parent {
+    /* Ultra-small screen optimizations */
+    word-spacing: -0.05em;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .split-char,
+  .split-word {
+    /* Disable animations for users who prefer reduced motion */
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .split-parent {
+    /* Ensure text remains readable in high contrast mode */
+    text-shadow: none;
+  }
+}

@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@astrojs/react": "^4.4.0",
+    "@gsap/react": "^2.1.2",
     "@tailwindcss/vite": "^4.1.14",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "astro": "^5.14.6",
+    "gsap": "^3.13.0",
     "ogl": "^1.0.11",
     "react": "^19.2.0",
     "react-bits": "1.0.5",
