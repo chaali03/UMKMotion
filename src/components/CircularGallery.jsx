@@ -462,7 +462,8 @@ export default function CircularGallery({
   borderRadius = 0.05,
   font = 'bold 30px Figtree',
   scrollSpeed = 2,
-  scrollEase = 0.05
+  scrollEase = 0.05,
+  className = ''
 }) {
   const containerRef = useRef(null);
   useEffect(() => {
@@ -476,10 +477,26 @@ export default function CircularGallery({
     } else {
       adjustedBend = 4; // smaller for desktop
     }
-    const app = new App(containerRef.current, { items, bend: adjustedBend, textColor, borderRadius, font, scrollSpeed, scrollEase });
+    const el = containerRef.current;
+    const app = new App(el, { items, bend: adjustedBend, textColor, borderRadius, font, scrollSpeed, scrollEase });
+    // Staged entrance once canvas appended
+    if (el) {
+      // allow layout to settle then reveal
+      requestAnimationFrame(() => {
+        el.style.setProperty('--d', '.12s');
+        el.classList.add('show');
+        
+        // Add unique entrance effect for individual gallery items
+        const canvas = el.querySelector('canvas');
+        if (canvas) {
+          canvas.style.transformOrigin = 'center center';
+          canvas.style.perspective = '1000px';
+        }
+      });
+    }
     return () => {
       app.destroy();
     };
   }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase]);
-  return <div className="circular-gallery" ref={containerRef} />;
+  return <div className={`circular-gallery reveal ${className}`} ref={containerRef} />;
 }

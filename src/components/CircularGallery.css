@@ -8,3 +8,17 @@
 .circular-gallery:active {
   cursor: grabbing;
 }
+
+/* Reveal animation (scoped to this component) */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px) scale(.975);
+  filter: blur(6px);
+  transition: opacity .6s ease, transform .65s cubic-bezier(.25,.85,.35,1), filter .6s ease;
+  transition-delay: var(--d, 0s);
+}
+.reveal.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0px);
+}

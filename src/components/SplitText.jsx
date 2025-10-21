@@ -20,7 +20,8 @@ const SplitText = ({
   rootMargin = '-100px',
   textAlign = 'center',
   tag = 'p',
-  onLetterAnimationComplete
+  onLetterAnimationComplete = () => {},
+  children = null
 }) => {
   const ref = useRef(null);
   const animationCompletedRef = useRef(false);
@@ -38,7 +39,7 @@ const SplitText = ({
 
   useGSAP(
     () => {
-      if (!ref.current || !text || !fontsLoaded) return;
+      if (!ref.current || (!text && !children) || !fontsLoaded) return;
       const el = ref.current;
 
       if (el._rbsplitInstance) {
@@ -170,6 +171,7 @@ const SplitText = ({
     {
       dependencies: [
         text,
+        !!children,
         delay,
         duration,
         ease,
@@ -186,10 +188,11 @@ const SplitText = ({
   );
 
   const renderTag = () => {
+    const isInline = tag === 'span';
     const style = {
       textAlign,
       overflow: 'hidden',
-      display: 'inline-block',
+      display: isInline ? 'inline' : 'block',
       whiteSpace: 'normal',
       wordWrap: 'break-word',
       willChange: 'transform, opacity',
@@ -201,47 +204,48 @@ const SplitText = ({
       textRendering: 'optimizeLegibility'
     };
     const classes = `split-parent ${className}`.trim();
+    const content = children ?? text;
     switch (tag) {
       case 'h1':
         return (
           <h1 ref={ref} style={style} className={classes}>
-            {text}
+            {content}
           </h1>
         );
       case 'h2':
         return (
           <h2 ref={ref} style={style} className={classes}>
-            {text}
+            {content}
           </h2>
         );
       case 'h3':
         return (
           <h3 ref={ref} style={style} className={classes}>
-            {text}
+            {content}
           </h3>
         );
       case 'h4':
         return (
           <h4 ref={ref} style={style} className={classes}>
-            {text}
+            {content}
           </h4>
         );
       case 'h5':
         return (
           <h5 ref={ref} style={style} className={classes}>
-            {text}
+            {content}
           </h5>
         );
       case 'h6':
         return (
           <h6 ref={ref} style={style} className={classes}>
-            {text}
+            {content}
           </h6>
         );
       default:
         return (
           <p ref={ref} style={style} className={classes}>
-            {text}
+            {content}
           </p>
         );
     }
