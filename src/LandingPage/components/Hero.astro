@@ -46,6 +46,32 @@ const items = [
       </div>
     </div>
     <CircularGallery client:load items={items} bend={8} className="animate-in" />
+    
+    <!-- Background gradient blurs -->
+    <div class="background-gradients">
+      <div class="gradient-orange"></div>
+      <div class="gradient-blue"></div>
+    </div>
+    
+    <!-- Floating animated elements -->
+    <div class="floating-animations animate-in">
+      <div class="float-circle circle-1"></div>
+      <div class="float-circle circle-2"></div>
+      <div class="float-circle circle-3"></div>
+      <div class="float-triangle triangle-1"></div>
+      <div class="float-triangle triangle-2"></div>
+      <div class="float-square square-1"></div>
+      <div class="float-square square-2"></div>
+      <!-- Additional creative animations -->
+      <div class="float-star star-1"></div>
+      <div class="float-star star-2"></div>
+      <div class="float-hexagon hex-1"></div>
+      <div class="float-hexagon hex-2"></div>
+      <div class="float-ring ring-1"></div>
+      <div class="float-ring ring-2"></div>
+      <div class="float-wave wave-1"></div>
+      <div class="float-wave wave-2"></div>
+    </div>
   </div>
 </section>
 
@@ -77,7 +103,7 @@ const items = [
     opacity: 0.5; 
     filter: saturate(110%) contrast(105%);
   }
-  
+
   /* Animation classes */
   .animate-in {
     opacity: 0;
@@ -135,6 +161,413 @@ const items = [
   
   .circular-gallery.animate-in.show::before {
     opacity: 1;
+  }
+
+  /* Floating animations */
+  .floating-animations {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -2;
+    overflow: hidden;
+  }
+  /* Floating entrance (container) */
+  .floating-animations.animate-in { opacity: 0; filter: blur(8px); transition: opacity .8s ease, filter .8s ease; transition-delay: .6s; }
+  .floating-animations.animate-in.show { opacity: 1; filter: blur(0); }
+  /* Stagger child fades (no transform to avoid conflicting with their keyframes) */
+  .floating-animations > * { opacity: 0; transition: opacity .7s ease; }
+  .floating-animations.animate-in.show > * { opacity: 1; }
+  .floating-animations.animate-in.show > *:nth-child(1) { transition-delay: .05s; }
+  .floating-animations.animate-in.show > *:nth-child(2) { transition-delay: .10s; }
+  .floating-animations.animate-in.show > *:nth-child(3) { transition-delay: .15s; }
+  .floating-animations.animate-in.show > *:nth-child(4) { transition-delay: .20s; }
+  .floating-animations.animate-in.show > *:nth-child(5) { transition-delay: .25s; }
+  .floating-animations.animate-in.show > *:nth-child(6) { transition-delay: .30s; }
+  .floating-animations.animate-in.show > *:nth-child(7) { transition-delay: .35s; }
+  .floating-animations.animate-in.show > *:nth-child(8) { transition-delay: .40s; }
+  .floating-animations.animate-in.show > *:nth-child(9) { transition-delay: .45s; }
+  .floating-animations.animate-in.show > *:nth-child(10) { transition-delay: .50s; }
+  .floating-animations.animate-in.show > *:nth-child(11) { transition-delay: .55s; }
+  .floating-animations.animate-in.show > *:nth-child(12) { transition-delay: .60s; }
+  .floating-animations.animate-in.show > *:nth-child(13) { transition-delay: .65s; }
+  .floating-animations.animate-in.show > *:nth-child(14) { transition-delay: .70s; }
+  
+  /* Background gradient blurs */
+  .background-gradients {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -3;
+    overflow: hidden;
+  }
+  
+  /* Orange gradient - top right corner */
+  .gradient-orange {
+    position: fixed;
+    top: -25%;
+    right: -20%;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, 
+      rgba(253, 87, 1, 0.35) 0%, 
+      rgba(255, 133, 51, 0.28) 25%, 
+      rgba(255, 167, 102, 0.20) 50%, 
+      rgba(255, 200, 153, 0.12) 75%, 
+      transparent 100%);
+    border-radius: 50%;
+    filter: blur(100px);
+    animation: gradientFloat 8s ease-in-out infinite;
+    z-index: -10;
+  }
+  
+  /* Blue gradient - bottom left corner */
+  .gradient-blue {
+    position: fixed;
+    bottom: -25%;
+    left: -25%;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, 
+      rgba(0, 17, 81, 0.30) 0%, 
+      rgba(0, 102, 255, 0.25) 25%, 
+      rgba(51, 153, 255, 0.18) 50%, 
+      rgba(102, 178, 255, 0.10) 75%, 
+      transparent 100%);
+    border-radius: 50%;
+    filter: blur(120px);
+    animation: gradientFloat 10s ease-in-out infinite reverse;
+    z-index: -10;
+  }
+  
+  /* Gradient floating animation */
+  @keyframes gradientFloat {
+    0%, 100% { 
+      transform: translate(0px, 0px) scale(1); 
+      opacity: 0.8;
+    }
+    25% { 
+      transform: translate(10px, -15px) scale(1.05); 
+      opacity: 1;
+    }
+    50% { 
+      transform: translate(-5px, -10px) scale(0.95); 
+      opacity: 0.9;
+    }
+    75% { 
+      transform: translate(-10px, 5px) scale(1.02); 
+      opacity: 1;
+    }
+  }
+  
+  /* Floating circles */
+  .float-circle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+  
+  .circle-1 {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #001151, #0066ff);
+    top: 15%;
+    left: 10%;
+    animation: floatUpDown 6s ease-in-out infinite, rotateClockwise 12s linear infinite;
+    box-shadow: 0 0 30px rgba(0, 17, 81, 0.3);
+  }
+  
+  .circle-2 {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, #FD5701, #ff8533);
+    top: 60%;
+    right: 15%;
+    animation: floatLeftRight 8s ease-in-out infinite, rotateCounterClockwise 10s linear infinite;
+    box-shadow: 0 0 40px rgba(253, 87, 1, 0.3);
+  }
+  
+  .circle-3 {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #0066ff, #00ccff);
+    top: 25%;
+    right: 25%;
+    animation: floatDiagonal 7s ease-in-out infinite, pulse 3s ease-in-out infinite;
+    box-shadow: 0 0 25px rgba(0, 102, 255, 0.4);
+  }
+  
+  /* Floating triangles */
+  .float-triangle {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0.6;
+  }
+  
+  .triangle-1 {
+    border-left: 25px solid transparent;
+    border-right: 25px solid transparent;
+    border-bottom: 43px solid #FD5701;
+    top: 40%;
+    left: 20%;
+    animation: floatUpDown 5s ease-in-out infinite reverse, rotateClockwise 8s linear infinite;
+    filter: drop-shadow(0 0 15px rgba(253, 87, 1, 0.4));
+  }
+  
+  .triangle-2 {
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 35px solid #0066ff;
+    top: 70%;
+    left: 70%;
+    animation: floatLeftRight 6s ease-in-out infinite, rotateCounterClockwise 9s linear infinite;
+    filter: drop-shadow(0 0 12px rgba(0, 102, 255, 0.4));
+  }
+  
+  /* Floating squares */
+  .float-square {
+    position: absolute;
+    opacity: 0.5;
+    transform-origin: center;
+  }
+  
+  .square-1 {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(45deg, #001151, #FD5701);
+    top: 80%;
+    left: 30%;
+    animation: floatDiagonal 9s ease-in-out infinite, rotateClockwise 6s linear infinite;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(253, 87, 1, 0.3);
+  }
+  
+  .square-2 {
+    
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(45deg, #0066ff, #00ccff);
+    top: 5%;
+    right: 40%;
+    animation: floatUpDown 7s ease-in-out infinite, rotateCounterClockwise 8s linear infinite;
+    border-radius: 6px;
+    box-shadow: 0 0 15px rgba(0, 102, 255, 0.3);
+  }
+  
+  /* Floating dots */
+  .float-dots {
+    position: absolute;
+    top: 50%;
+    left: 5%;
+    animation: floatLeftRight 10s ease-in-out infinite;
+  }
+  
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin: 8px 0;
+    animation: dotPulse 2s ease-in-out infinite;
+  }
+  
+  .dot:nth-child(1) { background: #001151; animation-delay: 0s; }
+  .dot:nth-child(2) { background: #0066ff; animation-delay: 0.2s; }
+  .dot:nth-child(3) { background: #FD5701; animation-delay: 0.4s; }
+  .dot:nth-child(4) { background: #ff8533; animation-delay: 0.6s; }
+  .dot:nth-child(5) { background: #00ccff; animation-delay: 0.8s; }
+  
+  /* Animation keyframes */
+  @keyframes floatUpDown {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+  
+  @keyframes floatLeftRight {
+    0%, 100% { transform: translateX(0px); }
+    50% { transform: translateX(30px); }
+  }
+  
+  @keyframes floatDiagonal {
+    0%, 100% { transform: translate(0px, 0px); }
+    25% { transform: translate(15px, -15px); }
+    50% { transform: translate(30px, 0px); }
+    75% { transform: translate(15px, 15px); }
+  }
+  
+  @keyframes rotateClockwise {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes rotateCounterClockwise {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(-360deg); }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.1); opacity: 1; }
+  }
+  
+  @keyframes dotPulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.3); opacity: 1; }
+  }
+  
+  /* Additional creative floating elements */
+  
+  /* Floating stars */
+  .float-star {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  }
+  
+  .star-1 {
+    background: linear-gradient(135deg, #FD5701, #ff8533);
+    top: 20%;
+    right: 10%;
+    animation: floatUpDown 4s ease-in-out infinite, rotateClockwise 8s linear infinite, twinkle 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(253, 87, 1, 0.5));
+  }
+  
+  .star-2 {
+    background: linear-gradient(135deg, #0066ff, #00ccff);
+    top: 75%;
+    left: 15%;
+    animation: floatLeftRight 5s ease-in-out infinite, rotateCounterClockwise 6s linear infinite, twinkle 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(0, 102, 255, 0.5));
+  }
+  
+  /* Floating hexagons */
+  .float-hexagon {
+    position: absolute;
+    width: 35px;
+    height: 30px;
+    opacity: 0.6;
+    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+  }
+  
+  .hex-1 {
+    background: linear-gradient(60deg, #001151, #0066ff);
+    top: 35%;
+    right: 30%;
+    animation: floatDiagonal 6s ease-in-out infinite, rotateClockwise 10s linear infinite;
+    filter: drop-shadow(0 0 8px rgba(0, 17, 81, 0.4));
+  }
+  
+  .hex-2 {
+    background: linear-gradient(60deg, #FD5701, #ff8533);
+    top: 55%;
+    left: 25%;
+    animation: floatUpDown 7s ease-in-out infinite reverse, rotateCounterClockwise 12s linear infinite;
+    filter: drop-shadow(0 0 8px rgba(253, 87, 1, 0.4));
+  }
+  
+  /* Floating rings */
+  .float-ring {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.5;
+    border: 3px solid;
+  }
+  
+  .ring-1 {
+    width: 50px;
+    height: 50px;
+    border-color: #0066ff;
+    top: 45%;
+    right: 20%;
+    animation: floatLeftRight 8s ease-in-out infinite, rotateClockwise 15s linear infinite, ringPulse 3s ease-in-out infinite;
+  }
+  
+  .ring-2 {
+    width: 35px;
+    height: 35px;
+    border-color: #FD5701;
+    top: 65%;
+    left: 40%;
+    animation: floatUpDown 6s ease-in-out infinite, rotateCounterClockwise 10s linear infinite, ringPulse 2.5s ease-in-out infinite;
+  }
+  
+  /* Floating waves */
+  .float-wave {
+    position: absolute;
+    width: 60px;
+    height: 20px;
+    opacity: 0.4;
+    border-radius: 50px;
+  }
+  
+  .wave-1 {
+    background: linear-gradient(90deg, transparent, #0066ff, transparent);
+    top: 30%;
+    left: 5%;
+    animation: floatLeftRight 10s ease-in-out infinite, waveStretch 4s ease-in-out infinite;
+  }
+  
+  .wave-2 {
+    background: linear-gradient(90deg, transparent, #FD5701, transparent);
+    top: 85%;
+    right: 50%;
+    animation: floatUpDown 8s ease-in-out infinite, waveStretch 3s ease-in-out infinite reverse;
+  }
+  
+  /* Sparkle container */
+  .sparkle-container {
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    width: 100px;
+    height: 100px;
+    animation: floatDiagonal 12s ease-in-out infinite;
+  }
+  
+  .sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #00ccff;
+    border-radius: 50%;
+    opacity: 0;
+    animation: sparkleFlash 2s ease-in-out infinite;
+  }
+  
+  .sparkle:nth-child(1) { top: 10px; left: 20px; animation-delay: 0s; }
+  .sparkle:nth-child(2) { top: 30px; left: 50px; animation-delay: 0.3s; }
+  .sparkle:nth-child(3) { top: 50px; left: 10px; animation-delay: 0.6s; }
+  .sparkle:nth-child(4) { top: 70px; left: 40px; animation-delay: 0.9s; }
+  .sparkle:nth-child(5) { top: 20px; left: 70px; animation-delay: 1.2s; }
+  .sparkle:nth-child(6) { top: 60px; left: 80px; animation-delay: 1.5s; }
+  
+  /* Additional animation keyframes */
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.8; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+  
+  @keyframes ringPulse {
+    0%, 100% { border-width: 3px; opacity: 0.5; }
+    50% { border-width: 5px; opacity: 0.8; }
+  }
+  
+  @keyframes waveStretch {
+    0%, 100% { transform: scaleX(1) scaleY(1); }
+    50% { transform: scaleX(1.3) scaleY(0.7); }
+  }
+  
+  @keyframes sparkleFlash {
+    0%, 90%, 100% { opacity: 0; transform: scale(0); }
+    10%, 80% { opacity: 1; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.5); }
   }
   
   @keyframes galleryReveal {
@@ -252,6 +685,101 @@ const items = [
     border-color: #d1d5db; /* slate-300 */
     box-shadow: 0 4px 12px rgba(15,23,42,.08);
   }
+  /* Responsive floating animations */
+  @media (max-width: 768px) {
+    .floating-animations {
+      display: block;
+    }
+    
+    /* Scale down background gradients for mobile */
+    .gradient-orange {
+      width: 500px;
+      height: 500px;
+      filter: blur(70px);
+      top: -20%;
+      right: -15%;
+    }
+    .gradient-blue {
+      width: 600px;
+      height: 600px;
+      filter: blur(80px);
+      bottom: -20%;
+      left: -20%;
+    }
+    
+    /* Scale down elements for mobile */
+    .circle-1 { width: 50px; height: 50px; }
+    .circle-2 { width: 70px; height: 70px; }
+    .circle-3 { width: 40px; height: 40px; }
+    .square-1 { width: 25px; height: 25px; }
+    .square-2 { width: 20px; height: 20px; }
+    .triangle-1 { 
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-bottom: 26px solid #FD5701;
+    }
+    .triangle-2 {
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
+      border-bottom: 21px solid #0066ff;
+    }
+    .dot { width: 8px; height: 8px; margin: 5px 0; }
+    
+    /* Scale down new elements for mobile */
+    .float-star { width: 12px; height: 12px; }
+    .float-hexagon { width: 20px; height: 18px; }
+    .float-ring { width: 30px; height: 30px; border-width: 2px; }
+    .ring-2 { width: 22px; height: 22px; }
+    .float-wave { width: 40px; height: 12px; }
+    .sparkle-container { width: 60px; height: 60px; }
+    .sparkle { width: 3px; height: 3px; }
+  }
+  
+  @media (min-width: 769px) and (max-width: 1024px) {
+    /* Scale for tablet */
+    .gradient-orange {
+      width: 600px;
+      height: 600px;
+      filter: blur(85px);
+      top: -22%;
+      right: -18%;
+    }
+    .gradient-blue {
+      width: 700px;
+      height: 700px;
+      filter: blur(100px);
+      bottom: -22%;
+      left: -22%;
+    }
+    
+    .circle-1 { width: 65px; height: 65px; }
+    .circle-2 { width: 90px; height: 90px; }
+    .circle-3 { width: 50px; height: 50px; }
+    .square-1 { width: 32px; height: 32px; }
+    .square-2 { width: 25px; height: 25px; }
+    .triangle-1 { 
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-bottom: 35px solid #FD5701;
+    }
+    .triangle-2 {
+      border-left: 16px solid transparent;
+      border-right: 16px solid transparent;
+      border-bottom: 28px solid #0066ff;
+    }
+    .dot { width: 10px; height: 10px; margin: 6px 0; }
+    
+    /* Scale for tablet - new elements */
+    .float-star { width: 16px; height: 16px; }
+    .float-hexagon { width: 28px; height: 24px; }
+    .float-ring { border-width: 2.5px; }
+    .ring-1 { width: 40px; height: 40px; }
+    .ring-2 { width: 28px; height: 28px; }
+    .float-wave { width: 50px; height: 16px; }
+    .sparkle-container { width: 80px; height: 80px; }
+    .sparkle { width: 3.5px; height: 3.5px; }
+  }
+  
   /* Responsive adjustments for smaller frames */
   @media (max-width: 768px) {
     .hero-inner {
