@@ -1,124 +1,75 @@
 @import "tailwindcss";
 
-/* Prevent horizontal scroll on all frames smaller than desktop */
-html,
-body {
+/* GLOBAL: Completely disable horizontal scroll on ALL screen sizes */
+html, body {
+  /* Primary locks */
   overflow-x: hidden !important;
+  overflow-x: clip !important;
   overscroll-behavior-x: none !important;
+  
+  /* Sizing constraints */
   width: 100% !important;
   max-width: 100vw !important;
-  position: relative;
+  min-width: 0 !important;
+  
+  /* Touch behavior */
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
+  
+  /* Box model safety */
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-/* Normalize box-sizing to prevent padding/border overflow */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+/* Apply to all major containers */
+body, #root, main, section, article, div, header, footer, nav {
+  overflow-x: hidden !important;
+  overflow-x: clip !important;
+  max-width: 100vw !important;
+  box-sizing: border-box !important;
 }
 
-/* Prevent media from causing overflow */
-img,
-svg,
-video,
-canvas,
-iframe {
+/* Prevent any element from causing horizontal overflow */
+* {
+  max-width: 100vw !important;
+  box-sizing: border-box !important;
+}
+
+/* Media elements safety */
+img, video, canvas, iframe, svg {
   max-width: 100% !important;
   height: auto !important;
   box-sizing: border-box !important;
 }
 
-/* Mobile/tablet: strict horizontal overflow prevention */
-@media (max-width: 1024px) {
-  /* Lock body positioning */
-  html {
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
+/* Completely hide horizontal scrollbars */
+html::-webkit-scrollbar:horizontal,
+body::-webkit-scrollbar:horizontal,
+*::-webkit-scrollbar:horizontal {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+/* Firefox scrollbar hiding */
+html, body {
+  scrollbar-width: none !important;
+  scrollbar-color: transparent transparent !important;
+}
+
+/* Webkit scrollbar complete removal */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+/* Force vertical-only scrolling behavior */
+@supports (overscroll-behavior: none) {
+  html, body, * {
     overscroll-behavior-x: none !important;
-    width: 100vw !important;
-    max-width: 100vw !important;
-  }
-  
-  body {
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    overscroll-behavior-x: none !important;
-    width: 100vw !important;
-    max-width: 100vw !important;
-    position: relative !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* Allow vertical scrolling but prevent horizontal */
-  *,
-  *::before,
-  *::after {
-    overscroll-behavior-x: none !important;
-  }
-
-  /* Clip overflow on common containers */
-  body,
-  main,
-  header,
-  footer,
-  section,
-  article,
-  div,
-  .container,
-  .wrapper,
-  .content {
-    max-width: 100vw !important;
-    overflow-x: hidden !important;
-    overscroll-behavior-x: none !important;
-  }
-
-  /* Ensure scrollable elements can scroll vertically */
-  body,
-  main,
-  .scrollable {
-    overflow-y: auto !important;
-  }
-
-  /* Hide horizontal scrollbars completely */
-  html::-webkit-scrollbar:horizontal,
-  body::-webkit-scrollbar:horizontal,
-  *::-webkit-scrollbar:horizontal {
-    width: 0 !important;
-    height: 0 !important;
-    display: none !important;
-  }
-
-  /* Firefox scrollbar hiding */
-  html,
-  body {
-    scrollbar-width: none !important;
-  }
-
-  /* Webkit scrollbar hiding */
-  html::-webkit-scrollbar,
-  body::-webkit-scrollbar {
-    width: 0 !important;
-    display: none !important;
-  }
-
-  /* Prevent any element from extending beyond viewport horizontally */
-  * {
-    max-width: 100vw !important;
-  }
-
-  /* Restore scroll functionality for specific elements */
-  html,
-  body,
-  main,
-  .scroll-container {
-    touch-action: pan-y !important;
-  }
-
-  /* Lock viewport meta behavior */
-  @supports (overscroll-behavior: none) {
-    html, body {
-      overscroll-behavior: none !important;
-    }
+    overscroll-behavior-y: auto !important;
   }
 }
