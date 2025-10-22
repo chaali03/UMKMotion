@@ -236,11 +236,14 @@ class Media {
       const effectiveX = Math.min(Math.abs(x), H);
 
       const arc = R - Math.sqrt(R * R - effectiveX * effectiveX);
+      // Amplify curvature vertically on smaller screens so the circle is obvious
+      const vw = (typeof window !== 'undefined' && window.innerWidth) ? window.innerWidth : this.screen.width;
+      const curvatureMultiplier = vw <= 480 ? 2.4 : vw <= 768 ? 1.6 : 1.0;
       if (this.bend > 0) {
-        this.plane.position.y = -arc - 3.0; // lower by 3.0 units
+        this.plane.position.y = -(arc * curvatureMultiplier) - 3.0; // amplified curve
         this.plane.rotation.z = -Math.sign(x) * Math.asin(effectiveX / R);
       } else {
-        this.plane.position.y = arc - 3.0; // lower by 3.0 units
+        this.plane.position.y = (arc * curvatureMultiplier) - 3.0; // amplified curve
         this.plane.rotation.z = Math.sign(x) * Math.asin(effectiveX / R);
       }
     }
@@ -270,9 +273,14 @@ class Media {
         this.plane.program.uniforms.uViewportSizes.value = [this.viewport.width, this.viewport.height];
       }
     }
-    this.scale = this.screen.height / 1500;
-    this.plane.scale.y = (this.viewport.height * (400 * this.scale)) / this.screen.height;
-    this.plane.scale.x = (this.viewport.width * (300 * this.scale)) / this.screen.width;
+    // Make items smaller on narrow screens so the curved path is more apparent
+    const isPhone = this.screen && this.screen.width <= 480;
+    const isTablet = !isPhone && this.screen && this.screen.width <= 768;
+    this.scale = this.screen.height / (isPhone ? 2000 : isTablet ? 1700 : 1500);
+    const baseY = isPhone ? 320 : isTablet ? 360 : 400;
+    const baseX = isPhone ? 220 : isTablet ? 260 : 300;
+    this.plane.scale.y = (this.viewport.height * (baseY * this.scale)) / this.screen.height;
+    this.plane.scale.x = (this.viewport.width * (baseX * this.scale)) / this.screen.width;
     this.plane.program.uniforms.uPlaneSizes.value = [this.plane.scale.x, this.plane.scale.y];
     this.padding = 2;
     this.width = this.plane.scale.x + this.padding;
@@ -467,18 +475,22 @@ export default function CircularGallery({
 }) {
   const containerRef = useRef(null);
   useEffect(() => {
-    // Adjust bend based on screen size for responsive animation
+    // Adjust curvature and rounding by screen size to emphasize the circular path on mobile
     const screenWidth = window.innerWidth;
     let adjustedBend = bend;
+    let adjustedBorderRadius = borderRadius;
     if (screenWidth <= 480) {
-      adjustedBend = 2; // smaller for mobile
+      adjustedBend = Math.max(bend, 48);      // extreme bend for small phones
+      adjustedBorderRadius = Math.max(borderRadius, 0.12);
     } else if (screenWidth <= 768) {
-      adjustedBend = 3; // smaller for tablet
+      adjustedBend = Math.max(bend, 22);      // very strong bend for tablets
+      adjustedBorderRadius = Math.max(borderRadius, 0.10);
     } else {
-      adjustedBend = 4; // smaller for desktop
+      adjustedBend = Math.max(bend, 12);      // moderate bend for desktop
+      adjustedBorderRadius = Math.max(borderRadius, 0.08);
     }
     const el = containerRef.current;
-    const app = new App(el, { items, bend: adjustedBend, textColor, borderRadius, font, scrollSpeed, scrollEase });
+    const app = new App(el, { items, bend: adjustedBend, textColor, borderRadius: adjustedBorderRadius, font, scrollSpeed, scrollEase });
     // Staged entrance once canvas appended
     if (el) {
       // allow layout to settle then reveal
