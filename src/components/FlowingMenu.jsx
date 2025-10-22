@@ -1,32 +1,23 @@
 import React from 'react';
 import { gsap } from 'gsap';
-
 import './FlowingMenu.css';
 
-function FlowingMenu({ items = [] }) {
-  return (
-    <div className="menu-wrap">
-      <nav className="menu">
-        {items.map((item, idx) => (
-          <MenuItem key={idx} {...item} />
-        ))}
-      </nav>
-    </div>
-  );
-}
+// Define the type for menu items
+const MenuItemType = {
+  text: String,
+  link: String,
+  image: String
+};
 
-function MenuItem({ link, text, image }) {
+const animationDefaults = { duration: 0.6, ease: 'expo' };
+
+/**
+ * Menu item component with marquee animation
+ */
+function MenuItemComponent({ text, link, image }) {
   const itemRef = React.useRef(null);
   const marqueeRef = React.useRef(null);
   const marqueeInnerRef = React.useRef(null);
-
-  const animationDefaults = { duration: 0.6, ease: 'expo' };
-
-  const findClosestEdge = (mouseX, mouseY, width, height) => {
-    const topEdgeDist = distMetric(mouseX, mouseY, width / 2, 0);
-    const bottomEdgeDist = distMetric(mouseX, mouseY, width / 2, height);
-    return topEdgeDist < bottomEdgeDist ? 'top' : 'bottom';
-  };
 
   const distMetric = (x, y, x2, y2) => {
     const xDiff = x - x2;
@@ -34,7 +25,13 @@ function MenuItem({ link, text, image }) {
     return xDiff * xDiff + yDiff * yDiff;
   };
 
-  const handleMouseEnter = ev => {
+  const findClosestEdge = (mouseX, mouseY, width, height) => {
+    const topEdgeDist = distMetric(mouseX, mouseY, width / 2, 0);
+    const bottomEdgeDist = distMetric(mouseX, mouseY, width / 2, height);
+    return topEdgeDist < bottomEdgeDist ? 'top' : 'bottom';
+  };
+
+  const handleMouseEnter = (ev) => {
     if (!itemRef.current || !marqueeRef.current || !marqueeInnerRef.current) return;
     const rect = itemRef.current.getBoundingClientRect();
     const x = ev.clientX - rect.left;
@@ -48,7 +45,7 @@ function MenuItem({ link, text, image }) {
       .to([marqueeRef.current, marqueeInnerRef.current], { y: '0%' }, 0);
   };
 
-  const handleMouseLeave = ev => {
+  const handleMouseLeave = (ev) => {
     if (!itemRef.current || !marqueeRef.current || !marqueeInnerRef.current) return;
     const rect = itemRef.current.getBoundingClientRect();
     const x = ev.clientX - rect.left;
@@ -64,14 +61,19 @@ function MenuItem({ link, text, image }) {
   const repeatedMarqueeContent = Array.from({ length: 4 }).map((_, idx) => (
     <React.Fragment key={idx}>
       <span>{text}</span>
-      <div className="marquee__img" style={{ backgroundImage: `url(${image})` }} />
+      {image && <div className="marquee__img" style={{ backgroundImage: `url(${image})` }} />}
     </React.Fragment>
   ));
 
   return (
     <div className="menu__item" ref={itemRef}>
-      <a className="menu__item-link" href={link} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-        {text}
+      <a 
+        className="menu__item-link" 
+        href={link} 
+        onMouseEnter={handleMouseEnter} 
+        onMouseLeave={handleMouseLeave}
+      >
+        <span className="menu__item-text">{text}</span>
       </a>
       <div className="marquee" ref={marqueeRef}>
         <div className="marquee__inner-wrap" ref={marqueeInnerRef}>
@@ -80,6 +82,26 @@ function MenuItem({ link, text, image }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * FlowingMenu component
+ * @param {Object} props
+ * @param {Array<{text: string, link: string, image: string}>} [props.items=[]] - Array of menu items
+ */
+function FlowingMenu({ items = [] }) {
+  // Ensure items is always an array
+  const menuItems = Array.isArray(items) ? items : [];
+  
+  return (
+    <div className="menu-wrap">
+      <nav className="menu">
+        {menuItems.map((item, idx) => (
+          <MenuItemComponent key={idx} {...item} />
+        ))}
+      </nav>
     </div>
   );
 }
