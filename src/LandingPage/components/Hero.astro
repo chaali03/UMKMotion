@@ -90,10 +90,25 @@ const items = [
     .hero {
       overflow-x: visible;
       overflow-y: visible;
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 0;
     }
     .hero-inner {
       overflow-x: visible;
       overflow-y: visible;
+      position: relative;
+      z-index: 1;
     }
     .hero .circular-gallery {
       max-width: none !important;
@@ -323,13 +338,13 @@ const items = [
     z-index: -10;
   }
   
-  /* Desktop: Much more intense gradients */
+  /* Desktop: More subtle gradients */
   @media (min-width: 1025px) {
     .gradient-orange {
       background: radial-gradient(circle, 
-        rgba(253, 87, 1, 0.85) 0%, 
-        rgba(255, 133, 51, 0.75) 25%, 
-        rgba(255, 167, 102, 0.6) 50%, 
+        rgba(253, 87, 1, 0.56) 0%, 
+        rgba(255, 133, 51, 0.40) 25%, 
+        rgba(255, 167, 102, 0.5) 50%, 
         rgba(255, 200, 153, 0.4) 75%, 
         rgba(255, 220, 180, 0.15) 90%,
         transparent 100%);
@@ -358,13 +373,13 @@ const items = [
     z-index: -10;
   }
   
-  /* Desktop: Much more intense blue gradient */
+  /* Desktop: More subtle blue gradient */
   @media (min-width: 1025px) {
     .gradient-blue {
       background: radial-gradient(circle, 
-        rgba(0, 17, 81, 0.8) 0%, 
-        rgba(0, 102, 255, 0.7) 25%, 
-        rgba(51, 153, 255, 0.55) 50%, 
+        rgba(0, 17, 81, 0.5) 0%, 
+        rgba(0, 102, 255, 0.5) 25%, 
+        rgba(51, 153, 255, 0.40) 50%, 
         rgba(102, 178, 255, 0.35) 75%, 
         rgba(153, 204, 255, 0.18) 90%,
         transparent 100%);

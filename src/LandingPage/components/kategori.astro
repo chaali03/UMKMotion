@@ -1,0 +1,42 @@
+---
+import ScrollStack, { ScrollStackItem } from "../../components/ScrollStack.jsx";
+---
+
+<section id="etalase" class="kategori-react">
+  <div class="container">
+    <header class="head">
+      <h2 class="title">Jelajahi Kategori UMKM</h2>
+      <p class="subtitle">Temukan berbagai bidang usaha: kuliner, jasa, kerajinan, dan lainnya.</p>
+    </header>
+
+    <ScrollStack
+      client:only="react"
+      className="stack"
+      itemDistance={160}
+      itemScale={0.03}
+      itemStackDistance={50}
+      stackPosition="20%"
+      scaleEndPosition="8%"
+      baseScale={0.85}
+      rotationAmount={0}
+      blurAmount={0.6}
+      useWindowScroll={true}
+      onStackComplete={() => {}}
+    >
+      <ScrollStackItem itemClassName="kat-card"><h2>All on React Bits!</h2></ScrollStackItem>
+      <ScrollStackItem itemClassName="kat-card"><h2>Kuliner</h2></ScrollStackItem>
+      <ScrollStackItem itemClassName="kat-card"><h2>Fashion</h2></ScrollStackItem>
+      <ScrollStackItem itemClassName="kat-card"><h2>Jasa</h2></ScrollStackItem>
+    </ScrollStack>
+  </div>
+</section>
+
+<style>
+  .kategori-react { position: relative; padding: clamp(24px, 6vw, 64px) 0; }
+  .container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+  .head { text-align: center; margin-bottom: clamp(16px, 5vw, 36px); }
+  .title { font-size: clamp(1.4rem, 3.8vw, 2.2rem); margin: 0 0 6px 0; font-weight: 900; letter-spacing: -0.02em; color: #0f172a; }
+  .subtitle { color: #475569; margin: 0; font-size: clamp(.9rem, 2.5vw, 1.05rem); }
+  .kat-card { display: grid; place-items: center; height: 100%; text-align: center; }
+  .kat-card h2 { color: #fff; font-size: clamp(1.6rem, 6vw, 2.6rem); }
+</style>
