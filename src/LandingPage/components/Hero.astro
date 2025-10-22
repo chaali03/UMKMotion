@@ -856,18 +856,18 @@ const items = [
     
     /* Scale down background gradients for mobile */
     .gradient-orange {
-      width: 400px;
-      height: 400px;
-      filter: blur(25px);
-      top: -15%;
-      right: -10%;
+      width: 320px;
+      height: 320px;
+      filter: blur(22px);
+      top: -18%;
+      right: -6%;
     }
     .gradient-blue {
-      width: 450px;
-      height: 450px;
-      filter: blur(30px);
-      bottom: -15%;
-      left: -15%;
+      width: 360px;
+      height: 360px;
+      filter: blur(26px);
+      bottom: -18%;
+      left: -8%;
     }
     
     /* Scale down elements for mobile */
@@ -1071,11 +1071,19 @@ const items = [
       backdrop-filter: blur(8px);
       border: 1px solid rgba(0, 17, 81, 0.12);
     }
-    /* Reduce background blur for small mobile */
+    /* Reduce background blur for small mobile and tuck gradients into corners */
     .gradient-orange {
-      filter: blur(15px) !important;
+      width: 240px;
+      height: 240px;
+      top: -22%;
+      right: -4%;
+      filter: blur(18px) !important;
     }
     .gradient-blue {
+      width: 280px;
+      height: 280px;
+      bottom: -22%;
+      left: -6%;
       filter: blur(20px) !important;
     }
   }
