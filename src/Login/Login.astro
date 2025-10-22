@@ -1,0 +1,759 @@
+---
+
+import Particles from "../components/Particles";
+import Carrousel from "../components/Carrousel";
+
+const carouselItems = [
+  { src: "/asset/umkm/umkm2.jpg" },
+  { src: "/asset/umkm/umkm3.jpeg" },
+];
+---
+
+
+
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <link rel="stylesheet" href="/tes.css" />
+  </head>
+  <body>
+<div class="background-container">
+      <Particles client:load />
+      <div class="particles-container" id="particlesContainer"></div>
+
+      <!-- === LOGIN WRAPPER === -->
+      <div class="login-card-wrapper">
+        <div class="login-card">
+          
+          <!-- === LEFT: IMAGE + CAROUSEL === -->
+         <!-- === LEFT: IMAGE + CAROUSEL === -->
+          <div class="login-image">
+            <div class="image-carousel">
+              {
+                carouselItems.map((item, index) => (
+                  <img
+                    src={item.src}
+                    alt={`Slide ${index + 1}`}
+                    class={`carousel-img ${index === 0 ? "active" : ""}`}
+                  />
+                ))
+              }
+            </div>
+
+            <div class="carousel-indicator">
+              <div class="indicator-bar"></div>
+            </div>
+          </div>
+              <!-- masukkan script di bawah, setelah markup -->
+    <script type="module">
+      document.addEventListener("DOMContentLoaded", () => {
+        const carouselImages = document.querySelectorAll(".carousel-img");
+        const indicatorBar = document.querySelector(".indicator-bar");
+        if (!carouselImages.length) return;
+
+        let currentIndex = 0;
+        const totalImages = carouselImages.length;
+        const intervalDuration = 3000;
+        const progressUpdateInterval = 50;
+        let elapsedTime = 0;
+        let progressInterval;
+
+        const showImage = (index) => {
+          carouselImages.forEach((img, i) => {
+            img.classList.toggle("active", i === index);
+          });
+        };
+
+        const updateProgressBar = () => {
+          elapsedTime += progressUpdateInterval;
+          const progress = (elapsedTime / intervalDuration) * 100;
+          if (indicatorBar) indicatorBar.style.width = Math.min(progress, 100) + "%";
+          if (elapsedTime >= intervalDuration) {
+            clearInterval(progressInterval);
+            nextImage();
+          }
+        };
+
+        const nextImage = () => {
+          currentIndex = (currentIndex + 1) % totalImages;
+          showImage(currentIndex);
+          elapsedTime = 0;
+          startProgressBar();
+        };
+
+        const startProgressBar = () => {
+          if (progressInterval) clearInterval(progressInterval);
+          progressInterval = setInterval(updateProgressBar, progressUpdateInterval);
+        };
+
+        showImage(0);
+        startProgressBar();
+      });
+    </script>
+
+          <!-- === RIGHT: FORM SECTION === -->
+          <div class="login-form-section">
+            <!-- Logo -->
+            <div class="logo-badge">
+              <img src="/public/logo.png" alt="Logo" />
+            </div>
+
+            <h2 class="login-title">Hai Wirausahawan</h2>
+            <p class="login-subtitle">Selamat Datang di UMMOTIONS</p>
+
+            <!-- === FORM === -->
+            <form class="login-form">
+              <div class="form-group">
+                <input 
+                  type="email" 
+                  placeholder="Email" 
+                  class="form-input"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <input 
+                  type="password" 
+                  placeholder="Password" 
+                  class="form-input"
+                  required
+                />
+              </div>
+
+              <div class="forgot-password">
+                <a href="#forgot">Lupa Password?</a>
+              </div>
+
+              <div class="divider">
+                <span>ATAU</span>
+              </div>
+
+              <button type="button" class="btn-google">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Lanjutkan Dengan Google
+              </button>
+
+              <button type="submit" class="btn-login">Masuk</button>
+              <button type="button" class="btn-register">Daftar</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+      <style>
+      * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        html,
+        body {
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        body {
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .background-container {
+          position: relative;
+          width: 100%;
+          height: 100vh;
+          overflow: hidden;
+        }
+
+        .particles-container {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 1;
+        }
+
+        .particle {
+          position: absolute;
+          opacity: 0.6;
+          pointer-events: none;
+        }
+
+        .particle svg {
+          display: block;
+          filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+        }
+
+        /* Updated login card layout with trapezoid image */
+        .login-card-wrapper {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 10;
+          width: 90%;
+          max-width: 1000px;
+          max-height: 90vh;
+          overflow-y: auto;
+        }
+
+        .login-card {
+          display: flex;
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(10px);
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          gap: 0;
+        }
+
+        /* Added trapezoid shape to image using clip-path */
+        .login-image {
+          flex: 0 0 40%;
+          min-height: 500px;
+          overflow: hidden;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            clip-path: polygon( 0 0, 90% 0, 100% 50%, 90% 100%, 0 100% );  display: flex;
+          flex-direction: column;
+        }
+
+        /* Added carousel container for image rotation */
+        /* === CAROUSEL STYLING === */
+.image-carousel {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.carousel-img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+}
+
+.carousel-img.active {
+  opacity: 1;
+}
+
+.carousel-indicator {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  position: relative;
+  width: 100%;
+}
+
+.indicator-bar {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  width: 25%;
+  transition: width 0.1s linear;
+}
+
+/* === PARENT WRAPPER === */
+.login-image {
+  flex: 0 0 40%;
+  min-height: 500px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  clip-path: polygon(0 0, 90% 0, 100% 50%, 90% 100%, 0 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+
+        /* Adjusted form section to be vertical rectangle */
+        .login-form-section {
+          flex: 1;
+          padding: 50px 40px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          position: relative;
+          min-width: 350px;
+        }
+
+        /* === RESPONSIVE LOGO BADGE === */
+        .logo-badge {
+          position: absolute;
+          top: 50px;
+          right: 50px;
+          width: 70px;
+          height: 70px;
+          display: flex;
+          align-items: center;
+          z-index: 5;
+          transition: all 0.3s ease;
+        }
+
+        .logo-badge img {
+          width: 80%;
+          height: 80%;
+          object-fit: contain;
+          transition: all 0.3s ease;
+        }
+
+        /* --- Tablet --- */
+        @media (max-width: 1024px) {
+          .logo-badge {
+            top: 40px;
+            right: 40px;
+            width: 60px;
+            height: 60px;
+          }
+
+          .logo-badge img {
+            width: 75%;
+            height: 75%;
+          }
+        }
+
+        /* --- Mobile (potrait) --- */
+        @media (max-width: 768px) {
+          .logo-badge {
+            top: 25px;
+            right: 25px;
+            width: 50px;
+            height: 50px;
+          }
+
+          .logo-badge img {
+            width: 70%;
+            height: 70%;
+          }
+        }
+
+        /* --- Small phones --- */
+        @media (max-width: 480px) {
+          .logo-badge {
+            top: 15px;
+            right: 15px;
+            width: 42px;
+            height: 42px;
+          }
+
+          .logo-badge img {
+            width: 65%;
+            height: 65%;
+          }
+        }
+
+        /* --- Extra small --- */
+        @media (max-width: 360px) {
+          .logo-badge {
+            top: 12px;
+            right: 12px;
+            width: 38px;
+            height: 38px;
+          }
+
+          .logo-badge img {
+            width: 60%;
+            height: 60%;
+          }
+        }
+
+
+        .login-title {
+          font-size: 28px;
+          font-weight: 700;
+          color: #1a1a1a;
+          margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+          font-size: 14px;
+          color: #666;
+          margin-bottom: 30px;
+        }
+
+        .login-form {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .form-input {
+          padding: 12px 16px;
+          border: 1.5px solid #e0e0e0;
+          border-radius: 10px;
+          font-size: 14px;
+          transition: all 0.3s ease;
+          background: #f9f9f9;
+        }
+
+        .form-input:focus {
+          outline: none;
+          border-color: #667eea;
+          background: white;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-input::placeholder {
+          color: #999;
+        }
+
+        .forgot-password {
+          text-align: right;
+          margin-bottom: 8px;
+        }
+
+        .forgot-password a {
+          font-size: 12px;
+          color: #667eea;
+          text-decoration: none;
+          transition: color 0.3s ease;
+        }
+
+        .forgot-password a:hover {
+          color: #764ba2;
+        }
+
+        .divider {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin: 20px 0;
+          color: #999;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .divider::before,
+        .divider::after {
+          content: "";
+          flex: 1;
+          height: 1px;
+          background: #e0e0e0;
+        }
+
+        .btn-google {
+          padding: 12px 16px;
+          border: 1.5px solid #e0e0e0;
+          background: white;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 500;
+          color: #333;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        }
+
+        .btn-google:hover {
+          background: #f9f9f9;
+          border-color: #667eea;
+        }
+
+        .btn-login {
+          padding: 14px 16px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border: none;
+          border-radius: 10px;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          margin-top: 8px;
+        }
+
+        .btn-login:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-login:active {
+          transform: translateY(0);
+        }
+
+        .btn-register {
+          padding: 12px 16px;
+          background: transparent;
+          color: #667eea;
+          border: 1.5px solid #667eea;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .btn-register:hover {
+          background: rgba(102, 126, 234, 0.1);
+        }
+
+        /* Enhanced responsive design for all devices */
+        /* Tablet devices (768px - 1024px) */
+        @media (max-width: 1024px) {
+          .login-card-wrapper {
+            width: 95%;
+            max-width: 900px;
+          }
+
+          .login-image {
+            flex: 0 0 35%;
+            min-height: 450px;
+          }
+
+          .login-form-section {
+            padding: 40px 35px;
+            min-width: 300px;
+          }
+
+          .login-title {
+            font-size: 26px;
+          }
+
+          .login-subtitle {
+            font-size: 13px;
+          }
+
+          .form-input {
+            font-size: 13px;
+            padding: 11px 14px;
+          }
+
+          .btn-google,
+          .btn-login,
+          .btn-register {
+            font-size: 13px;
+            padding: 11px 14px;
+          }
+        }
+
+        /* Medium tablets (768px) */
+        @media (max-width: 768px) {
+          .login-card-wrapper {
+            width: 95%;
+            max-width: 100%;
+          }
+
+          .login-card {
+            flex-direction: column;
+            border-radius: 20px;
+          }
+
+          .login-image {
+            flex: 0 0 auto;
+            min-height: 300px;
+            max-height: 350px;
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+          }
+
+          .login-form-section {
+            padding: 35px 28px;
+            min-width: auto;
+          }
+
+          .logo-badge {
+            top: 12px;
+            right: 18px;
+            width: 45px;
+            height: 45px;
+          }
+
+          .login-title {
+            font-size: 22px;
+            margin-bottom: 6px;
+          }
+
+          .login-subtitle {
+            font-size: 12px;
+            margin-bottom: 20px;
+          }
+
+          .login-form {
+            gap: 14px;
+          }
+
+          .form-input {
+            font-size: 13px;
+            padding: 10px 14px;
+          }
+
+          .btn-google,
+          .btn-login,
+          .btn-register {
+            font-size: 13px;
+            padding: 10px 14px;
+          }
+
+          .forgot-password {
+            margin-bottom: 6px;
+          }
+
+          .forgot-password a {
+            font-size: 11px;
+          }
+
+          .divider {
+            margin: 15px 0;
+            font-size: 11px;
+          }
+        }
+
+        /* Small phones (480px - 767px) */
+        @media (max-width: 480px) {
+          .login-card-wrapper {
+            width: 98%;
+            max-width: 100%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+          }
+
+          .login-card {
+            flex-direction: column;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+          }
+
+          .login-image {
+            flex: 0 0 auto;
+            min-height: 250px;
+            max-height: 280px;
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+          }
+
+          .login-form-section {
+            padding: 28px 20px;
+            min-width: auto;
+          }
+
+          .logo-badge {
+            top: 10px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+          }
+
+          .login-title {
+            font-size: 20px;
+            margin-bottom: 4px;
+          }
+
+          .login-subtitle {
+            font-size: 11px;
+            margin-bottom: 18px;
+          }
+
+          .login-form {
+            gap: 12px;
+          }
+
+          .form-input {
+            font-size: 12px;
+            padding: 9px 12px;
+            border-radius: 8px;
+          }
+
+          .btn-google,
+          .btn-login,
+          .btn-register {
+            font-size: 12px;
+            padding: 9px 12px;
+            border-radius: 8px;
+          }
+
+          .forgot-password {
+            margin-bottom: 4px;
+          }
+
+          .forgot-password a {
+            font-size: 10px;
+          }
+
+          .divider {
+            margin: 12px 0;
+            font-size: 10px;
+          }
+        }
+
+        /* Extra small phones (< 480px) */
+        @media (max-width: 360px) {
+          .login-card-wrapper {
+            width: 100%;
+          }
+
+          .login-image {
+            min-height: 200px;
+            max-height: 220px;
+          }
+
+          .login-form-section {
+            padding: 24px 16px;
+          }
+
+          .login-title {
+            font-size: 18px;
+          }
+
+          .login-subtitle {
+            font-size: 10px;
+          }
+
+          .form-input,
+          .btn-google,
+          .btn-login,
+          .btn-register {
+            font-size: 11px;
+            padding: 8px 10px;
+          }
+        }
+
+        /* Animasi untuk partikel */
+        @keyframes float {
+          0% {
+            transform: translateY(0px) rotate(0deg);
+            opacity: 0;
+          }
+          10% {
+            opacity: 0.6;
+          }
+          90% {
+            opacity: 0.6;
+          }
+          100% {
+            transform: translateY(-100vh) rotate(360deg);
+            opacity: 0;
+          }
+        }
+
+        @keyframes sway {
+          0%,
+          100% {
+            transform: translateX(0px);
+          }
+          50% {
+            transform: translateX(30px);
+          }
+        }
+
+    </style>
+</html>
