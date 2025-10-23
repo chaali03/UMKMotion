@@ -1,0 +1,13 @@
+#lights {
+  position: absolute;
+  inset: 0; /* pin to all sides */
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none; /* background only */
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+}
