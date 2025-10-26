@@ -176,8 +176,8 @@
       </main>
     </div>
   </body>
-    <style>
-      /* ===== Reset dan Font ===== */
+        <style>
+          /* ===== Reset dan Font ===== */
       * {
         margin: 0;
         padding: 0;
@@ -191,22 +191,20 @@
       }
 
       .background {
-        width: 80%;
+        width: 85%;
         margin: auto;
-        padding: 30px 0;
-      }
-
-      /* ===== Header / Etalase ===== */
-      .etalase {
-        text-align: center;
         padding: 20px 0;
       }
 
+      /* ===== Header ===== */
+      .etalase {
+        text-align: center;
+        padding: 15px 0;
+      }
       .etalase h1 {
-        font-size: 2.8rem;
+        font-size: 2.4rem;
         color: #f33636;
-        letter-spacing: 2px;
-        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        letter-spacing: 1.5px;
       }
 
       /* ===== Banner ===== */
@@ -214,215 +212,150 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-bottom: 40px;
+        margin-bottom: 30px;
       }
-
       .promotion-banner img {
         width: 100%;
-        max-width: 100%;
-        height: 200px;
+        height: 180px;
         border-radius: 20px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
         object-fit: cover;
         object-position: center;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
       }
 
       /* ===== Hero Section ===== */
       .header {
         text-align: center;
-        margin-bottom: 30px;
-      }
-
-      .header h1 {
-        font-size: 2rem;
-        font-weight: 600;
         margin-bottom: 25px;
+      }
+      .header h1 {
+        font-size: 1.8rem;
+        font-weight: 600;
         color: #222;
       }
 
       /* ===== Search Card ===== */
       .search-card {
-        background-color: #fff;
-        padding: 25px;
+        background: #fff;
+        padding: 20px;
         border-radius: 14px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        margin-bottom: 30px;
-        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        margin-bottom: 25px;
       }
-
-      .search-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
-      }
-
       .search-item {
         display: flex;
         gap: 10px;
-        margin-bottom: 18px;
+        margin-bottom: 15px;
       }
-
       .search-item input {
         flex: 1;
-        padding: 12px 15px;
+        padding: 12px 14px;
         border: 1px solid #ccc;
         border-radius: 8px;
         font-size: 1rem;
         outline: none;
-        transition: 0.2s;
+        transition: .2s;
       }
-
       .search-item input:focus {
         border-color: #f33636;
-        box-shadow: 0 0 0 2px rgba(243, 54, 54, 0.15);
+        box-shadow: 0 0 0 2px rgba(243,54,54,0.1);
       }
-
       .search-item button {
         padding: 12px 25px;
-        background-color: #f33636;
+        background: #f33636;
         color: #fff;
         border: none;
         border-radius: 8px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s;
+        transition: .3s;
       }
-
       .search-item button:hover {
-        background-color: #d72c2c;
+        background: #d72c2c;
       }
 
-      /* ===== Filter Item - ENHANCED ===== */
+      /* ===== Filter ===== */
       .filter-item {
         text-align: start;
-        margin-top: 15px;
-        background-color: #f8f9fa;
+        background: #f8f9fa;
         padding: 20px;
         border-radius: 14px;
       }
-
       .filter-item p {
-        margin-bottom: 16px;
         font-weight: 600;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         color: #333;
+        margin-bottom: 14px;
       }
 
-      /* Added wrapper for horizontal scroll with navigation buttons */
       .category-wrapper {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         position: relative;
       }
 
-      /* Horizontal scroll container */
       .category-section {
         display: flex;
-        gap: 14px;
+        gap: 12px;
         overflow-x: auto;
         overflow-y: hidden;
         scroll-behavior: smooth;
         padding: 8px 0;
         flex: 1;
-        min-width: 0;
         scrollbar-width: thin;
         scrollbar-color: #d3d3d3 #f0f0f0;
       }
-
-      /* Custom scrollbar styling */
       .category-section::-webkit-scrollbar {
         height: 6px;
       }
-
-      .category-section::-webkit-scrollbar-track {
-        background: #f0f0f0;
-        border-radius: 10px;
-      }
-
       .category-section::-webkit-scrollbar-thumb {
         background: #d3d3d3;
         border-radius: 10px;
-        transition: background 0.3s;
       }
 
-      .category-section::-webkit-scrollbar-thumb:hover {
-        background: #999;
-      }
-      
-      #categorySection {
-        overflow-x: auto;
-        scroll-behavior: smooth;
-        cursor: grab;
-      }
-
-      #categorySection.dragging {
-        cursor: grabbing;
-      }
-
-
-      /* Category buttons - now fully clickable button elements */
+      /* Category Buttons */
       .category-buttons {
-        background-color: #fff;
-        min-width: 130px;
-        width: 130px;
-        height: 130px;
-        border-radius: 16px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        background: #fff;
+        min-width: 120px;
+        width: 120px;
+        height: 120px;
+        border-radius: 14px;
+        border: 2px solid #eee;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        border: 2px solid #eee;
-        padding: 12px;
+        transition: .3s ease;
         flex-shrink: 0;
-        font-family: "Poppins", sans-serif;
-        font-size: 0.9rem;
+      }
+      .category-buttons img {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
+        margin-bottom: 6px;
+      }
+      .category-buttons span {
+        font-size: .85rem;
         color: #333;
-        font-weight: 500;
+        text-align: center;
       }
-
       .category-buttons:hover {
-        transform: translateY(-6px) scale(1.05);
-        box-shadow: 0 8px 20px rgba(243, 54, 54, 0.2);
+        transform: translateY(-5px);
         border-color: #f33636;
-        background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+        box-shadow: 0 5px 15px rgba(243,54,54,0.2);
       }
-
-      .category-buttons:active {
-        transform: translateY(-4px) scale(1.02);
-      }
-
-      /* Active/selected state for category */
       .category-buttons.active {
-        background: linear-gradient(135deg, #f33636 0%, #ff6b6b 100%);
+        background: linear-gradient(135deg, #f33636, #ff6b6b);
         color: #fff;
         border-color: #f33636;
-        box-shadow: 0 8px 20px rgba(243, 54, 54, 0.3);
       }
 
-      .category-buttons img {
-        width: 45px;
-        height: 45px;
-        object-fit: contain;
-        margin-bottom: 8px;
-        transition: transform 0.3s ease;
-      }
-
-      .category-buttons:hover img {
-        transform: scale(1.1);
-      }
-
-      .category-buttons span {
-        text-align: center;
-        line-height: 1.3;
-        font-size: 0.85rem;
-      }
-
-      /* Navigation scroll buttons */
+      /* Scroll Buttons */
       .scroll-btn {
-        background-color: #fff;
+        background: #fff;
         border: 2px solid #eee;
         border-radius: 50%;
         width: 40px;
@@ -432,140 +365,126 @@
         justify-content: center;
         cursor: pointer;
         color: #f33636;
-        transition: all 0.3s ease;
-        flex-shrink: 0;
-        z-index: 10;
+        transition: .3s;
       }
-
-      .scroll-btn:hover:not(:disabled) {
-        background-color: #f33636;
+      .scroll-btn:hover {
+        background: #f33636;
         color: #fff;
-        border-color: #f33636;
         transform: scale(1.1);
-        box-shadow: 0 4px 12px rgba(243, 54, 54, 0.3);
       }
-
       .scroll-btn:disabled {
         opacity: 0.3;
         cursor: not-allowed;
       }
 
-      .scroll-btn svg {
-        width: 20px;
-        height: 20px;
-      }
-
       /* ===== Sell Promotion ===== */
       .sell-promotion {
-        background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
-        padding: 30px;
+        background: linear-gradient(135deg, #fff5f5, #ffe0e0);
+        padding: 25px;
         border-radius: 14px;
         text-align: center;
-        box-shadow: 0 5px 15px rgba(243, 54, 54, 0.1);
-        margin-bottom: 50px;
-        border: 2px solid rgba(243, 54, 54, 0.1);
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 5px 15px rgba(243,54,54,0.1);
+        margin: 40px 0;
       }
-
-      .sell-promotion h3 {
-        background: linear-gradient(135deg, #f33636 0%, #ff6b6b 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-size: 1.5em;
-        margin-bottom: 12px;
+      .sell-section h3 {
+        font-size: 1.4rem;
+        color: #f33636;
       }
-
       .sell-section p {
-        margin-bottom: 20px;
+        margin: 10px 0 20px;
         color: #555;
-        font-size: 1.05em;
       }
-
       .sell-section button {
-        background: linear-gradient(135deg, #f33636 0%, #ff6b6b 100%);
+        background: linear-gradient(135deg, #f33636, #ff6b6b);
         color: #fff;
         padding: 12px 28px;
         border: none;
         border-radius: 8px;
         font-size: 1em;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         font-weight: 600;
-        box-shadow: 0 4px 12px rgba(243, 54, 54, 0.3);
+        cursor: pointer;
+        transition: .3s;
       }
-
       .sell-section button:hover {
         transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(243, 54, 54, 0.4);
+        box-shadow: 0 8px 20px rgba(243,54,54,0.4);
       }
 
       /* ===== Product List ===== */
       .product-list {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 25px;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 20px;
       }
-
       .product-list > span {
         grid-column: 1 / -1;
-        text-align: left;
-        font-weight: 600;
-        font-size: 1.3rem;
-        margin-bottom: 10px;
+        font-size: 1.2rem;
         color: #f33636;
+        font-weight: 600;
       }
-
       .product-item {
-        background-color: #fff;
-        padding: 18px;
+        background: #fff;
+        padding: 15px;
         border-radius: 14px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         text-align: center;
-        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: .3s;
       }
-
       .product-item:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        transform: translateY(-4px);
       }
-
       .product-item img {
         width: 100%;
-        height: 160px;
-        object-fit: cover;
+        height: 140px;
         border-radius: 10px;
-        margin-bottom: 12px;
-        background-color: #f4f4f4;
+        object-fit: cover;
+        margin-bottom: 10px;
       }
-
       .product-item h3 {
-        font-size: 1.1em;
+        font-size: 1rem;
         font-weight: 600;
         color: #222;
+        margin-bottom: 6px;
+      }
+      .product-item p {
+        font-size: .85em;
+        color: #666;
         margin-bottom: 8px;
       }
-
-      .product-item p {
-        font-size: 0.9em;
-        color: #666;
-        margin-bottom: 12px;
-      }
-
       .product-item span {
         color: #f33636;
         font-weight: 700;
-        font-size: 1em;
       }
 
-      /* ===== Responsiveness ===== */
-      @media (max-width: 768px) {
+      /* ===== RESPONSIVE BREAKPOINTS ===== */
+
+      /* Tablet */
+      @media (max-width: 992px) {
         .background {
-          width: 92%;
+          width: 90%;
+        }
+        .etalase h1 {
+          font-size: 2rem;
+        }
+        .category-buttons {
+          min-width: 110px;
+          height: 110px;
+        }
+      }
+
+      /* Mobile */
+      @media (max-width: 600px) {
+        .background {
+          width: 95%;
+          padding: 10px 0;
+        }
+
+        .etalase h1 {
+          font-size: 1.8rem;
         }
 
         .promotion-banner img {
-          width: 100%;
+          height: 140px;
         }
 
         .search-item {
@@ -576,108 +495,121 @@
           width: 100%;
         }
 
+        .filter-item {
+          padding: 15px;
+        }
+
         .category-buttons {
-          min-width: 110px;
-          width: 110px;
-          height: 110px;
+          min-width: 95px;
+          width: 95px;
+          height: 95px;
+        }
+
+        .category-buttons img {
+          width: 35px;
+          height: 35px;
         }
 
         .scroll-btn {
-          width: 36px;
-          height: 36px;
+          display: none; /* sembunyikan tombol scroll di mobile */
+        }
+
+        .product-list {
+          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+          gap: 15px;
         }
       }
-    </style>
+      </style>
 
-<script>
-// @ts-nocheck
-document.addEventListener('DOMContentLoaded', function() {
-  var categorySection = document.getElementById('categorySection');
-  var scrollPrevBtn = document.getElementById('scrollPrev');
-  var scrollNextBtn = document.getElementById('scrollNext');
-  var categoryButtons = document.querySelectorAll('.category-buttons');
+  <script>
+  // @ts-nocheck
+  document.addEventListener('DOMContentLoaded', function() {
+    var categorySection = document.getElementById('categorySection');
+    var scrollPrevBtn = document.getElementById('scrollPrev');
+    var scrollNextBtn = document.getElementById('scrollNext');
+    var categoryButtons = document.querySelectorAll('.category-buttons');
 
-  if (!categorySection) return;
+    if (!categorySection) return;
 
-  // === SCROLL BUTTON HANDLER (optional) ===
-  function updateScrollButtons() {
-    if (!scrollPrevBtn || !scrollNextBtn) return;
-    var hasScroll = categorySection.scrollWidth > categorySection.clientWidth;
-    var isAtStart = categorySection.scrollLeft === 0;
-    var isAtEnd = categorySection.scrollLeft + categorySection.clientWidth >= categorySection.scrollWidth - 10;
-    if ('disabled' in scrollPrevBtn) scrollPrevBtn.disabled = !hasScroll || isAtStart;
-    if ('disabled' in scrollNextBtn) scrollNextBtn.disabled = !hasScroll || isAtEnd;
-  }
+    // === SCROLL BUTTON HANDLER  ===
+    function updateScrollButtons() {
+      if (!scrollPrevBtn || !scrollNextBtn) return;
+      var hasScroll = categorySection.scrollWidth > categorySection.clientWidth;
+      var isAtStart = categorySection.scrollLeft === 0;
+      var isAtEnd = categorySection.scrollLeft + categorySection.clientWidth >= categorySection.scrollWidth - 10;
+      if ('disabled' in scrollPrevBtn) scrollPrevBtn.disabled = !hasScroll || isAtStart;
+      if ('disabled' in scrollNextBtn) scrollNextBtn.disabled = !hasScroll || isAtEnd;
+    }
 
-  if (scrollPrevBtn) {
-    scrollPrevBtn.addEventListener('click', function() {
-      categorySection.scrollBy({ left: -300, behavior: 'smooth' });
-      setTimeout(updateScrollButtons, 300);
-    });
-  }
-
-  if (scrollNextBtn) {
-    scrollNextBtn.addEventListener('click', function() {
-      categorySection.scrollBy({ left: 300, behavior: 'smooth' });
-      setTimeout(updateScrollButtons, 300);
-    });
-  }
-
-  // === DRAG / SWIPE SCROLL FEATURE ===
-  var isDown = false;
-  var startX;
-  var scrollLeft;
-
-  categorySection.addEventListener('mousedown', function(e) {
-    isDown = true;
-    categorySection.classList.add('dragging');
-    startX = e.pageX - categorySection.offsetLeft;
-    scrollLeft = categorySection.scrollLeft;
-  });
-
-  categorySection.addEventListener('mouseleave', function() {
-    isDown = false;
-    categorySection.classList.remove('dragging');
-  });
-
-  categorySection.addEventListener('mouseup', function() {
-    isDown = false;
-    categorySection.classList.remove('dragging');
-  });
-
-  categorySection.addEventListener('mousemove', function(e) {
-    if (!isDown) return;
-    e.preventDefault();
-    var x = e.pageX - categorySection.offsetLeft;
-    var walk = (x - startX) * 1.5; // kecepatan scroll
-    categorySection.scrollLeft = scrollLeft - walk;
-  });
-
-  // === TOUCH SCROLL (mobile) ===
-  // ga perlu apa-apa tambahan, karena native browser udah bisa swipe
-  categorySection.style.overflowX = "auto";
-  categorySection.style.scrollBehavior = "smooth";
-
-  // === CATEGORY BUTTON ACTIVE STATE ===
-  for (var i = 0; i < categoryButtons.length; i++) {
-    categoryButtons[i].addEventListener('click', function(e) {
-      e.preventDefault();
-      for (var j = 0; j < categoryButtons.length; j++) {
-        categoryButtons[j].classList.remove('active');
-      }
-      this.classList.add('active');
-      var category = this.getAttribute('data-category');
-      var event = new CustomEvent('categorySelected', {
-        detail: { category: category, element: this }
+    if (scrollPrevBtn) {
+      scrollPrevBtn.addEventListener('click', function() {
+        categorySection.scrollBy({ left: -300, behavior: 'smooth' });
+        setTimeout(updateScrollButtons, 300);
       });
-      document.dispatchEvent(event);
-    });
-  }
+    }
 
-  updateScrollButtons();
-  window.addEventListener('resize', updateScrollButtons);
-});
-</script>
+    if (scrollNextBtn) {
+      scrollNextBtn.addEventListener('click', function() {
+        categorySection.scrollBy({ left: 300, behavior: 'smooth' });
+        setTimeout(updateScrollButtons, 300);
+      });
+    }
+
+    // === DRAG / SWIPE SCROLL FEATURE ===
+    var isDown = false;
+    var startX;
+    var scrollLeft;
+
+    categorySection.addEventListener('mousedown', function(e) {
+      isDown = true;
+      categorySection.classList.add('dragging');
+      startX = e.pageX - categorySection.offsetLeft;
+      scrollLeft = categorySection.scrollLeft;
+    });
+
+    categorySection.addEventListener('mouseleave', function() {
+      isDown = false;
+      categorySection.classList.remove('dragging');
+    });
+
+    categorySection.addEventListener('mouseup', function() {
+      isDown = false;
+      categorySection.classList.remove('dragging');
+    });
+
+    categorySection.addEventListener('mousemove', function(e) {
+      if (!isDown) return;
+      e.preventDefault();
+      var x = e.pageX - categorySection.offsetLeft;
+      var walk = (x - startX) * 1.5; // kecepatan scroll
+      categorySection.scrollLeft = scrollLeft - walk;
+    });
+
+    // === TOUCH SCROLL (mobile) ===
+    // ga perlu apa-apa tambahan, karena native browser udah bisa swipe
+    categorySection.style.overflowX = "auto";
+    categorySection.style.scrollBehavior = "smooth";
+
+    // === CATEGORY BUTTON ACTIVE STATE ===
+    for (var i = 0; i < categoryButtons.length; i++) {
+      categoryButtons[i].addEventListener('click', function(e) {
+        e.preventDefault();
+        for (var j = 0; j < categoryButtons.length; j++) {
+          categoryButtons[j].classList.remove('active');
+        }
+        this.classList.add('active');
+        var category = this.getAttribute('data-category');
+        var event = new CustomEvent('categorySelected', {
+          detail: { category: category, element: this }
+        });
+        document.dispatchEvent(event);
+      });
+    }
+
+    updateScrollButtons();
+    window.addEventListener('resize', updateScrollButtons);
+  });
+  </script>
 
 
 </html>
