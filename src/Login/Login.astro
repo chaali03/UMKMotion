@@ -1,0 +1,1078 @@
+---
+import Particles from "../components/Particles";
+import Carrousel from "../components/Carrousel";
+import Hero from "../LandingPage/components/Hero.astro";
+
+const carouselItems = [
+  { src: "/asset/umkm/umkm2.jpg"  },
+  { src: "/asset/umkm/umkm3.jpeg" },
+];
+
+---
+
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+  </head>
+  <body>
+    <div class="background-container">
+      <!-- Background gradients -->
+      <div class="background-gradients">
+        <div class="gradient-orange"></div>
+        <div class="gradient-blue"></div>
+      </div>
+
+      <!-- Floating animations container - will be populated by JavaScript -->
+      <div class="floating-animations" id="floatingContainer"></div>
+
+      <!-- Particles layer -->
+      <div class="particles-container" id="particlesContainer"></div>
+
+      <!-- === LOGIN WRAPPER === -->
+      <div class="login-card-wrapper">
+        <div class="login-card">
+          <!-- === LEFT: IMAGE + CAROUSEL === -->
+          <div class="login-image">
+              <div class="image-carousel">
+                {
+                  carouselItems.map((item, index) => (
+                    <img
+                      src={item.src || "/placeholder.svg"}
+                      alt={`Slide ${index + 1}`}
+                      class={`carousel-img ${index === 0 ? "active" : ""}`}
+                    />
+                  ))
+                }
+              </div>
+            <div class="carousel-indicator">
+              <div class="indicator-bar"></div>
+            </div>
+          </div>
+
+          <!-- === RIGHT: FORM SECTION === -->
+          <div class="login-form-section">
+            <!-- Logo -->
+            <div class="logo-badge">
+              <img src="/logo.png" width="10rem" alt="Logo" />
+            </div>
+
+            <h2 class="login-title"> Mulai Langkahmu </h2>
+            <p class="login-subtitle">Bersama UMKMOTION, wujudkan usaha maju.</p>
+
+            <!-- === FORM === -->
+<form class="login-form">
+  <!-- Email -->
+  <div class="form-group">
+    <label for="email">Email</label>
+    <div class="input-wrapper">
+      <span class="icon">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+          <path
+            d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm0 2l8 5 8-5"
+            stroke="#999"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
+      <input
+        type="email"
+        id="email"
+        placeholder="masukkan email"
+        class="form-input"
+        required
+      />
+    </div>
+  </div>
+
+  <!-- Password -->
+  <div class="form-group">
+    <div class="password-header">
+      <label for="password">Password</label>
+      <a href="#forgot" class="forgot-link">Forgot?</a>
+    </div>
+    <div class="input-wrapper">
+      <span class="icon">
+<svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+  <path
+    d="M17 10V7a5 5 0 0 0-10 0v3"
+    stroke="#999"
+    stroke-width="1.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <rect
+    x="5"
+    y="10"
+    width="14"
+    height="10"
+    rx="2"
+    stroke="#999"
+    stroke-width="1.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="12" cy="15" r="1.5" fill="#999" />
+</svg>
+      </span>
+      <input
+        type="password"
+        id="password"
+        placeholder="••••••••"
+        class="form-input"
+        required
+      />
+      <button type="button" class="toggle-password" aria-label="Show password">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+          <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" fill="#999" />
+          <path
+            d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"
+            stroke="#999"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div class="divider"><span>ATAU</span></div>
+
+  <!-- Google Button -->
+  <button type="button" class="btn-google">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+        fill="#4285F4"
+      />
+      <path
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+        fill="#34A853"
+      />
+      <path
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+        fill="#EA4335"
+      />
+    </svg>
+    Lanjutkan Dengan Google
+  </button>
+
+  <!-- Login -->
+  <button type="submit" class="btn-login">Masuk</button>
+
+  <!-- Register -->
+  <p>Belum punya akun?</p>
+  <button type="button" class="btn-register">Daftar</button>
+</form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+<!-- Removed double GSAP loading - only use ES module import -->
+<script type="module">
+  import gsap from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/index.js';
+
+  document.addEventListener("DOMContentLoaded", () => {
+    console.log("[v0] Starting floating animations initialization");
+    
+    // Initialize floating animations with GSAP
+    const floatingContainer = document.getElementById("floatingContainer");
+    if (!floatingContainer) {
+      console.log("[v0] Floating container not found");
+      return;
+    }
+
+    const floaterCount = 12;
+    const floaters = [];
+
+    // Create floating elements
+    for (let i = 0; i < floaterCount; i++) {
+      const f = document.createElement('div');
+      f.className = 'floater';
+      const size = Math.random() * 20 + 20;
+      f.style.width = `${size}px`;
+      f.style.height = `${size}px`;
+      f.style.left = `${Math.random() * 100}%`;
+      f.style.top = `${Math.random() * 100}%`;
+      f.style.transform = `rotate(${Math.random() * 360}deg)`;
+      floatingContainer.appendChild(f);
+      floaters.push(f);
+    }
+
+    console.log("[v0] Created", floaters.length, "floaters");
+
+    // Set initial states
+    gsap.set(floaters, { opacity: 0, scale: 0 });
+
+    const tl = gsap.timeline({ 
+      defaults: { ease: 'power3.out' }
+    });
+
+    // Floaters burst animation
+    tl.to(floaters, {
+      opacity: 1,
+      scale: 1,
+      duration: 0.8,
+      stagger: {
+        each: 0.05,
+        from: 'center'
+      },
+      ease: 'back.out(2)'
+    })
+    // Floaters drift and fade out
+    .to(floaters, {
+      y: '+=60',
+      x: (i) => (Math.random() - 0.5) * 40,
+      rotation: '+=180',
+      opacity: 0,
+      duration: 1.2,
+      stagger: {
+        each: 0.03,
+        from: 'random'
+      },
+      ease: 'power2.inOut'
+    }, '-=0.6');
+
+    console.log("[v0] GSAP timeline created and animations started");
+
+    // Carousel functionality
+    const carouselImages = document.querySelectorAll(".carousel-img");
+    const indicatorBar = document.querySelector(".indicator-bar");
+    if (!carouselImages.length) return;
+
+    let currentIndex = 0;
+    const totalImages = carouselImages.length;
+    const intervalDuration = 3000;
+    const progressUpdateInterval = 50;
+    let elapsedTime = 0;
+    let progressInterval;
+
+    const showImage = (index) => {
+      carouselImages.forEach((img, i) => {
+        img.classList.toggle("active", i === index);
+      });
+    };
+
+    const updateProgressBar = () => {
+      elapsedTime += progressUpdateInterval;
+      const progress = (elapsedTime / intervalDuration) * 100;
+      if (indicatorBar) indicatorBar.style.width = Math.min(progress, 100) + "%";
+      if (elapsedTime >= intervalDuration) {
+        clearInterval(progressInterval);
+        nextImage();
+      }
+    };
+
+    const nextImage = () => {
+      currentIndex = (currentIndex + 1) % totalImages;
+      showImage(currentIndex);
+      elapsedTime = 0;
+      startProgressBar();
+    };
+
+    const startProgressBar = () => {
+      if (progressInterval) clearInterval(progressInterval);
+      progressInterval = setInterval(updateProgressBar, progressUpdateInterval);
+    };
+
+    showImage(0);
+    startProgressBar();
+  });
+
+  // Form
+  const togglePassword = document.querySelector('.toggle-password');
+  const passwordInput = document.getElementById('password');
+
+  togglePassword.addEventListener('click', () => {
+    passwordInput.type =
+      passwordInput.type === 'password' ? 'text' : 'password';
+  });
+
+</script>
+
+      <style>
+      * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        html,
+        body {
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        body {
+          margin: 0;
+          padding: 0;
+          background: linear-gradient(135deg, #ff9a56 0%, #ff6b35 100%);
+          min-height: 100vh;
+        }
+
+        
+        .background-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100dvh;
+          width: 100%;
+          position: relative;
+        }
+
+        .particles-container {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 1;
+        }
+        
+        .floating-animations {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: 3;
+          overflow: visible;
+        }
+  
+        .floater {
+          position: fixed;
+          background: linear-gradient(135deg, rgba(102, 126, 234, 1), rgba(118, 75, 162, 1));
+          border-radius: 50%;
+          opacity: 0;
+          box-shadow: 0 8px 24px rgba(102, 126, 234, 0.8), 0 0 16px rgba(118, 75, 162, 0.6);
+          will-change: transform, opacity;
+          pointer-events: none;
+        }
+  
+        /* Background gradient blurs */
+        .background-gradients {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .particle {
+          position: absolute;
+          opacity: 0.6;
+          pointer-events: none;
+        }
+
+        .particle svg {
+          display: block;
+          filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+        }
+
+/* Updated login card layout with trapezoid image */
+        .login-card-wrapper {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 10;
+          width: 90%;
+          max-width: 1000px;
+          max-height: 90dvh;
+          overflow: visible;
+          padding-top: 10px;
+        }
+
+        .login-card {
+          display: flex;
+          padding: 10px;
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(10px);
+          border-radius: 24px;
+          overflow: visible;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          gap: 0;
+        }
+        /* Added trapezoid shape to image using clip-path */
+        .login-image {
+          flex: 0 0 40%;
+          min-height: 500px;
+          overflow: visible;
+          background: linear-gradient(135deg, #ea6689 0%, #FC5D01 100%);
+          /* clip-path: polygon(0 0, 90% 0, 100% 50%, 90% 100%, 0 100%); */
+          clip-path: polygon(0 0, 98% 10%, 98% 90%, 0 100%);
+          display: flex;
+          border-radius: 15px;
+          flex-direction: column;
+        }
+
+        /* Added carousel container for image rotation */
+        /* === CAROUSEL STYLING === */
+        .image-carousel {
+          flex: 1;
+          position: relative;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .carousel-img {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          opacity: 0;
+          border-radius: 15px;
+          transition: opacity 0.8s ease-in-out;
+        }
+
+        .carousel-img.active {
+          opacity: 1;
+        }
+
+        .carousel-indicator {
+          height: 4px;
+          background: rgba(255, 255, 255, 0.2);
+          position: relative;
+          width: 100%;
+        }
+
+        .indicator-bar {
+          height: 100%;
+          background: rgba(255, 255, 255, 0.8);
+          width: 25%;
+          transition: width 0.1s linear;
+        }
+
+        /* Adjusted form section to be vertical rectangle */
+/* === FORM SECTION === */
+.login-form-section {
+  flex: 1;
+  padding: 50px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  min-width: 350px;
+}
+
+/* === TITLE === */
+.login-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+/* === FORM === */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* === INPUT GROUP === */
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-input {
+  padding: 12px 42px;
+  border: 1.5px solid rgba(255, 154, 86, 0.4);
+  border-radius: 10px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.6);
+  width: 100%;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #ff9a56;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 3px rgba(255, 154, 86, 0.2);
+}
+
+.form-input::placeholder {
+  color: #999;
+}
+
+/* === FORGOT PASSWORD === */
+.forgot-password {
+  text-align: right;
+  margin-bottom: 8px;
+}
+
+.forgot-password a {
+  font-size: 12px;
+  color: #ff7f32;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.forgot-password a:hover {
+  color: #ff9a56;
+}
+
+/* === DIVIDER === */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  color: #999;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 154, 86, 0.3);
+}
+
+/* === GOOGLE BUTTON === */
+.btn-google {
+  padding: 12px 16px;
+  border: 1.5px solid rgba(255, 154, 86, 0.3);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  backdrop-filter: blur(8px);
+}
+
+.btn-google:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #ff9a56;
+  box-shadow: 0 4px 15px rgba(255, 154, 86, 0.2);
+}
+
+/* === LOGIN BUTTON === */
+.btn-login {
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #ff7f32 0%, #ff9a56 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+}
+
+.btn-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 154, 86, 0.4);
+}
+
+.btn-login:active {
+  transform: translateY(0);
+}
+
+/* === REGISTER BUTTON === */
+.btn-register {
+  padding: 12px 16px;
+  background: transparent;
+  color: #ff7f32;
+  border: 1.5px solid #ff9a56;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-register:hover {
+  background: rgba(255, 154, 86, 0.1);
+}
+
+/* === TEXT BELOW === */
+.login-form p {
+  text-align: center;
+  font-size: 13px;
+  color: #555;
+  margin-top: 4px;
+}
+
+/* === INPUT ICON WRAPPER === */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Responsive icon positioning that scales with screen size */
+.icon {
+  position: absolute;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0.7;
+  transition: left 0.3s ease;
+}
+
+/* === TOGGLE PASSWORD BUTTON === */
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  opacity: 0.6;
+  transition: opacity 0.2s, right 0.3s ease;
+}
+
+.toggle-password:hover {
+  opacity: 1;
+}
+
+/* === PASSWORD HEADER (LABEL + FORGOT) === */
+.password-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.password-header label {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.forgot-link {
+  font-size: 12px;
+  color: #00ffc8;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.forgot-link:hover {
+  color: #5effda;
+}
+
+/* === ICON COLOR SYNC ON FOCUS === */
+.input-wrapper:focus-within .icon svg path,
+.input-wrapper:focus-within .toggle-password svg path {
+  stroke: #ff9a56;
+  fill: #ff9a56;
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+
+        /* === RESPONSIVE LOGO BADGE === */
+/* === BASE === */
+.logo-badge {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  width: 150px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+/* --- Tablet (≤1024px) --- */
+@media (max-width: 1024px) {
+  .logo-badge {
+    top: 20px;
+    right: 15px;
+    width: 120px;
+    height: 120px;
+  }
+
+  .logo-badge img {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Adjust input padding and icon positioning for tablet */
+  .form-input {
+    padding: 11px 40px;
+    font-size: 13px;
+  }
+
+  .icon {
+    left: 11px;
+  }
+
+  .toggle-password {
+    right: 11px;
+  }
+}
+
+/* --- Mobile (≤768px) --- */
+@media (max-width: 768px) {
+  .logo-badge {
+    top: 18px;
+    right: 12px;
+    width: 100px;
+    height: 100px;
+  }
+
+  /* Adjust input padding and icon positioning for mobile */
+  .form-input {
+    padding: 10px 38px;
+    font-size: 13px;
+  }
+
+  .icon {
+    left: 10px;
+  }
+
+  .toggle-password {
+    right: 10px;
+  }
+}
+
+/* --- Small phones (≤480px) --- */
+@media (max-width: 480px) {
+  .logo-badge {
+    top: 14px;
+    right: 10px;
+    width: 80px;
+    height: 80px;
+  }
+
+  /* Adjust input padding and icon positioning for small phones */
+  .form-input {
+    padding: 9px 36px;
+    font-size: 12px;
+  }
+
+  .icon {
+    left: 9px;
+  }
+
+  .toggle-password {
+    right: 9px;
+  }
+}
+
+/* --- Extra small (≤360px) --- */
+@media (max-width: 360px) {
+  .logo-badge {
+    top: 10px;
+    right: 8px;
+    width: 65px;
+    height: 65px;
+  }
+
+  /* Adjust input padding and icon positioning for extra small phones */
+  .form-input {
+    padding: 8px 32px;
+    font-size: 11px;
+  }
+
+  .icon {
+    left: 8px;
+  }
+
+  .toggle-password {
+    right: 8px;
+  }
+}
+
+
+        /* Enhanced responsive design for all devices */
+        /* Tablet devices (768px - 1024px) */
+        @media (max-width: 1024px) {
+          .login-card-wrapper {
+            width: 95%;
+            max-width: 900px;
+          }
+
+          .login-image {
+            flex: 0 0 35%;
+            min-height: 450px;
+          }
+
+          .login-form-section {
+            padding: 40px 35px;
+            min-width: 300px;
+          }
+
+          .login-title {
+            font-size: 26px;
+          }
+
+          .login-subtitle {
+            font-size: 13px;
+          }
+
+          .btn-google,
+          .btn-login,
+          .btn-register {
+            font-size: 13px;
+            padding: 11px 14px;
+          }
+        }
+
+        /* Medium tablets (768px) */
+        @media (max-width: 768px) {
+          .login-card-wrapper {
+            width: 95%;
+            max-width: 90%;
+          }
+
+          .login-card {
+            flex-direction: column;
+            border-radius: 20px;
+          }
+
+          /* Hide image on mobile, form takes full width */
+          .login-image {
+            display: none;
+          }
+
+          .login-form-section {
+            padding: 35px 28px;
+            min-width: auto;
+          }
+
+          .login-title {
+            font-size: 22px;
+            margin-bottom: 6px;
+          }
+
+          .login-subtitle {
+            font-size: 12px;
+            margin-bottom: 20px;
+          }
+
+          .login-form {
+            gap: 14px;
+          }
+
+          .btn-google,
+          .btn-login,
+          .btn-register {
+            font-size: 13px;
+            padding: 10px 14px;
+          }
+
+          .forgot-password {
+            margin-bottom: 6px;
+          }
+
+          .forgot-password a {
+            font-size: 11px;
+          }
+
+          .divider {
+            margin: 15px 0;
+            font-size: 11px;
+          }
+        }
+
+        /* Small phones (480px - 767px) */
+        @supports (-webkit-touch-callout: none) {
+          @media (max-width: 480px) {
+            .login-card-wrapper {
+              width: 98%;
+              max-width: 100%;
+              transform: translate(-50%, -50%);
+            }
+
+            .login-card {
+              flex-direction: column;
+              border-radius: 16px;
+            }
+
+            .login-image {
+              flex: 0 0 auto;
+              min-height: 250px;
+              max-height: 280px;
+              clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+            }
+
+            .login-form-section {
+              padding: 28px 20px;
+              min-width: auto;
+            }
+
+            .login-title {
+              font-size: 20px;
+              margin-bottom: 4px;
+            }
+
+            .login-subtitle {
+              font-size: 11px;
+              margin-bottom: 18px;
+            }
+
+            .login-form {
+              gap: 12px;
+            }
+
+            .btn-google,
+            .btn-login,
+            .btn-register {
+              font-size: 12px;
+              padding: 9px 12px;
+              border-radius: 8px;
+            }
+
+            .forgot-password {
+              margin-bottom: 4px;
+            }
+
+            .forgot-password a {
+              font-size: 10px;
+            }
+
+            .divider {
+              margin: 12px 0;
+              font-size: 10px;
+            }
+          }
+        }
+        /* Extra small phones (< 480px) */
+        @media (max-width: 360px) {
+          .login-card-wrapper {
+            width: 100%;
+          }
+
+          .login-image {
+            min-height: 200px;
+            max-height: 220px;
+          }
+
+          .login-form-section {
+            padding: 24px 16px;
+          }
+
+          .login-title {
+            font-size: 18px;
+          }
+
+          .login-subtitle {
+            font-size: 10px;
+          }
+
+          .btn-google,
+          .btn-login,
+          .btn-register {
+            font-size: 11px;
+            padding: 8px 10px;
+          }
+        }
+
+        /* IMPROVE BEKGRON */
+      .background-container {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+        background: radial-gradient(circle at 20% 30%, #fff7f1 0%, #fdfdfd 100%);
+      }
+
+      /* === GRADIENT BLOBS === */
+      .background-gradients {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 0;
+      }
+
+      .gradient-orange,
+      .gradient-blue {
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        filter: blur(120px);
+        opacity: 0.55;
+        animation: float 12s ease-in-out infinite alternate;
+      }
+
+      /* Warna-warna lembut tapi hidup */
+      .gradient-orange {
+        top: -100px;
+        left: -150px;
+        background: radial-gradient(circle at center, #ff8b3d 0%, #fd5b02 60%, transparent 100%);
+      }
+
+      .gradient-blue {
+        bottom: -150px;
+        right: -100px;
+        background: radial-gradient(circle at center, #4b6aff 0%, #011255 70%, transparent 100%);
+        animation-delay: 3s;
+      }
+
+      /* Animasi lembut buat blob-nya */
+      @keyframes float {
+        0% {
+          transform: translateY(0) scale(1);
+        }
+        100% {
+          transform: translateY(-40px) scale(1.1);
+        }
+      }
+
+      /* LOGIN CARD IMPROVE */
+      .login-card {
+        display: flex;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(16px);
+        border-radius: 28px;
+        overflow: visible;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
+      }
+
+      .login-card:hover {
+        transform: translateY(-5px);
+      }
+
+
+      </style>
+    </html>
