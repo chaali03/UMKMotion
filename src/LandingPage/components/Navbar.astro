@@ -1,4 +1,6 @@
 ---
+// Simple, responsive navbar component for the landing page
+// Uses brand colors and the provided logo at /LogoNavbar.png
 ---
 
 <style>
@@ -697,25 +699,97 @@
         <li><a href="#beranda" class="active">Beranda</a></li>
         <li><a href="#etalase">Etalase</a></li>
         <li><a href="#rumah-umkm">Rumah UMKM</a></li>
-        <li><a href="#konsultasi">Konsultasi</a></li>
-        <li><a href="#komunitas">Komunitas</a></li>
-        <!-- Mobile-only actions inside the menu -->
-        <li class="actions-mobile">
-          <a class="btn btn--ghost" href="/login">Masuk</a>
-          <a class="btn btn--primary" href="/register">Daftar</a>
-        </li>
       </ul>
     </nav>
 
     <!-- Desktop Actions -->
     <div class="actions">
-      <a class="btn btn--ghost" href="/login">Masuk</a>
-      <a class="btn btn--primary" href="/register">Daftar</a>
+      <a class="btn btn--ghost" href="/masuk">Masuk</a>
+      <a class="btn btn--primary" href="/daftar">Daftar</a>
     </div>
+
+    <!-- Mobile Toggle Button -->
+    <button class="toggle" aria-label="Toggle mobile menu" id="navToggle">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
   </div>
-  <!-- Backdrop for mobile menu -->
-  <div class="nav-backdrop" id="navBackdrop" aria-hidden="true"></div>
 </header>
+
+<!-- External Mobile Menu (completely separate from navbar) -->
+<div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+<div class="mobile-menu-container" id="mobileMenuContainer">
+  <div class="mobile-menu-header">
+    <a class="brand" href="/">
+      <img src="/LogoNavbar.png" alt="Brand Logo" style="height: 40px;" />
+    </a>
+    <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Close menu">
+      ✕
+    </button>
+  </div>
+
+  <div class="mobile-menu-content">
+    <ul class="mobile-menu-items" data-numbering="true">
+      <li class="mobile-menu-item" data-mm-text="Beranda">
+        <a href="#beranda" class="mobile-menu-link"><span class="mobile-menu-label">Beranda</span></a>
+        <div class="mm-marquee"><div class="mm-marquee-inner-wrap"><div class="mm-marquee-inner" aria-hidden="true"></div></div></div>
+      </li>
+      <li class="mobile-menu-item" data-mm-text="Etalase">
+        <a href="#etalase" class="mobile-menu-link"><span class="mobile-menu-label">Etalase</span></a>
+        <div class="mm-marquee"><div class="mm-marquee-inner-wrap"><div class="mm-marquee-inner" aria-hidden="true"></div></div></div>
+      </li>
+      <li class="mobile-menu-item" data-mm-text="Rumah UMKM">
+        <a href="#rumah-umkm" class="mobile-menu-link"><span class="mobile-menu-label">Rumah UMKM</span></a>
+        <div class="mm-marquee"><div class="mm-marquee-inner-wrap"><div class="mm-marquee-inner" aria-hidden="true"></div></div></div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="mobile-menu-actions">
+    <a class="btn btn--ghost" href="/masuk">Masuk</a>
+    <a class="btn btn--primary" href="/daftar">Daftar</a>
+  </div>
+</div>
+
+<script>
+  // Mobile Menu Functions
+  function openMobileMenu() {
+    const menu = document.getElementById('mobileMenuContainer');
+    const overlay = document.getElementById('mobileMenuOverlay');
+    if (menu && overlay) {
+      menu.classList.add('active');
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeMobileMenu() {
+    const menu = document.getElementById('mobileMenuContainer');
+    const overlay = document.getElementById('mobileMenuOverlay');
+    if (menu && overlay) {
+      menu.classList.remove('active');
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+
+  // Initialize event listeners
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggle = document.getElementById('navToggle');
+    const close = document.getElementById('mobileMenuClose');
+    const overlay = document.getElementById('mobileMenuOverlay');
+    
+    if (toggle) toggle.addEventListener('click', openMobileMenu);
+    if (close) close.addEventListener('click', closeMobileMenu);
+    if (overlay) overlay.addEventListener('click', closeMobileMenu);
+
+    // Close on link click
+    document.querySelectorAll('.mobile-menu-link').forEach(a => {
+      a.addEventListener('click', closeMobileMenu);
+    });
+  });
+</script>
 
 <script type="module">
   import gsap from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/index.js';

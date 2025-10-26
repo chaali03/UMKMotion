@@ -1,0 +1,252 @@
+---
+import ScrollStack, { ScrollStackItem } from "../../components/ScrollStack.jsx";
+import SearchBar from "./SearchBar.astro";
+---
+
+<!-- Scroll Text Animation Section -->
+<section class="scroll-text-section">
+  <header class="scroll-header">
+    <h1 class="fluid animate-on-scroll">Bersama Kita<br />UMKMotion.</h1>
+  </header>
+  <main class="scroll-main">
+    <section class="content fluid">
+      <h2><span aria-hidden="true">Anda bisa&nbsp;</span>
+        <span class="sr-only">Anda bisa berbagai hal dengan UMKM.</span>
+      </h2>
+      <ul aria-hidden="true" style="--count: 20" data-animate="true" data-snap="true">
+        <li style="--i: 0">kuliner.</li>
+        <li style="--i: 1">fashion.</li>
+        <li style="--i: 2">kerajinan.</li>
+        <li style="--i: 3">jasa.</li>
+        <li style="--i: 4">berkembang.</li>
+        <li style="--i: 5">berinovasi.</li>
+        <li style="--i: 6">berkolaborasi.</li>
+        <li style="--i: 7">berdagang.</li>
+        <li style="--i: 8">memasak.</li>
+        <li style="--i: 9">menjahit.</li>
+        <li style="--i: 10">membuat.</li>
+        <li style="--i: 11">melayani.</li>
+        <li style="--i: 12">menginspirasi.</li>
+        <li style="--i: 13">mengajar.</li>
+        <li style="--i: 14">memproduksi.</li>
+        <li style="--i: 15">memasarkan.</li>
+        <li style="--i: 16">bertumbuh.</li>
+        <li style="--i: 17">berjualan.</li>
+        <li style="--i: 18">sukses.</li>
+        <li style="--i: 19">maju bersama.</li>
+      </ul>
+    </section>
+  </main>
+</section>
+
+<SearchBar />
+
+<style>
+  /* Scroll Text Animation Styles */
+  .scroll-text-section {
+    width: 100%;
+    background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%);
+  }
+  
+  .scroll-header {
+    min-height: 100vh;
+    display: flex;
+    place-items: center;
+    width: 100%;
+    padding-inline: clamp(0.75rem, 3vw + 0.5rem, 5rem);
+    padding-block: clamp(1rem, 3vh, 3rem);
+  }
+  
+  .scroll-header h1 {
+    text-wrap: pretty;
+    line-height: clamp(0.85, 0.9, 1);
+    margin: 0;
+    font-weight: 900;
+    background: linear-gradient(#1e293b 60%, #94a3b8);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: clamp(1.75rem, 8vw + 1rem, 8rem);
+    opacity: 0;
+    transform: translateY(50px);
+    animation: fadeInUp 1.5s ease-out 0.5s forwards;
+  }
+  
+  @media (max-width: 768px) {
+    .scroll-header h1 {
+      font-size: clamp(1.5rem, 10vw, 4rem);
+      line-height: 0.95;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .scroll-header h1 {
+      font-size: clamp(1.25rem, 12vw, 3rem);
+      line-height: 1;
+    }
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(clamp(30px, 8vh, 50px));
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Scroll-triggered text animation */
+  .scroll-header h1.animate-on-scroll {
+    opacity: 0;
+    transform: translateY(clamp(20px, 5vh, 50px)) scale(0.95);
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .scroll-header h1.animate-on-scroll.in-view {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  
+  .scroll-main {
+    width: 100%;
+  }
+  
+  .content {
+    display: flex;
+    line-height: clamp(1.1, 1.25, 1.4);
+    width: 100%;
+    padding-left: clamp(0.75rem, 3vw + 0.5rem, 5rem);
+    padding-right: clamp(0.5rem, 2vw, 2rem);
+    min-height: 200vh;
+    gap: clamp(0.5rem, 2vw, 2rem);
+  }
+  
+  @media (max-width: 768px) {
+    .content {
+      flex-direction: column;
+      gap: clamp(0.25rem, 1vw, 1rem);
+      padding-left: clamp(0.5rem, 2vw, 2rem);
+    }
+  }
+  
+  .content h2 {
+    position: sticky;
+    top: calc(50% - 0.5lh);
+    font-size: clamp(1.5rem, 5vw + 0.5rem, 6rem);
+    margin: 0;
+    display: inline-block;
+    height: fit-content;
+    font-weight: 700;
+    background: linear-gradient(#1e293b 50%, #cbd5e1);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    flex-shrink: 0;
+  }
+  
+  @media (max-width: 768px) {
+    .content h2 {
+      font-size: clamp(1.25rem, 6vw, 3.5rem);
+      position: relative;
+      top: auto;
+    }
+  }
+  
+  .content ul {
+    --step: calc((var(--end, 280) - var(--start, 0)) / (var(--count) - 1));
+    font-weight: 700;
+    padding-inline: 0;
+    margin: 0;
+    list-style-type: none;
+    font-size: clamp(1.5rem, 5vw + 0.5rem, 6rem);
+    scroll-snap-type: y proximity;
+    flex: 1;
+  }
+  
+  .content li {
+    color: oklch(65% 0.25 calc(var(--start, 0) + (var(--step) * var(--i))));
+    scroll-snap-align: center;
+    opacity: 0.2;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    will-change: opacity, transform;
+  }
+  
+  .content li:first-of-type {
+    opacity: 1;
+  }
+  
+  .content li:last-of-type {
+    background: linear-gradient(#1e293b 50%, #cbd5e1);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  
+  /* Scroll Animation with View Timeline */
+  @supports (animation-timeline: view()) {
+    [data-animate="true"] li {
+      animation-name: brighten;
+      animation-fill-mode: both;
+      animation-timing-function: linear;
+      animation-timeline: view();
+      animation-range: cover calc(50% - clamp(2rem, 4vw, 3rem)) calc(50% + clamp(2rem, 4vw, 3rem));
+    }
+    
+    @keyframes brighten {
+      0% {
+        opacity: 0.2;
+        transform: scale(0.98);
+      }
+      50% {
+        opacity: 1;
+        filter: brightness(1.2);
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0.2;
+        transform: scale(0.98);
+      }
+    }
+  }
+  
+  :root {
+    --start: 0;
+    --end: 280;
+  }
+</style>
+
+<script>
+  // Intersection Observer for scroll animations
+  const observerOptions = {
+    threshold: 0.3,
+    rootMargin: '0px 0px -100px 0px'
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in-view');
+      }
+    });
+  }, observerOptions);
+
+  // Observe elements with scroll animation
+  document.addEventListener('DOMContentLoaded', () => {
+    const animateElements = document.querySelectorAll('.animate-on-scroll');
+    animateElements.forEach(el => observer.observe(el));
+  });
+</script>
