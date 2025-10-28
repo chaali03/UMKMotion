@@ -30,9 +30,9 @@
     top: 0;
     z-index: 60; /* below intro overlay (z-index: 50) when shown, but enough for content */
     background: transparent;
-    --logo-h: clamp(48px, 9vw, 88px);
-    --logo-shift: 10px;
-    --logo-scale: 1.25; /* visually enlarge logo */
+    --logo-h: clamp(20px, 3vw, 32px);
+    --logo-shift: 0px;
+    --logo-scale: 1; /* no enlargement */
     transition: transform .4s cubic-bezier(.25,.8,.25,1), background-color .35s ease, box-shadow .35s ease, backdrop-filter .35s ease, opacity .2s ease;
     will-change: transform, background-color;
     /* create a stacking context for the stroke pseudo-element */
@@ -180,10 +180,10 @@
   .container {
     max-width: 1100px;
     margin-inline: auto;
-    padding: 12px 20px;
+    padding: 4px 16px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
     /* Ensure proper positioning for desktop */
     justify-content: flex-start;
   }
@@ -229,7 +229,7 @@
     gap: 0;
     color: var(--brand-blue);
     font-weight: 800;
-    font-size: 20px;
+    font-size: 14px;
     text-decoration: none;
     letter-spacing: .2px;
     white-space: nowrap;
@@ -260,7 +260,7 @@
     list-style: none;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 14px;
     margin: 0;
     padding: 0;
     position: relative; /* anchor for active pill */
@@ -269,11 +269,11 @@
     color: var(--brand-blue);
     text-decoration: none;
     font-weight: 600;
-    font-size: 15px;
+    font-size: 12px;
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 10px 12px;
+    gap: 6px;
+    padding: 6px 12px;
     line-height: 1;
     border-radius: 12px;
     transition: color .25s cubic-bezier(.34,1.56,.64,1), background-color .3s ease, box-shadow .3s ease, transform .25s ease;
@@ -338,12 +338,12 @@
 
   /* Auth buttons */
   .actions {
-    margin-left: 16px;
+    margin-left: 12px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     /* Reserve fixed space so longer buttons don't shift the menu */
-    flex: 0 0 300px; /* basis width */
+    flex: 0 0 240px; /* basis width */
     justify-content: flex-end; /* extend to the right inside reserved space */
   }
   /* Search icon button (desktop only) */
@@ -351,7 +351,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px; height: 36px;
+    width: 26px; height: 26px;
     border-radius: 10px;
     border: 0;
     background: rgba(0,17,81,.06);
@@ -360,16 +360,16 @@
   }
   .search:hover { background: rgba(0,17,81,.10); transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,17,81,.10); }
   .search:active { transform: scale(.95); }
-  .search svg { width: 18px; height: 18px; }
+  .search svg { width: 14px; height: 14px; }
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 40px;
+    height: 32px;
     padding: 0 14px;
-    border-radius: 12px;
+    border-radius: 10px;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 12px;
     text-decoration: none;
     transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease, background-color .25s ease, color .2s ease;
     will-change: transform;
@@ -390,9 +390,9 @@
     pointer-events: none;
   }
   .btn:hover::after { transform: skewX(-18deg) translateX(260%); }
-  .btn--ghost { color: var(--brand-blue); background: rgba(0,17,81,.06); box-shadow: inset 0 0 0 1px rgba(0,17,81,.10); min-width: 140px; }
+  .btn--ghost { color: var(--brand-blue); background: rgba(0,17,81,.06); box-shadow: inset 0 0 0 1px rgba(0,17,81,.10); min-width: 85px; }
   .btn--ghost:hover { background: rgba(0,17,81,.10); box-shadow: inset 0 0 0 1px rgba(0,17,81,.18); }
-  .btn--primary { color: #fff; background: var(--brand-orange); box-shadow: 0 8px 20px rgba(253,87,1,.22), 0 2px 6px rgba(0,0,0,.06); min-width: 160px; }
+  .btn--primary { color: #fff; background: var(--brand-orange); box-shadow: 0 8px 20px rgba(253,87,1,.22), 0 2px 6px rgba(0,0,0,.06); min-width: 90px; }
   .btn--primary:hover { color: #fff; box-shadow: 0 12px 28px rgba(253,87,1,.30), 0 4px 10px rgba(0,0,0,.08); filter: saturate(1.05); }
   .btn--primary:focus, .btn--primary:focus-visible, .btn--primary:visited { color: #fff; }
 
