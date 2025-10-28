@@ -1,7 +1,12 @@
 ---
-import EtalaseComponent from "../Etalase/Etalase.astro"
-import Navbar from "../LandingPage/components/Navbar.astro"
+import EtalaseComponent from "../Etalase/Etalase.astro";
+import Navbar from "../LandingPage/components/Header.astro";
+import LandingPageLayout from "../layouts/LandingPageLayout.astro";
 ---
 
-<Navbar></Navbar>
-<EtalaseComponent />
+<LandingPageLayout>
+  <Navbar />
+  <main class="min-h-screen pt-20">
+    <EtalaseComponent />
+  </main>
+</LandingPageLayout>
