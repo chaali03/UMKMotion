@@ -1,0 +1,10 @@
+---
+// src/LandingPage/components/Header.astro
+import HomeHeader from './header/header.tsx';
+
+// Default theme state
+const localTheme = 'light';
+const setLocalTheme = () => {}; // No-op function for now
+---
+
+<HomeHeader client:load {localTheme} {setLocalTheme} />

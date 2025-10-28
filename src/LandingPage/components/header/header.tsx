@@ -23,11 +23,38 @@ interface HomeHeaderProps {
 }
 
 export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProps) {
-  const isMobile = useMediaQuery("(max-width: 992px)");
-  const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [pathname, setPathname] = useState("/");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // This code only runs on the client side
+    setMounted(true);
+    setPathname(window.location.pathname);
+    
+    // Initialize isMobile based on window width
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 992);
+    };
+    
+    // Set initial value
+    checkMobile();
+    
+    // Add resize listener
+    window.addEventListener('resize', checkMobile);
+    
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
   
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 40);
