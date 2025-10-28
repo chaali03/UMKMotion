@@ -23,8 +23,14 @@
           <div class="header-card">
             <section class="search-card">
               <div class="search-item">
-                <input type="text" placeholder="Cari produk..." />
-                <button>Cari</button>
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                  <input type="text" placeholder="Cari produk..." />
+                  <button>Cari</button>
+                </div>
               </div>
 
               <div class="filter-item">
@@ -87,6 +93,102 @@
                   </button>
                 </div>
             </section>
+
+            <!-- Trending Products Section -->
+            <section class="trending-section">
+              <h2>Produk Pilihan</h2>
+              <div class="trending-container">
+                <!-- Left: Trending Carousel -->
+                <div class="trending-carousel">
+                  <div class="carousel-wrapper">
+                    <div class="carousel-track" id="carouselTrack">
+                      <div class="carousel-slide active">
+                        <img src="/asset/umkm/umkm5.jpg" alt="Trending 1" />
+                        <div class="carousel-info">
+                          <h3>Produk Trending #1</h3>
+                          <p>Produk terlaris minggu ini</p>
+                          <span class="price">Rp 350.000</span>
+                        </div>
+                      </div>
+                      <div class="carousel-slide">
+                        <img src="/asset/umkm/umkm5.jpg" alt="Trending 2" />
+                        <div class="carousel-info">
+                          <h3>Produk Trending #2</h3>
+                          <p>Favorit pelanggan</p>
+                          <span class="price">Rp 280.000</span>
+                        </div>
+                      </div>
+                      <div class="carousel-slide">
+                        <img src="/asset/umkm/umkm5.jpg" alt="Trending 3" />
+                        <div class="carousel-info">
+                          <h3>Produk Trending #3</h3>
+                          <p>Rekomendasi spesial</p>
+                          <span class="price">Rp 420.000</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button class="carousel-btn prev" id="carouselPrev">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                      </svg>
+                    </button>
+                    <button class="carousel-btn next" id="carouselNext">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="carousel-dots" id="carouselDots"></div>
+                </div>
+
+                <!-- Right: Featured Products  -->
+                <div class="featured-grid">
+                  <article class="featured-item">
+                    <img src="/asset/umkm/umkm5.jpg" alt="Featured 1" />
+                    <div class="featured-info">
+                      <h4>Produk Pilihan 1</h4>
+                      <span>Rp 180.000</span>
+                    </div>
+                  </article>
+                  <article class="featured-item">
+                    <img src="/asset/umkm/umkm5.jpg" alt="Featured 2" />
+                    <div class="featured-info">
+                      <h4>Produk Pilihan 2</h4>
+                      <span>Rp 220.000</span>
+                    </div>
+                  </article>
+                  <article class="featured-item">
+                    <img src="/asset/umkm/umkm5.jpg" alt="Featured 3" />
+                    <div class="featured-info">
+                      <h4>Produk Pilihan 3</h4>
+                      <span>Rp 195.000</span>
+                    </div>
+                  </article>
+                  <article class="featured-item">
+                    <img src="/asset/umkm/umkm5.jpg" alt="Featured 4" />
+                    <div class="featured-info">
+                      <h4>Produk Pilihan 4</h4>
+                      <span>Rp 240.000</span>
+                    </div>
+                  </article>
+                  <article class="featured-item">
+                    <img src="/asset/umkm/umkm5.jpg" alt="Featured 5" />
+                    <div class="featured-info">
+                      <h4>Produk Pilihan 5</h4>
+                      <span>Rp 210.000</span>
+                    </div>
+                  </article>
+                  <article class="featured-item">
+                    <img src="/asset/umkm/umkm5.jpg" alt="Featured 6" />
+                    <div class="featured-info">
+                      <h4>Produk Pilihan 6</h4>
+                      <span>Rp 265.000</span>
+                    </div>
+                  </article>
+                </div>
+              </div>
+            </section>
+
 
             <section class="sell-promotion">
               <div class="sell-text">
@@ -285,6 +387,7 @@
           font-size: 1rem;
           outline: none;
           transition: .2s;
+          margin-right: 10px;
         }
         .search-item input:focus {
           border-color: #f33636;
@@ -304,6 +407,35 @@
           background: #d72c2c;
         }
 
+        .search-input-wrapper {
+          flex: 1;
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+        .search-icon {
+          position: absolute;
+          left: 14px;
+          color: #94a3b8;
+          pointer-events: none;
+        }
+        .search-input-wrapper input {
+          width: 100%;
+          padding: 12px 14px 12px 44px; /* Extra left padding for icon */
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          font-size: 1rem;
+          outline: none;
+          transition: .2s;
+        }
+        .search-input-wrapper input:focus {
+          border-color: #ff6b6b; /* Changed to blue */
+          box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+        .search-input-wrapper input:focus + .search-icon {
+          color: #ff6b6b;
+        }
+    
         /* ===== Filter ===== */
         .filter-item {
           text-align: start;
@@ -383,6 +515,8 @@
           border-color: #f33636;
         }
 
+        /* === TRENDING SECTION  === */
+
         /* Scroll Buttons */
         .scroll-btn {
           background: #fff;
@@ -405,6 +539,233 @@
         .scroll-btn:disabled {
           opacity: 0.3;
           cursor: not-allowed;
+        }
+
+        /* === TRENDING LAYOUT === */
+        .trending-section {
+          margin: 40px 0;
+        }
+
+        .trending-section h2 {
+          font-size: 1.6rem;
+          color: #f33636;
+          margin-block: 50px;
+          font-weight: 600;
+        }
+
+        /* Grid: kiri carousel, kanan grid */
+        .trending-container {
+          display: grid;
+          grid-template-columns: 1.2fr 1fr;
+          gap: 20px;
+        }
+
+        /* === LEFT: CAROUSEL === */
+        .trending-carousel {
+          background: #fff;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .carousel-wrapper {
+          position: relative;
+          overflow: hidden;
+        }
+
+        .carousel-track {
+          display: flex;
+          transition: transform 0.5s ease;
+        }
+
+        .carousel-slide {
+          min-width: 100%;
+          position: relative;
+          display: none;
+        }
+        .carousel-slide.active {
+          display: block;
+        }
+        .carousel-slide img {
+          width: 100%;
+          height: 400px;
+          object-fit: cover;
+        }
+
+        .carousel-info {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+          padding: 30px 20px 20px;
+          color: #fff;
+        }
+        .carousel-info h3 {
+          font-size: 1.4rem;
+          margin-bottom: 8px;
+        }
+        .carousel-info p {
+          font-size: 0.95rem;
+          margin-bottom: 10px;
+          opacity: 0.9;
+        }
+        .carousel-info .price {
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: #f97316;
+        }
+
+        /* Carousel Navigation */
+        .carousel-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background: rgba(255,255,255,0.9);
+          border: none;
+          border-radius: 50%;
+          width: 45px;
+          height: 45px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #ff6b6b;
+          transition: .3s;
+          z-index: 10;
+        }
+        .carousel-btn:hover {
+          background: #ff6b6b;
+          color: #fff;
+          transform: translateY(-50%) scale(1.1);
+        }
+        .carousel-btn.prev {
+          left: 15px;
+        }
+        .carousel-btn.next {
+          right: 15px;
+        }
+
+        /* Carousel Dots */
+        .carousel-dots {
+          display: flex;
+          justify-content: center;
+          gap: 8px;
+          padding: 15px;
+          background: #fff;
+        }
+        .carousel-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: #d1d5db;
+          cursor: pointer;
+          transition: .3s;
+        }
+        .carousel-dot.active {
+          background: #2563eb;
+          width: 30px;
+          border-radius: 5px;
+        }
+
+        /* === RIGHT: FEATURED GRID === */
+        .featured-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          grid-template-rows: repeat(2, 1fr);
+          gap: 15px;
+        }
+        .featured-item {
+          background: #fff;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          transition: .3s;
+          cursor: pointer;
+        }
+        .featured-item:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 6px 20px rgba(37, 99, 235, 0.15);
+        }
+        .featured-item img {
+          width: 100%;
+          height: 120px;
+          object-fit: cover;
+        }
+        .featured-info {
+          padding: 12px;
+        }
+        .featured-info h4 {
+          font-size: 0.9rem;
+          color: #222;
+          margin-bottom: 6px;
+          font-weight: 600;
+        }
+        .featured-info span {
+          color: #f97316;
+          font-weight: 700;
+          font-size: 0.95rem;
+        }
+
+
+        /* === RESPONSIVE ADAPTATION === */
+
+        /* --- Tablet (max-width: 992px) --- */
+        @media (max-width: 992px) {
+          .trending-container {
+            grid-template-columns: 1fr;
+          }
+
+          .carousel-slide img {
+            height: 300px;
+          }
+
+          .featured-grid {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: auto;
+          }
+        }
+
+        /* --- Mobile (max-width: 600px) --- */
+        @media (max-width: 600px) {
+          .trending-section h2 {
+            font-size: 1.3rem;
+            text-align: center;
+            margin-block: 30px;
+          }
+
+          .carousel-slide img {
+            height: 220px;
+          }
+
+          .carousel-info {
+            padding: 20px 15px;
+          }
+
+          .featured-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+          }
+
+          .featured-item img {
+            height: 100px;
+          }
+
+          .carousel-btn {
+            width: 35px;
+            height: 35px;
+          }
+        }
+
+        /* --- Extra Small (max-width: 400px) --- */
+        @media (max-width: 400px) {
+          .featured-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .featured-item img {
+            height: 140px;
+          }
         }
 
         /* ===== Sell Promotion ===== */
@@ -647,6 +1008,93 @@
     updateScrollButtons();
     window.addEventListener('resize', updateScrollButtons);
   });
+
+  var carouselTrack = document.getElementById('carouselTrack');
+    var carouselPrev = document.getElementById('carouselPrev');
+    var carouselNext = document.getElementById('carouselNext');
+    var carouselDots = document.getElementById('carouselDots');
+    
+    if (carouselTrack) {
+      var slides = carouselTrack.querySelectorAll('.carousel-slide');
+      var currentSlide = 0;
+      var autoPlayInterval;
+
+      // Create dots
+      for (var i = 0; i < slides.length; i++) {
+        var dot = document.createElement('div');
+        dot.className = 'carousel-dot';
+        if (i === 0) dot.classList.add('active');
+        dot.setAttribute('data-index', i);
+        carouselDots.appendChild(dot);
+      }
+
+      var dots = carouselDots.querySelectorAll('.carousel-dot');
+
+      function showSlide(index) {
+        if (index >= slides.length) index = 0;
+        if (index < 0) index = slides.length - 1;
+        
+        for (var i = 0; i < slides.length; i++) {
+          slides[i].classList.remove('active');
+          dots[i].classList.remove('active');
+        }
+        
+        slides[index].classList.add('active');
+        dots[index].classList.add('active');
+        currentSlide = index;
+      }
+
+      function nextSlide() {
+        showSlide(currentSlide + 1);
+      }
+
+      function prevSlide() {
+        showSlide(currentSlide - 1);
+      }
+
+      // Auto play
+      function startAutoPlay() {
+        autoPlayInterval = setInterval(nextSlide, 4000);
+      }
+
+      function stopAutoPlay() {
+        clearInterval(autoPlayInterval);
+      }
+
+      if (carouselPrev) {
+        carouselPrev.addEventListener('click', function() {
+          prevSlide();
+          stopAutoPlay();
+          startAutoPlay();
+        });
+      }
+
+      if (carouselNext) {
+        carouselNext.addEventListener('click', function() {
+          nextSlide();
+          stopAutoPlay();
+          startAutoPlay();
+        });
+      }
+
+      // Dot navigation
+      for (var i = 0; i < dots.length; i++) {
+        dots[i].addEventListener('click', function() {
+          var index = parseInt(this.getAttribute('data-index'));
+          showSlide(index);
+          stopAutoPlay();
+          startAutoPlay();
+        });
+      }
+
+      // Start auto play
+      startAutoPlay();
+
+      // Pause on hover
+      carouselTrack.addEventListener('mouseenter', stopAutoPlay);
+      carouselTrack.addEventListener('mouseleave', startAutoPlay);
+    }
+  
   </script>
 
 
