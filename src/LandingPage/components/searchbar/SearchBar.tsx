@@ -1,301 +1,552 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Sparkles } from 'lucide-react';
 
 interface SearchBarProps {
-  onSearch?: (query: string, category: string, location: string) => void;
+  onSearch?: (query: string) => void;
 }
 
 export default function SearchBar({ onSearch }: SearchBarProps) {
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('');
-  const [location, setLocation] = useState('');
+  const [isVisible, setIsVisible] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 150);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSearch = () => {
-    if (onSearch) {
-      onSearch(query, category, location);
+    if (onSearch && query.trim()) {
+      onSearch(query);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
     }
   };
 
   return (
-    <section className="search-section">
+    <section ref={sectionRef} className={`search-section ${isVisible ? 'visible' : ''}`}>
       <style>{`
         .search-section {
           position: relative;
           width: 100%;
           max-width: 100%;
-          padding: clamp(1rem, 3vw, 3.5rem) clamp(0.5rem, 1.5vw, 1rem);
+          padding: clamp(3rem, 6vw, 5rem) clamp(1rem, 3vw, 2rem);
           overflow: hidden;
-          background: linear-gradient(135deg, #FF6B00 0%, #C41E3A 25%, #6B2C91 50%, #1E3A8A 75%, #0066CC 100%);
+          background: #2563eb;
           box-sizing: border-box;
+          opacity: 0;
+          transform: translateY(40px);
+          transition: opacity 1s cubic-bezier(0.34, 1.56, 0.64, 1), transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .search-section.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        /* Animated Background Orbs */
+        .search-section::before,
+        .search-section::after {
+          content: '';
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+          pointer-events: none;
+          animation: float 20s ease-in-out infinite;
+        }
+
+        .search-section::before {
+          width: 500px;
+          height: 500px;
+          background: rgba(37, 99, 235, 0.4);
+          top: -250px;
+          right: -150px;
+          animation-delay: 0s;
+        }
+
+        .search-section::after {
+          width: 600px;
+          height: 600px;
+          background: rgba(37, 99, 235, 0.4);
+          bottom: -300px;
+          left: -200px;
+          animation-delay: 5s;
+        }
+
+        @keyframes float {
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+          33% { transform: translate(40px, -40px) scale(1.1); opacity: 0.4; }
+          66% { transform: translate(-30px, 30px) scale(0.95); opacity: 0.35; }
+        }
+
+        /* Grid Pattern Overlay */
+        .grid-overlay {
+          position: absolute;
+          inset: 0;
+          background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1px, transparent 0);
+          background-size: 40px 40px;
+          opacity: 0.4;
+          pointer-events: none;
+          mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
         }
 
         .search-container {
           width: 100%;
-          max-width: calc(100% - 1rem);
+          max-width: 900px;
           margin: 0 auto;
           padding: 0;
           box-sizing: border-box;
+          opacity: 0;
+          transform: translateY(30px) scale(0.95);
+          transition: opacity 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s;
+          position: relative;
+          z-index: 1;
+          className="flex items-center justify-center gap-3 px-8 h-16 md:h-20 text-lg md:text-xl font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-2xl whitespace-nowrap transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/30 active:scale-95";
+        }
+
+        .search-section.visible .search-container {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+
+        /* Header Section */
+        .search-header {
+          text-align: center;
+          margin-bottom: 2.5rem;
+          opacity: 0;
+          transform: translateY(20px);
+          transition: opacity 0.7s ease 0.4s, transform 0.7s ease 0.4s;
+        }
+
+        .search-section.visible .search-header {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .header-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: #2563eb;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 100px;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: white;
+          margin-bottom: 1rem;
+          box-shadow: 0 2px 12px rgba(37, 99, 235, 0.3);
+          transition: all 0.3s ease;
+        }
+
+        .header-badge:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+          background: #1d4ed8;
+        }
+
+        .header-badge svg {
+          width: 16px;
+          height: 16px;
+          animation: sparkle 2s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+          0%, 100% { transform: rotate(0deg) scale(1); }
+          25% { transform: rotate(-15deg) scale(1.15); }
+          75% { transform: rotate(15deg) scale(0.95); }
+        }
+
+        .search-title {
+          font-size: clamp(1.75rem, 5vw, 3rem);
+          font-weight: 900;
+          color: white;
+          margin: 0;
+          line-height: 1.2;
+          letter-spacing: -0.02em;
+          text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-subtitle {
+          font-size: clamp(0.95rem, 2.5vw, 1.125rem);
+          color: rgba(255, 255, 255, 0.85);
+          margin-top: 0.75rem;
+          font-weight: 400;
+          line-height: 1.6;
         }
         
+        /* Premium Search Box */
         .search-box {
           width: 100%;
-          max-width: 100%;
-          background: rgba(255, 255, 255, 0.98);
-          border-radius: clamp(0.6rem, 1.5vw, 1.25rem);
-          padding: clamp(0.5rem, 1.5vw, 1.25rem);
-          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-          backdrop-filter: blur(10px);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          background: #FFFFFF;
+          border-radius: 20px;
+          padding: 1rem;
+          box-shadow: 
+            0 4px 24px rgba(0, 0, 0, 0.08),
+            0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+          backdrop-filter: blur(20px);
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
           box-sizing: border-box;
-          margin: 0;
+          position: relative;
+          overflow: hidden;
+          className="w-full h-16 md:h-20 px-6 md:px-8 text-lg md:text-xl rounded-2xl border-2 border-blue-300/50 bg-white/10 backdrop-blur-lg text-white placeholder-blue-100/70 focus:outline-none focus:ring-2 focus:ring-blue-200/50 focus:border-transparent transition-all duration-300 shadow-lg hover:shadow-xl hover:bg-white/15";
         }
-        
-        .search-box:hover {
-          box-shadow: 0 10px 32px rgba(0, 0, 0, 0.18);
-          transform: translateY(-1px);
+
+        .search-box::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: #2563eb;
+          transition: left 0.6s ease;
+        }
+
+        .search-box.focused {
+          box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 0 0 2px #FF6914 inset;
+          transform: translateY(-2px) scale(1.01);
+        }
+
+        .search-box.focused::before {
+          left: 100%;
         }
         
         .search-content {
           display: flex;
           align-items: center;
-          gap: clamp(0.5rem, 1.4vw, 1rem);
-          flex-wrap: wrap;
+          gap: 1rem;
           width: 100%;
+          position: relative;
+          z-index: 1;
         }
         
-        .search-field,
-        .filter-field,
-        .location-field {
+        .search-field {
           display: flex;
           align-items: center;
-          gap: clamp(0.35rem, 1vw, 0.6rem);
+          gap: 1rem;
           flex: 1;
-          min-width: clamp(100px, 22vw, 160px);
-          max-width: 100%;
+          padding: 0.5rem;
+          transition: all 0.3s ease;
         }
         
-        .search-icon,
-        .filter-icon,
-        .location-icon {
-          color: #64748b;
+        .search-icon-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 48px;
+          background: #e0f2fe;
+          border-radius: 14px;
           flex-shrink: 0;
-          width: clamp(14px, 3.8vw, 20px);
-          height: clamp(14px, 3.8vw, 20px);
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          border: 1px solid #bae6fd;
+        }
+
+        .search-box.focused .search-icon-wrapper {
+          background: #2563eb;
+          transform: rotate(8deg) scale(1.05);
+          box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
         }
         
-        .search-input,
-        .category-select,
-        .location-select {
+        .search-icon-wrapper svg {
+          width: 24px;
+          height: 24px;
+          color: #64748b;
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .search-box.focused .search-icon-wrapper svg {
+          color: white;
+          transform: scale(1.1);
+        }
+
+        .search-input-wrapper {
+          flex: 1;
+          position: relative;
+        }
+        
+        .search-input {
           border: none;
           outline: none;
           background: transparent;
-          font-size: clamp(0.75rem, 2vw, 0.95rem);
+          font-size: clamp(1rem, 2.5vw, 1.125rem);
           color: #1e293b;
           width: 100%;
           font-family: inherit;
-          padding: clamp(0.3rem, 0.8vw, 0.4rem) 0;
+          font-weight: 500;
+          padding: 0.75rem 0;
           line-height: 1.5;
+          transition: all 0.3s ease;
         }
-        
+
         .search-input::placeholder {
           color: #94a3b8;
+          font-weight: 400;
+        }
+
+        .search-input:focus::placeholder {
+          color: #cbd5e1;
+        }
+
+        /* Search Suggestions Indicator */
+        .search-count {
+          position: absolute;
+          bottom: -1.5rem;
+          left: 0;
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.7);
+          font-weight: 500;
+          opacity: 0;
+          transform: translateY(-5px);
+          transition: all 0.3s ease;
+        }
+
+        .search-box.focused .search-count {
+          opacity: 1;
+          transform: translateY(0);
         }
         
-        .category-select,
-        .location-select {
-          cursor: pointer;
-          appearance: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-          background-repeat: no-repeat;
-          background-position: right 0.15rem center;
-          background-size: clamp(11px, 2.8vw, 16px);
-          padding-right: clamp(1.4rem, 3.5vw, 2rem);
-        }
-        
-        .divider {
-          width: 1px;
-          height: clamp(0.8rem, 2.2vw, 1.4rem);
-          background: #e2e8f0;
-          flex-shrink: 0;
-          margin: clamp(0.05rem, 0.2vw, 0.1rem) 0;
-        }
-        
+        /* Premium Search Button */
         .search-button {
-          background: linear-gradient(135deg, #FF6B00 0%, #FF8534 100%);
+          background: #2563eb;
           color: white;
           border: none;
-          border-radius: clamp(0.4rem, 1vw, 0.6rem);
-          padding: clamp(0.45rem, 1.2vw, 0.7rem) clamp(0.7rem, 2vw, 1.2rem);
-          font-size: clamp(0.7rem, 1.8vw, 0.9rem);
-          font-weight: 600;
+          border-radius: 14px;
+          padding: 0.875rem 1.75rem;
+          font-size: 1rem;
+          font-weight: 700;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: clamp(0.3rem, 0.8vw, 0.5rem);
-          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+          gap: 0.625rem;
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
           white-space: nowrap;
-          box-shadow: 0 4px 14px rgba(255, 107, 0, 0.3);
+          box-shadow: 
+            0 8px 24px rgba(37, 99, 235, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
           flex-shrink: 0;
-          min-height: 38px;
-          touch-action: manipulation;
-          -webkit-tap-highlight-color: transparent;
-          margin-top: clamp(0.15rem, 0.4vw, 0.25rem);
+          min-height: 48px;
+          position: relative;
+          overflow: hidden;
+          letter-spacing: 0.3px;
+        }
+
+        .search-button::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, transparent 100%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .search-button:hover::before {
+          opacity: 1;
         }
         
         .search-button svg {
-          width: clamp(12px, 2.8vw, 16px);
-          height: clamp(12px, 2.8vw, 16px);
+          width: 20px;
+          height: 20px;
+          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .search-button:hover svg {
+          transform: scale(1.2) rotate(8deg);
         }
         
         .search-button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(255, 107, 0, 0.4);
-          background: linear-gradient(135deg, #FF7A1A 0%, #FF9548 100%);
+          transform: translateY(-3px) scale(1.03);
+          box-shadow: 
+            0 12px 36px rgba(37, 99, 235, 0.5),
+            0 0 30px rgba(59, 130, 246, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+          background: #3b82f6;
         }
         
         .search-button:active {
-          transform: translateY(0);
-          box-shadow: 0 2px 10px rgba(255, 107, 0, 0.3);
+          transform: translateY(-1px) scale(0.98);
+          box-shadow: 
+            0 4px 16px rgba(29, 78, 216, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
+        .search-button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        /* Floating Particles */
+        .particle {
+          position: absolute;
+          width: 4px;
+          height: 4px;
+          background: rgba(255, 255, 255, 0.4);
+          border-radius: 50%;
+          pointer-events: none;
+          animation: particleFloat 15s linear infinite;
+        }
+
+        @keyframes particleFloat {
+          0% {
+            transform: translateY(0) translateX(0);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-100vh) translateX(100px);
+            opacity: 0;
+          }
+        }
+
+        .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { left: 25%; animation-delay: 3s; }
+        .particle:nth-child(3) { left: 40%; animation-delay: 6s; }
+        .particle:nth-child(4) { left: 55%; animation-delay: 9s; }
+        .particle:nth-child(5) { left: 70%; animation-delay: 12s; }
+        .particle:nth-child(6) { left: 85%; animation-delay: 15s; }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
+          .search-section {
+            padding: clamp(2rem, 5vw, 3rem) clamp(1rem, 3vw, 1.5rem);
+          }
+
+          .search-header {
+            margin-bottom: 1.75rem;
+          }
+
+          .search-box {
+            padding: 0.75rem;
+            border-radius: 16px;
+          }
+
           .search-content {
             flex-direction: column;
-            align-items: stretch;
-            gap: 0.6rem;
+            gap: 0.75rem;
           }
 
-          .search-field,
-          .filter-field,
-          .location-field {
+          .search-field {
             width: 100%;
-            min-width: unset;
-            padding: 0.5rem 0;
+            padding: 0.375rem;
           }
 
-          .divider {
-            width: 100%;
-            height: 1px;
-            margin: 0.12rem 0;
+          .search-icon-wrapper {
+            width: 44px;
+            height: 44px;
+          }
+
+          .search-icon-wrapper svg {
+            width: 20px;
+            height: 20px;
           }
 
           .search-button {
             width: 100%;
-            margin-top: 0.2rem;
+            padding: 0.875rem 1.25rem;
+            min-height: 48px;
           }
         }
 
         @media (max-width: 480px) {
-          .search-section {
-            padding: 1.125rem 0.625rem;
+          .search-title {
+            font-size: 1.5rem;
           }
 
-          .search-box {
-            padding: 0.6rem;
-            border-radius: 0.7rem;
+          .search-subtitle {
+            font-size: 0.9rem;
           }
 
-          .search-content {
-            gap: 0.5rem;
+          .header-badge {
+            font-size: 0.8125rem;
+            padding: 0.4rem 0.875rem;
           }
 
-          .search-field,
-          .filter-field,
-          .location-field {
-            padding: 0.4rem 0;
-          }
-
-          .search-icon,
-          .filter-icon,
-          .location-icon {
-            width: 14px;
-            height: 14px;
-          }
-
-          .search-input,
-          .category-select,
-          .location-select {
-            font-size: 0.8rem;
+          .search-input {
+            font-size: 0.9375rem;
           }
 
           .search-button {
-            padding: 0.625rem 0.85rem;
-            font-size: 0.8rem;
-            min-height: 36px;
-          }
-
-          .search-button svg {
-            width: 14px;
-            height: 14px;
+            font-size: 0.9375rem;
+            padding: 0.8rem 1rem;
           }
         }
       `}</style>
 
+      {/* Grid Overlay */}
+      <div className="grid-overlay" />
+
+      {/* Floating Particles */}
+      <div className="particle" style={{ bottom: '0' }} />
+      <div className="particle" style={{ bottom: '0' }} />
+      <div className="particle" style={{ bottom: '0' }} />
+      <div className="particle" style={{ bottom: '0' }} />
+      <div className="particle" style={{ bottom: '0' }} />
+      <div className="particle" style={{ bottom: '0' }} />
+
       <div className="search-container">
-        <div className="search-box">
+        {/* Header Section */}
+        <div className="search-header">
+          <div className="header-badge">
+            <Sparkles color="white" />
+            <span className="text-white">TEMUKAN UMKM TERBAIK</span>
+          </div>
+          <h2 className="search-title">
+            Cari UMKM Pilihan Anda
+          </h2>
+          <p className="search-subtitle">
+            Jelajahi ribuan UMKM terpercaya di seluruh Indonesia
+          </p>
+        </div>
+
+        {/* Search Box */}
+        <div className={`search-box ${isFocused ? 'focused' : ''}`}>
           <div className="search-content">
             <div className="search-field">
-              <svg className="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-              </svg>
-              <input 
-                type="text" 
-                placeholder="Cari UMKM..." 
-                className="search-input"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              />
+              <div className="search-icon-wrapper">
+                <Search strokeWidth={2.5} />
+              </div>
+              
+              <div className="search-input-wrapper">
+                <input 
+                  type="text" 
+                  placeholder="Cari produk, jasa, atau UMKM..." 
+                  className="search-input"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                />
+                {isFocused && (
+                  <div className="search-count">
+                    Tekan Enter atau klik tombol untuk mencari
+                  </div>
+                )}
+              </div>
             </div>
             
-            <div className="divider"></div>
-            
-            <div className="filter-field">
-              <svg className="filter-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 6h18"></path>
-                <path d="M7 12h10"></path>
-                <path d="M10 18h4"></path>
-              </svg>
-              <select 
-                className="category-select"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option value="">Semua Kategori</option>
-                <option value="kuliner">Kuliner</option>
-                <option value="fashion">Fashion</option>
-                <option value="kerajinan">Kerajinan</option>
-                <option value="jasa">Jasa</option>
-              </select>
-            </div>
-            
-            <div className="divider"></div>
-            
-            <div className="location-field">
-              <svg className="location-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-              <select 
-                className="location-select"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-              >
-                <option value="">Semua Lokasi</option>
-                <option value="jakarta">Jakarta</option>
-                <option value="bandung">Bandung</option>
-                <option value="surabaya">Surabaya</option>
-                <option value="yogyakarta">Yogyakarta</option>
-              </select>
-            </div>
-            
-            <button className="search-button" onClick={handleSearch}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-              </svg>
-              <span className="search-text">Cari</span>
+            <button 
+              className="search-button" 
+              onClick={handleSearch}
+              disabled={!query.trim()}
+            >
+              <Search strokeWidth={2.5} />
+              <span>Cari Sekarang</span>
             </button>
           </div>
         </div>

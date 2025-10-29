@@ -2,12 +2,14 @@ import { type HTMLMotionProps, motion, useInView } from "motion/react"
 import type React from "react"
 import type { Variants } from "motion/react"
 
+type TimelineAs = keyof HTMLElementTagNameMap | React.ElementType
+
 type TimelineContentProps<T extends keyof HTMLElementTagNameMap> = {
   children?: React.ReactNode
   animationNum: number
   className?: string
   timelineRef: React.RefObject<HTMLElement | null>
-  as?: T
+  as?: TimelineAs
   customVariants?: Variants
   once?: boolean
 } & HTMLMotionProps<T>
@@ -46,7 +48,10 @@ export const TimelineContent = <T extends keyof HTMLElementTagNameMap = "div">({
     once
   })
 
-  const MotionComponent = motion[as || "div"] as React.ElementType
+  const MotionComponent: React.ElementType =
+    typeof as === "string"
+      ? (motion as any)[as || "div"]
+      : as || motion.div
 
   return (
     <MotionComponent

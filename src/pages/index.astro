@@ -14,12 +14,57 @@ const title = "UMKMotion";
     .reveal { opacity: 0; transform: translateY(26px) scale(.985); filter: blur(6px);
       transition: opacity .6s ease, transform .7s cubic-bezier(.22,.85,.3,1), filter .6s ease; }
     .reveal.show { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    
+    /* Desktop spacing between hero and feature sections */
+    @media (min-width: 1024px) {
+      .feature-section-mobile-spacing {
+        margin-top: 12rem !important;
+        margin-bottom: 6rem !important;
+      }
+    }
+    
+    /* Tablet spacing */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .feature-section-mobile-spacing {
+        margin-top: 10rem !important;
+        margin-bottom: 5rem !important;
+      }
+    }
+    
+    /* Mobile spacing between hero and feature sections */
+    /* Default mobile spacing */
+    @media (max-width: 767px) {
+      .feature-section-mobile-spacing {
+        margin-top: 8rem !important;
+      }
+    }
+    
+    /* Small tablets and large phones */
+    @media (max-width: 640px) {
+      .feature-section-mobile-spacing {
+        margin-top: 7rem !important;
+      }
+    }
+    
+    /* Small phones (iPhone SE, 5/SE, etc.) */
+    @media (max-width: 375px) {
+      .feature-section-mobile-spacing {
+        margin-top: 30rem !important;
+      }
+    }
+    
+    /* Very small phones */
+    @media (max-width: 320px) {
+      .feature-section-mobile-spacing {
+        margin-top: 5.5rem !important;
+      }
+    }
   </style>
 
   <div class="reveal" data-reveal data-delay="0.0s">
     <Hero />
   </div>
-  <div class="reveal" data-reveal data-delay=".12s">
+  <div class="reveal feature-section-mobile-spacing" data-reveal data-delay=".12s">
     <Feature />
   </div>
   <div class="reveal" data-reveal data-delay=".18s">

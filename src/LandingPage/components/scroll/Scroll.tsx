@@ -201,7 +201,7 @@ export default function Scroll() {
 
       <header className="scroll-header">
         <h1 className="fluid animate-on-scroll enhanced-title">
-          <span className="line title-line-1" data-text="Anda bisa">Anda bisa</span>
+          <span className="line title-line-1" data-text="Bersama UMKMotion">Bersama Kami</span>
           <br />
           <span className="line title-line-2" data-text="scroll.">scroll.</span>
         </h1>
