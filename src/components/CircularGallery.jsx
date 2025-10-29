@@ -236,11 +236,14 @@ class Media {
       const effectiveX = Math.min(Math.abs(x), H);
 
       const arc = R - Math.sqrt(R * R - effectiveX * effectiveX);
+      // Amplify curvature vertically on smaller screens so the circle is obvious
+      const vw = (typeof window !== 'undefined' && window.innerWidth) ? window.innerWidth : this.screen.width;
+      const curvatureMultiplier = vw <= 480 ? 2.4 : vw <= 768 ? 1.6 : 1.0;
       if (this.bend > 0) {
-        this.plane.position.y = -arc - 3.0; // lower by 3.0 units
+        this.plane.position.y = -(arc * curvatureMultiplier) - 3.0; // amplified curve
         this.plane.rotation.z = -Math.sign(x) * Math.asin(effectiveX / R);
       } else {
-        this.plane.position.y = arc - 3.0; // lower by 3.0 units
+        this.plane.position.y = (arc * curvatureMultiplier) - 3.0; // amplified curve
         this.plane.rotation.z = Math.sign(x) * Math.asin(effectiveX / R);
       }
     }
@@ -270,9 +273,14 @@ class Media {
         this.plane.program.uniforms.uViewportSizes.value = [this.viewport.width, this.viewport.height];
       }
     }
-    this.scale = this.screen.height / 1500;
-    this.plane.scale.y = (this.viewport.height * (400 * this.scale)) / this.screen.height;
-    this.plane.scale.x = (this.viewport.width * (300 * this.scale)) / this.screen.width;
+    // Make items smaller on narrow screens so the curved path is more apparent
+    const isPhone = this.screen && this.screen.width <= 480;
+    const isTablet = !isPhone && this.screen && this.screen.width <= 768;
+    this.scale = this.screen.height / (isPhone ? 2000 : isTablet ? 1700 : 1500);
+    const baseY = isPhone ? 320 : isTablet ? 360 : 400;
+    const baseX = isPhone ? 220 : isTablet ? 260 : 300;
+    this.plane.scale.y = (this.viewport.height * (baseY * this.scale)) / this.screen.height;
+    this.plane.scale.x = (this.viewport.width * (baseX * this.scale)) / this.screen.width;
     this.plane.program.uniforms.uPlaneSizes.value = [this.plane.scale.x, this.plane.scale.y];
     this.padding = 2;
     this.width = this.plane.scale.x + this.padding;
@@ -414,6 +422,10 @@ class App {
   }
   update() {
     this.scroll.current = lerp(this.scroll.current, this.scroll.target, this.scroll.ease);
+    // Auto-scroll when enabled and not paused
+    if (this.__auto && this.__auto.enabled && !this.__auto.paused) {
+      this.scroll.target += this.__auto.speed;
+    }
     const direction = this.scroll.current > this.scroll.last ? 'right' : 'left';
     if (this.medias) {
       this.medias.forEach(media => media.update(this.scroll, direction));
@@ -463,28 +475,42 @@ export default function CircularGallery({
   font = 'bold 30px Figtree',
   scrollSpeed = 2,
   scrollEase = 0.05,
-  className = ''
+  className = '',
+  autoScroll = true,
+  autoScrollSpeed = 0.04,
 }) {
   const containerRef = useRef(null);
   useEffect(() => {
-    // Adjust bend based on screen size for responsive animation
+    // Adjust curvature and rounding by screen size to emphasize the circular path on mobile
     const screenWidth = window.innerWidth;
     let adjustedBend = bend;
+    let adjustedBorderRadius = borderRadius;
     if (screenWidth <= 480) {
-      adjustedBend = 2; // smaller for mobile
+      adjustedBend = Math.max(bend, 48);      // extreme bend for small phones
+      adjustedBorderRadius = Math.max(borderRadius, 0.12);
     } else if (screenWidth <= 768) {
-      adjustedBend = 3; // smaller for tablet
+      adjustedBend = Math.max(bend, 22);      // very strong bend for tablets
+      adjustedBorderRadius = Math.max(borderRadius, 0.10);
     } else {
-      adjustedBend = 4; // smaller for desktop
+      adjustedBend = Math.max(bend, 12);      // moderate bend for desktop
+      adjustedBorderRadius = Math.max(borderRadius, 0.08);
     }
     const el = containerRef.current;
-    const app = new App(el, { items, bend: adjustedBend, textColor, borderRadius, font, scrollSpeed, scrollEase });
+    const app = new App(el, { items, bend: adjustedBend, textColor, borderRadius: adjustedBorderRadius, font, scrollSpeed, scrollEase });
+    // Auto scroll control
+    app.__auto = { enabled: autoScroll, speed: autoScrollSpeed, paused: false };
+    // Pause on hover/focus/when not visible
+    const onEnter = () => { if (app.__auto) app.__auto.paused = true; };
+    const onLeave = () => { if (app.__auto) app.__auto.paused = false; };
+    const onVisibility = () => { if (app.__auto) app.__auto.paused = document.visibilityState !== 'visible'; };
+    el.addEventListener('mouseenter', onEnter);
+    el.addEventListener('mouseleave', onLeave);
+    document.addEventListener('visibilitychange', onVisibility);
     // Staged entrance once canvas appended
     if (el) {
-      // allow layout to settle then reveal
+      // allow layout to settle; keep initial classes stable for hydration
       requestAnimationFrame(() => {
         el.style.setProperty('--d', '.12s');
-        el.classList.add('show');
         
         // Add unique entrance effect for individual gallery items
         const canvas = el.querySelector('canvas');
@@ -496,7 +522,10 @@ export default function CircularGallery({
     }
     return () => {
       app.destroy();
+      el.removeEventListener('mouseenter', onEnter);
+      el.removeEventListener('mouseleave', onLeave);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase]);
-  return <div className={`circular-gallery reveal ${className}`} ref={containerRef} />;
+  }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase, autoScroll, autoScrollSpeed]);
+  return <div suppressHydrationWarning className={`circular-gallery reveal ${className} show`} ref={containerRef} />;
 }

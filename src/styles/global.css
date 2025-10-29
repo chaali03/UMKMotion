@@ -1,21 +1,35 @@
 @import "tailwindcss";
 
+
+@custom-variant dark (&:is(.dark *));
+
+/* Unified typography across the entire app */
+:root {
+  --font-sans: ui-sans-serif, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+}
+
+html, body, button, input, select, textarea, a {
+  font-family: var(--font-sans) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 /* GLOBAL: Completely disable horizontal scroll on ALL screen sizes */
 html, body {
   /* Primary locks */
   overflow-x: hidden !important;
   overflow-x: clip !important;
   overscroll-behavior-x: none !important;
-  
+
   /* Sizing constraints */
   width: 100% !important;
   max-width: 100vw !important;
   min-width: 0 !important;
-  
+
   /* Touch behavior */
   touch-action: pan-y !important;
   -webkit-overflow-scrolling: touch !important;
-  
+
   /* Box model safety */
   box-sizing: border-box !important;
   margin: 0 !important;
@@ -72,4 +86,44 @@ body::-webkit-scrollbar {
     overscroll-behavior-x: none !important;
     overscroll-behavior-y: auto !important;
   }
+}
+
+@theme inline {
+  --animate-marquee: marquee var(--duration) infinite linear;
+  --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
+  @keyframes marquee {
+  from {
+    transform: translateX(0);
+    }
+  to {
+    transform: translateX(calc(-100% - var(--gap)));
+    }
+  }
+  @keyframes marquee-vertical {
+  from {
+    transform: translateY(0);
+    }
+  to {
+    transform: translateY(calc(-100% - var(--gap)));
+    }
+  }
+}
+
+/* ===== Custom animations for ShimmerButton and hero ===== */
+@keyframes shimmer-slide {
+  0% { transform: translateX(-200%) rotate(0deg); }
+  100% { transform: translateX(200%) rotate(0deg); }
+}
+
+@keyframes spin-around {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-shimmer-slide {
+  animation: shimmer-slide var(--speed, 3s) linear infinite;
+}
+
+.animate-spin-around {
+  animation: spin-around calc(var(--speed, 3s) * 2) linear infinite;
 }

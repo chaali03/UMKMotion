@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Etalase UMKM</title>
+
+  </head>
+
+  <body>
+    <div class="background">
+      <header class="etalase">
+        <h1>Etalase</h1>
+      </header>
+
+      <section class="promotion-banner">
+        <img src="/asset/umkm/umkm5.jpg" alt="Banner promosi UMKM" />
+      </section>
+
+      <main>
+        <section class="header">
+          <h1>Temukan Produkmu, Sekarang Juga!</h1>
+
+          <div class="header-card">
+            <section class="search-card">
+              <div class="search-item">
+                <input type="text" placeholder="Cari produk..." />
+                <button>Cari</button>
+              </div>
+
+              <div class="filter-item">
+                <p>Filter produk</p>
+                <!-- Added wrapper for horizontal scroll with navigation buttons -->
+                <div class="category-wrapper">
+                  <button class="scroll-btn scroll-btn-prev" id="scrollPrev" aria-label="Scroll kategori ke kiri">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                  
+                  <div class="category-section" id="categorySection">
+                    <button class="category-buttons" data-category="elektronik">
+                      <img src="asset/logo kategori/electronic.webp" alt="Elektronik"></img>
+                      <span>Elektronik</span>
+                    </button>
+                    <button class="category-buttons" data-category="kuliner">
+                      <img src="asset/logo kategori/kuliner.webp" alt="Kuliner"></img>
+                      <span>Kuliner</span>
+                    </button> 
+                    <button class="category-buttons" data-category="fashion">
+                      <img src="asset/logo kategori/fashion.webp" alt="Fashion"></img>
+                      <span>Fashion & Aksesoris</span>
+                    </button>
+                    <button class="category-buttons" data-category="musik">
+                      <img src="asset/logo kategori/music.webp" alt="Musik"></img>
+                      <span>Seni & Musik</span>
+                    </button>
+                    <button class="category-buttons" data-category="otomotif">
+                      <img src="asset/logo kategori/otomotif.webp" alt="Otomotif"></img>
+                      <span>Otomotif</span>
+                    </button>
+                    <button class="category-buttons" data-category="interior">
+                      <img src="asset/logo kategori/interior.webp" alt="Interior"></img>
+                      <span>Interior Rumah</span>
+                    </button>
+                    <button class="category-buttons" data-category="olahraga">
+                      <img src="asset/logo kategori/olahraga.webp" alt="Olahraga"></img>
+                      <span>Olahraga</span>
+                    </button>
+                    <button class="category-buttons" data-category="olahraga">
+                      <img src="asset/logo kategori/olahraga.webp" alt="Olahraga"></img>
+                      <span>Olahraga</span>
+                    </button>
+                    <button class="category-buttons" data-category="olahraga">
+                      <img src="asset/logo kategori/olahraga.webp" alt="Olahraga"></img>
+                      <span>Olahraga</span>
+                    </button>
+                    <button class="category-buttons" data-category="olahraga">
+                      <img src="asset/logo kategori/olahraga.webp" alt="Olahraga"></img>
+                      <span>Olahraga</span>
+                    </button>
+                  </div>
+
+                  <button class="scroll-btn scroll-btn-next" id="scrollNext" aria-label="Scroll kategori ke kanan">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+            </section>
+
+            <section class="sell-promotion">
+              <div class="sell-section">
+                <h3>Ingin Jualan di Sini?</h3>
+                <p>Gabung bersama kami dan kembangkan bisnismu dengan mudah!</p>
+                <button>Daftar Sekarang</button>
+              </div>
+            </section>
+
+            <section class="product-list">
+              <span>Semua Produk</span>
+
+              <article class="product-item">
+                <a href="/buyingpage">
+                  <img src="/asset/umkm/umkm5.jpg" alt="Produk 1" />
+                  <h3>Produk 1</h3>
+                  <p>Deskripsi singkat produk 1.</p>
+                  <span>Rp 100.000</span>
+                </a>
+              </article>
+
+              <article class="product-item">
+                <img src="/asset/umkm/umkm5.jpg" alt="Produk 2" />
+                <h3>Produk 2</h3>
+                <p>Deskripsi singkat produk 2.</p>
+                <span>Rp 150.000</span>
+              </article>
+
+              <article class="product-item">
+                <img src="/asset/umkm/umkm5.jpg" alt="Produk 3" />
+                <h3>Produk 3</h3>
+                <p>Deskripsi singkat produk 3.</p>
+                <span>Rp 200.000</span>
+              </article>
+
+              <article class="product-item">
+                <img src="/asset/umkm/umkm5.jpg" alt="Produk 4" />
+                <h3>Produk 4</h3>
+                <p>Deskripsi singkat produk 4.</p>
+                <span>Rp 250.000</span>
+              </article>
+
+              <article class="product-item">
+                <img src="/asset/umkm/umkm5.jpg" alt="Produk 4" />
+                <h3>Produk 5</h3>
+                <p>Deskripsi singkat produk 5.</p>
+                <span>Rp 250.000</span>
+              </article>
+
+              <article class="product-item">
+                <img src="/asset/umkm/umkm5.jpg" alt="Produk 1" />
+                <h3>Produk 1</h3>
+                <p>Deskripsi singkat produk 1.</p>
+                <span>Rp 100.000</span>
+              </article>
+
+              <article class="product-item">
+                <img src="/asset/umkm/umkm5.jpg" alt="Produk 2" />
+                <h3>Produk 2</h3>
+                <p>Deskripsi singkat produk 2.</p>
+                <span>Rp 150.000</span>
+              </article>
+
+              <article class="product-item">
+                <img src="/asset/umkm/umkm5.jpg" alt="Produk 3" />
+                <h3>Produk 3</h3>
+                <p>Deskripsi singkat produk 3.</p>
+                <span>Rp 200.000</span>
+              </article>
+
+              <article class="product-item">
+                <img src="/asset/umkm/umkm5.jpg" alt="Produk 4" />
+                <h3>Produk 4</h3>
+                <p>Deskripsi singkat produk 4.</p>
+                <span>Rp 250.000</span>
+              </article>
+
+              <article class="product-item">
+                <img src="/asset/umkm/umkm5.jpg" alt="Produk 4" />
+                <h3>Produk 5</h3>
+                <p>Deskripsi singkat produk 5.</p>
+                <span>Rp 250.000</span>
+              </article>
+
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+        <style>
+          /* ===== Reset dan Font ===== */
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          font-family: "Poppins", sans-serif;
+        }
+
+        body {
+          background-color: #fafafa;
+          color: #333;
+        }
+
+        .background {
+          width: 85%;
+          margin: auto;
+          padding: 20px 0;
+        }
+
+        /* ===== Header ===== */
+        .etalase {
+          text-align: center;
+          padding: 15px 0;
+        }
+        .etalase h1 {
+          font-size: 2.4rem;
+          color: #f33636;
+          letter-spacing: 1.5px;
+        }
+
+        /* ===== Banner ===== */
+        .promotion-banner {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 30px;
+        }
+        .promotion-banner img {
+          width: 100%;
+          height: 180px;
+          border-radius: 20px;
+          object-fit: cover;
+          object-position: center;
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        /* ===== Hero Section ===== */
+        .header {
+          text-align: center;
+          margin-bottom: 25px;
+        }
+        .header h1 {
+          font-size: 1.8rem;
+          font-weight: 600;
+          color: #222;
+        }
+
+        /* ===== Search Card ===== */
+        .search-card {
+          background: #fff;
+          padding: 20px;
+          border-radius: 14px;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+          margin-bottom: 25px;
+        }
+        .search-item {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 15px;
+        }
+        .search-item input {
+          flex: 1;
+          padding: 12px 14px;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          font-size: 1rem;
+          outline: none;
+          transition: .2s;
+        }
+        .search-item input:focus {
+          border-color: #f33636;
+          box-shadow: 0 0 0 2px rgba(243,54,54,0.1);
+        }
+        .search-item button {
+          padding: 12px 25px;
+          background: #f33636;
+          color: #fff;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: .3s;
+        }
+        .search-item button:hover {
+          background: #d72c2c;
+        }
+
+        /* ===== Filter ===== */
+        .filter-item {
+          text-align: start;
+          background: #f8f9fa;
+          padding: 20px;
+          border-radius: 14px;
+        }
+        .filter-item p {
+          font-weight: 600;
+          font-size: 1.05rem;
+          color: #333;
+          margin-bottom: 14px;
+        }
+
+        .category-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          position: relative;
+        }
+
+        .category-section {
+          display: flex;
+          gap: 12px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scroll-behavior: smooth;
+          padding: 8px 0;
+          flex: 1;
+          scrollbar-width: thin;
+          scrollbar-color: #d3d3d3 #f0f0f0;
+        }
+        .category-section::-webkit-scrollbar {
+          height: 6px;
+        }
+        .category-section::-webkit-scrollbar-thumb {
+          background: #d3d3d3;
+          border-radius: 10px;
+        }
+
+        /* Category Buttons */
+        .category-buttons {
+          background: #fff;
+          min-width: 120px;
+          width: 120px;
+          height: 120px;
+          border-radius: 14px;
+          border: 2px solid #eee;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: .3s ease;
+          flex-shrink: 0;
+        }
+        .category-buttons img {
+          width: 42px;
+          height: 42px;
+          object-fit: contain;
+          margin-bottom: 6px;
+        }
+        .category-buttons span {
+          font-size: .85rem;
+          color: #333;
+          text-align: center;
+        }
+        .category-buttons:hover {
+          transform: translateY(-5px);
+          border-color: #f33636;
+          box-shadow: 0 5px 15px rgba(243,54,54,0.2);
+        }
+        .category-buttons.active {
+          background: linear-gradient(135deg, #f33636, #ff6b6b);
+          color: #fff;
+          border-color: #f33636;
+        }
+
+        /* Scroll Buttons */
+        .scroll-btn {
+          background: #fff;
+          border: 2px solid #eee;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #f33636;
+          transition: .3s;
+        }
+        .scroll-btn:hover {
+          background: #f33636;
+          color: #fff;
+          transform: scale(1.1);
+        }
+        .scroll-btn:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+        }
+
+        /* ===== Sell Promotion ===== */
+        .sell-promotion {
+          background: linear-gradient(135deg, #fff5f5, #ffe0e0);
+          padding: 25px;
+          border-radius: 14px;
+          text-align: center;
+          box-shadow: 0 5px 15px rgba(243,54,54,0.1);
+          margin: 40px 0;
+        }
+        .sell-section h3 {
+          font-size: 1.4rem;
+          color: #f33636;
+        }
+        .sell-section p {
+          margin: 10px 0 20px;
+          color: #555;
+        }
+        .sell-section button {
+          background: linear-gradient(135deg, #f33636, #ff6b6b);
+          color: #fff;
+          padding: 12px 28px;
+          border: none;
+          border-radius: 8px;
+          font-size: 1em;
+          font-weight: 600;
+          cursor: pointer;
+          transition: .3s;
+        }
+        .sell-section button:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 20px rgba(243,54,54,0.4);
+        }
+
+        /* ===== Product List ===== */
+        .product-list {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 20px;
+        }
+        .product-list > span {
+          grid-column: 1 / -1;
+          font-size: 1.2rem;
+          color: #f33636;
+          font-weight: 600;
+        }
+        .product-item {
+          background: #fff;
+          padding: 15px;
+          border-radius: 14px;
+          text-align: center;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          transition: .3s;
+        }
+        .product-item:hover {
+          transform: translateY(-4px);
+        }
+        .product-item img {
+          width: 100%;
+          height: 140px;
+          border-radius: 10px;
+          object-fit: cover;
+          margin-bottom: 10px;
+        }
+        .product-item h3 {
+          font-size: 1rem;
+          font-weight: 600;
+          color: #222;
+          margin-bottom: 6px;
+        }
+        .product-item p {
+          font-size: .85em;
+          color: #666;
+          margin-bottom: 8px;
+        }
+        .product-item span {
+          color: #f33636;
+          font-weight: 700;
+        }
+
+        /* ===== RESPONSIVE BREAKPOINTS ===== */
+
+        /* Tablet */
+        @media (max-width: 992px) {
+          .background {
+            width: 90%;
+          }
+          .etalase h1 {
+            font-size: 2rem;
+          }
+          .category-buttons {
+            min-width: 110px;
+            height: 110px;
+          }
+        }
+
+        /* Mobile */
+        @media (max-width: 600px) {
+          .background {
+            width: 95%;
+            padding: 10px 0;
+          }
+
+          .etalase h1 {
+            font-size: 1.8rem;
+          }
+
+          .promotion-banner img {
+            height: 140px;
+          }
+
+          .search-item {
+            flex-direction: column;
+          }
+
+          .search-item button {
+            width: 100%;
+          }
+
+          .filter-item {
+            padding: 15px;
+          }
+
+          .category-buttons {
+            min-width: 95px;
+            width: 95px;
+            height: 95px;
+          }
+
+          .category-buttons img {
+            width: 35px;
+            height: 35px;
+          }
+
+          .scroll-btn {
+            display: none; /* sembunyikan tombol scroll di mobile */
+          }
+
+          .product-list {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+          }
+        }
+        </style>
+
+  <script>
+  // @ts-nocheck
+  document.addEventListener('DOMContentLoaded', function() {
+    var categorySection = document.getElementById('categorySection');
+    var scrollPrevBtn = document.getElementById('scrollPrev');
+    var scrollNextBtn = document.getElementById('scrollNext');
+    var categoryButtons = document.querySelectorAll('.category-buttons');
+
+    if (!categorySection) return;
+
+    // === SCROLL BUTTON HANDLER  ===
+    function updateScrollButtons() {
+      if (!scrollPrevBtn || !scrollNextBtn) return;
+      var hasScroll = categorySection.scrollWidth > categorySection.clientWidth;
+      var isAtStart = categorySection.scrollLeft === 0;
+      var isAtEnd = categorySection.scrollLeft + categorySection.clientWidth >= categorySection.scrollWidth - 10;
+      if ('disabled' in scrollPrevBtn) scrollPrevBtn.disabled = !hasScroll || isAtStart;
+      if ('disabled' in scrollNextBtn) scrollNextBtn.disabled = !hasScroll || isAtEnd;
+    }
+
+    if (scrollPrevBtn) {
+      scrollPrevBtn.addEventListener('click', function() {
+        categorySection.scrollBy({ left: -300, behavior: 'smooth' });
+        setTimeout(updateScrollButtons, 300);
+      });
+    }
+
+    if (scrollNextBtn) {
+      scrollNextBtn.addEventListener('click', function() {
+        categorySection.scrollBy({ left: 300, behavior: 'smooth' });
+        setTimeout(updateScrollButtons, 300);
+      });
+    }
+
+    // === DRAG / SWIPE SCROLL FEATURE ===
+    var isDown = false;
+    var startX;
+    var scrollLeft;
+
+    categorySection.addEventListener('mousedown', function(e) {
+      isDown = true;
+      categorySection.classList.add('dragging');
+      startX = e.pageX - categorySection.offsetLeft;
+      scrollLeft = categorySection.scrollLeft;
+    });
+
+    categorySection.addEventListener('mouseleave', function() {
+      isDown = false;
+      categorySection.classList.remove('dragging');
+    });
+
+    categorySection.addEventListener('mouseup', function() {
+      isDown = false;
+      categorySection.classList.remove('dragging');
+    });
+
+    categorySection.addEventListener('mousemove', function(e) {
+      if (!isDown) return;
+      e.preventDefault();
+      var x = e.pageX - categorySection.offsetLeft;
+      var walk = (x - startX) * 1.5; // kecepatan scroll
+      categorySection.scrollLeft = scrollLeft - walk;
+    });
+
+    // === TOUCH SCROLL (mobile) ===
+    // ga perlu apa-apa tambahan, karena native browser udah bisa swipe
+    categorySection.style.overflowX = "auto";
+    categorySection.style.scrollBehavior = "smooth";
+
+    // === CATEGORY BUTTON ACTIVE STATE ===
+    for (var i = 0; i < categoryButtons.length; i++) {
+      categoryButtons[i].addEventListener('click', function(e) {
+        e.preventDefault();
+        for (var j = 0; j < categoryButtons.length; j++) {
+          categoryButtons[j].classList.remove('active');
+        }
+        this.classList.add('active');
+        var category = this.getAttribute('data-category');
+        var event = new CustomEvent('categorySelected', {
+          detail: { category: category, element: this }
+        });
+        document.dispatchEvent(event);
+      });
+    }
+
+    updateScrollButtons();
+    window.addEventListener('resize', updateScrollButtons);
+  });
+  </script>
+
+
+</html>

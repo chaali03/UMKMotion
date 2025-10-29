@@ -1,0 +1,22 @@
+---
+// Astro wrapper for SearchBar component
+import SearchBar from './searchbar/SearchBar.tsx';
+---
+<style>
+  /* Create spacing above the search bar to avoid covering 'maju bersama.' on small screens */
+  .searchbar-after-scroll{ width:100%; }
+  @media (max-width: 768px){
+    .searchbar-after-scroll{ margin-top: max(12vh, 84px); }
+  }
+  @media (min-width: 769px) and (max-width: 1024px){
+    .searchbar-after-scroll{ margin-top: max(10vh, 96px); }
+  }
+  @media (min-width: 1025px){
+    .searchbar-after-scroll{ margin-top: clamp(24px, 6vh, 72px); }
+  }
+</style>
+
+<div class="searchbar-after-scroll">
+  <SearchBar client:load />
+  
+</div>

@@ -1,6 +1,6 @@
 ---
-import Navbar from '../LandingPage/components/Navbar.astro';
 const title = "UMKMotion";
+import Header from 'src/LandingPage/components/Header.astro';
 import ConsultantSlider from '../components/ConsultantSlider.jsx';
 const handleAnimationComplete = () => {
   console.log('All letters have animated!');
@@ -26,7 +26,8 @@ const handleAnimationComplete = () => {
   body { margin: 0; font-family: 'Ubuntu', system-ui, -apple-system, "Segoe UI", Roboto, Cantarell, "Noto Sans", sans-serif; overflow-x: hidden; }
 </style>
 <body>
-    <Navbar />
+
+  <Header />
 
   <section class="hero">
     <div class="container-hero">
