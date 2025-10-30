@@ -99,7 +99,7 @@ export default function MapComponent({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        <MapController center={validCenter} zoom={zoom} />
+        <MapController center={validCenter} zoom={zoom} />{"content":"kenap gambar di mapnya gak ditampilkan gituu masih putihh","multiMedia":[{"resource_id":"tos-alisg-i-84wi3idyod-sg/sg/7549150589516497936/image/1761800460879_0qmsnwhokstr0_png_1024x592","resource_type":"image"}],"parsedQuery":["kenap gambar di mapnya gak ditampilkan gituu masih putihh"]}
         <ZoomControl position="bottomright" />
         
         {umkmLocations.map((umkm) => (
