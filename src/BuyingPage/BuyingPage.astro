@@ -1199,198 +1199,197 @@
     }
 </style>
     <script>
-        // QUANTITY CONTROL
-        // QUANTITY CONTROL
-const quantityInput = document.getElementById('quantity') as HTMLInputElement | null;
-const decreaseBtn = document.getElementById('decreaseBtn') as HTMLButtonElement | null;
-const increaseBtn = document.getElementById('increaseBtn') as HTMLButtonElement | null;
+    // QUANTITY CONTROL
+    const quantityInput = document.getElementById('quantity') as HTMLInputElement | null;
+    const decreaseBtn = document.getElementById('decreaseBtn') as HTMLButtonElement | null;
+    const increaseBtn = document.getElementById('increaseBtn') as HTMLButtonElement | null;
 
-decreaseBtn?.addEventListener('click', () => {
-  if (!quantityInput) return;
-  const current = parseInt(quantityInput.value);
-  if (current > 1) quantityInput.value = String(current - 1);
-});
-
-increaseBtn?.addEventListener('click', () => {
-  if (!quantityInput) return;
-  const current = parseInt(quantityInput.value);
-  quantityInput.value = String(current + 1);
-});
-
-// THUMBNAIL SELECTION
-const thumbnails = document.querySelectorAll('.thumbnails svg');
-const mainImage = document.getElementById('mainImage') as HTMLImageElement | null;
-
-thumbnails.forEach((thumb) => {
-  thumb.addEventListener('click', () => {
-    thumbnails.forEach((t) => t.classList.remove('active'));
-    thumb.classList.add('active');
-  });
-});
-
-// FILTER REVIEWS
-const filterButtons = document.querySelectorAll('.filter-btn');
-const reviewItems = document.querySelectorAll('.review-item');
-
-filterButtons.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    filterButtons.forEach((b) => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    const filter = (btn as HTMLElement).dataset.filter;
-    reviewItems.forEach((item) => {
-      const el = item as HTMLElement;
-      if (filter === 'all') el.style.display = 'block';
-      else el.style.display = el.dataset.rating === filter ? 'block' : 'none';
+    decreaseBtn?.addEventListener('click', () => {
+    if (!quantityInput) return;
+    const current = parseInt(quantityInput.value);
+    if (current > 1) quantityInput.value = String(current - 1);
     });
-  });
-});
 
-// BUTTON ACTIONS
-document.getElementById('buyBtn')?.addEventListener('click', () => {
-  const qty = quantityInput?.value || '1';
-  alert(`Membeli ${qty} item - Lanjut ke checkout`);
-});
+    increaseBtn?.addEventListener('click', () => {
+    if (!quantityInput) return;
+    const current = parseInt(quantityInput.value);
+    quantityInput.value = String(current + 1);
+    });
 
-document.getElementById('cartBtn')?.addEventListener('click', () => {
-  const btn = document.getElementById('cartBtn') as HTMLButtonElement | null;
-  if (!btn) return;
-  const isAdded = btn.classList.toggle('active');
-  btn.style.background = isAdded ? '#00c853' : 'white';
-  btn.style.color = isAdded ? 'white' : '#00c853';
-});
+    // THUMBNAIL SELECTION
+    const thumbnails = document.querySelectorAll('.thumbnails svg');
+    const mainImage = document.getElementById('mainImage') as HTMLImageElement | null;
 
-// SORT REVIEWS
-document.getElementById('sortSelect')?.addEventListener('change', (e) => {
-  const target = e.target as HTMLSelectElement;
-  console.log('Sorting by:', target.value);
-});
+    thumbnails.forEach((thumb) => {
+    thumb.addEventListener('click', () => {
+        thumbnails.forEach((t) => t.classList.remove('active'));
+        thumb.classList.add('active');
+    });
+    });
 
-// PHOTO UPLOAD
-const photoUploadBtn = document.getElementById('photoUploadBtn') as HTMLButtonElement | null;
-const photoInput = document.getElementById('photoInput') as HTMLInputElement | null;
-const photoPreview = document.getElementById('photoPreview') as HTMLElement | null;
-const photoCount = document.getElementById('photoCount') as HTMLElement | null;
-let uploadedPhotos: { name: string; data: string }[] = [];
+    // FILTER REVIEWS
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const reviewItems = document.querySelectorAll('.review-item');
 
-photoUploadBtn?.addEventListener('click', () => photoInput?.click());
+    filterButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+        filterButtons.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
 
-photoInput?.addEventListener('change', (e) => {
-  const files = Array.from((e.target as HTMLInputElement).files || []);
-  files.forEach((file) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      uploadedPhotos.push({
-        name: file.name,
-        data: event.target?.result as string,
-      });
-      renderPhotoPreview();
-    };
-    reader.readAsDataURL(file);
-  });
-});
+        const filter = (btn as HTMLElement).dataset.filter;
+        reviewItems.forEach((item) => {
+        const el = item as HTMLElement;
+        if (filter === 'all') el.style.display = 'block';
+        else el.style.display = el.dataset.rating === filter ? 'block' : 'none';
+        });
+    });
+    });
 
-function renderPhotoPreview() {
-  if (!photoPreview || !photoCount) return;
-  photoPreview.innerHTML = '';
-  photoCount.textContent = `${uploadedPhotos.length} foto`;
+    // BUTTON ACTIONS
+    document.getElementById('buyBtn')?.addEventListener('click', () => {
+    const qty = quantityInput?.value || '1';
+    alert(`Membeli ${qty} item - Lanjut ke checkout`);
+    });
 
-  uploadedPhotos.forEach((photo, index) => {
-    const photoItem = document.createElement('div');
-    photoItem.className = 'photo-item';
-    photoItem.innerHTML = `
-      <img src="${photo.data}" alt="preview">
-      <button type="button" class="photo-remove" data-index="${index}">×</button>
+    document.getElementById('cartBtn')?.addEventListener('click', () => {
+    const btn = document.getElementById('cartBtn') as HTMLButtonElement | null;
+    if (!btn) return;
+    const isAdded = btn.classList.toggle('active');
+    btn.style.background = isAdded ? '#00c853' : 'white';
+    btn.style.color = isAdded ? 'white' : '#00c853';
+    });
+
+    // SORT REVIEWS
+    document.getElementById('sortSelect')?.addEventListener('change', (e) => {
+    const target = e.target as HTMLSelectElement;
+    console.log('Sorting by:', target.value);
+    });
+
+    // PHOTO UPLOAD
+    const photoUploadBtn = document.getElementById('photoUploadBtn') as HTMLButtonElement | null;
+    const photoInput = document.getElementById('photoInput') as HTMLInputElement | null;
+    const photoPreview = document.getElementById('photoPreview') as HTMLElement | null;
+    const photoCount = document.getElementById('photoCount') as HTMLElement | null;
+    let uploadedPhotos: { name: string; data: string }[] = [];
+
+    photoUploadBtn?.addEventListener('click', () => photoInput?.click());
+
+    photoInput?.addEventListener('change', (e) => {
+    const files = Array.from((e.target as HTMLInputElement).files || []);
+    files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+        uploadedPhotos.push({
+            name: file.name,
+            data: event.target?.result as string,
+        });
+        renderPhotoPreview();
+        };
+        reader.readAsDataURL(file);
+    });
+    });
+
+    function renderPhotoPreview() {
+    if (!photoPreview || !photoCount) return;
+    photoPreview.innerHTML = '';
+    photoCount.textContent = `${uploadedPhotos.length} foto`;
+
+    uploadedPhotos.forEach((photo, index) => {
+        const photoItem = document.createElement('div');
+        photoItem.className = 'photo-item';
+        photoItem.innerHTML = `
+        <img src="${photo.data}" alt="preview">
+        <button type="button" class="photo-remove" data-index="${index}">×</button>
+        `;
+        photoPreview.appendChild(photoItem);
+    });
+
+    photoPreview.querySelectorAll('.photo-remove').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const index = parseInt((btn as HTMLElement).dataset.index || '0');
+        uploadedPhotos.splice(index, 1);
+        renderPhotoPreview();
+        });
+    });
+    }
+
+    // COMMENT FORM
+    const commentForm = document.getElementById('commentForm') as HTMLFormElement | null;
+    const reviewsList = document.getElementById('reviewsList') as HTMLElement | null;
+    const successMessage = document.getElementById('successMessage') as HTMLElement | null;
+
+    commentForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const name = (document.getElementById('commentName') as HTMLInputElement)?.value.trim();
+    const rating = (document.getElementById('commentRating') as HTMLSelectElement)?.value;
+    const text = (document.getElementById('commentText') as HTMLTextAreaElement)?.value.trim();
+
+    // Validation
+    let isValid = true;
+    (document.getElementById('nameError') as HTMLElement).textContent = '';
+    (document.getElementById('ratingError') as HTMLElement).textContent = '';
+    (document.getElementById('textError') as HTMLElement).textContent = '';
+
+    if (!name) {
+        (document.getElementById('nameError') as HTMLElement).textContent = 'Nama tidak boleh kosong';
+        isValid = false;
+    }
+    if (!rating) {
+        (document.getElementById('ratingError') as HTMLElement).textContent = 'Pilih rating terlebih dahulu';
+        isValid = false;
+    }
+    if (!text) {
+        (document.getElementById('textError') as HTMLElement).textContent = 'Komentar tidak boleh kosong';
+        isValid = false;
+    }
+    if (!isValid) return;
+
+    // New Review
+    const newReview = document.createElement('div');
+    newReview.className = 'review-item';
+    newReview.dataset.rating = rating;
+    const starsStr = '⭐'.repeat(parseInt(rating));
+    const initials = name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 1);
+
+    let photosHTML = '';
+    if (uploadedPhotos.length > 0) {
+        photosHTML = '<div class="review-images">';
+        uploadedPhotos.forEach((photo) => {
+        photosHTML += `<img src="${photo.data}" alt="review-photo">`;
+        });
+        photosHTML += '</div>';
+    }
+
+    newReview.innerHTML = `
+        <div class="review-header-item">
+        <div class="review-avatar">${initials}</div>
+        <div>
+            <div class="review-name">${escapeHtml(name)}</div>
+            <div class="review-rating">${starsStr}</div>
+        </div>
+        </div>
+        <div class="review-text">${escapeHtml(text)}</div>
+        ${photosHTML}
     `;
-    photoPreview.appendChild(photoItem);
-  });
 
-  photoPreview.querySelectorAll('.photo-remove').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const index = parseInt((btn as HTMLElement).dataset.index || '0');
-      uploadedPhotos.splice(index, 1);
-      renderPhotoPreview();
+    reviewsList?.prepend(newReview);
+
+    successMessage!.innerHTML = '<div class="success-message">✓ Ulasan kamu berhasil ditambahkan!</div>';
+    setTimeout(() => (successMessage!.innerHTML = ''), 3000);
+
+    commentForm.reset();
+    uploadedPhotos = [];
+    if (photoCount) photoCount.textContent = '';
+    if (photoPreview) photoPreview.innerHTML = '';
     });
-  });
-}
 
-// COMMENT FORM
-const commentForm = document.getElementById('commentForm') as HTMLFormElement | null;
-const reviewsList = document.getElementById('reviewsList') as HTMLElement | null;
-const successMessage = document.getElementById('successMessage') as HTMLElement | null;
-
-commentForm?.addEventListener('submit', (e) => {
-  e.preventDefault();
-
-  const name = (document.getElementById('commentName') as HTMLInputElement)?.value.trim();
-  const rating = (document.getElementById('commentRating') as HTMLSelectElement)?.value;
-  const text = (document.getElementById('commentText') as HTMLTextAreaElement)?.value.trim();
-
-  // Validation
-  let isValid = true;
-  (document.getElementById('nameError') as HTMLElement).textContent = '';
-  (document.getElementById('ratingError') as HTMLElement).textContent = '';
-  (document.getElementById('textError') as HTMLElement).textContent = '';
-
-  if (!name) {
-    (document.getElementById('nameError') as HTMLElement).textContent = 'Nama tidak boleh kosong';
-    isValid = false;
-  }
-  if (!rating) {
-    (document.getElementById('ratingError') as HTMLElement).textContent = 'Pilih rating terlebih dahulu';
-    isValid = false;
-  }
-  if (!text) {
-    (document.getElementById('textError') as HTMLElement).textContent = 'Komentar tidak boleh kosong';
-    isValid = false;
-  }
-  if (!isValid) return;
-
-  // New Review
-  const newReview = document.createElement('div');
-  newReview.className = 'review-item';
-  newReview.dataset.rating = rating;
-  const starsStr = '⭐'.repeat(parseInt(rating));
-  const initials = name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 1);
-
-  let photosHTML = '';
-  if (uploadedPhotos.length > 0) {
-    photosHTML = '<div class="review-images">';
-    uploadedPhotos.forEach((photo) => {
-      photosHTML += `<img src="${photo.data}" alt="review-photo">`;
-    });
-    photosHTML += '</div>';
-  }
-
-  newReview.innerHTML = `
-    <div class="review-header-item">
-      <div class="review-avatar">${initials}</div>
-      <div>
-        <div class="review-name">${escapeHtml(name)}</div>
-        <div class="review-rating">${starsStr}</div>
-      </div>
-    </div>
-    <div class="review-text">${escapeHtml(text)}</div>
-    ${photosHTML}
-  `;
-
-  reviewsList?.prepend(newReview);
-
-  successMessage!.innerHTML = '<div class="success-message">✓ Ulasan kamu berhasil ditambahkan!</div>';
-  setTimeout(() => (successMessage!.innerHTML = ''), 3000);
-
-  commentForm.reset();
-  uploadedPhotos = [];
-  if (photoCount) photoCount.textContent = '';
-  if (photoPreview) photoPreview.innerHTML = '';
-});
-
-function escapeHtml(str: string) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
+    function escapeHtml(str: string) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+    }
 
     </script>
 </body>
