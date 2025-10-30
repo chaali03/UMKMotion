@@ -791,8 +791,9 @@
 
         .trending-container {
           display: grid;
-          grid-template-columns: 0.9fr 1fr;
-          gap: 20px;
+          grid-template-columns: 2fr 1.8fr; /* ✅ kiri lebih besar, kanan lebih kecil */
+          gap: 25px;
+          align-items: stretch;
         }
 
         /* === LEFT: CAROUSEL === */
@@ -823,9 +824,11 @@
         }
         .carousel-slide img {
           width: 100%;
-          height: 400px;
+          height: 100%;
           object-fit: cover;
+          display: block;
         }
+
 
         .carousel-info {
           position: absolute;
