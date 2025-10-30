@@ -1,5 +1,5 @@
 ---
-import EtalaseComponent from "../Etalase/Etalase.astro";
+import KonsulPage from '../konsultan/KonsulPage';
 import Navbar from "../LandingPage/components/Header.astro";
 import LandingPageLayout from "../layouts/LandingPageLayout.astro";
 ---
@@ -7,6 +7,6 @@ import LandingPageLayout from "../layouts/LandingPageLayout.astro";
 <LandingPageLayout>
   <Navbar />
   <main class="min-h-screen pt-20">
-    <EtalaseComponent />
+    <KonsulPage client:load />
   </main>
 </LandingPageLayout>

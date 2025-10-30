@@ -422,6 +422,10 @@ class App {
   }
   update() {
     this.scroll.current = lerp(this.scroll.current, this.scroll.target, this.scroll.ease);
+    // Auto-scroll when enabled and not paused
+    if (this.__auto && this.__auto.enabled && !this.__auto.paused) {
+      this.scroll.target += this.__auto.speed;
+    }
     const direction = this.scroll.current > this.scroll.last ? 'right' : 'left';
     if (this.medias) {
       this.medias.forEach(media => media.update(this.scroll, direction));
@@ -471,7 +475,9 @@ export default function CircularGallery({
   font = 'bold 30px Figtree',
   scrollSpeed = 2,
   scrollEase = 0.05,
-  className = ''
+  className = '',
+  autoScroll = true,
+  autoScrollSpeed = 0.04,
 }) {
   const containerRef = useRef(null);
   useEffect(() => {
@@ -491,12 +497,20 @@ export default function CircularGallery({
     }
     const el = containerRef.current;
     const app = new App(el, { items, bend: adjustedBend, textColor, borderRadius: adjustedBorderRadius, font, scrollSpeed, scrollEase });
+    // Auto scroll control
+    app.__auto = { enabled: autoScroll, speed: autoScrollSpeed, paused: false };
+    // Pause on hover/focus/when not visible
+    const onEnter = () => { if (app.__auto) app.__auto.paused = true; };
+    const onLeave = () => { if (app.__auto) app.__auto.paused = false; };
+    const onVisibility = () => { if (app.__auto) app.__auto.paused = document.visibilityState !== 'visible'; };
+    el.addEventListener('mouseenter', onEnter);
+    el.addEventListener('mouseleave', onLeave);
+    document.addEventListener('visibilitychange', onVisibility);
     // Staged entrance once canvas appended
     if (el) {
-      // allow layout to settle then reveal
+      // allow layout to settle; keep initial classes stable for hydration
       requestAnimationFrame(() => {
         el.style.setProperty('--d', '.12s');
-        el.classList.add('show');
         
         // Add unique entrance effect for individual gallery items
         const canvas = el.querySelector('canvas');
@@ -508,7 +522,10 @@ export default function CircularGallery({
     }
     return () => {
       app.destroy();
+      el.removeEventListener('mouseenter', onEnter);
+      el.removeEventListener('mouseleave', onLeave);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase]);
-  return <div className={`circular-gallery reveal ${className}`} ref={containerRef} />;
+  }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase, autoScroll, autoScrollSpeed]);
+  return <div suppressHydrationWarning className={`circular-gallery reveal ${className} show`} ref={containerRef} />;
 }

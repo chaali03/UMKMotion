@@ -1,0 +1,53 @@
+---
+import Layout from '../layouts/LandingPageLayout.astro';
+import RumahUMKM from '../RumahUMKM/RumahUMKM';
+---
+
+<Layout title="Rumah UMKM - Temukan UMKM Terdekat">
+  <div class="min-h-screen bg-gradient-to-br from-[#0a0118] to-[#24154f]">
+    <RumahUMKM client:only="react" />
+  </div>
+</Layout>
+
+<style is:global>
+  /* Leaflet custom styles */
+  .leaflet-container {
+    font-family: inherit;
+  }
+  
+  .custom-marker {
+    background: transparent !important;
+    border: none !important;
+  }
+  
+  .leaflet-popup-content-wrapper {
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    background: #0f0b1d;
+    color: #e5e7eb;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  
+  .leaflet-popup-tip {
+    display: none;
+  }
+  
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #0f0b1d;
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #7e22ce, #2563eb);
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #9333ea, #3b82f6);
+  }
+</style>

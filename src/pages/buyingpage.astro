@@ -1,6 +1,12 @@
 ---
 import BuyingPageComponent from "../BuyingPage/BuyingPage.astro"
-import Navbar from "../LandingPage/components/Navbar.astro"
+import Navbar from "../LandingPage/components/Header.astro"
+import LandingPageLayout from "../layouts/LandingPageLayout.astro";
 ---
-<Navbar></Navbar>
-<BuyingPageComponent />
+
+<LandingPageLayout>
+  <Navbar />
+  <main class="min-h-screen pt-20">
+    <BuyingPageComponent />
+  </main>
+</LandingPageLayout>

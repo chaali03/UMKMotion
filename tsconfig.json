@@ -9,6 +9,13 @@
   ],
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "react"
+    "jsxImportSource": "react",
+    "baseUrl": ".",
+    "skipLibCheck": true,
+    "types": ["astro/client", "google.maps"],
+    "paths": {
+      "src/*": ["src/*"],
+      "@/*": ["src/*"]
+    }
   }
 }

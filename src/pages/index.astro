@@ -1,11 +1,108 @@
 ---
 import LandingPageLayout from "../layouts/LandingPageLayout.astro";
 import Hero from "../LandingPage/components/Hero.astro";
-import Kategori from "../LandingPage/components/kategori.astro";
+import Feature from "../LandingPage/components/Feature.astro";
+import Scroll from "../LandingPage/components/Scroll.astro";
+import SearchBar from "../LandingPage/components/SearchBar.astro";
+import ProductGallery from "../LandingPage/components/productgallery/ProductGallery.tsx";
 const title = "UMKMotion";
 ---
 
 <LandingPageLayout {title}>
-  <Hero />
-  <Kategori />
+  <style>
+    /* Section reveal animation */
+    .reveal { opacity: 0; transform: translateY(26px) scale(.985); filter: blur(6px);
+      transition: opacity .6s ease, transform .7s cubic-bezier(.22,.85,.3,1), filter .6s ease; }
+    .reveal.show { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    
+    /* Desktop spacing between hero and feature sections */
+    @media (min-width: 1024px) {
+      .feature-section-mobile-spacing {
+        margin-top: 12rem !important;
+        margin-bottom: 6rem !important;
+      }
+    }
+    
+    /* Tablet spacing */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .feature-section-mobile-spacing {
+        margin-top: 10rem !important;
+        margin-bottom: 5rem !important;
+      }
+    }
+    
+    /* Mobile spacing between hero and feature sections */
+    /* Default mobile spacing */
+    @media (max-width: 767px) {
+      .feature-section-mobile-spacing {
+        margin-top: 8rem !important;
+      }
+    }
+    
+    /* Small tablets and large phones */
+    @media (max-width: 640px) {
+      .feature-section-mobile-spacing {
+        margin-top: 7rem !important;
+      }
+    }
+    
+    /* Small phones (iPhone SE, 5/SE, etc.) */
+    @media (max-width: 375px) {
+      .feature-section-mobile-spacing {
+        margin-top: 30rem !important;
+      }
+    }
+    
+    /* Very small phones */
+    @media (max-width: 320px) {
+      .feature-section-mobile-spacing {
+        margin-top: 5.5rem !important;
+      }
+    }
+  </style>
+
+  <div class="reveal" data-reveal data-delay="0.0s">
+    <Hero />
+  </div>
+  <div class="reveal feature-section-mobile-spacing" data-reveal data-delay=".12s">
+    <Feature />
+  </div>
+  <div class="reveal" data-reveal data-delay=".18s">
+    <Scroll />
+  </div>
+
+  <!-- GSAP CDN for ProductGallery (expects window.gsap / window.ScrollTrigger) -->
+  <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+  <div class="reveal" data-reveal data-delay=".22s">
+    <SearchBar client:load />
+  </div>
+  <div class="reveal" data-reveal data-delay=".26s">
+    <ProductGallery client:load />
+  </div>
+
+  <script>
+    // @ts-nocheck lightweight reveal on scroll
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const nodes = Array.from(document.querySelectorAll('[data-reveal]'));
+    const show = (el) => {
+      const d = el.getAttribute('data-delay') || '0s';
+      el.style.transitionDelay = d;
+      el.classList.add('show');
+    };
+    if (prefersReduced) {
+      nodes.forEach(n => n.classList.add('show'));
+    } else {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => { if (e.isIntersecting) { show(e.target); io.unobserve(e.target); } });
+      }, { rootMargin: '0px 0px -10% 0px', threshold: 0.12 });
+      nodes.forEach(n => io.observe(n));
+      // Fallback for already in-view on first paint
+      requestAnimationFrame(() => nodes.forEach(n => {
+        const r = n.getBoundingClientRect();
+        if (r.top < innerHeight * 0.88) show(n);
+      }));
+    }
+  </script>
 </LandingPageLayout>
