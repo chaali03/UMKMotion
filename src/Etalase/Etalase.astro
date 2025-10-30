@@ -35,15 +35,13 @@
             <section class="search-card">
               <div class="search-item">
                 <div class="search-input-wrapper">
-                    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <path d="m21 21-4.35-4.35"></path>
-                    </svg>
-                  <input type="text" placeholder="Cari produk..." />
-                  <button>Cari</button>
+                  <input type="text" placeholder="Cari produk, layanan, dll...">
+                  <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> 
+                    <circle cx="11" cy="11" r="8"></circle> <path d="m21 21-4.35-4.35"></path> 
+                  </svg>                
                 </div>
+                <button type  ="submit">Cari</button>
               </div>
-
               <div class="filter-item">
                 <p>Filter produk</p>
                 <div class="category-wrapper">
@@ -945,7 +943,7 @@
     /* ===== Sell Promotion ===== */
     .sell-promotion {
       background: linear-gradient(135deg, #fff5f5, #ffe0e0);
-      padding: 25px;
+      padding: 25px 30px;
       border-radius: 14px;
       box-shadow: 0 5px 15px rgba(243,54,54,0.1);
       margin: 40px 0;
@@ -953,17 +951,20 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 30px;
+      gap: 20px;
+      transition: all 0.3s ease;
     }
 
     .sell-text h3 {
       font-size: 1.4rem;
       color: #f33636;
+      margin-bottom: 8px;
     }
 
     .sell-text p {
-      margin: 10px 0 0;
+      margin: 0;
       color: #555;
+      line-height: 1.4;
     }
 
     .sell-promotion button {
@@ -975,12 +976,51 @@
       font-size: 1em;
       font-weight: 600;
       cursor: pointer;
-      transition: .3s;
+      transition: 0.3s;
+      white-space: nowrap;
     }
 
     .sell-promotion button:hover {
       transform: translateY(-3px);
       box-shadow: 0 8px 20px rgba(243,54,54,0.4);
+    }
+
+    /* --- RESPONSIVE DESIGN --- */
+    @media (max-width: 768px) {
+      .sell-promotion {
+        flex-direction: column;
+        text-align: center;
+        padding: 25px 20px;
+      }
+
+      .sell-text h3 {
+        font-size: 1.2rem;
+      }
+
+      .sell-promotion button {
+        width: 100%;
+        max-width: 250px;
+        margin-top: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .sell-promotion {
+        padding: 20px 15px;
+      }
+
+      .sell-text h3 {
+        font-size: 1.1rem;
+      }
+
+      .sell-text p {
+        font-size: 0.9rem;
+      }
+
+      .sell-promotion button {
+        font-size: 0.9rem;
+        padding: 10px 24px;
+      }
     }
 
     /* ===== Product List ===== */
