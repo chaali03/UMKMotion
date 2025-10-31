@@ -38,8 +38,8 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           max-width: 100%;
           /* Added extra padding to prevent clipping */
           padding: clamp(4rem, 8vw, 6rem) clamp(1rem, 3vw, 2rem);
-          /* Changed to visible to prevent clipping */
-          overflow: visible;
+          /* Clip background orbs within section */
+          overflow: hidden;
           background: #2563eb;
           box-sizing: border-box;
           opacity: 0;
@@ -72,20 +72,20 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         }
 
         .search-section::before {
-          width: 500px;
-          height: 500px;
+          width: 420px;
+          height: 420px;
           background: rgba(37, 99, 235, 0.4);
-          top: -250px;
-          right: -150px;
+          top: -120px;
+          right: -80px;
           animation-delay: 0s;
         }
 
         .search-section::after {
-          width: 600px;
-          height: 600px;
+          width: 500px;
+          height: 500px;
           background: rgba(37, 99, 235, 0.4);
-          bottom: -300px;
-          left: -200px;
+          bottom: -140px;
+          left: -100px;
           animation-delay: 5s;
         }
 
@@ -104,17 +104,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           }
         }
         
-        /* ===== GRID PATTERN OVERLAY ===== */
-        .grid-overlay {
-          position: absolute;
-          inset: 0;
-          background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1px, transparent 0);
-          background-size: 40px 40px;
-          opacity: 0.4;
-          pointer-events: none;
-          mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
-          z-index: 0;
-        }
+        
 
         /* ===== CONTAINER ===== */
         .search-container {
@@ -610,8 +600,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         }
       `}</style>
 
-      {/* Grid Overlay */}
-      <div className="grid-overlay" />
+      
 
       {/* Floating Particles */}
       <div className="particle" style={{ bottom: '0' }} />

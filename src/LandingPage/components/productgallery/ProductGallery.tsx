@@ -87,20 +87,11 @@ const categories: ProductCategory[] = [
     gradient: 'from-amber-500 to-orange-500'
   },
   {
-    icon: `<path d="M4 19v-3"></path><path d="M10 19v-3"></path><path d="M14 19v-3"></path><path d="M18 19v-3"></path><path d="M8 11V9"></path><path d="M16 11V9"></path><rect width="18" height="18" x="3" y="3" rx="2"></rect>`,
-    title: 'Edukasi',
-    count: '982',
-    img: '/asset/umkm/umkm3.jpeg',
-    id: '09',
-    color: '#6366f1',
-    gradient: 'from-indigo-500 to-purple-500'
-  },
-  {
     icon: `<circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path>`,
     title: 'Lainnya',
     count: '756',
     img: '/asset/umkm/umkm4.jpeg',
-    id: '10',
+    id: '9',
     color: '#64748b',
     gradient: 'from-gray-500 to-slate-500'
   }

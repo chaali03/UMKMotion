@@ -1,5 +1,6 @@
-import { forwardRef, useRef, useEffect } from 'react';
-import { motion, useAnimation, Variants } from 'framer-motion';
+import { forwardRef, useEffect } from 'react';
+import { motion, useAnimation } from 'motion/react';
+import type { Variants } from 'motion/react';
 
 export interface VerticalCutRevealProps {
   children: React.ReactNode;

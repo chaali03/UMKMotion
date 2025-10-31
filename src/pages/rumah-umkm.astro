@@ -4,7 +4,7 @@ import RumahUMKM from '../RumahUMKM/RumahUMKM';
 ---
 
 <Layout title="Rumah UMKM - Temukan UMKM Terdekat">
-  <div class="min-h-screen bg-gradient-to-br from-[#0a0118] to-[#24154f]">
+  <div class="min-h-screen bg-gradient-to-br from-[#1f1305] via-[#130a02] to-[#2a1606]">
     <RumahUMKM client:only="react"  />
   </div>
 </Layout>
@@ -22,10 +22,10 @@ import RumahUMKM from '../RumahUMKM/RumahUMKM';
   
   .leaflet-popup-content-wrapper {
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    background: #0f0b1d;
-    color: #e5e7eb;
-    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    background: #1a1208;
+    color: #fde68a; /* amber-200 */
+    border: 1px solid rgba(251, 146, 60, 0.25); /* orange-400 */
   }
   
   .leaflet-popup-tip {
@@ -38,16 +38,16 @@ import RumahUMKM from '../RumahUMKM/RumahUMKM';
   }
   
   ::-webkit-scrollbar-track {
-    background: #0f0b1d;
+    background: #1a1208;
     border-radius: 10px;
   }
   
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #7e22ce, #2563eb);
+    background: linear-gradient(180deg, #fb923c, #f59e0b);
     border-radius: 10px;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #9333ea, #3b82f6);
+    background: linear-gradient(180deg, #f97316, #d97706);
   }
 </style>
