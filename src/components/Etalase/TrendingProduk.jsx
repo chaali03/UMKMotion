@@ -5,7 +5,6 @@ function TrendingProduk() {
   const carouselRef = useRef(null);
   const intervalRef = useRef(null);
 
-  // Data produk (bisa dari API nanti)
   const trendingSlides = [
     {
       title: "Produk Trending #1",
@@ -38,7 +37,6 @@ function TrendingProduk() {
 
   const totalSlides = trendingSlides.length;
 
-  // Auto play
   useEffect(() => {
     const startAutoPlay = () => {
       intervalRef.current = setInterval(() => {
@@ -82,171 +80,152 @@ function TrendingProduk() {
   return (
     <>
       <style jsx>{`
-        /* === TRENDING LAYOUT === */
         .trending-section {
-          margin: 40px 0;
+          margin: 60px 0;
           padding: 0 16px;
         }
 
-        .trending-section h2 {
-          font-size: 1.6rem;
-          color: #f33636;
-          margin: 50px 0 30px;
-          font-weight: 600;
+        .trending-title {
+          font-size: 2.2rem;
+          font-weight: 800;
           text-align: center;
+          margin-bottom: 40px;
+          background: linear-gradient(135deg, #ff6b35, #f33636);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
         }
 
         .trending-container {
           display: grid;
-          grid-template-columns: 2fr 1.8fr;
-          gap: 25px;
-          align-items: stretch;
+          grid-template-columns: 1.8fr 1fr;
+          gap: 28px;
           max-width: 1400px;
           margin: 0 auto;
         }
 
-        /* === LEFT: CAROUSEL === */
-        .trending-carousel {
-          background: #fff;
-          border-radius: 16px;
-          overflow: hidden;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-          position: relative;
-        }
-
         .carousel-wrapper {
           position: relative;
+          border-radius: 20px;
           overflow: hidden;
+          box-shadow: 0 15px 40px rgba(0,0,0,0.15);
         }
 
         .carousel-track {
           display: flex;
-          transition: transform 0.5s ease;
-          width: ${totalSlides * 100}%;
+          transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .carousel-slide {
           min-width: 100%;
-          width: 100%;
           position: relative;
         }
 
         .carousel-slide img {
           width: 100%;
-          height: 280px;
+          height: 320px;
           object-fit: cover;
-          display: block;
         }
 
-        .carousel-info {
+        .carousel-overlay {
           position: absolute;
           bottom: 0;
           left: 0;
           right: 0;
-          background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-          padding: 30px 20px 20px;
-          color: #fff;
+          background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+          padding: 40px 24px 24px;
+          color: white;
         }
 
-        .carousel-info h3 {
-          font-size: 1.4rem;
+        .carousel-overlay h3 {
+          font-size: 1.6rem;
+          font-weight: 800;
           margin-bottom: 8px;
         }
 
-        .carousel-info p {
-          font-size: 0.95rem;
-          margin-bottom: 10px;
+        .carousel-overlay p {
+          font-size: 1rem;
           opacity: 0.9;
+          margin-bottom: 12px;
         }
 
-        .trending-price {
-          font-size: 1.3rem;
-          font-weight: 700;
-          color: #f97316;
+        .price-tag {
+          font-size: 1.5rem;
+          font-weight: 800;
+          color: #fbbf24;
         }
 
-        /* Carousel Navigation */
         .carousel-btn {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
           background: rgba(255,255,255,0.9);
           border: none;
+          width: 50px;
+          height: 50px;
           border-radius: 50%;
-          width: 45px;
-          height: 45px;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          color: #ff6b6b;
-          transition: 0.3s;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+          transition: all 0.3s;
           z-index: 10;
         }
 
         .carousel-btn:hover {
-          background: #ff6b6b;
-          color: #fff;
+          background: #ff6b35;
+          color: white;
           transform: translateY(-50%) scale(1.1);
         }
 
-        .carousel-btn.prev {
-          left: 15px;
-        }
+        .carousel-btn.prev { left: 16px; }
+        .carousel-btn.next { right: 16px; }
 
-        .carousel-btn.next {
-          right: 15px;
-        }
-
-        /* Carousel Dots */
         .carousel-dots {
           display: flex;
           justify-content: center;
-          gap: 8px;
-          padding: 12px 0;
-          border-top: 1px solid #eee;
+          gap: 10px;
+          padding: 16px 0;
         }
 
         .carousel-dot {
-          width: 10px;
-          height: 10px;
+          width: 12px;
+          height: 12px;
           border-radius: 50%;
-          background: #d1d5db;
+          background: #ddd;
           cursor: pointer;
-          transition: 0.3s;
+          transition: all 0.3s;
         }
 
         .carousel-dot.active {
-          background: #2563eb;
-          width: 30px;
-          border-radius: 5px;
+          background: #ff6b35;
+          width: 36px;
+          border-radius: 6px;
         }
 
-        /* === RIGHT: FEATURED GRID === */
         .featured-grid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          grid-template-rows: repeat(2, 1fr);
-          gap: 15px;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 16px;
         }
 
         .featured-item {
-          background: #fff;
-          border-radius: 12px;
+          background: white;
+          border-radius: 16px;
           overflow: hidden;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-          transition: 0.3s;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+          transition: all 0.3s;
           cursor: pointer;
         }
 
         .featured-item:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 6px 20px rgba(37, 99, 235, 0.15);
+          transform: translateY(-6px);
+          box-shadow: 0 12px 25px rgba(255,107,53,0.2);
         }
 
         .featured-item img {
           width: 100%;
-          height: 120px;
+          height: 100px;
           object-fit: cover;
         }
 
@@ -275,51 +254,43 @@ function TrendingProduk() {
           .trending-container {
             grid-template-columns: 1fr;
           }
-          .carousel-slide img {
-            height: 200px;
-          }
-          .featured-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
+          .carousel-slide img { height: 240px; }
+          .featured-grid { grid-template-columns: 1fr; }
+          .trending-title { font-size: 1.8rem; }
         }
       `}</style>
 
       <section className="trending-section">
-        <h2>Produk Pilihan</h2>
+        <h2 className="trending-title">Produk Pilihan</h2>
         <div className="trending-container">
-          {/* Kiri: Carousel */}
-          <div className="trending-carousel" ref={carouselRef}>
-            <div className="carousel-wrapper">
-              <div
-                className="carousel-track"
-                style={{ transform: `translateX(-${currentSlide * (100 / totalSlides)}%)` }}
-              >
-                {trendingSlides.map((slide, index) => (
-                  <div key={index} className="carousel-slide">
-                    <img src={slide.image} alt={slide.title} />
-                    <div className="carousel-info">
-                      <h3>{slide.title}</h3>
-                      <p>{slide.description}</p>
-                      <span className="trending-price">{slide.price}</span>
-                    </div>
+          <div className="carousel-wrapper" ref={carouselRef}>
+            <div
+              className="carousel-track"
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            >
+              {trendingSlides.map((slide, index) => (
+                <div key={index} className="carousel-slide">
+                  <img src={slide.image} alt={slide.title} />
+                  <div className="carousel-overlay">
+                    <h3>{slide.title}</h3>
+                    <p>{slide.description}</p>
+                    <div className="price-tag">{slide.price}</div>
                   </div>
-                ))}
-              </div>
-
-              {/* Tombol Navigasi */}
-              <button className="carousel-btn prev" onClick={prevSlide}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
-              <button className="carousel-btn next" onClick={nextSlide}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
+                </div>
+              ))}
             </div>
 
-            {/* Dots */}
+            <button className="carousel-btn prev" onClick={prevSlide}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <button className="carousel-btn next" onClick={nextSlide}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+
             <div className="carousel-dots">
               {trendingSlides.map((_, index) => (
                 <div
@@ -331,16 +302,15 @@ function TrendingProduk() {
             </div>
           </div>
 
-          {/* Kanan: Featured Grid */}
           <div className="featured-grid">
             {featuredProducts.map((item, index) => (
-              <article key={index} className="featured-item">
+              <div key={index} className="featured-item">
                 <img src={item.image} alt={item.title} />
                 <div className="featured-info">
                   <h4>{item.title}</h4>
                   <span>{item.price}</span>
                 </div>
-              </article>
+              </div>
             ))}
           </div>
         </div>

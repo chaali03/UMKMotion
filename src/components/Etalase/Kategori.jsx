@@ -1,27 +1,26 @@
-// Kategori.jsx
+// src/components/Etalase/Kategori.jsx
 import React, { useState, useEffect, useRef } from "react";
 
-function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setParentCategory, onSearch }) {
+export default function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setParentCategory, onSearch }) {
   const [localCategory, setLocalCategory] = useState(parentCategory || "all");
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(true);
+  const sectionRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const categories = [
-    { id: "all", label: "Semua Produk", icon: "/asset/logo kategori/all.webp" },
-    { id: "food", label: "Kuliner", icon: "/asset/logo kategori/kuliner.webp" },
-    { id: "services", label: "Jasa", icon: "/asset/logo kategori/jasa.webp" },
-    { id: "fashion", label: "Fashion", icon: "/asset/logo kategori/fashion.webp" },
-    { id: "craft", label: "Kerajinan/kriya", icon: "/asset/logo kategori/kriya.webp" },
-    { id: "beauty", label: "Kesehatan & Kecantikan", icon: "/asset/logo kategori/beauty.webp" },
-    { id: "agriculture", label: "Pertanian & Perkebunan", icon: "/asset/logo kategori/pertanian.webp" },
-    { id: "electronics", label: "Komputer & Elektronik", icon: "/asset/logo kategori/electronic.webp" },
-    { id: "furniture", label: "Furniture", icon: "/asset/logo kategori/furniture.webp" },
-    { id: "education", label: "Edukasi", icon: "/asset/logo kategori/edukasi.webp" },
-    { id: "others", label: "Lainnya", icon: "/asset/logo kategori/lainnya.webp" },
+    { id: "all", label: "Semua", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><circle cx="15" cy="9" r="2"/><circle cx="12" cy="15" r="2"/></svg> },
+    { id: "food", label: "Kuliner", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
+    { id: "services", label: "Jasa", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> },
+    { id: "fashion", label: "Fashion", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2m0 0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/></svg> },
+    { id: "craft", label: "Kerajinan", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2.9l3 5.4a2 2 0 0 1-3.6 2l-5.4-3a2 2 0 0 1 3.6-2zM12 9.1l3 5.4a2 2 0 0 1-3.6 2l-5.4-3a2 2 0 0 1 3.6-2zM12 15.3l3 5.4a2 2 0 0 1-3.6 2l-5.4-3a2 2 0 0 1 3.6-2z"/></svg> },
+    { id: "beauty", label: "Kesehatan", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg> },
+    { id: "agriculture", label: "Pertanian", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9a9 9 0 0 1 18 0"/><path d="M21 15a4 4 0 0 1-8 0 4 4 0 0 1-8 0"/><path d="M3 12h18"/></svg> },
+    { id: "electronics", label: "Elektronik", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M17 7v1M7 7v1M12 7v1M7 21v-1M17 21v-1"/></svg> },
+    { id: "furniture", label: "Furniture", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg> },
+    { id: "education", label: "Edukasi", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7z"/><line x1="2" y1="17" x2="22" y2="17"/><polyline points="2,12 9,9 15,12 22,9"/></svg> },
+    { id: "others", label: "Lainnya", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> },
   ];
-
-  const sectionRef = useRef(null);
-  const prevRef = useRef(null);
-  const nextRef = useRef(null);
-  const searchInputRef = useRef(null);
 
   const handleSelect = (category) => {
     setLocalCategory(category);
@@ -36,330 +35,386 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
     window.dispatchEvent(new CustomEvent("searchChange", { detail: query }));
   };
 
-  // Scroll & Touch Logic
-  useEffect(() => {
-    const section = sectionRef.current;
-    const prevBtn = prevRef.current;
-    const nextBtn = nextRef.current;
-    if (!section || !prevBtn || !nextBtn) return;
+  // SMOOTH SCROLL CUSTOM
+  const smoothScroll = (element, target, duration = 400) => {
+    const start = element.scrollLeft;
+    const distance = target - start;
+    let startTime = null;
 
-    const updateButtons = () => {
-      const hasScroll = section.scrollWidth > section.clientWidth;
-      const atStart = section.scrollLeft <= 1;
-      const atEnd = section.scrollLeft + section.clientWidth >= section.scrollWidth - 10;
+    const animation = (currentTime) => {
+      if (!startTime) startTime = currentTime;
+      const timeElapsed = currentTime - startTime;
+      const progress = Math.min(timeElapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      element.scrollLeft = start + distance * ease;
 
-      prevBtn.style.opacity = hasScroll && !atStart ? "1" : "0.3";
-      prevBtn.style.pointerEvents = hasScroll && !atStart ? "auto" : "none";
-      nextBtn.style.opacity = hasScroll && !atEnd ? "1" : "0.3";
-      nextBtn.style.pointerEvents = hasScroll && !atEnd ? "auto" : "none";
-    };
-
-    const scrollLeft = () => {
-      section.scrollBy({ left: -300, behavior: "smooth" });
-      setTimeout(updateButtons, 300);
-    };
-
-    const scrollRight = () => {
-      section.scrollBy({ left: 300, behavior: "smooth" });
-      setTimeout(updateButtons, 300);
-    };
-
-    prevBtn.addEventListener("click", scrollLeft);
-    nextBtn.addEventListener("click", scrollRight);
-
-    let isDown = false;
-    let startX;
-    let scrollLeftStart;
-    let velocity = 0;
-    let frameId = null;
-
-    const handleStart = (e) => {
-      isDown = true;
-      section.classList.add("grabbing");
-      startX = (e.pageX || e.touches[0].pageX) - section.offsetLeft;
-      scrollLeftStart = section.scrollLeft;
-      velocity = 0;
-      cancelMomentum();
-    };
-
-    const handleEnd = () => {
-      if (!isDown) return;
-      isDown = false;
-      section.classList.remove("grabbing");
-      startMomentum();
-    };
-
-    const handleMove = (e) => {
-      if (!isDown) return;
-      e.preventDefault();
-      const x = (e.pageX || e.touches[0].pageX) - section.offsetLeft;
-      const walk = (x - startX) * 2;
-      const prevScrollLeft = section.scrollLeft;
-      section.scrollLeft = scrollLeftStart - walk;
-      velocity = section.scrollLeft - prevScrollLeft;
-    };
-
-    const momentum = () => {
-      if (Math.abs(velocity) > 0.5) {
-        section.scrollBy({ left: velocity, behavior: "auto" });
-        velocity *= 0.95;
-        frameId = requestAnimationFrame(momentum);
-      } else {
-        cancelMomentum();
-        updateButtons();
+      if (progress < 1) {
+        requestAnimationFrame(animation);
       }
     };
 
-    const startMomentum = () => {
-      cancelMomentum();
-      frameId = requestAnimationFrame(momentum);
+    requestAnimationFrame(animation);
+  };
+
+  const scrollPrev = () => {
+    const section = sectionRef.current;
+    if (section) smoothScroll(section, section.scrollLeft - 320, 500);
+  };
+
+  const scrollNext = () => {
+    const section = sectionRef.current;
+    if (section) smoothScroll(section, section.scrollLeft + 320, 500);
+  };
+
+  // SCROLL LOGIC — WHEEL + DRAG + TOUCH + INERTIA
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    let isDown = false;
+    let startX = 0;
+    let scrollLeft = 0;
+    let velocity = 0;
+    let rafId = null;
+
+    const start = (e) => {
+      isDown = true;
+      section.classList.add("grabbing");
+      startX = e.pageX || e.touches?.[0]?.pageX;
+      scrollLeft = section.scrollLeft;
+      velocity = 0;
+      cancelAnimationFrame(rafId);
     };
 
-    const cancelMomentum = () => {
-      if (frameId) cancelAnimationFrame(frameId);
-      frameId = null;
+    const end = () => {
+      if (!isDown) return;
+      isDown = false;
+      section.classList.remove("grabbing");
+      const momentum = () => {
+        if (Math.abs(velocity) > 0.5) {
+          section.scrollBy({ left: velocity, behavior: "auto" });
+          velocity *= 0.95;
+          rafId = requestAnimationFrame(momentum);
+        }
+      };
+      rafId = requestAnimationFrame(momentum);
     };
 
-    section.addEventListener("mousedown", handleStart);
-    section.addEventListener("mouseleave", handleEnd);
-    section.addEventListener("mouseup", handleEnd);
-    section.addEventListener("mousemove", handleMove);
-    section.addEventListener("touchstart", handleStart, { passive: false });
-    section.addEventListener("touchend", handleEnd);
-    section.addEventListener("touchcancel", handleEnd);
-    section.addEventListener("touchmove", handleMove, { passive: false });
+    const move = (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX || e.touches?.[0]?.pageX;
+      const walk = (x - startX) * 2.5;
+      const prev = section.scrollLeft;
+      section.scrollLeft = scrollLeft - walk;
+      velocity = section.scrollLeft - prev;
+    };
 
-    updateButtons();
-    window.addEventListener("resize", updateButtons);
+    const handleWheel = (e) => {
+      e.preventDefault();
+      const delta = e.deltaY * 1.2 || e.deltaX * 1.2;
+      section.scrollBy({ left: delta, behavior: "auto" });
+    };
+
+    // CHECK SCROLL LIMITS
+    const checkScroll = () => {
+      setCanScrollPrev(section.scrollLeft > 10);
+      setCanScrollNext(section.scrollLeft < section.scrollWidth - section.clientWidth - 10);
+    };
+
+    // Events
+    section.addEventListener("mousedown", start);
+    section.addEventListener("mousemove", move);
+    section.addEventListener("mouseup", end);
+    section.addEventListener("mouseleave", end);
+
+    section.addEventListener("touchstart", start, { passive: false });
+    section.addEventListener("touchmove", move, { passive: false });
+    section.addEventListener("touchend", end);
+    section.addEventListener("touchcancel", end);
+
+    section.addEventListener("wheel", handleWheel, { passive: false });
+    section.addEventListener("scroll", checkScroll);
+
+    checkScroll(); // Initial check
 
     return () => {
-      prevBtn.removeEventListener("click", scrollLeft);
-      nextBtn.removeEventListener("click", scrollRight);
-      section.removeEventListener("mousedown", handleStart);
-      section.removeEventListener("mouseleave", handleEnd);
-      section.removeEventListener("mouseup", handleEnd);
-      section.removeEventListener("mousemove", handleMove);
-      section.removeEventListener("touchstart", handleStart);
-      section.removeEventListener("touchend", handleEnd);
-      section.removeEventListener("touchcancel", handleEnd);
-      section.removeEventListener("touchmove", handleMove);
-      window.removeEventListener("resize", updateButtons);
-      cancelMomentum();
+      section.removeEventListener("mousedown", start);
+      section.removeEventListener("mousemove", move);
+      section.removeEventListener("mouseup", end);
+      section.removeEventListener("mouseleave", end);
+      section.removeEventListener("touchstart", start);
+      section.removeEventListener("touchmove", move);
+      section.removeEventListener("touchend", end);
+      section.removeEventListener("touchcancel", end);
+      section.removeEventListener("wheel", handleWheel);
+      section.removeEventListener("scroll", checkScroll);
+      cancelAnimationFrame(rafId);
     };
   }, []);
+
+  // SVG ICONS
+  const LeftArrow = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+  );
+
+  const RightArrow = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <path d="M5 12h14M12 5l7 7-7 7"/>
+    </svg>
+  );
 
   return (
     <>
       <style jsx>{`
-        .search-card {
-          background: #fff;
-          padding: 20px;
-          border-radius: 14px;
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-          margin-bottom: 25px;
+        .kategori-card {
+          background: white;
+          border-radius: 28px;
+          padding: 32px;
+          margin: 20px auto;
+          max-width: 1400px;
+          border: 1px solid #f1f5f9;
+          overflow: hidden;
         }
-        .search-item {
+
+        .search-form {
           display: flex;
-          gap: 10px;
-          margin-bottom: 15px;
+          gap: 16px;
+          margin-bottom: 32px;
+          flex-wrap: wrap;
         }
-        .search-input-wrapper {
+
+        .search-input {
           flex: 1;
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
-        .search-input-wrapper input {
-          width: 100%;
-          padding: 12px 14px 12px 44px;
-          border: 1px solid #ccc;
-          border-radius: 8px;
+          min-width: 250px;
+          padding: 16px 20px;
+          border: 2px solid #e5e7eb;
+          border-radius: 18px;
           font-size: 1rem;
+          background: #f8fafc;
+          transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+          border-color: #ff6b35;
+          box-shadow: 0 0 0 5px rgba(255,107,53,0.15);
+          background: white;
           outline: none;
-          transition: 0.2s;
         }
-        .search-input-wrapper input:focus {
-          border-color: #ff6b6b;
-          box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-        }
-        .search-input-wrapper input:focus + .search-icon {
-          color: #ff6b6b;
-        }
-        .search-icon {
-          position: absolute;
-          left: 14px;
-          color: #94a3b8;
-          pointer-events: none;
-        }
-        .search-item button {
-          padding: 12px 25px;
-          background: #f33636;
-          color: #fff;
+
+        .search-btn {
+          background: linear-gradient(135deg, #ff6b35, #f33636);
+          color: white;
           border: none;
-          border-radius: 8px;
+          padding: 0 28px;
+          border-radius: 18px;
           font-weight: 600;
-          cursor: pointer;
-          transition: 0.3s;
-        }
-        .search-item button:hover {
-          background: #d72c2c;
-        }
-        .filter-item {
-          text-align: start;
-          background: #f8f9fa;
-          padding: 20px;
-          border-radius: 14px;
-        }
-        .filter-item p {
-          font-weight: 600;
-          font-size: 1.05rem;
-          color: #333;
-          margin-bottom: 14px;
-        }
-        .category-wrapper {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          position: relative;
-        }
-        .category-section {
-          display: flex;
-          gap: 12px;
-          overflow-x: auto;
-          overflow-y: hidden;
-          scroll-behavior: smooth;
-          padding: 8px 0;
-          flex: 1;
-          scrollbar-width: thin;
-          scrollbar-color: #d3d3d3 #f0f0f0;
-        }
-        .category-section::-webkit-scrollbar {
-          height: 6px;
-        }
-        .category-section::-webkit-scrollbar-thumb {
-          background: #d3d3d3;
-          border-radius: 10px;
-        }
-        .category-buttons {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 4px;
-          padding: 14px 20px;
-          min-width: 120px;
-          width: 120px;
-          height: 120px;
-          background: #fff;
-          border: 2px solid #eee;
-          border-radius: 14px;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-          color: #475569;
-          font-weight: 600;
-          font-size: 1rem;
-          text-align: center;
           cursor: pointer;
           transition: all 0.3s ease;
-          flex-shrink: 0;
+          white-space: nowrap;
+          height: 56px;
         }
-        .category-buttons img {
-          width: 42px;
-          height: 42px;
-          object-fit: contain;
-          margin-bottom: 6px;
+
+        .search-btn:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 10px 25px rgba(255,107,53,0.4);
         }
-        .category-buttons span {
-          font-size: 0.85rem;
-          color: #333;
-          text-align: center;
+
+        .filter-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 20px;
+          gap: 12px;
         }
-        .category-buttons:hover {
-          transform: translateY(-5px);
-          border-color: #60a5fa;
-          box-shadow: 0 5px 15px rgba(96, 165, 250, 0.25);
+
+        .filter-title {
+          font-size: 1.4rem;
+          font-weight: 800;
+          background: linear-gradient(135deg, #ff6b35, #f33636);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          margin: 0;
+          white-space: nowrap;
         }
-        .category-buttons.active {
-          background: linear-gradient(135deg, #60a5fa, #93c5fd);
-          color: #ffffff;
-          border-color: #3b82f6;
-          box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
-        }
-        .category-buttons.active span {
-          color: #ffffff;
-          font-weight: 600;
-        }
+
         .scroll-btn {
-          background: #fff;
-          border: 2px solid #eee;
-          border-radius: 50%;
+          background: #f1f5f9;
+          border: none;
           width: 40px;
           height: 40px;
+          border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          color: #f33636;
-          transition: 0.3s;
+          transition: all 0.3s ease;
+          color: #64748b;
           flex-shrink: 0;
           z-index: 10;
         }
+
         .scroll-btn:hover:not(:disabled) {
-          background: #f33636;
-          color: #fff;
-          transform: scale(1.1);
+          background: #ff6b35;
+          color: white;
+          transform: scale(1.12);
         }
-        .grabbing {
-          cursor: grabbing !important;
+
+        .scroll-btn:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+          background: #f1f5f9;
+          color: #94a3b8;
+        }
+
+        .scroll-btn svg {
+          width: 20px;
+          height: 20px;
+        }
+
+        .category-section {
+          display: flex;
+          gap: 16px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          padding: 12px 0;
+          scroll-behavior: smooth;
+          cursor: grab;
+          user-select: none;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior-x: contain;
+          scroll-snap-type: x proximity;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+
+        .category-section::-webkit-scrollbar {
+          display: none;
+        }
+
+        .category-section.grabbing {
+          cursor: grabbing;
+          scroll-behavior: auto;
+        }
+
+        .category-btn {
+          flex-shrink: 0;
+          width: 120px;
+          padding: 20px 12px;
+          background: #f8fafc;
+          border: 2px solid transparent;
+          border-radius: 24px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          text-align: center;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .category-btn:hover {
+          border-color: #ff6b35;
+          background: white;
+          transform: translateY(-8px);
+          box-shadow: 0 15px 30px rgba(255,107,53,0.2);
+        }
+
+        .category-btn.active {
+          background: linear-gradient(135deg, #ff6b35, #f33636);
+          border-color: transparent;
+          color: white;
+          transform: translateY(-8px);
+          box-shadow: 0 20px 40px rgba(255,107,53,0.35);
+        }
+
+        .category-btn svg {
+          width: 36px;
+          height: 36px;
+          color: #64748b;
+          transition: color 0.3s;
+        }
+
+        .category-btn:hover svg,
+        .category-btn.active svg {
+          color: #ff6b35;
+        }
+
+        .category-btn.active svg {
+          color: white;
+        }
+
+        .category-btn span {
+          font-size: 0.85rem;
+          font-weight: 600;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100px;
+        }
+
+        @media (max-width: 768px) {
+          .kategori-card { padding: 24px 16px; margin: 16px; border-radius: 24px; }
+          .search-form { flex-direction: column; gap: 12px; }
+          .search-input, .search-btn { width: 100%; height: 52px; }
+          .filter-header { margin-bottom: 16px; }
+          .scroll-btn { width: 36px; height: 36px; }
+          .scroll-btn svg { width: 18px; height: 18px; }
+          .category-section { gap: 12px; padding: 10px 0; }
+          .category-btn { width: 100px; padding: 16px 8px; }
+          .category-btn svg { width: 32px; height: 32px; }
+          .filter-title { font-size: 1.25rem; }
+        }
+
+        @media (max-width: 480px) {
+          .category-section { gap: 10px; }
+          .category-btn { width: 90px; padding: 14px 6px; }
+          .category-btn span { font-size: 0.75rem; max-width: 80px; }
         }
       `}</style>
 
-      <section className="search-card">
-        <div className="search-item">
-          <form onSubmit={handleSearch} style={{ display: "flex", width: "100%", gap: "10px" }}>
-            <div className="search-input-wrapper">
-              <input ref={searchInputRef} type="text" placeholder="Cari produk, layanan, dll..." />
-              <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-            </div>
-            <button type="submit">Cari</button>
-          </form>
+      <div className="kategori-card">
+        <form onSubmit={handleSearch} className="search-form">
+          <input ref={searchInputRef} type="text" className="search-input" placeholder="Cari produk, jasa, UMKM..." />
+          <button type="submit" className="search-btn">Cari</button>
+        </form>
+
+        <div className="filter-header">
+          <button 
+            onClick={scrollPrev} 
+            className="scroll-btn" 
+            disabled={!canScrollPrev}
+            aria-label="Scroll kiri"
+          >
+            <LeftArrow />
+          </button>
+          <h3 className="filter-title">Pilih Kategori</h3>
+          <button 
+            onClick={scrollNext} 
+            className="scroll-btn" 
+            disabled={!canScrollNext}
+            aria-label="Scroll kanan"
+          >
+            <RightArrow />
+          </button>
         </div>
 
-        <div className="filter-item">
-          <p>Filter produk</p>
-          <div className="category-wrapper">
-            <button ref={prevRef} className="scroll-btn" aria-label="Scroll kiri">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
+        <div ref={sectionRef} className="category-section">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              className={`category-btn ${localCategory === cat.id ? "active" : ""}`}
+              onClick={() => handleSelect(cat.id)}
+            >
+              {cat.icon}
+              <span>{cat.label}</span>
             </button>
-
-            <div ref={sectionRef} className="category-section">
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  className={`category-buttons ${localCategory === cat.id ? "active" : ""}`}
-                  onClick={() => handleSelect(cat.id)}
-                >
-                  <img src={cat.icon} alt={cat.label} />
-                  <span>{cat.label}</span>
-                </button>
-              ))}
-            </div>
-
-            <button ref={nextRef} className="scroll-btn" aria-label="Scroll kanan">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
-          </div>
+          ))}
         </div>
-      </section>
+      </div>
     </>
   );
 }
-
-export default Kategori;
