@@ -31,17 +31,26 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   return (
     <section ref={sectionRef} className={`search-section ${isVisible ? 'visible' : ''}`}>
       <style>{`
+        /* ===== BASE STYLES ===== */
         .search-section {
           position: relative;
           width: 100%;
           max-width: 100%;
-          padding: clamp(3rem, 6vw, 5rem) clamp(1rem, 3vw, 2rem);
-          overflow: hidden;
+          /* Added extra padding to prevent clipping */
+          padding: clamp(4rem, 8vw, 6rem) clamp(1rem, 3vw, 2rem);
+          /* Changed to visible to prevent clipping */
+          overflow: visible;
           background: #2563eb;
           box-sizing: border-box;
           opacity: 0;
           transform: translateY(40px);
-          transition: opacity 1s cubic-bezier(0.34, 1.56, 0.64, 1), transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+          will-change: opacity, transform;
+          transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                      transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+          backface-visibility: hidden;
+          -webkit-font-smoothing: antialiased;
+          /* Ensure background doesn't clip */
+          isolation: isolate;
         }
 
         .search-section.visible {
@@ -49,7 +58,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           transform: translateY(0);
         }
 
-        /* Animated Background Orbs */
+        /* ===== ANIMATED BACKGROUND ORBS ===== */
         .search-section::before,
         .search-section::after {
           content: '';
@@ -58,6 +67,8 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           filter: blur(80px);
           pointer-events: none;
           animation: float 20s ease-in-out infinite;
+          /* Ensure they stay behind */
+          z-index: 0;
         }
 
         .search-section::before {
@@ -79,12 +90,21 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         }
 
         @keyframes float {
-          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
-          33% { transform: translate(40px, -40px) scale(1.1); opacity: 0.4; }
-          66% { transform: translate(-30px, 30px) scale(0.95); opacity: 0.35; }
+          0%, 100% { 
+            transform: translate(0, 0) scale(1); 
+            opacity: 0.3; 
+          }
+          33% { 
+            transform: translate(30px, -30px) scale(1.08); 
+            opacity: 0.4; 
+          }
+          66% { 
+            transform: translate(-20px, 20px) scale(0.97); 
+            opacity: 0.35; 
+          }
         }
-
-        /* Grid Pattern Overlay */
+        
+        /* ===== GRID PATTERN OVERLAY ===== */
         .grid-overlay {
           position: absolute;
           inset: 0;
@@ -93,20 +113,26 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           opacity: 0.4;
           pointer-events: none;
           mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+          z-index: 0;
         }
 
+        /* ===== CONTAINER ===== */
         .search-container {
           width: 100%;
           max-width: 900px;
           margin: 0 auto;
-          padding: 0;
+          /* Added padding for animations */
+          padding: 0 clamp(0.5rem, 2vw, 1rem);
           box-sizing: border-box;
           opacity: 0;
           transform: translateY(30px) scale(0.95);
-          transition: opacity 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s;
+          will-change: opacity, transform;
+          transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s, 
+                      transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
           position: relative;
           z-index: 1;
-          className="flex items-center justify-center gap-3 px-8 h-16 md:h-20 text-lg md:text-xl font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-2xl whitespace-nowrap transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/30 active:scale-95";
+          backface-visibility: hidden;
+          transform-style: preserve-3d;
         }
 
         .search-section.visible .search-container {
@@ -114,10 +140,11 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           transform: translateY(0) scale(1);
         }
 
-        /* Header Section */
+        /* ===== HEADER SECTION ===== */
         .search-header {
           text-align: center;
-          margin-bottom: 2.5rem;
+          /* Added extra bottom margin for spacing */
+          margin-bottom: clamp(2.5rem, 5vw, 3.5rem);
           opacity: 0;
           transform: translateY(20px);
           transition: opacity 0.7s ease 0.4s, transform 0.7s ease 0.4s;
@@ -180,21 +207,35 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           line-height: 1.6;
         }
         
-        /* Premium Search Box */
+        /* ===== SEARCH BOX WRAPPER ===== */
+        .search-box-wrapper {
+          /* Added wrapper with padding to prevent clipping */
+          padding: clamp(0.5rem, 2vw, 1rem);
+          /* Ensure space for shadow and animations */
+          margin: -0.5rem;
+        }
+
+        /* ===== PREMIUM SEARCH BOX ===== */
         .search-box {
           width: 100%;
           background: #FFFFFF;
           border-radius: 20px;
-          padding: 1rem;
+          padding: clamp(0.875rem, 2vw, 1rem);
           box-shadow: 
             0 4px 24px rgba(0, 0, 0, 0.08),
             0 0 0 1px rgba(0, 0, 0, 0.05) inset;
           backdrop-filter: blur(20px);
-          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          will-change: transform, box-shadow;
+          /* Smoother transition */
+          transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
           box-sizing: border-box;
           position: relative;
-          overflow: hidden;
-          className="w-full h-16 md:h-20 px-6 md:px-8 text-lg md:text-xl rounded-2xl border-2 border-blue-300/50 bg-white/10 backdrop-blur-lg text-white placeholder-blue-100/70 focus:outline-none focus:ring-2 focus:ring-blue-200/50 focus:border-transparent transition-all duration-300 shadow-lg hover:shadow-xl hover:bg-white/15";
+          /* Allow pseudo-elements to overflow */
+          overflow: visible;
+          transform: translateZ(0);
+          backface-visibility: hidden;
+          /* Ensure proper stacking */
+          isolation: isolate;
         }
 
         .search-box::before {
@@ -204,25 +245,30 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           left: -100%;
           width: 100%;
           height: 100%;
-          background: #2563eb;
+          background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.08), transparent);
           transition: left 0.6s ease;
+          border-radius: 20px;
+          pointer-events: none;
         }
 
         .search-box.focused {
+          /* Reduced transform to prevent clipping */
+          transform: translateY(-4px) scale(1.005);
           box-shadow: 
-            0 8px 32px rgba(0, 0, 0, 0.1),
-            0 0 0 2px #FF6914 inset;
-          transform: translateY(-2px) scale(1.01);
+            0 12px 40px rgba(0, 0, 0, 0.12),
+            0 0 0 2px #FF6914 inset,
+            0 20px 60px rgba(255, 105, 20, 0.15);
         }
 
         .search-box.focused::before {
           left: 100%;
         }
         
+        /* ===== SEARCH CONTENT ===== */
         .search-content {
           display: flex;
           align-items: center;
-          gap: 1rem;
+          gap: clamp(0.75rem, 2vw, 1rem);
           width: 100%;
           position: relative;
           z-index: 1;
@@ -231,34 +277,39 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         .search-field {
           display: flex;
           align-items: center;
-          gap: 1rem;
+          gap: clamp(0.75rem, 2vw, 1rem);
           flex: 1;
           padding: 0.5rem;
           transition: all 0.3s ease;
+          min-width: 0;
         }
         
+        /* ===== SEARCH ICON ===== */
         .search-icon-wrapper {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 48px;
-          height: 48px;
+          width: clamp(44px, 8vw, 48px);
+          height: clamp(44px, 8vw, 48px);
           background: #e0f2fe;
           border-radius: 14px;
           flex-shrink: 0;
           transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
           border: 1px solid #bae6fd;
+          /* Ensure icon doesn't get cut */
+          overflow: visible;
         }
 
         .search-box.focused .search-icon-wrapper {
           background: #2563eb;
-          transform: rotate(8deg) scale(1.05);
-          box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
+          /* Reduced rotation to prevent clipping */
+          transform: rotate(6deg) scale(1.05);
+          box-shadow: 0 6px 16px rgba(29, 78, 216, 0.35);
         }
         
         .search-icon-wrapper svg {
-          width: 24px;
-          height: 24px;
+          width: clamp(20px, 4vw, 24px);
+          height: clamp(20px, 4vw, 24px);
           color: #64748b;
           transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
@@ -268,16 +319,20 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           transform: scale(1.1);
         }
 
+        /* ===== INPUT WRAPPER ===== */
         .search-input-wrapper {
           flex: 1;
           position: relative;
+          min-width: 0;
+          /* Extra padding bottom for hint text */
+          padding-bottom: clamp(1.25rem, 3vw, 2rem);
         }
         
         .search-input {
           border: none;
           outline: none;
           background: transparent;
-          font-size: clamp(1rem, 2.5vw, 1.125rem);
+          font-size: clamp(0.9375rem, 2vw, 1.125rem);
           color: #1e293b;
           width: 100%;
           font-family: inherit;
@@ -296,17 +351,22 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           color: #cbd5e1;
         }
 
-        /* Search Suggestions Indicator */
+        /* ===== SEARCH COUNT HINT ===== */
         .search-count {
           position: absolute;
-          bottom: -1.5rem;
+          /* Positioned inside wrapper to prevent clipping */
+          bottom: 0;
           left: 0;
-          font-size: 0.75rem;
-          color: rgba(255, 255, 255, 0.7);
+          font-size: clamp(0.6875rem, 1.5vw, 0.75rem);
+          color: rgba(255, 255, 255, 0.8);
           font-weight: 500;
           opacity: 0;
           transform: translateY(-5px);
-          transition: all 0.3s ease;
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
         }
 
         .search-box.focused .search-count {
@@ -314,30 +374,33 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           transform: translateY(0);
         }
         
-        /* Premium Search Button */
+        /* ===== SEARCH BUTTON ===== */
         .search-button {
           background: #2563eb;
           color: white;
           border: none;
           border-radius: 14px;
-          padding: 0.875rem 1.75rem;
-          font-size: 1rem;
+          padding: clamp(0.75rem, 2vw, 0.875rem) clamp(1.25rem, 3vw, 1.75rem);
+          font-size: clamp(0.9375rem, 1.8vw, 1rem);
           font-weight: 700;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0.625rem;
+          gap: clamp(0.5rem, 1.5vw, 0.625rem);
+          will-change: transform, box-shadow;
           transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
           white-space: nowrap;
           box-shadow: 
             0 8px 24px rgba(37, 99, 235, 0.4),
             inset 0 1px 0 rgba(255, 255, 255, 0.4);
           flex-shrink: 0;
-          min-height: 48px;
+          min-height: clamp(44px, 8vw, 48px);
           position: relative;
           overflow: hidden;
           letter-spacing: 0.3px;
+          transform: translateZ(0);
+          backface-visibility: hidden;
         }
 
         .search-button::before {
@@ -354,8 +417,8 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         }
         
         .search-button svg {
-          width: 20px;
-          height: 20px;
+          width: clamp(18px, 3vw, 20px);
+          height: clamp(18px, 3vw, 20px);
           transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
@@ -364,7 +427,8 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         }
         
         .search-button:hover {
-          transform: translateY(-3px) scale(1.03);
+          /* Reduced transform to prevent clipping */
+          transform: translateY(-2px) scale(1.02);
           box-shadow: 
             0 12px 36px rgba(37, 99, 235, 0.5),
             0 0 30px rgba(59, 130, 246, 0.5),
@@ -373,7 +437,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         }
         
         .search-button:active {
-          transform: translateY(-1px) scale(0.98);
+          transform: translateY(0) scale(0.98);
           box-shadow: 
             0 4px 16px rgba(29, 78, 216, 0.4),
             inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -383,9 +447,10 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           opacity: 0.5;
           cursor: not-allowed;
           transform: none;
+          pointer-events: none;
         }
 
-        /* Floating Particles */
+        /* ===== FLOATING PARTICLES ===== */
         .particle {
           position: absolute;
           width: 4px;
@@ -394,6 +459,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           border-radius: 50%;
           pointer-events: none;
           animation: particleFloat 15s linear infinite;
+          z-index: 0;
         }
 
         @keyframes particleFloat {
@@ -420,29 +486,45 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         .particle:nth-child(5) { left: 70%; animation-delay: 12s; }
         .particle:nth-child(6) { left: 85%; animation-delay: 15s; }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
+        /* ===== RESPONSIVE - TABLET ===== */
+        @media (min-width: 768px) and (max-width: 1023px) {
           .search-section {
-            padding: clamp(2rem, 5vw, 3rem) clamp(1rem, 3vw, 1.5rem);
+            padding: clamp(3.5rem, 7vw, 5rem) clamp(1.5rem, 3vw, 2rem);
           }
 
           .search-header {
-            margin-bottom: 1.75rem;
+            margin-bottom: 2.5rem;
+          }
+        }
+
+        /* ===== RESPONSIVE - MOBILE ===== */
+        @media (max-width: 767px) {
+          .search-section {
+            padding: clamp(3rem, 6vw, 4rem) clamp(1rem, 3vw, 1.5rem);
+          }
+
+          .search-header {
+            margin-bottom: 2rem;
           }
 
           .search-box {
-            padding: 0.75rem;
+            padding: 0.875rem;
             border-radius: 16px;
+          }
+
+          .search-box-wrapper {
+            padding: 0.75rem;
+            margin: -0.75rem;
           }
 
           .search-content {
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 1rem;
           }
 
           .search-field {
             width: 100%;
-            padding: 0.375rem;
+            padding: 0.5rem;
           }
 
           .search-icon-wrapper {
@@ -457,8 +539,21 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
 
           .search-button {
             width: 100%;
-            padding: 0.875rem 1.25rem;
+            padding: 1rem 1.5rem;
             min-height: 48px;
+          }
+
+          /* Reduced transforms on mobile */
+          .search-box.focused {
+            transform: translateY(-2px) scale(1.002);
+          }
+
+          .search-box.focused .search-icon-wrapper {
+            transform: rotate(4deg) scale(1.03);
+          }
+
+          .search-button:hover {
+            transform: translateY(-1px) scale(1.01);
           }
         }
 
@@ -482,7 +577,35 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
 
           .search-button {
             font-size: 0.9375rem;
-            padding: 0.8rem 1rem;
+            padding: 0.875rem 1.25rem;
+          }
+
+          .search-count {
+            font-size: 0.6875rem;
+          }
+        }
+
+        /* ===== ACCESSIBILITY ===== */
+        @media (prefers-reduced-motion: reduce) {
+          .search-section,
+          .search-container,
+          .search-box,
+          .search-button,
+          .search-icon-wrapper,
+          .search-count {
+            transition: none !important;
+            animation: none !important;
+          }
+        }
+
+        /* ===== LANDSCAPE MOBILE ===== */
+        @media (max-width: 896px) and (orientation: landscape) {
+          .search-section {
+            padding: 2.5rem 1.5rem;
+          }
+
+          .search-header {
+            margin-bottom: 1.5rem;
           }
         }
       `}</style>
@@ -503,7 +626,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         <div className="search-header">
           <div className="header-badge">
             <Sparkles color="white" />
-            <span className="text-white">TEMUKAN UMKM TERBAIK</span>
+            <span>TEMUKAN UMKM TERBAIK</span>
           </div>
           <h2 className="search-title">
             Cari UMKM Pilihan Anda
@@ -513,41 +636,43 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           </p>
         </div>
 
-        {/* Search Box */}
-        <div className={`search-box ${isFocused ? 'focused' : ''}`}>
-          <div className="search-content">
-            <div className="search-field">
-              <div className="search-icon-wrapper">
-                <Search strokeWidth={2.5} />
+        {/* Search Box with Wrapper to prevent clipping */}
+        <div className="search-box-wrapper">
+          <div className={`search-box ${isFocused ? 'focused' : ''}`}>
+            <div className="search-content">
+              <div className="search-field">
+                <div className="search-icon-wrapper">
+                  <Search strokeWidth={2.5} />
+                </div>
+                
+                <div className="search-input-wrapper">
+                  <input 
+                    type="text" 
+                    placeholder="Cari produk, jasa, atau UMKM..." 
+                    className="search-input"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                  />
+                  {isFocused && (
+                    <div className="search-count">
+                      Tekan Enter atau klik tombol untuk mencari
+                    </div>
+                  )}
+                </div>
               </div>
               
-              <div className="search-input-wrapper">
-                <input 
-                  type="text" 
-                  placeholder="Cari produk, jasa, atau UMKM..." 
-                  className="search-input"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                />
-                {isFocused && (
-                  <div className="search-count">
-                    Tekan Enter atau klik tombol untuk mencari
-                  </div>
-                )}
-              </div>
+              <button 
+                className="search-button" 
+                onClick={handleSearch}
+                disabled={!query.trim()}
+              >
+                <Search strokeWidth={2.5} />
+                <span>Cari Sekarang</span>
+              </button>
             </div>
-            
-            <button 
-              className="search-button" 
-              onClick={handleSearch}
-              disabled={!query.trim()}
-            >
-              <Search strokeWidth={2.5} />
-              <span>Cari Sekarang</span>
-            </button>
           </div>
         </div>
       </div>
