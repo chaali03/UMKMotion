@@ -15,11 +15,11 @@ interface Product {
 
 const fallback: Product = {
   product_title: "TrendPlain 160z/470ml Glass Oil Sprayer for Cooking – 2 in 1 Olive Oil Dispenser Bottle for Kitchen Gadgets and Air Fryer Accessories, Salad, BBQ - Black Global Recycled Standard",
-  product_photo: "https://via.placeholder.com/600",
+  product_photo: "https://via.placeholder.com/600x800/2563eb/ffffff?text=Oil+Sprayer",
   product_price: "Rp 143.840",
   product_original_price: "Rp 299.000",
   product_star_rating: "4.5",
-  product_num_ratings: "24124",
+  product_num_ratings: "24125",
   seller_name: "UMKMotion Official",
   discount: "52%",
   asin: "B0CJF94M8J",
@@ -29,11 +29,13 @@ const fallback: Product = {
 export default function BuyingPage() {
   const [product, setProduct] = useState<Product>(fallback);
   const [quantity, setQuantity] = useState(1);
-  const [activeThumb, setActiveThumb] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(0);
   const [activeColor, setActiveColor] = useState(0);
   const [activeTab, setActiveTab] = useState("description");
   const [isZoomed, setIsZoomed] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -61,7 +63,6 @@ export default function BuyingPage() {
   const stars = renderStars(product.product_star_rating);
   const discount = product.discount || "0%";
 
-  // 3 GAMBAR UTAMA UNTUK CAROUSEL
   const carouselImages = [
     product.product_photo,
     product.product_photo,
@@ -98,18 +99,33 @@ export default function BuyingPage() {
     window.location.href = "/checkout";
   };
 
+  // ZOOM FOLLOW MOUSE - AKURAT
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (window.innerWidth <= 768) return;
-    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - left) / width) * 100;
-    const y = ((e.clientY - top) / height) * 100;
+    if (window.innerWidth <= 768 || !isZoomed) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
     setMousePos({ x, y });
   };
+
+  // SWIPE
+  const handleTouchStart = (e: React.TouchEvent) => setTouchStart(e.targetTouches[0].clientX);
+  const handleTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientX);
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && activeSlide < carouselImages.length - 1) setActiveSlide(activeSlide + 1);
+    if (isRightSwipe && activeSlide > 0) setActiveSlide(activeSlide - 1);
+  };
+
+  const goToSlide = (index: number) => setActiveSlide(index);
 
   return (
     <>
       <style>{`
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
           font-family: 'Inter', sans-serif;
           background: #f5f5f5;
@@ -117,27 +133,21 @@ export default function BuyingPage() {
           line-height: 1.5;
         }
 
-        /* Breadcrumb */
-        .breadcrumb-wrapper {
-          max-width: 1200px;
-          margin: 12px auto;
-          padding: 0 16px;
-          font-size: 13px;
-          color: #666;
+        /* TOKOPEDIA LAYOUT: GAP DARI LAYAR */
+        .page-container {
+          padding-top: 80px; /* tinggi navbar */
+          padding-left: 16px;
+          padding-right: 16px;
+          min-height: 100vh;
         }
-        .breadcrumb {
-          display: flex;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 4px;
+        @media (min-width: 769px) {
+          .page-container { padding-left: 24px; padding-right: 24px; }
         }
-        .breadcrumb a { color: #2563eb; text-decoration: none; }
-        .breadcrumb .current { color: #1a1a1a; font-weight: 600; white-space: nowrap; }
 
-        /* CARD UTAMA */
+        /* CARD UTAMA - RAPI */
         .product-card {
           max-width: 1200px;
-          margin: 0 auto 100px;
+          margin: 0 auto 140px;
           background: white;
           border-radius: 16px;
           overflow: hidden;
@@ -145,7 +155,7 @@ export default function BuyingPage() {
           padding: 16px;
         }
         @media (max-width: 768px) {
-          .product-card { margin: 0 8px 120px; padding: 12px; border-radius: 12px; }
+          .product-card { margin: 0 0 140px; padding: 12px; border-radius: 12px; }
         }
 
         /* Grid */
@@ -158,28 +168,36 @@ export default function BuyingPage() {
           .product-grid { grid-template-columns: 1fr; gap: 14px; }
         }
 
-        /* CAROUSEL KIRI */
+        /* CAROUSEL */
         .carousel-wrapper {
           position: relative;
           border-radius: 12px;
           overflow: hidden;
           background: white;
           box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+          user-select: none;
+          cursor: zoom-in;
         }
+
         .carousel {
           display: flex;
           transition: transform 0.4s ease;
         }
+
         .carousel-slide {
           min-width: 100%;
           position: relative;
+          overflow: hidden;
         }
+
         .carousel-slide img {
           width: 100%;
           height: auto;
           aspect-ratio: 4 / 3;
           object-fit: contain;
           background: white;
+          transition: transform 0.4s ease;
+          transform-origin: center center;
         }
 
         /* ZOOM - DESKTOP ONLY */
@@ -215,13 +233,14 @@ export default function BuyingPage() {
           border-radius: 50%;
           background: #ddd;
           transition: 0.3s;
+          cursor: pointer;
         }
         .dot.active {
           background: #10b981;
           transform: scale(1.2);
         }
 
-        /* THUMBNAILS - DESKTOP ONLY */
+        /* THUMBNAILS DESKTOP */
         .thumbnails-desktop {
           display: grid;
           grid-template-columns: repeat(5, 1fr);
@@ -240,6 +259,7 @@ export default function BuyingPage() {
         }
         .thumb:hover, .thumb.active {
           border-color: #10b981;
+          transform: scale(1.05);
         }
         .thumb img {
           width: 100%;
@@ -273,7 +293,6 @@ export default function BuyingPage() {
           align-items: center;
           gap: 6px;
           font-size: 12px;
-          flex-wrap: wrap;
         }
         .stars { color: #fbbf24; font-size: 14px; }
         .rating-text { color: #666; font-weight: 500; }
@@ -282,18 +301,9 @@ export default function BuyingPage() {
           display: flex;
           align-items: baseline;
           gap: 6px;
-          flex-wrap: wrap;
         }
-        .current-price {
-          font-size: 22px;
-          font-weight: 800;
-          color: #dc2626;
-        }
-        .original-price {
-          font-size: 14px;
-          color: #999;
-          text-decoration: line-through;
-        }
+        .current-price { font-size: 22px; font-weight: 800; color: #dc2626; }
+        .original-price { font-size: 14px; color: #999; text-decoration: line-through; }
 
         .description {
           font-size: 12.5px;
@@ -303,11 +313,10 @@ export default function BuyingPage() {
           -webkit-line-clamp: 5;
           -webkit-box-orient: vertical;
           overflow: hidden;
-          text-overflow: ellipsis;
         }
 
         .variant-section label { font-size: 12px; font-weight: 600; color: #333; margin-bottom: 4px; }
-        .color-options { display: flex; gap: 8px; flex-wrap: wrap; }
+        .color-options { display: flex; gap: 8px; }
         .color-btn {
           width: 26px;
           height: 26px;
@@ -315,9 +324,7 @@ export default function BuyingPage() {
           border: 2px solid transparent;
           cursor: pointer;
         }
-        .color-btn.active, .color-btn:hover {
-          border-color: #10b981;
-        }
+        .color-btn.active, .color-btn:hover { border-color: #10b981; }
 
         .quantity-section {
           display: flex;
@@ -336,6 +343,7 @@ export default function BuyingPage() {
           border-radius: 6px;
         }
         .quantity-section input {
+          justify-content: center;
           width: 40px;
           height: 30px;
           text-align: center;
@@ -344,7 +352,6 @@ export default function BuyingPage() {
           font-weight: 600;
         }
 
-        /* DESKTOP BUTTONS */
         .action-buttons-desktop {
           display: flex;
           gap: 8px;
@@ -376,7 +383,6 @@ export default function BuyingPage() {
           justify-content: center;
         }
 
-        /* MOBILE STICKY BAR */
         .action-bar {
           position: fixed;
           bottom: 0;
@@ -403,7 +409,6 @@ export default function BuyingPage() {
         }
         .item-info strong { color: #333; }
 
-        /* TABS */
         .tabs {
           display: flex;
           gap: 4px;
@@ -434,127 +439,134 @@ export default function BuyingPage() {
         }
       `}</style>
 
-      <div className="breadcrumb-wrapper">
-        <div className="breadcrumb">
-          <a href="/">Back</a>
-          <span>›</span>
-          <span className="current">Product Detail</span>
-        </div>
-      </div>
-
-      <div className="product-card">
-        <div className="product-grid">
-          {/* CAROUSEL KIRI */}
-          <div>
-            <div className="carousel-wrapper">
+      {/* LAYOUT + NAVBAR MARGIN */}
+      <div className="page-container">
+        <div className="product-card">
+          <div className="product-grid">
+            {/* CAROUSEL */}
+            <div>
               <div
-                className="carousel"
-                style={{ transform: `translateX(-${activeThumb * 100}%)` }}
+                className="carousel-wrapper"
                 onMouseEnter={() => window.innerWidth > 768 && setIsZoomed(true)}
                 onMouseLeave={() => setIsZoomed(false)}
                 onMouseMove={handleMouseMove}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
               >
+                <div
+                  className="carousel"
+                  style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+                >
+                  {carouselImages.map((src, i) => (
+                    <div
+                      key={i}
+                      className={`carousel-slide ${isZoomed ? 'zoomed' : ''}`}
+                    >
+                      <img
+                        src={src}
+                        alt={`${product.product_title} ${i + 1}`}
+                        style={{
+                          transform: isZoomed ? `scale(2)` : 'scale(1)',
+                          transformOrigin: isZoomed ? `${mousePos.x}% ${mousePos.y}%` : 'center',
+                        }}
+                      />
+                      <div className="discount-badge">{discount} OFF</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="carousel-dots">
+                {carouselImages.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`dot ${activeSlide === i ? "active" : ""}`}
+                    onClick={() => goToSlide(i)}
+                  />
+                ))}
+              </div>
+
+              <div className="thumbnails-desktop">
                 {carouselImages.map((src, i) => (
-                  <div key={i} className={`carousel-slide ${isZoomed ? 'zoomed' : ''}`}>
-                    <img src={src} alt={`${product.product_title} ${i + 1}`} />
-                    <div className="discount-badge">{discount} OFF</div>
+                  <div
+                    key={i}
+                    className={`thumb ${activeSlide === i ? "active" : ""}`}
+                    onClick={() => goToSlide(i)}
+                  >
+                    <img src={src} alt={`Thumb ${i + 1}`} />
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* DOT INDICATOR */}
-            <div className="carousel-dots">
-              {carouselImages.map((_, i) => (
-                <div
-                  key={i}
-                  className={`dot ${activeThumb === i ? "active" : ""}`}
-                  onClick={() => setActiveThumb(i)}
-                />
-              ))}
-            </div>
+            {/* DETAILS */}
+            <div className="details-section">
+              <h1 className="product-title">{product.product_title}</h1>
+              <div className="rating-reviews">
+                <div className="stars">{stars}</div>
+                <span className="rating-text">{product.product_star_rating} ({product.product_num_ratings} Reviews)</span>
+              </div>
+              <div className="price-section">
+                <div className="current-price">{product.product_price}</div>
+                {product.product_original_price && <div className="original-price">{product.product_original_price}</div>}
+              </div>
 
-            {/* THUMBNAILS - DESKTOP ONLY */}
-            <div className="thumbnails-desktop">
-              {carouselImages.map((src, i) => (
-                <div
-                  key={i}
-                  className={`thumb ${activeThumb === i ? "active" : ""}`}
-                  onClick={() => setActiveThumb(i)}
-                >
-                  <img src={src} alt={`Thumb ${i + 1}`} />
+              <p className="description">
+                This gaming chair is designed to provide exceptional comfort during extended sessions. 
+                Featuring adjustable height, tilt, and recline functions, it supports your posture whether you're working, studying, or gaming. 
+                The premium leather upholstery and contoured cushioning deliver a smooth, durable, and elegant look.
+              </p>
+
+              <div className="variant-section">
+                <label>Color Available</label>
+                <div className="color-options">
+                  {colors.map((color, i) => (
+                    <button key={i} className={`color-btn ${activeColor === i ? "active" : ""}`} style={{ background: color.hex }} title={color.name} onClick={() => setActiveColor(i)} />
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          {/* DETAILS KANAN */}
-          <div className="details-section">
-            <h1 className="product-title">{product.product_title}</h1>
-            <div className="rating-reviews">
-              <div className="stars">{stars}</div>
-              <span className="rating-text">{product.product_star_rating} ({product.product_num_ratings} Reviews)</span>
-            </div>
-            <div className="price-section">
-              <div className="current-price">{product.product_price}</div>
-              {product.product_original_price && <div className="original-price">{product.product_original_price}</div>}
-            </div>
+              <div className="quantity-section">
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
+                <input type="number" value={quantity} readOnly />
+                <button onClick={() => setQuantity(quantity + 1)}>+</button>
+              </div>
 
-            <p className="description">
-              This gaming chair is designed to provide exceptional comfort during extended sessions. 
-              Featuring adjustable height, tilt, and recline functions, it supports your posture whether you're working, studying, or gaming. 
-              The premium leather upholstery and contoured cushioning deliver a smooth, durable, and elegant look.
-            </p>
+              <div className="action-buttons-desktop">
+                <button className="btn-buy" onClick={handleBuyNow}>Buy Now</button>
+                <button className="btn-cart" onClick={handleAddToCart}>Add To Cart</button>
+              </div>
 
-            <div className="variant-section">
-              <label>Color Available</label>
-              <div className="color-options">
-                {colors.map((color, i) => (
-                  <button key={i} className={`color-btn ${activeColor === i ? "active" : ""}`} style={{ background: color.hex }} title={color.name} onClick={() => setActiveColor(i)} />
+              <div className="item-info">
+                <div><strong>Item Code:</strong> {product.asin}</div>
+                <div><strong>Tags:</strong> Furniture, Office, Gaming Chair, Chair</div>
+              </div>
+
+              <div className="tabs">
+                {tabs.map((tab) => (
+                  <button key={tab.id} className={`tab ${activeTab === tab.id ? "active" : ""}`} onClick={() => setActiveTab(tab.id)}>
+                    {tab.label}
+                  </button>
                 ))}
               </div>
-            </div>
 
-            <div className="quantity-section">
-              <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
-              <input type="number" value={quantity} readOnly />
-              <button onClick={() => setQuantity(quantity + 1)}>+</button>
-            </div>
-
-            <div className="action-buttons-desktop">
-              <button className="btn-buy" onClick={handleBuyNow}>Buy Now</button>
-              <button className="btn-cart" onClick={handleAddToCart}>Add To Cart</button>
-              <button className="btn-wishlist">Heart</button>
-            </div>
-
-            <div className="item-info">
-              <div><strong>Item Code:</strong> {product.asin}</div>
-              <div><strong>Tags:</strong> Furniture, Office, Gaming Chair, Chair</div>
-            </div>
-
-            <div className="tabs">
-              {tabs.map((tab) => (
-                <button key={tab.id} className={`tab ${activeTab === tab.id ? "active" : ""}`} onClick={() => setActiveTab(tab.id)}>
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="tab-content">
-              {activeTab === "description" && (
-                <p>
-                  This gaming chair is designed to provide exceptional comfort during extended sessions. 
-                  Featuring adjustable height, tilt, and recline functions, it supports your posture 
-                  whether you're working, studying, or gaming. The premium leather upholstery and contoured 
-                  cushioning deliver a smooth, durable, and elegant look that fits any workspace.
-                </p>
-              )}
-              {activeTab === "specs" && (
-                <p>Spesifikasi: Tinggi adjustable, bahan kulit premium, berat 20kg, kapasitas 150kg.</p>
-              )}
-              {activeTab === "reviews" && (
-                <p>{product.product_num_ratings} ulasan | {product.product_star_rating} stars | “Kursi sangat nyaman untuk kerja lama!”</p>
-              )}
+              <div className="tab-content">
+                {activeTab === "description" && (
+                  <p>
+                    This gaming chair is designed to provide exceptional comfort during extended sessions. 
+                    Featuring adjustable height, tilt, and recline functions, it supports your posture 
+                    whether you're working, studying, or gaming. The premium leather upholstery and contoured 
+                    cushioning deliver a smooth, durable, and elegant look that fits any workspace.
+                  </p>
+                )}
+                {activeTab === "specs" && (
+                  <p>Spesifikasi: Tinggi adjustable, bahan kulit premium, berat 20kg, kapasitas 150kg.</p>
+                )}
+                {activeTab === "reviews" && (
+                  <p>{product.product_num_ratings} ulasan | {product.product_star_rating} stars | “Kursi sangat nyaman untuk kerja lama!”</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
