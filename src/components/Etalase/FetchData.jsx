@@ -3,13 +3,26 @@ import React, { useEffect, useState } from "react";
 function FetchData() {
   const [category, setCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [displayedProducts, setDisplayedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
-  // === Listen to Kategori ===
+  const PRODUCTS_PER_PAGE = 15;
+
+  // === Listen to Kategori & Search ===
   useEffect(() => {
-    const handleCategoryChange = (e) => setCategory(e.detail);
-    const handleSearchChange = (e) => setSearchQuery(e.detail);
+    const handleCategoryChange = (e) => {
+      setCategory(e.detail);
+      setDisplayedProducts([]);
+      setAllProducts([]);
+    };
+    const handleSearchChange = (e) => {
+      setSearchQuery(e.detail);
+      setDisplayedProducts([]);
+      setAllProducts([]);
+    };
 
     window.addEventListener("categoryChange", handleCategoryChange);
     window.addEventListener("searchChange", handleSearchChange);
@@ -67,6 +80,7 @@ function FetchData() {
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
+      setHasMore(true);
       try {
         const API_KEY = "986c36be1amsh402e5c0d7ab578bp138232jsn0d1fb915784b";
         const HOST = "real-time-amazon-data.p.rapidapi.com";
@@ -76,17 +90,20 @@ function FetchData() {
           query = searchQuery;
         } else if (category && category !== "all") {
           const map = {
-            electronics: "electronics",
+            all: "best sellers",
             food: "grocery",
+            services: "services",
             fashion: "clothing",
-            music: "musical instruments",
-            otomotif: "car accessories",
-            interior: "home decor",
-            sports: "sports equipment"
+            craft: "handmade",
+            beauty: "beauty",
+            agriculture: "garden",
+            electronics: "electronics",
+            furniture: "furniture",
+            others: "miscellaneous"
           };
-          query = map[category] || category;
+          query = map[category] || "best sellers";
         } else {
-          query = "amazon best sellers";
+          query = "best sellers";
         }
 
         const url = `https://${HOST}/search?query=${encodeURIComponent(query)}&page=1&country=US&sort_by=RELEVANCE`;
@@ -104,28 +121,48 @@ function FetchData() {
         const apiProducts = result.data?.products || [];
 
         const transformed = apiProducts.map(p => ({
-          product_title: p.product_title || "Premium Mousepad Gaming",
+          product_title: p.product_title || "Produk Premium",
           product_photo: p.product_photo || "/asset/umkm/umkm1.jpg",
           product_price: p.product_price,
           product_original_price: p.product_original_price,
           product_star_rating: p.product_star_rating,
           product_num_ratings: p.product_num_ratings,
-          seller_name: p.seller_name || "Unitech Indonesia",
+          seller_name: p.seller_name || "Toko Resmi",
           discount: extractDiscount(p),
           bonusText: generateBonusText()
         }));
 
-        setProducts(transformed);
+        setAllProducts(transformed);
+        setDisplayedProducts(transformed.slice(0, PRODUCTS_PER_PAGE));
+        setHasMore(transformed.length > PRODUCTS_PER_PAGE);
       } catch (err) {
         console.error("Gagal fetch:", err);
-        setProducts([]);
+        setAllProducts([]);
+        setDisplayedProducts([]);
+        setHasMore(false);
       } finally {
         setLoading(false);
+        setLoadingMore(false);
       }
     };
 
     fetchProducts();
   }, [category, searchQuery]);
+
+  // === Load More ===
+  const loadMore = () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+
+    const currentLength = displayedProducts.length;
+    const moreProducts = allProducts.slice(currentLength, currentLength + PRODUCTS_PER_PAGE);
+
+    setTimeout(() => {
+      setDisplayedProducts(prev => [...prev, ...moreProducts]);
+      setHasMore(currentLength + moreProducts.length < allProducts.length);
+      setLoadingMore(false);
+    }, 400);
+  };
 
   return (
     <>
@@ -238,7 +275,6 @@ function FetchData() {
           text-decoration: underline;
         }
 
-        /* RATING + TERJUAL (space-between) DI BAWAH JUDUL */
         .rating-sold {
           display: flex;
           justify-content: space-between;
@@ -291,8 +327,38 @@ function FetchData() {
         }
 
         .store-name::before {
-          content: "✓ ";
+          content: "Checkmark ";
           font-weight: bold;
+        }
+
+        /* Load More Button */
+        .load-more-wrapper {
+          text-align: center;
+          margin: 32px 0 20px;
+        }
+
+        .load-more-btn {
+          background: #f33636;
+          color: white;
+          border: none;
+          padding: 12px 36px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 1rem;
+          cursor: pointer;
+          transition: 0.3s;
+          box-shadow: 0 4px 12px rgba(243, 54, 54, 0.2);
+        }
+
+        .load-more-btn:hover:not(:disabled) {
+          background: #d72c2c;
+          transform: translateY(-2px);
+        }
+
+        .load-more-btn:disabled {
+          background: #ccc;
+          cursor: not-allowed;
+          transform: none;
         }
 
         /* Mobile: 2 kolom */
@@ -312,6 +378,7 @@ function FetchData() {
           }
         }
 
+        /* Tablet: 4 kolom */
         @media (min-width: 769px) and (max-width: 1024px) {
           .product-list {
             grid-template-columns: repeat(4, 1fr);
@@ -324,34 +391,48 @@ function FetchData() {
           <p style={{ textAlign: "center", color: "#666", margin: "32px 0", fontSize: "0.95rem" }}>
             Loading produk...
           </p>
-        ) : products.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#666" }}>Tidak ada produk.</p>
+        ) : displayedProducts.length === 0 ? (
+          <p style={{ textAlign: "center", color: "#666" }}>Tidak ada produk ditemukan.</p>
         ) : (
-          <div className="product-list">
-            {products.map((item, i) => {
-              const fullTitle = item.product_title;
-              const shortTitle = fullTitle.length > 60 ? fullTitle.slice(0, 57) + "..." : fullTitle;
-              const price = convertToIDR(item.product_price);
-              const rating = renderStars(item.product_star_rating);
-              const sold = item.product_num_ratings ? `${item.product_num_ratings}+ terjual` : "";
-              const seller = item.seller_name;
+          <>
+            <div className="product-list">
+              {displayedProducts.map((item, i) => {
+                const fullTitle = item.product_title;
+                const shortTitle = fullTitle.length > 60 ? fullTitle.slice(0, 57) + "..." : fullTitle;
+                const price = convertToIDR(item.product_price);
+                const rating = renderStars(item.product_star_rating);
+                const sold = item.product_num_ratings ? `${item.product_num_ratings}+ terjual` : "";
+                const seller = item.seller_name;
 
-              return (
-                <ProductCard
-                  key={i}
-                  image={item.product_photo}
-                  fullTitle={fullTitle}
-                  shortTitle={shortTitle}
-                  price={price}
-                  rating={rating}
-                  sold={sold}
-                  seller={seller}
-                  discount={item.discount}
-                  bonusText={item.bonusText}
-                />
-              );
-            })}
-          </div>
+                return (
+                  <ProductCard
+                    key={i}
+                    image={item.product_photo}
+                    fullTitle={fullTitle}
+                    shortTitle={shortTitle}
+                    price={price}
+                    rating={rating}
+                    sold={sold}
+                    seller={seller}
+                    discount={item.discount}
+                    bonusText={item.bonusText}
+                  />
+                );
+              })}
+            </div>
+
+            {hasMore && (
+              <div className="load-more-wrapper">
+                <button
+                  className="load-more-btn"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? "Memuat..." : "Lihat Produk Lainnya"}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </>
@@ -363,17 +444,11 @@ function ProductCard({ image, fullTitle, shortTitle, price, rating, sold, seller
 
   return (
     <div className="product-card">
-      {/* Diskon */}
       <div className="discount-badge">{discount}</div>
-
-      {/* Gambar */}
       <div className="product-image">
         <img src={image} alt={fullTitle} loading="lazy" />
       </div>
-
-      {/* Info */}
       <div className="product-info">
-        {/* Judul */}
         <h3 className={`product-title ${expanded ? "expanded" : ""}`}>
           {expanded ? fullTitle : shortTitle}
         </h3>
@@ -382,22 +457,14 @@ function ProductCard({ image, fullTitle, shortTitle, price, rating, sold, seller
             {expanded ? "Sembunyikan" : "Lihat lebih"}
           </button>
         )}
-
-        {/* RATING + TERJUAL (space-between) */}
         <div className="rating-sold">
           <div className="rating">
             <span>{rating}</span>
           </div>
           <div className="sold">{sold}</div>
         </div>
-
-        {/* Harga */}
         <div className="price-large">{price}</div>
-
-        {/* Hemat Promo */}
         <p className="bonus-promo">{bonusText}</p>
-
-        {/* Toko */}
         <p className="store-name" title={seller}>{seller}</p>
       </div>
     </div>

@@ -1,0 +1,366 @@
+        <section class="header">
+          <div class="header-card">
+            <section class="search-card">
+              <div class="search-item">
+                <div class="search-input-wrapper">
+                  <input type="text" placeholder="Cari produk, layanan, dll...">
+                  <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> 
+                    <circle cx="11" cy="11" r="8"></circle> <path d="m21 21-4.35-4.35"></path> 
+                  </svg>                
+                </div>
+                <button type  ="submit">Cari</button>
+              </div>
+              <div class="filter-item">
+                <p>Filter produk</p>
+                <div class="category-wrapper">
+                  <button class="scroll-btn scroll-btn-prev" id="scrollPrev" aria-label="Scroll kategori ke kiri">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                  
+                  <div class="category-section" id="categorySection">
+                    <button class="category-buttons" data-category="elektronik">
+                      <img src="asset/logo kategori/electronic.webp" alt="Elektronik"></img>
+                      <span>Elektronik</span>
+                    </button>
+                    <button class="category-buttons" data-category="kuliner">
+                      <img src="asset/logo kategori/kuliner.webp" alt="Kuliner"></img>
+                      <span>Kuliner</span>
+                    </button> 
+                    <button class="category-buttons" data-category="fashion">
+                      <img src="asset/logo kategori/fashion.webp" alt="Fashion"></img>
+                      <span>Fashion & Aksesoris</span>
+                    </button>
+                    <button class="category-buttons" data-category="musik">
+                      <img src="asset/logo kategori/music.webp" alt="Musik"></img>
+                      <span>Seni & Musik</span>
+                    </button>
+                    <button class="category-buttons" data-category="otomotif">
+                      <img src="asset/logo kategori/otomotif.webp" alt="Otomotif"></img>
+                      <span>Otomotif</span>
+                    </button>
+                    <button class="category-buttons" data-category="interior">
+                      <img src="asset/logo kategori/interior.webp" alt="Interior"></img>
+                      <span>Interior Rumah</span>
+                    </button>
+                    <button class="category-buttons" data-category="olahraga">
+                      <img src="asset/logo kategori/olahraga.webp" alt="Olahraga"></img>
+                      <span>Olahraga</span>
+                    </button>
+                    <button class="category-buttons" data-category="olahraga">
+                      <img src="asset/logo kategori/olahraga.webp" alt="Olahraga"></img>
+                      <span>Olahraga</span>
+                    </button>
+                    <button class="category-buttons" data-category="olahraga">
+                      <img src="asset/logo kategori/olahraga.webp" alt="Olahraga"></img>
+                      <span>Olahraga</span>
+                    </button>
+                    <button class="category-buttons" data-category="olahraga">
+                      <img src="asset/logo kategori/olahraga.webp" alt="Olahraga"></img>
+                      <span>Olahraga</span>
+                    </button>
+                  </div>
+
+                  <button class="scroll-btn scroll-btn-next" id="scrollNext" aria-label="Scroll kategori ke kanan">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+            </section>
+
+            <!-- Trending Products Section -->
+            <section class="trending-section">
+              <h2>Produk Pilihan</h2>
+              <div class="trending-container">
+                <!-- Kiri: Trending Carousel -->
+                <div class="trending-carousel">
+                  <div class="carousel-wrapper">
+                    <div class="carousel-track" id="carouselTrack">
+                      <div class="carousel-slide active">
+                        <img src="/asset/umkm/umkm5.jpg" alt="Trending 1" />
+                        <div class="carousel-info">
+                          <h3>Produk Trending #1</h3>
+                          <p>Produk terlaris minggu ini</p>
+                          <span class="trending-price">Rp 350.000</span>
+                        </div>
+                      </div>
+                      <div class="carousel-slide">
+                        <img src="/asset/umkm/umkm5.jpg" alt="Trending 2" />
+                        <div class="carousel-info">
+                          <h3>Produk Trending #2</h3>
+                          <p>Favorit pelanggan</p>
+                          <span class="trending-price">Rp 280.000</span>
+                        </div>
+                      </div>
+                      <div class="carousel-slide">
+                        <img src="/asset/umkm/umkm5.jpg" alt="Trending 3" />
+                        <div class="carousel-info">
+                          <h3>Produk Trending #3</h3>
+                          <p>Rekomendasi spesial</p>
+                          <span class="trending-price">Rp 420.000</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button class="carousel-btn prev" id="carouselPrev">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                      </svg>
+                    </button>
+                    <button class="carousel-btn next" id="carouselNext">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="carousel-dots" id="carouselDots"></div>
+                </div>
+
+                <!-- Kanan: Featured Products  -->
+                <div class="featured-grid">
+                  <article class="featured-item">
+                    <img src="/asset/umkm/umkm5.jpg" alt="Featured 1" />
+                    <div class="featured-info">
+                      <h4>Produk Pilihan 1</h4>
+                      <span>Rp 180.000</span>
+                    </div>
+                  </article>
+                  <article class="featured-item">
+                    <img src="/asset/umkm/umkm5.jpg" alt="Featured 2" />
+                    <div class="featured-info">
+                      <h4>Produk Pilihan 2</h4>
+                      <span>Rp 220.000</span>
+                    </div>
+                  </article>
+                  <article class="featured-item">
+                    <img src="/asset/umkm/umkm5.jpg" alt="Featured 3" />
+                    <div class="featured-info">
+                      <h4>Produk Pilihan 3</h4>
+                      <span>Rp 195.000</span>
+                    </div>
+                  </article>
+                  <article class="featured-item">
+                    <img src="/asset/umkm/umkm5.jpg" alt="Featured 4" />
+                    <div class="featured-info">
+                      <h4>Produk Pilihan 4</h4>
+                      <span>Rp 240.000</span>
+                    </div>
+                  </article>
+                  <article class="featured-item">
+                    <img src="/asset/umkm/umkm5.jpg" alt="Featured 5" />
+                    <div class="featured-info">
+                      <h4>Produk Pilihan 5</h4>
+                      <span>Rp 210.000</span>
+                    </div>
+                  </article>
+                  <article class="featured-item">
+                    <img src="/asset/umkm/umkm5.jpg" alt="Featured 6" />
+                    <div class="featured-info">
+                      <h4>Produk Pilihan 6</h4>
+                      <span>Rp 265.000</span>
+                    </div>
+                  </article>
+                </div>
+              </div>
+            </section>
+
+
+// card produk
+            <section class="product-list">
+              <span>Semua Produk</span>
+
+
+              <article class="product-card">
+                <div class="product-image">
+                  <img src="/asset/umkm/umkm5.jpg" alt="Produk 2">
+                  <span class="discount-badge">37%</span>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-title">Produk1</h3>
+                  <div class="price-section">
+                    <span class="price">Rp264.000</span>
+                    <span class="promo-text">Hemat s.d 3% Pakai Bonus</span>
+                  </div>
+                  <div class="rating-section">
+                    <span class="star"> 4.8</span>
+                    <span class="sold">1rb+ terjual</span>
+                  </div>
+                  <p class="store-name">Saz Official Store</p>
+                </div>
+              </article>
+              
+              <article class="product-card">
+                <div class="product-image">
+                  <img src="/asset/umkm/umkm5.jpg" alt="Produk 2">
+                  <span class="discount-badge">37%</span>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-title">Produk1</h3>
+                  <div class="price-section">
+                    <span class="price">Rp264.000</span>
+                    <span class="promo-text">Hemat s.d 3% Pakai Bonus</span>
+                  </div>
+                  <div class="rating-section">
+                    <span class="star"> 4.8</span>
+                    <span class="sold">1rb+ terjual</span>
+                  </div>
+                  <p class="store-name">Saz Official Store</p>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-image">
+                  <img src="/asset/umkm/umkm5.jpg" alt="Produk 2">
+                  <span class="discount-badge">37%</span>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-title">Produk1</h3>
+                  <div class="price-section">
+                    <span class="price">Rp264.000</span>
+                    <span class="promo-text">Hemat s.d 3% Pakai Bonus</span>
+                  </div>
+                  <div class="rating-section">
+                    <span class="star"> 4.8</span>
+                    <span class="sold">1rb+ terjual</span>
+                  </div>
+                  <p class="store-name">Saz Official Store</p>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-image">
+                  <img src="/asset/umkm/umkm5.jpg" alt="Produk 2">
+                  <span class="discount-badge">37%</span>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-title">Produk1</h3>
+                  <div class="price-section">
+                    <span class="price">Rp264.000</span>
+                    <span class="promo-text">Hemat s.d 3% Pakai Bonus</span>
+                  </div>
+                  <div class="rating-section">
+                    <span class="star"> 4.8</span>
+                    <span class="sold">1rb+ terjual</span>
+                  </div>
+                  <p class="store-name">Saz Official Store</p>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-image">
+                  <img src="/asset/umkm/umkm5.jpg" alt="Produk 2">
+                  <span class="discount-badge">37%</span>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-title">Produk1</h3>
+                  <div class="price-section">
+                    <span class="price">Rp264.000</span>
+                    <span class="promo-text">Hemat s.d 3% Pakai Bonus</span>
+                  </div>
+                  <div class="rating-section">
+                    <span class="star"> 4.8</span>
+                    <span class="sold">1rb+ terjual</span>
+                  </div>
+                  <p class="store-name">Saz Official Store</p>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-image">
+                  <img src="/asset/umkm/umkm5.jpg" alt="Produk 2">
+                  <span class="discount-badge">37%</span>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-title">Produk1</h3>
+                  <div class="price-section">
+                    <span class="price">Rp264.000</span>
+                    <span class="promo-text">Hemat s.d 3% Pakai Bonus</span>
+                  </div>
+                  <div class="rating-section">
+                    <span class="star"> 4.8</span>
+                    <span class="sold">1rb+ terjual</span>
+                  </div>
+                  <p class="store-name">Saz Official Store</p>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-image">
+                  <img src="/asset/umkm/umkm5.jpg" alt="Produk 2">
+                  <span class="discount-badge">37%</span>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-title">Produk1</h3>
+                  <div class="price-section">
+                    <span class="price">Rp264.000</span>
+                    <span class="promo-text">Hemat s.d 3% Pakai Bonus</span>
+                  </div>
+                  <div class="rating-section">
+                    <span class="star"> 4.8</span>
+                    <span class="sold">1rb+ terjual</span>
+                  </div>
+                  <p class="store-name">Saz Official Store</p>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-image">
+                  <img src="/asset/umkm/umkm5.jpg" alt="Produk 2">
+                  <span class="discount-badge">37%</span>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-title">Produk1</h3>
+                  <div class="price-section">
+                    <span class="price">Rp264.000</span>
+                    <span class="promo-text">Hemat s.d 3% Pakai Bonus</span>
+                  </div>
+                  <div class="rating-section">
+                    <span class="star"> 4.8</span>
+                    <span class="sold">1rb+ terjual</span>
+                  </div>
+                  <p class="store-name">Saz Official Store</p>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-image">
+                  <img src="/asset/umkm/umkm5.jpg" alt="Produk 2">
+                  <span class="discount-badge">37%</span>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-title">Produk1</h3>
+                  <div class="price-section">
+                    <span class="price">Rp264.000</span>
+                    <span class="promo-text">Hemat s.d 3% Pakai Bonus</span>
+                  </div>
+                  <div class="rating-section">
+                    <span class="star"> 4.8</span>
+                    <span class="sold">1rb+ terjual</span>
+                  </div>
+                  <p class="store-name">Saz Official Store</p>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-image">
+                  <img src="/asset/umkm/umkm5.jpg" alt="Produk 2">
+                  <span class="discount-badge">37%</span>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-title">Produk1</h3>
+                  <div class="price-section">
+                    <span class="price">Rp264.000</span>
+                    <span class="promo-text">Hemat s.d 3% Pakai Bonus</span>
+                  </div>
+                  <div class="rating-section">
+                    <span class="star"> 4.8</span>
+                    <span class="sold">1rb+ terjual</span>
+                  </div>
+                  <p class="store-name">Saz Official Store</p>
+                </div>
+              </article>
+
+            </section>
+          </div>
+        </section>

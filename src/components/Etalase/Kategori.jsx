@@ -3,14 +3,19 @@ import React, { useState, useEffect, useRef } from "react";
 function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setParentCategory, onSearch }) {
   const [localCategory, setLocalCategory] = useState(parentCategory || "all");
 
+  // === KATEGORI BARU SESUAI PERMINTAAN ===
   const categories = [
-    { id: "electronics", label: "Elektronik", icon: "/asset/logo kategori/electronic.webp" },
+    { id: "all", label: "Semua Produk", icon: "/asset/logo kategori/all.webp" },
     { id: "food", label: "Kuliner", icon: "/asset/logo kategori/kuliner.webp" },
-    { id: "fashion", label: "Fashion & Aksesoris", icon: "/asset/logo kategori/fashion.webp" },
-    { id: "music", label: "Seni & Musik", icon: "/asset/logo kategori/music.webp" },
-    { id: "otomotif", label: "Otomotif", icon: "/asset/logo kategori/otomotif.webp" },
-    { id: "interior", label: "Interior Rumah", icon: "/asset/logo kategori/interior.webp" },
-    { id: "sports", label: "Olahraga", icon: "/asset/logo kategori/olahraga.webp" },
+    { id: "services", label: "Jasa", icon: "/asset/logo kategori/jasa.webp" },
+    { id: "fashion", label: "Fashion", icon: "/asset/logo kategori/fashion.webp" },
+    { id: "craft", label: "Kerajinan/kriya", icon: "/asset/logo kategori/kriya.webp" },
+    { id: "beauty", label: "Kesehatan & Kecantikan", icon: "/asset/logo kategori/beauty.webp" },
+    { id: "agriculture", label: "Pertanian & Perkebunan", icon: "/asset/logo kategori/pertanian.webp" },
+    { id: "electronics", label: "Komputer & Elektronik", icon: "/asset/logo kategori/electronic.webp" },
+    { id: "furniture", label: "Furniture", icon: "/asset/logo kategori/furniture.webp" },
+    { id: "education", label: "Edukasi", icon: "/asset/logo kategori/edukasi.webp" },
+    { id: "others", label: "Lainnya", icon: "/asset/logo kategori/lainnya.webp" },
   ];
 
   const sectionRef = useRef(null);
@@ -31,6 +36,7 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
     window.dispatchEvent(new CustomEvent("searchChange", { detail: query }));
   };
 
+  // === SCROLL & TOUCH LOGIC (SAMA SEBELUMNYA) ===
   useEffect(() => {
     const section = sectionRef.current;
     const prevBtn = prevRef.current;
@@ -71,130 +77,124 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
   }, []);
 
   useEffect(() => {
-  const section = sectionRef.current;
-  const prevBtn = prevRef.current;
-  const nextBtn = nextRef.current;
-  if (!section || !prevBtn || !nextBtn) return;
+    const section = sectionRef.current;
+    const prevBtn = prevRef.current;
+    const nextBtn = nextRef.current;
+    if (!section || !prevBtn || !nextBtn) return;
 
-  const updateButtons = () => {
-    const hasScroll = section.scrollWidth > section.clientWidth;
-    const atStart = section.scrollLeft <= 1;
-    const atEnd = section.scrollLeft + section.clientWidth >= section.scrollWidth - 10;
+    const updateButtons = () => {
+      const hasScroll = section.scrollWidth > section.clientWidth;
+      const atStart = section.scrollLeft <= 1;
+      const atEnd = section.scrollLeft + section.clientWidth >= section.scrollWidth - 10;
 
-    prevBtn.style.opacity = hasScroll && !atStart ? "1" : "0.3";
-    prevBtn.style.pointerEvents = hasScroll && !atStart ? "auto" : "none";
-    nextBtn.style.opacity = hasScroll && !atEnd ? "1" : "0.3";
-    nextBtn.style.pointerEvents = hasScroll && !atEnd ? "auto" : "none";
-  };
+      prevBtn.style.opacity = hasScroll && !atStart ? "1" : "0.3";
+      prevBtn.style.pointerEvents = hasScroll && !atStart ? "auto" : "none";
+      nextBtn.style.opacity = hasScroll && !atEnd ? "1" : "0.3";
+      nextBtn.style.pointerEvents = hasScroll && !atEnd ? "auto" : "none";
+    };
 
-  const scrollLeft = () => {
-    section.scrollBy({ left: -300, behavior: "smooth" });
-    setTimeout(updateButtons, 300);
-  };
+    const scrollLeft = () => {
+      section.scrollBy({ left: -300, behavior: "smooth" });
+      setTimeout(updateButtons, 300);
+    };
 
-  const scrollRight = () => {
-    section.scrollBy({ left: 300, behavior: "smooth" });
-    setTimeout(updateButtons, 300);
-  };
+    const scrollRight = () => {
+      section.scrollBy({ left: 300, behavior: "smooth" });
+      setTimeout(updateButtons, 300);
+    };
 
-  prevBtn.addEventListener("click", scrollLeft);
-  nextBtn.addEventListener("click", scrollRight);
+    prevBtn.addEventListener("click", scrollLeft);
+    nextBtn.addEventListener("click", scrollRight);
 
-  // === TOUCH SUPPORT (MOBILE) ===
-  let isDown = false;
-  let startX;
-  let scrollLeftStart;
-  let velocity = 0;
-  let frameId = null;
+    let isDown = false;
+    let startX;
+    let scrollLeftStart;
+    let velocity = 0;
+    let frameId = null;
 
-  const handleStart = (e) => {
-    isDown = true;
-    section.classList.add("grabbing");
-    startX = (e.pageX || e.touches[0].pageX) - section.offsetLeft;
-    scrollLeftStart = section.scrollLeft;
-    velocity = 0;
-    cancelMomentum();
-  };
-
-  const handleEnd = () => {
-    if (!isDown) return;
-    isDown = false;
-    section.classList.remove("grabbing");
-    startMomentum();
-  };
-
-  const handleMove = (e) => {
-    if (!isDown) return;
-    e.preventDefault();
-    const x = (e.pageX || e.touches[0].pageX) - section.offsetLeft;
-    const walk = (x - startX) * 2; // Kecepatan drag
-    const prevScrollLeft = section.scrollLeft;
-    section.scrollLeft = scrollLeftStart - walk;
-    velocity = section.scrollLeft - prevScrollLeft;
-  };
-
-  // Momentum (inertia) setelah lepas jari
-  const momentum = () => {
-    if (Math.abs(velocity) > 0.5) {
-      section.scrollBy({ left: velocity, behavior: "auto" });
-      velocity *= 0.95; // Perlambat
-      frameId = requestAnimationFrame(momentum);
-    } else {
+    const handleStart = (e) => {
+      isDown = true;
+      section.classList.add("grabbing");
+      startX = (e.pageX || e.touches[0].pageX) - section.offsetLeft;
+      scrollLeftStart = section.scrollLeft;
+      velocity = 0;
       cancelMomentum();
-      updateButtons();
-    }
-  };
+    };
 
-  const startMomentum = () => {
-    cancelMomentum();
-    frameId = requestAnimationFrame(momentum);
-  };
+    const handleEnd = () => {
+      if (!isDown) return;
+      isDown = false;
+      section.classList.remove("grabbing");
+      startMomentum();
+    };
 
-  const cancelMomentum = () => {
-    if (frameId) cancelAnimationFrame(frameId);
-    frameId = null;
-  };
+    const handleMove = (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = (e.pageX || e.touches[0].pageX) - section.offsetLeft;
+      const walk = (x - startX) * 2;
+      const prevScrollLeft = section.scrollLeft;
+      section.scrollLeft = scrollLeftStart - walk;
+      velocity = section.scrollLeft - prevScrollLeft;
+    };
 
-  // Mouse Events
-  section.addEventListener("mousedown", handleStart);
-  section.addEventListener("mouseleave", handleEnd);
-  section.addEventListener("mouseup", handleEnd);
-  section.addEventListener("mousemove", handleMove);
+    const momentum = () => {
+      if (Math.abs(velocity) > 0.5) {
+        section.scrollBy({ left: velocity, behavior: "auto" });
+        velocity *= 0.95;
+        frameId = requestAnimationFrame(momentum);
+      } else {
+        cancelMomentum();
+        updateButtons();
+      }
+    };
 
-  // Touch Events (Mobile)
-  section.addEventListener("touchstart", handleStart, { passive: false });
-  section.addEventListener("touchend", handleEnd);
-  section.addEventListener("touchcancel", handleEnd);
-  section.addEventListener("touchmove", handleMove, { passive: false });
+    const startMomentum = () => {
+      cancelMomentum();
+      frameId = requestAnimationFrame(momentum);
+    };
 
-  // Resize & Initial
-  updateButtons();
-  window.addEventListener("resize", updateButtons);
+    const cancelMomentum = () => {
+      if (frameId) cancelAnimationFrame(frameId);
+      frameId = null;
+    };
 
-  return () => {
-    prevBtn.removeEventListener("click", scrollLeft);
-    nextBtn.removeEventListener("click", scrollRight);
+    section.addEventListener("mousedown", handleStart);
+    section.addEventListener("mouseleave", handleEnd);
+    section.addEventListener("mouseup", handleEnd);
+    section.addEventListener("mousemove", handleMove);
 
-    section.removeEventListener("mousedown", handleStart);
-    section.removeEventListener("mouseleave", handleEnd);
-    section.removeEventListener("mouseup", handleEnd);
-    section.removeEventListener("mousemove", handleMove);
+    section.addEventListener("touchstart", handleStart, { passive: false });
+    section.addEventListener("touchend", handleEnd);
+    section.addEventListener("touchcancel", handleEnd);
+    section.addEventListener("touchmove", handleMove, { passive: false });
 
-    section.removeEventListener("touchstart", handleStart);
-    section.removeEventListener("touchend", handleEnd);
-    section.removeEventListener("touchcancel", handleEnd);
-    section.removeEventListener("touchmove", handleMove);
+    updateButtons();
+    window.addEventListener("resize", updateButtons);
 
-    window.removeEventListener("resize", updateButtons);
-    cancelMomentum();
-  };
-}, []);
+    return () => {
+      prevBtn.removeEventListener("click", scrollLeft);
+      nextBtn.removeEventListener("click", scrollRight);
+
+      section.removeEventListener("mousedown", handleStart);
+      section.removeEventListener("mouseleave", handleEnd);
+      section.removeEventListener("mouseup", handleEnd);
+      section.removeEventListener("mousemove", handleMove);
+
+      section.removeEventListener("touchstart", handleStart);
+      section.removeEventListener("touchend", handleEnd);
+      section.removeEventListener("touchcancel", handleEnd);
+      section.removeEventListener("touchmove", handleMove);
+
+      window.removeEventListener("resize", updateButtons);
+      cancelMomentum();
+    };
+  }, []);
 
   return (
     <>
-      {/* STYLE 100% SESUAI ASTRO — WARNA MERAH #f33636, FOCUS BIRU, DLL */}
       <style jsx>{`
-        /* ===== Search Card ===== */
+        /* STYLE SAMA — TIDAK DIUBAH */
         .search-card {
           background: #fff;
           padding: 20px;
@@ -257,7 +257,6 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
           background: #d72c2c;
         }
 
-        /* ===== Filter ===== */
         .filter-item {
           text-align: start;
           background: #f8f9fa;
@@ -300,7 +299,6 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
           border-radius: 10px;
         }
 
-        /* Category Buttons */
         .category-buttons {
           position: relative;
           display: flex;
@@ -338,14 +336,12 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
           text-align: center;
         }
 
-        /* HOVER */
         .category-buttons:hover {
           transform: translateY(-5px);
           border-color: #60a5fa;
           box-shadow: 0 5px 15px rgba(96, 165, 250, 0.25);
         }
 
-        /* ACTIVE STATE */
         .category-buttons.active {
           background: linear-gradient(135deg, #60a5fa, #93c5fd);
           color: #ffffff;
@@ -359,7 +355,6 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
           font-weight: 600;
         }
 
-        /* Scroll Buttons */
         .scroll-btn {
           background: #fff;
           border: 2px solid #eee;
@@ -393,7 +388,6 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
       `}</style>
 
       <section className="search-card">
-        {/* Search */}
         <div className="search-item">
           <form onSubmit={handleSearch} style={{ display: "flex", width: "100%", gap: "10px" }}>
             <div className="search-input-wrapper">
@@ -407,7 +401,6 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
           </form>
         </div>
 
-        {/* Filter */}
         <div className="filter-item">
           <p>Filter produk</p>
           <div className="category-wrapper">
