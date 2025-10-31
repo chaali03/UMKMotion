@@ -1,9 +1,9 @@
+// Kategori.jsx
 import React, { useState, useEffect, useRef } from "react";
 
 function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setParentCategory, onSearch }) {
   const [localCategory, setLocalCategory] = useState(parentCategory || "all");
 
-  // === KATEGORI BARU SESUAI PERMINTAAN ===
   const categories = [
     { id: "all", label: "Semua Produk", icon: "/asset/logo kategori/all.webp" },
     { id: "food", label: "Kuliner", icon: "/asset/logo kategori/kuliner.webp" },
@@ -31,51 +31,12 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
 
   const handleSearch = (e) => {
     e.preventDefault();
-    const query = searchInputRef.current?.value.trim();
+    const query = searchInputRef.current?.value.trim() || "";
     if (onSearch) onSearch(query);
     window.dispatchEvent(new CustomEvent("searchChange", { detail: query }));
   };
 
-  // === SCROLL & TOUCH LOGIC (SAMA SEBELUMNYA) ===
-  useEffect(() => {
-    const section = sectionRef.current;
-    const prevBtn = prevRef.current;
-    const nextBtn = nextRef.current;
-    if (!section || !prevBtn || !nextBtn) return;
-
-    const updateButtons = () => {
-      const hasScroll = section.scrollWidth > section.clientWidth;
-      const atStart = section.scrollLeft <= 1;
-      const atEnd = section.scrollLeft + section.clientWidth >= section.scrollWidth - 10;
-
-      prevBtn.style.opacity = hasScroll && !atStart ? "1" : "0.3";
-      prevBtn.style.pointerEvents = hasScroll && !atStart ? "auto" : "none";
-      nextBtn.style.opacity = hasScroll && !atEnd ? "1" : "0.3";
-      nextBtn.style.pointerEvents = hasScroll && !atEnd ? "auto" : "none";
-    };
-
-    const scrollLeft = () => {
-      section.scrollBy({ left: -300, behavior: "smooth" });
-      setTimeout(updateButtons, 300);
-    };
-
-    const scrollRight = () => {
-      section.scrollBy({ left: 300, behavior: "smooth" });
-      setTimeout(updateButtons, 300);
-    };
-
-    prevBtn.addEventListener("click", scrollLeft);
-    nextBtn.addEventListener("click", scrollRight);
-    updateButtons();
-    window.addEventListener("resize", updateButtons);
-
-    return () => {
-      prevBtn.removeEventListener("click", scrollLeft);
-      nextBtn.removeEventListener("click", scrollRight);
-      window.removeEventListener("resize", updateButtons);
-    };
-  }, []);
-
+  // Scroll & Touch Logic
   useEffect(() => {
     const section = sectionRef.current;
     const prevBtn = prevRef.current;
@@ -163,7 +124,6 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
     section.addEventListener("mouseleave", handleEnd);
     section.addEventListener("mouseup", handleEnd);
     section.addEventListener("mousemove", handleMove);
-
     section.addEventListener("touchstart", handleStart, { passive: false });
     section.addEventListener("touchend", handleEnd);
     section.addEventListener("touchcancel", handleEnd);
@@ -175,17 +135,14 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
     return () => {
       prevBtn.removeEventListener("click", scrollLeft);
       nextBtn.removeEventListener("click", scrollRight);
-
       section.removeEventListener("mousedown", handleStart);
       section.removeEventListener("mouseleave", handleEnd);
       section.removeEventListener("mouseup", handleEnd);
       section.removeEventListener("mousemove", handleMove);
-
       section.removeEventListener("touchstart", handleStart);
       section.removeEventListener("touchend", handleEnd);
       section.removeEventListener("touchcancel", handleEnd);
       section.removeEventListener("touchmove", handleMove);
-
       window.removeEventListener("resize", updateButtons);
       cancelMomentum();
     };
@@ -194,7 +151,6 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
   return (
     <>
       <style jsx>{`
-        /* STYLE SAMA — TIDAK DIUBAH */
         .search-card {
           background: #fff;
           padding: 20px;
@@ -202,20 +158,17 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
           box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
           margin-bottom: 25px;
         }
-
         .search-item {
           display: flex;
           gap: 10px;
           margin-bottom: 15px;
         }
-
         .search-input-wrapper {
           flex: 1;
           position: relative;
           display: flex;
           align-items: center;
         }
-
         .search-input-wrapper input {
           width: 100%;
           padding: 12px 14px 12px 44px;
@@ -225,23 +178,19 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
           outline: none;
           transition: 0.2s;
         }
-
         .search-input-wrapper input:focus {
           border-color: #ff6b6b;
           box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
         }
-
         .search-input-wrapper input:focus + .search-icon {
           color: #ff6b6b;
         }
-
         .search-icon {
           position: absolute;
           left: 14px;
           color: #94a3b8;
           pointer-events: none;
         }
-
         .search-item button {
           padding: 12px 25px;
           background: #f33636;
@@ -252,32 +201,27 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
           cursor: pointer;
           transition: 0.3s;
         }
-
         .search-item button:hover {
           background: #d72c2c;
         }
-
         .filter-item {
           text-align: start;
           background: #f8f9fa;
           padding: 20px;
           border-radius: 14px;
         }
-
         .filter-item p {
           font-weight: 600;
           font-size: 1.05rem;
           color: #333;
           margin-bottom: 14px;
         }
-
         .category-wrapper {
           display: flex;
           align-items: center;
           gap: 10px;
           position: relative;
         }
-
         .category-section {
           display: flex;
           gap: 12px;
@@ -289,16 +233,13 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
           scrollbar-width: thin;
           scrollbar-color: #d3d3d3 #f0f0f0;
         }
-
         .category-section::-webkit-scrollbar {
           height: 6px;
         }
-
         .category-section::-webkit-scrollbar-thumb {
           background: #d3d3d3;
           border-radius: 10px;
         }
-
         .category-buttons {
           position: relative;
           display: flex;
@@ -322,39 +263,32 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
           transition: all 0.3s ease;
           flex-shrink: 0;
         }
-
         .category-buttons img {
           width: 42px;
           height: 42px;
           object-fit: contain;
           margin-bottom: 6px;
         }
-
         .category-buttons span {
           font-size: 0.85rem;
           color: #333;
           text-align: center;
         }
-
         .category-buttons:hover {
           transform: translateY(-5px);
           border-color: #60a5fa;
           box-shadow: 0 5px 15px rgba(96, 165, 250, 0.25);
         }
-
         .category-buttons.active {
           background: linear-gradient(135deg, #60a5fa, #93c5fd);
           color: #ffffff;
           border-color: #3b82f6;
           box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
         }
-
         .category-buttons.active span {
-          font-size: 0.85rem;
           color: #ffffff;
           font-weight: 600;
         }
-
         .scroll-btn {
           background: #fff;
           border: 2px solid #eee;
@@ -370,18 +304,11 @@ function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setPa
           flex-shrink: 0;
           z-index: 10;
         }
-
         .scroll-btn:hover:not(:disabled) {
           background: #f33636;
           color: #fff;
           transform: scale(1.1);
         }
-
-        .scroll-btn:disabled {
-          opacity: 0.3;
-          cursor: not-allowed;
-        }
-
         .grabbing {
           cursor: grabbing !important;
         }

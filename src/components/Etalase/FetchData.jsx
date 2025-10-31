@@ -35,10 +35,11 @@ function FetchData() {
 
   // === Convert USD to IDR ===
   const convertToIDR = (priceText) => {
-    if (!priceText) return "Harga tidak tersedia";
+    if (!priceText) return null;
     const match = String(priceText).match(/[\d.,]+/);
-    if (!match) return priceText;
+    if (!match) return null;
     const usd = parseFloat(match[0].replace(",", ""));
+    if (isNaN(usd) || usd <= 0) return null;
     const idr = usd * 16000;
     return "Rp " + idr.toLocaleString("id-ID");
   };
@@ -57,7 +58,7 @@ function FetchData() {
     if (priceStr && originalPriceStr && priceStr !== originalPriceStr) {
       const current = parseFloat(priceStr.replace(/[^0-9.]/g, ""));
       const original = parseFloat(originalPriceStr.replace(/[^0-9.]/g, ""));
-      if (original > current) {
+      if (original > current && current > 0) {
         const discount = Math.round(((original - current) / original) * 100);
         return `${discount}%`;
       }
@@ -82,7 +83,7 @@ function FetchData() {
       setLoading(true);
       setHasMore(true);
       try {
-        const API_KEY = "986c36be1amsh402e5c0d7ab578bp138232jsn0d1fb915784b";
+        const API_KEY = "8563fb076emsh47a582e54d5da53p1acff6jsna5155aba2a88";
         const HOST = "real-time-amazon-data.p.rapidapi.com";
 
         let query = "";
@@ -120,17 +121,26 @@ function FetchData() {
         const result = await res.json();
         const apiProducts = result.data?.products || [];
 
-        const transformed = apiProducts.map(p => ({
-          product_title: p.product_title || "Produk Premium",
-          product_photo: p.product_photo || "/asset/umkm/umkm1.jpg",
-          product_price: p.product_price,
-          product_original_price: p.product_original_price,
-          product_star_rating: p.product_star_rating,
-          product_num_ratings: p.product_num_ratings,
-          seller_name: p.seller_name || "Toko Resmi",
-          discount: extractDiscount(p),
-          bonusText: generateBonusText()
-        }));
+        const transformed = apiProducts
+          .map(p => {
+            const priceIDR = convertToIDR(p.product_price);
+            if (!priceIDR) return null;
+
+            return {
+              product_title: p.product_title || "Produk Premium",
+              product_photo: p.product_photo || "/asset/umkm/umkm1.jpg",
+              product_price: priceIDR,
+              product_original_price: p.product_original_price,
+              product_star_rating: p.product_star_rating,
+              product_num_ratings: p.product_num_ratings,
+              seller_name: p.seller_name || "Toko Resmi",
+              discount: extractDiscount(p),
+              bonusText: generateBonusText(),
+              asin: p.asin,
+              product_url: p.product_url
+            };
+          })
+          .filter(Boolean);
 
         setAllProducts(transformed);
         setDisplayedProducts(transformed.slice(0, PRODUCTS_PER_PAGE));
@@ -175,6 +185,7 @@ function FetchData() {
           margin: 0 auto;
         }
 
+        /* GRID DENGAN GAP NORMAL (14px) */
         .product-list {
           display: grid;
           grid-template-columns: repeat(5, 1fr);
@@ -182,6 +193,7 @@ function FetchData() {
           justify-content: center;
         }
 
+        /* CARD: TINGGI SAMA */
         .product-card {
           background: #fff;
           border-radius: 12px;
@@ -193,6 +205,8 @@ function FetchData() {
           border: 1px solid #f0f0f0;
           display: flex;
           flex-direction: column;
+          height: 100%; /* PENTING */
+          min-height: 280px; /* Pastikan cukup tinggi */
         }
 
         .product-card:hover {
@@ -233,12 +247,14 @@ function FetchData() {
           transform: scale(1.05);
         }
 
+        /* INFO: TIDAK FLEX:1, TAPI TETAP RATA */
         .product-info {
           padding: 10px 10px 12px;
           display: flex;
           flex-direction: column;
           gap: 4px;
-          flex: 1;
+          flex-grow: 1; /* Ganti flex: 1 jadi ini */
+          justify-content: space-between;
         }
 
         .product-title {
@@ -260,6 +276,12 @@ function FetchData() {
           white-space: normal;
         }
 
+        .toggle-wrapper {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 2px;
+        }
+
         .toggle-btn {
           background: none;
           border: none;
@@ -268,7 +290,6 @@ function FetchData() {
           font-weight: 600;
           cursor: pointer;
           padding: 0;
-          margin-top: 2px;
         }
 
         .toggle-btn:hover {
@@ -331,7 +352,53 @@ function FetchData() {
           font-weight: bold;
         }
 
-        /* Load More Button */
+        /* ACTION BUTTONS: SELALU TAMPIL */
+        .action-buttons {
+          display: flex;
+          gap: 6px;
+          margin-top: 6px;
+        }
+
+        .btn-cart, .btn-buy {
+          flex: 1;
+          padding: 6px 8px;
+          border-radius: 6px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border: none;
+        }
+
+        .btn-cart {
+          background: #f33636;
+          color: white;
+        }
+
+        .btn-cart:hover {
+          background: #d72c2c;
+          transform: translateY(-1px);
+        }
+
+        .btn-buy {
+          background: #10b981;
+          color: white;
+        }
+
+        .btn-buy:hover {
+          background: #059669;
+          transform: translateY(-1px);
+        }
+
+        .btn-icon {
+          width: 14px;
+          height: 14px;
+        }
+
         .load-more-wrapper {
           text-align: center;
           margin: 32px 0 20px;
@@ -358,31 +425,23 @@ function FetchData() {
         .load-more-btn:disabled {
           background: #ccc;
           cursor: not-allowed;
-          transform: none;
         }
 
-        /* Mobile: 2 kolom */
+        /* RESPONSIVE */
         @media (max-width: 768px) {
           .product-list {
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
           }
-          .product-image {
-            height: 100px;
-          }
-          .product-info {
-            padding: 8px;
-          }
-          .price-large {
-            font-size: 0.98rem;
-          }
+          .product-image { height: 100px; }
+          .product-info { padding: 8px; }
+          .price-large { font-size: 0.98rem; }
+          .action-buttons { flex-direction: column; }
+          .btn-cart, .btn-buy { font-size: 0.7rem; padding: 5px; }
         }
 
-        /* Tablet: 4 kolom */
         @media (min-width: 769px) and (max-width: 1024px) {
-          .product-list {
-            grid-template-columns: repeat(4, 1fr);
-          }
+          .product-list { grid-template-columns: repeat(4, 1fr); }
         }
       `}</style>
 
@@ -399,7 +458,7 @@ function FetchData() {
               {displayedProducts.map((item, i) => {
                 const fullTitle = item.product_title;
                 const shortTitle = fullTitle.length > 60 ? fullTitle.slice(0, 57) + "..." : fullTitle;
-                const price = convertToIDR(item.product_price);
+                const price = item.product_price;
                 const rating = renderStars(item.product_star_rating);
                 const sold = item.product_num_ratings ? `${item.product_num_ratings}+ terjual` : "";
                 const seller = item.seller_name;
@@ -416,6 +475,7 @@ function FetchData() {
                     seller={seller}
                     discount={item.discount}
                     bonusText={item.bonusText}
+                    product={item}
                   />
                 );
               })}
@@ -423,11 +483,7 @@ function FetchData() {
 
             {hasMore && (
               <div className="load-more-wrapper">
-                <button
-                  className="load-more-btn"
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                >
+                <button className="load-more-btn" onClick={loadMore} disabled={loadingMore}>
                   {loadingMore ? "Memuat..." : "Lihat Produk Lainnya"}
                 </button>
               </div>
@@ -439,11 +495,43 @@ function FetchData() {
   );
 }
 
-function ProductCard({ image, fullTitle, shortTitle, price, rating, sold, seller, discount, bonusText }) {
+// === PRODUCT CARD ===
+function ProductCard({ image, fullTitle, shortTitle, price, rating, sold, seller, discount, bonusText, product }) {
   const [expanded, setExpanded] = useState(false);
 
+  const handleCardClick = (e) => {
+    if (
+      e.target.closest(".toggle-btn") ||
+      e.target.closest(".action-buttons") ||
+      e.target.closest(".btn-cart") ||
+      e.target.closest(".btn-buy")
+    ) return;
+
+    localStorage.setItem("selectedProduct", JSON.stringify(product));
+    window.location.href = "/buyingpage";
+  };
+
+  const handleAddToCart = (e) => {
+    e.stopPropagation();
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const existing = cart.find(p => p.asin === product.asin);
+    if (existing) {
+      existing.quantity = (existing.quantity || 1) + 1;
+    } else {
+      cart.push({ ...product, quantity: 1 });
+    }
+    localStorage.setItem("cart", JSON.stringify(cart));
+    alert("Berhasil ditambahkan ke keranjang!");
+  };
+
+  const handleBuyNow = (e) => {
+    e.stopPropagation();
+    localStorage.setItem("selectedProduct", JSON.stringify(product));
+    window.location.href = "/buyingpage";
+  };
+
   return (
-    <div className="product-card">
+    <div className="product-card" onClick={handleCardClick}>
       <div className="discount-badge">{discount}</div>
       <div className="product-image">
         <img src={image} alt={fullTitle} loading="lazy" />
@@ -452,20 +540,45 @@ function ProductCard({ image, fullTitle, shortTitle, price, rating, sold, seller
         <h3 className={`product-title ${expanded ? "expanded" : ""}`}>
           {expanded ? fullTitle : shortTitle}
         </h3>
+
         {fullTitle.length > 60 && (
-          <button className="toggle-btn" onClick={() => setExpanded(!expanded)}>
-            {expanded ? "Sembunyikan" : "Lihat lebih"}
-          </button>
-        )}
-        <div className="rating-sold">
-          <div className="rating">
-            <span>{rating}</span>
+          <div className="toggle-wrapper">
+            <button
+              className="toggle-btn"
+              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+            >
+              {expanded ? "Sembunyikan" : "Lihat lebih"}
+            </button>
           </div>
+        )}
+
+        <div className="rating-sold">
+          <div className="rating"><span>{rating}</span></div>
           <div className="sold">{sold}</div>
         </div>
+
         <div className="price-large">{price}</div>
         <p className="bonus-promo">{bonusText}</p>
         <p className="store-name" title={seller}>{seller}</p>
+
+        {/* TOMBOl SELALU TAMPIL */}
+        <div className="action-buttons">
+          <button className="btn-cart" onClick={handleAddToCart}>
+            <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+            Keranjang
+          </button>
+          <button className="btn-buy" onClick={handleBuyNow}>
+            <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 12l2 2 4-4" />
+              <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+            </svg>
+            Beli
+          </button>
+        </div>
       </div>
     </div>
   );
