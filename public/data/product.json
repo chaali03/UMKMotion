@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "nama": "Kopi Arabika Gayo",
+    "harga": 120000,
+    "image": "/asset/umkm/umkm1.jpg",
+    "category": "food"
+  },
+  {
+    "id": 2,
+    "nama": "Kaos Polos Premium",
+    "harga": 85000,
+    "image": "/asset/umkm/umkm2.jpg",
+    "category": "fashion"
+  },
+  {
+    "id": 3,
+    "nama": "Speaker Bluetooth Mini",
+    "harga": 250000,
+    "image": "/asset/umkm/umkm3.jpg",
+    "category": "electronics"
+  },
+  {
+    "id": 4,
+    "nama": "Gitar Akustik Natural",
+    "harga": 750000,
+    "image": "/asset/umkm/umkm4.jpg",
+    "category": "music"
+  }
+]

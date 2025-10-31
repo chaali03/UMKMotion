@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kategori Produk Amazon - Expand Title Fix</title>
+  <style>
+    body {
+      font-family: "Inter", sans-serif;
+      background: #fafafa;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .category-section { margin-bottom: 20px; display:flex; gap:10px; flex-wrap:wrap; }
+    .category-buttons { padding:8px 12px; border-radius:10px; border:1px solid #eee; background:#fff; cursor:pointer; }
+
+    .product-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 20px;
+      padding: 10px;
+      justify-content: center;
+    }
+
+    .product-card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      overflow: hidden;
+      max-width: 240px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .product-card:hover { transform: translateY(-5px); box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
+
+    .product-image { width:100%; aspect-ratio:1.5/1; background:#f3f3f3; overflow:hidden; }
+    .product-image img { width:100%; height:100%; object-fit:cover; display:block; }
+
+    .product-info { padding:12px 14px 16px; }
+
+    /* default: truncated 2 lines */
+    .product-title {
+      font-size: 0.95rem;
+      color: #222;
+      font-weight: 600;
+      margin-bottom: 6px;
+      line-height: 1.3;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      text-overflow: ellipsis;
+      min-height: 2.6em; /* jaga tinggi supaya rata antar kartu */
+      transition: max-height 0.18s ease;
+    }
+
+    /* ketika expanded: tampilkan penuh */
+    .product-title.expanded {
+      overflow: visible;
+      display: block;              /* non- -webkit-box agar clamp hilang */
+      -webkit-box-orient: unset;
+      text-overflow: unset;
+      white-space: normal;
+      min-height: 0;
+    }
+
+    .toggle-title-btn {
+      background: none;
+      border: none;
+      color: #007bff;
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin: 4px 0 8px 0;
+      padding: 0;
+      display: inline-block;
+    }
+    .toggle-title-btn:hover { text-decoration: underline; }
+
+    .price { display:inline-block; background:#ffeaea; color:#f33636; font-weight:700; padding:3px 6px; border-radius:6px; }
+    .rating-section { margin-top:6px; font-size:0.85rem; color:#555; }
+    .store-name { color:#888; font-size:0.85rem; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    /* responsive smaller cards keep behavior */
+    @media (max-width:600px) {
+      .product-list { grid-template-columns: repeat(2, 1fr); gap:12px; }
+      .product-card { max-width:100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="category-section" id="categorySection">
+    <button class="category-buttons active" data-category="electronics">Elektronik</button>
+    <button class="category-buttons" data-category="food">Kuliner</button>
+    <button class="category-buttons" data-category="fashion">Fashion</button>
+    <button class="category-buttons" data-category="music">Musik</button>
+  </div>
+
+  <div class="product-list" id="productList">
+    <span>Loading products...</span>
+  </div>
+
+  <script>
+function convertToIDR(priceText) {
+  if (!priceText) return "Harga tidak tersedia";
+
+  // Ambil angka dolar dari string, misal "$15.99"
+  const match = priceText.match(/[\d.,]+/);
+  if (!match) return priceText;
+
+  const usd = parseFloat(match[0].replace(",", ""));
+  const rate = 16000; // rate konversi USD ke IDR
+  const idr = usd * rate;
+
+  // Format ke Rupiah dengan toLocaleString
+  return "Rp " + idr.toLocaleString("id-ID");
+}
+
+
+    const API_KEY = "8a08e2c166msh99f0e3365dc53d1p1bb7d7jsnb5265f6b9ba0";
+    const HOST = "real-time-amazon-data.p.rapidapi.com";
+    const productList = document.getElementById("productList");
+    const buttons = document.querySelectorAll(".category-buttons");
+
+    async function fetchProducts(category = "electronics") {
+      productList.innerHTML = "<span>Loading products...</span>";
+      const url = `https://${HOST}/search?query=${encodeURIComponent(category)}&page=1&country=US&sort_by=RELEVANCE`;
+      const options = {
+        method: "GET",
+        headers: {
+          "x-rapidapi-key": API_KEY,
+          "x-rapidapi-host": HOST
+        }
+      };
+
+      try {
+        const res = await fetch(url, options);
+        if (!res.ok) {
+          // tampilkan error ringkas & log detail
+          productList.innerHTML = `<span>Gagal memuat produk (HTTP ${res.status}).</span>`;
+          console.error('HTTP error:', res.status, await res.text());
+          return;
+        }
+        const result = await res.json();
+        const products = result.data?.products || [];
+
+        productList.innerHTML = "";
+        if (products.length === 0) {
+          productList.innerHTML = "<span>Tidak ada produk ditemukan.</span>";
+          return;
+        }
+
+        products.forEach(item => {
+          const stars = renderStars(item.product_star_rating);
+          const soldText = item.product_num_ratings ? `${item.product_num_ratings}+ terjual` : "";
+          const seller = item.seller_name || "Amazon Store";
+
+          const fullTitle = item.product_title || "Produk tanpa nama";
+          const shortTitle = fullTitle.length > 70 ? fullTitle.slice(0, 67) + "..." : fullTitle;
+
+          const card = document.createElement("div");
+          card.className = "product-card";
+          card.innerHTML = `
+            <div class="product-image">
+              <img src="${item.product_photo || 'asset/umkm/umkm5.jpg'}" alt="${escapeHtml(fullTitle)}" loading="lazy">
+            </div>
+            <div class="product-info">
+              <h3 class="product-title" title="${escapeHtml(fullTitle)}">${escapeHtml(shortTitle)}</h3>
+              ${fullTitle.length > 70 ? `<button class="toggle-title-btn" aria-expanded="false">Lihat lebih</button>` : ""}
+             <div class="price-section"><span class="price">${convertToIDR(item.product_price)}</span></div>
+              <div class="rating-section"><span class="stars">${stars}</span> <span class="sold">${soldText}</span></div>
+              <p class="store-name" title="${escapeHtml(seller)}">${escapeHtml(seller)}</p>
+            </div>
+          `;
+
+          // tambahkan event toggle (expand/collapse)
+          const btn = card.querySelector(".toggle-title-btn");
+          const titleEl = card.querySelector(".product-title");
+          if (btn && titleEl) {
+            btn.addEventListener("click", (e) => {
+              const expanded = btn.getAttribute("aria-expanded") === "true";
+              if (!expanded) {
+                // expand
+                titleEl.classList.add("expanded");
+                titleEl.textContent = fullTitle;
+                btn.textContent = "Lihat lebih sedikit";
+                btn.setAttribute("aria-expanded", "true");
+              } else {
+                // collapse
+                titleEl.classList.remove("expanded");
+                titleEl.textContent = shortTitle;
+                btn.textContent = "Lihat lebih";
+                btn.setAttribute("aria-expanded", "false");
+              }
+            });
+          }
+
+          productList.appendChild(card);
+        });
+      } catch (err) {
+        console.error(err);
+        productList.innerHTML = "<span>Gagal memuat produk.</span>";
+      }
+    }
+
+    // konversi rating ke bintang
+    function renderStars(rating) {
+      if (!rating) return "⭐ N/A";
+      const full = Math.round(Number(rating));
+      return "⭐".repeat(full) + "☆".repeat(5 - full);
+    }
+
+    // tombol kategori
+    buttons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        buttons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const category = btn.dataset.category;
+        fetchProducts(category);
+      });
+    });
+
+    // helper: escape html untuk attribute/title
+    function escapeHtml(str = "") {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    
+
+    // load default
+    fetchProducts();
+  </script>
+</body>
+</html>

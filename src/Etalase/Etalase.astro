@@ -1,3 +1,13 @@
+---
+  import FetchData from '../components/Etalase/FetchData.jsx';
+  import Kategori from '../components/Etalase/Kategori.jsx';
+  import EtalaseWrapper from '../components/Etalase/EtalaseWrapper.jsx';
+  import React, { useState } from 'react';
+
+  let selectedCategory = "";
+  let searchQuery = "";
+---
+
 <!DOCTYPE html>
 <html lang="id">
   <head>
@@ -8,26 +18,25 @@
 
   <body>
     <div class="background">
-      <!-- <CHANGE> Transform promotion-banner into carousel with multiple slides -->
-<section class="mobile-hero">
-  <div class="hero-image">
-    <img 
-      src="/asset/umkm/umkm5.jpg" 
-      alt="UMKM Kreatif" 
-      loading="lazy"
-      class="hero-img"
-    />
-  </div>
+    <section class="mobile-hero">
+      <div class="hero-image">
+        <img 
+          src="/asset/umkm/umkm5.jpg" 
+          alt="UMKM Kreatif" 
+          loading="lazy"
+          class="hero-img"
+        />
+      </div>
 
-  <div class="hero-content">
-    <h1 class="hero-title">Etalase</h1>
-    <p class="hero-desc">
-      Temukan berbagai produk unggulan dan barang favoritmu di sini. 
-      Dukung UMKM lokal dengan berbelanja cerdas!
-    </p>
-    <a href="#produk" class="hero-btn">Lihat Produk</a>
-  </div>
-</section>
+      <div class="hero-content">
+        <h1 class="hero-title">Etalase</h1>
+        <p class="hero-desc">
+          Temukan berbagai produk unggulan dan barang favoritmu di sini. 
+          Dukung UMKM lokal dengan berbelanja cerdas!
+        </p>
+        <a href="#produk" class="hero-btn">Lihat Produk</a>
+      </div>
+    </section>
 
       <main>
         <section class="header">
@@ -205,8 +214,19 @@
               <button>Daftar Sekarang</button>
             </section>
 
+
+<section>
+  <Kategori client:load />
+</section>
+
+<section>
+  <FetchData client:load />
+</section>
+
+
             <section class="product-list">
               <span>Semua Produk</span>
+
 
               <article class="product-card">
                 <div class="product-image">
@@ -1433,6 +1453,21 @@
 
   <script>
     // @ts-nocheck
+
+
+    // fetch
+const EtalaseWrapper: React.FC = () => {
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+
+
+
+
     document.addEventListener('DOMContentLoaded', function() {
       // ===== BANNER CAROUSEL LOGIC =====
       var bannerCarouselTrack = document.getElementById('bannerCarouselTrack');
@@ -1687,6 +1722,8 @@
         carouselTrack.addEventListener('mouseleave', startAutoPlay);
       }
     });
+
+  }  
   </script>
 
 </html>
