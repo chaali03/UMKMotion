@@ -42,8 +42,6 @@ const socialLinks = [
   { icon: Youtube, href: "#", label: "YouTube", color: "from-red-500 to-red-700", hoverColor: "group-hover:text-red-500" },
 ];
 
-// removed stats section entirely
-
 export default function Footer() {
   const ref = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -267,18 +265,96 @@ export default function Footer() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ delay: 0.3 + linkIndex * 0.1 }}
-                    className="overflow-visible"
+                    className="overflow-visible relative group"
                   >
-                    <a
+                    <motion.a
                       href={link.href}
-                      className="group relative z-10 flex items-center justify-between rounded-lg sm:rounded-xl border border-gray-200 bg-white px-3 sm:px-4 py-2.5 sm:py-3 md:py-3.5 text-xs sm:text-sm md:text-base font-medium text-slate-700 transition-all duration-300 hover:border-orange-300 hover:shadow-2xl hover:shadow-orange-200/50 hover:scale-[1.02] active:scale-[0.98] overflow-visible"
+                      className="relative z-10 flex items-center justify-between rounded-lg sm:rounded-xl border border-gray-200 bg-white px-3 sm:px-4 py-2.5 sm:py-3 md:py-3.5 text-xs sm:text-sm md:text-base font-medium text-slate-700 transition-all duration-500 overflow-visible"
+                      whileHover={!isMobile ? { 
+                        scale: 1.02,
+                        y: -2,
+                        borderColor: "#fdba74",
+                        boxShadow: "0 20px 25px -5px rgba(249, 115, 22, 0.1), 0 10px 10px -5px rgba(249, 115, 22, 0.04)"
+                      } : {}}
+                      whileTap={{ scale: 0.98 }}
                     >
-                      <span className="inline-flex items-center gap-2">
-                        <link.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-500 flex-shrink-0" />
-                        <span className="truncate">{link.label}</span>
+                      {/* Hover Background Effect */}
+                      <motion.div 
+                        className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 opacity-0 z-0"
+                        whileHover={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                      
+                      {/* Animated Border Glow */}
+                      <motion.div 
+                        className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-400 to-amber-400 opacity-0 z-0"
+                        whileHover={{ opacity: 0.1 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                      
+                      {/* Floating Particles Effect */}
+                      {!isMobile && (
+                        <>
+                          <motion.div
+                            className="absolute -top-1 -right-1 w-2 h-2 bg-orange-400 rounded-full opacity-0 z-20"
+                            whileHover={{ 
+                              opacity: [0, 1, 0],
+                              scale: [0, 1.5, 0],
+                              transition: { duration: 0.8, times: [0, 0.5, 1] }
+                            }}
+                          />
+                          <motion.div
+                            className="absolute -bottom-1 -left-1 w-1.5 h-1.5 bg-amber-400 rounded-full opacity-0 z-20"
+                            whileHover={{ 
+                              opacity: [0, 1, 0],
+                              scale: [0, 1.8, 0],
+                              transition: { duration: 0.8, delay: 0.2, times: [0, 0.5, 1] }
+                            }}
+                          />
+                        </>
+                      )}
+
+                      <span className="relative z-10 inline-flex items-center gap-2">
+                        <motion.div
+                          whileHover={!isMobile ? { 
+                            scale: 1.2,
+                            rotate: [0, -10, 10, 0],
+                            transition: { duration: 0.5 }
+                          } : {}}
+                        >
+                          <link.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-500 flex-shrink-0" />
+                        </motion.div>
+                        <motion.span
+                          whileHover={!isMobile ? { 
+                            background: "linear-gradient(45deg, #ea580c, #d97706)",
+                            backgroundClip: "text",
+                            WebkitBackgroundClip: "text",
+                            color: "transparent",
+                            transition: { duration: 0.3 }
+                          } : {}}
+                        >
+                          {link.label}
+                        </motion.span>
                       </span>
-                      <ArrowUpRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-slate-400 transition-all duration-300 group-hover:text-orange-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 flex-shrink-0" />
-                    </a>
+                      
+                      <motion.div
+                        className="relative z-10 flex items-center"
+                        whileHover={!isMobile ? { 
+                          x: 3,
+                          y: -3,
+                          transition: { type: "spring", stiffness: 400, damping: 10 }
+                        } : {}}
+                      >
+                        <ArrowUpRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-slate-400 transition-all duration-300 group-hover:text-orange-600 flex-shrink-0" />
+                      </motion.div>
+                    </motion.a>
+
+                    {/* Extended Hover Glow Effect */}
+                    <motion.div 
+                      className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-200 to-amber-200 blur-md opacity-0 -z-10"
+                      whileHover={{ opacity: 0.3, scale: 1.05 }}
+                      transition={{ duration: 0.4 }}
+                    />
                   </motion.li>
                 ))}
               </ul>

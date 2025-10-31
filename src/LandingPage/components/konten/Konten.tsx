@@ -124,13 +124,13 @@ export default function Konten() {
         </motion.div>
       </div>
       
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="max-w-7xl mx-auto relative z-10 overflow-visible">
 
         {/* Main Hero Section */}
-        <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 mb-16 sm:mb-20 md:mb-24 items-center">
+        <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 mb-16 sm:mb-20 md:mb-24 items-center overflow-visible">
           {/* Left Content */}
-          <div className="space-y-6 sm:space-y-8 md:space-y-10 order-2 lg:order-1">
-            <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-6 sm:space-y-8 md:space-y-10 order-2 lg:order-1 overflow-visible">
+            <div className="space-y-4 sm:space-y-6 overflow-visible">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black !leading-[1.1] text-slate-900">
                 <VerticalCutReveal as="span" delay={0.3} duration={0.8}>
                   <span className="block mb-1 sm:mb-2">Temukan UMKM</span>
@@ -159,13 +159,13 @@ export default function Konten() {
               animationNum={2}
               timelineRef={heroRef}
               customVariants={revealVariants}
-              className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5"
+              className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 overflow-visible"
             >
               <motion.div 
                 whileHover={{ scale: 1.05, y: -5 }}
-                className="group relative bg-gradient-to-br from-white to-orange-50/50 backdrop-blur-xl border border-orange-200/60 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 shadow-xl shadow-orange-500/10 hover:shadow-2xl hover:shadow-orange-500/20 transition-all duration-500 overflow-hidden"
+                className="group relative bg-gradient-to-br from-white to-orange-50/50 backdrop-blur-xl border border-orange-200/60 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 shadow-xl shadow-orange-500/10 hover:shadow-2xl hover:shadow-orange-500/20 transition-all duration-500 overflow-visible"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-600/0 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-600/0 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl sm:rounded-3xl" />
                 <div className="relative">
                   <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
                     <div className="p-1.5 sm:p-2 md:p-2.5 bg-sky-100 rounded-lg sm:rounded-xl group-hover:scale-110 transition-transform duration-300">
@@ -180,9 +180,9 @@ export default function Konten() {
               
               <motion.div 
                 whileHover={{ scale: 1.05, y: -5 }}
-                className="group relative bg-gradient-to-br from-white to-amber-50/50 backdrop-blur-xl border border-amber-200/60 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 shadow-xl shadow-amber-500/10 hover:shadow-2xl hover:shadow-amber-500/20 transition-all duration-500 overflow-hidden"
+                className="group relative bg-gradient-to-br from-white to-amber-50/50 backdrop-blur-xl border border-amber-200/60 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 shadow-xl shadow-amber-500/10 hover:shadow-2xl hover:shadow-amber-500/20 transition-all duration-500 overflow-visible"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-600/0 to-amber-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-600/0 to-amber-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl sm:rounded-3xl" />
                 <div className="relative">
                   <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
                     <div className="p-1.5 sm:p-2 md:p-2.5 bg-violet-100 rounded-lg sm:rounded-xl group-hover:scale-110 transition-transform duration-300">
@@ -202,7 +202,7 @@ export default function Konten() {
               animationNum={3}
               timelineRef={heroRef}
               customVariants={revealVariants}
-              className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4"
+              className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 overflow-visible"
             >
               <motion.button
                 whileHover={{ scale: isMobile ? 1 : 1.05, boxShadow: "0 20px 60px -15px rgba(249, 115, 22, 0.5)" }}
@@ -214,8 +214,6 @@ export default function Konten() {
                 <span className="relative">Buka Peta UMKM</span>
                 <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-2 transition-transform relative" />
               </motion.button>
-
-              {/* Removed 'Lihat Demo' secondary button as requested */}
             </TimelineContent>
 
             {/* Trust Indicators */}
@@ -224,10 +222,10 @@ export default function Konten() {
               animationNum={4}
               timelineRef={heroRef}
               customVariants={revealVariants}
-              className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 md:gap-8 pt-4 border-t border-slate-200"
+              className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 md:gap-8 pt-4 border-t border-slate-200 overflow-visible"
             >
-              <div className="flex items-center gap-2">
-                <div className="flex -space-x-2">
+              <div className="flex items-center gap-2 overflow-visible">
+                <div className="flex -space-x-2 overflow-visible">
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="w-8 sm:w-10 h-8 sm:h-10 rounded-full border-2 border-white bg-gradient-to-br from-orange-400 to-amber-400 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                       {i}K
@@ -238,7 +236,7 @@ export default function Konten() {
                   <span className="text-orange-600">15,000+</span> Pengguna Aktif
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 overflow-visible">
                 <div className="flex">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="w-4 sm:w-5 h-4 sm:h-5 fill-amber-400 text-amber-400" />
@@ -255,15 +253,15 @@ export default function Konten() {
             animationNum={5}
             timelineRef={heroRef}
             customVariants={scaleVariants}
-            className="relative order-1 lg:order-2"
+            className="relative order-1 lg:order-2 overflow-visible"
           >
             <motion.div 
               whileHover={{ scale: isMobile ? 1 : 1.02 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="relative rounded-2xl sm:rounded-3xl overflow-hidden backdrop-blur-sm group"
+              className="relative rounded-2xl sm:rounded-3xl overflow-visible backdrop-blur-sm group"
             >
               {/* Map Container with Glassmorphism */}
-              <div className="relative bg-gradient-to-br from-white/80 to-orange-50/60 p-1.5 sm:p-2 rounded-2xl sm:rounded-3xl border-2 border-white/60 backdrop-blur-xl">
+              <div className="relative bg-gradient-to-br from-white/80 to-orange-50/60 p-1.5 sm:p-2 rounded-2xl sm:rounded-3xl border-2 border-white/60 backdrop-blur-xl overflow-visible">
                 <div className="relative rounded-xl sm:rounded-2xl overflow-hidden">
                   {/* Map Image - Focused on Indonesia */}
                   <img
@@ -283,7 +281,7 @@ export default function Konten() {
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ delay: 2 + pin.delay, duration: 0.5, type: "spring" }}
-                        className="absolute z-20 group/pin cursor-pointer"
+                        className="absolute z-20 group/pin cursor-pointer overflow-visible"
                         style={{ top: pin.top, left: pin.left }}
                       >
                         {/* Pin with Pulse Animation */}
@@ -296,7 +294,7 @@ export default function Konten() {
                             repeat: Infinity,
                             delay: pin.delay
                           }}
-                          className="relative"
+                          className="relative overflow-visible"
                         >
                           {/* Ping Effect */}
                           <span className="absolute inset-0 flex items-center justify-center">
@@ -314,7 +312,7 @@ export default function Konten() {
                           <motion.div
                             initial={{ opacity: 0, y: 10, scale: 0.8 }}
                             whileHover={{ opacity: 1, y: -10, scale: 1 }}
-                            className="hidden sm:block absolute -top-16 left-1/2 -translate-x-1/2 opacity-0 group-hover/pin:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap"
+                            className="hidden sm:block absolute -top-16 left-1/2 -translate-x-1/2 opacity-0 group-hover/pin:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-50"
                           >
                             <div className="bg-white/95 backdrop-blur-md rounded-xl px-4 py-2 shadow-xl border border-orange-100">
                               <p className="font-bold text-slate-900 text-sm">{pin.city}</p>
@@ -403,7 +401,7 @@ export default function Konten() {
         </div>
 
         {/* Enhanced Services Grid */}
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-16 sm:mb-20 md:mb-24">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-16 sm:mb-20 md:mb-24 overflow-visible">
           {[
             {
               icon: MapPin,
@@ -436,12 +434,13 @@ export default function Konten() {
               animationNum={service.delay}
               timelineRef={heroRef}
               customVariants={revealVariants}
+              className="overflow-visible"
             >
               <motion.div
                 whileHover={{ y: isMobile ? 0 : -10, scale: isMobile ? 1 : 1.02 }}
-                className={`group relative bg-gradient-to-br ${service.bgGradient} backdrop-blur-xl border border-white/60 rounded-2xl sm:rounded-3xl p-6 sm:p-7 md:p-8 hover:shadow-2xl transition-all duration-500 overflow-hidden h-full`}
+                className={`group relative bg-gradient-to-br ${service.bgGradient} backdrop-blur-xl border border-white/60 rounded-2xl sm:rounded-3xl p-6 sm:p-7 md:p-8 hover:shadow-2xl transition-all duration-500 overflow-visible h-full`}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl sm:rounded-3xl" />
                 
                 <div className="relative space-y-3 sm:space-y-4 md:space-y-5">
                   <motion.div 
@@ -477,6 +476,7 @@ export default function Konten() {
           animationNum={9}
           timelineRef={heroRef}
           customVariants={revealVariants}
+          className="overflow-visible"
         >
           <motion.div
             whileHover={{ scale: isMobile ? 1 : 1.02 }}
@@ -491,8 +491,8 @@ export default function Konten() {
             {/* Grid Pattern */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:2rem_2rem] sm:bg-[size:3rem_3rem] opacity-10" />
             
-            <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
-              <div className="flex-1 space-y-3 sm:space-y-4 text-center md:text-left">
+            <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8 overflow-visible">
+              <div className="flex-1 space-y-3 sm:space-y-4 text-center md:text-left overflow-visible">
                 <motion.div
                   animate={{ scale: [1, 1.02, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
@@ -510,7 +510,7 @@ export default function Konten() {
                   Akses peta interaktif dengan ribuan UMKM terverifikasi. Temukan, navigasi, dan dukung bisnis lokal dengan mudah.
                 </p>
                 
-                <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center md:justify-start gap-4 sm:gap-6 pt-2 sm:pt-4">
+                <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center md:justify-start gap-4 sm:gap-6 pt-2 sm:pt-4 overflow-visible">
                   <div className="flex items-center gap-2 text-white">
                     <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
                       <Users className="w-5 sm:w-6 h-5 sm:h-6" />
@@ -552,4 +552,4 @@ export default function Konten() {
       </div>
     </section>
   );
-} 
+}
