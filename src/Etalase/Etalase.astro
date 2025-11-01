@@ -2,6 +2,7 @@
   import FetchData from '../components/Etalase/FetchData.jsx';
   import Kategori from '../components/Etalase/Kategori.jsx';
   import EtalaseWrapper from '../components/Etalase/EtalaseWrapper.jsx';
+  import BackgroundCarousel from '../components/Etalase/BacgroundCarousel.tsx';
   import React, { useState } from 'react';
 
   let selectedCategory = "";
@@ -18,25 +19,11 @@
 
   <body>
     <div class="background">
-    <section class="mobile-hero">
-      <div class="hero-image">
-        <img 
-          src="/asset/umkm/umkm5.jpg" 
-          alt="UMKM Kreatif" 
-          loading="lazy"
-          class="hero-img"
-        />
-      </div>
 
-      <div class="hero-content">
-        <h1 class="hero-title">Etalase</h1>
-        <p class="hero-desc">
-          Temukan berbagai produk unggulan dan barang favoritmu di sini. 
-          Dukung UMKM lokal dengan berbelanja cerdas!
-        </p>
-        <a href="#produk" class="hero-btn">Lihat Produk</a>
-      </div>
+    <section>
+      <BackgroundCarousel client:load />
     </section>
+
     <section class="sell-promotion">
       <div class="sell-text">
         <h3>Ingin Jualan di Sini?</h3>
