@@ -1,1064 +1,523 @@
-import React, { useEffect } from 'react';
-import ConsultantSlider from '../components/ConsultantSlider';
-import { motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import TestimonialSection from './testimonial/TestimonialSection';
+import Footer from '../LandingPage/components/footer/Footer';
+import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
+import { TimelineContent } from "@/components/ui/timeline-animation";
+import VerticalCutReveal from "@/components/ui/vertical-cut-reveal";
+import { 
+  ArrowRight, 
+  Award, 
+  Target, 
+  Users, 
+  CheckCircle, 
+  Sparkles, 
+  TrendingUp,
+  MessageCircle,
+  Calendar,
+  Star,
+  Zap,
+  BarChart3
+} from "lucide-react";
+import { useRef } from "react";
 
-const KonsulPage: React.FC = () => {
-  const handleAnimationComplete = () => {
-    console.log('All letters have animated!');
+function HeroKonsultanAbout() {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const { scrollYProgress } = useScroll();
+  const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
+  const prefersReducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  const revealVariants = {
+    visible: (i: number) => ({
+      y: 0,
+      opacity: 1,
+      filter: "blur(0px)",
+      transition: { delay: i * 0.15, duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }
+    }),
+    hidden: { filter: "blur(12px)", y: 40, opacity: 0 }
   };
 
+  const features = [
+    { icon: CheckCircle, text: "Pendampingan strategi pemasaran dan digitalisasi", color: "from-blue-600 to-indigo-600" },
+    { icon: CheckCircle, text: "Rencana aksi 30–90 hari yang terukur", color: "from-purple-600 to-fuchsia-600" },
+    { icon: CheckCircle, text: "Akses jaringan mentor dan komunitas UMKM", color: "from-cyan-500 to-sky-500" }
+  ];
+
   return (
-    <div className="konsul-page">
-      <section className="hero">
-        <div className="container-hero">
-          {/* Gradient grid background + glow orbs */}
-          <div className="bg-grid" />
-          <div className="background-gradients">
-            <div className="gradient-orange" />
-            <div className="gradient-blue" />
-          </div>
-
-          {/* Text side */}
-          <div className="text-hero">
-            <motion.h1
-              className="headline"
-              initial={{ opacity: 0, y: 28, scale: 0.98, filter: 'blur(8px)' }}
-              animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0)' }}
-              transition={{ duration: 0.75, ease: [0.22, 0.85, 0.3, 1] }}
-            >
-              <span>MEMBANTU UMKM TUMBUH,</span>
-              <span>BERKEMBANG, DAN</span>
-              <span>SIAP BERSAING.</span>
-            </motion.h1>
-
-            <motion.h2
-              className="subline"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.6 }}
-            >
-              Dapatkan arahan profesional dari tim konsultan berpengalaman untuk membawa bisnis Anda menuju kesuksesan yang lebih besar.
-            </motion.h2>
-
-            <motion.div
-              className="cta-row"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25, duration: 0.6 }}
-            >
-              <a href="#" className="cta-primary">Jadwalkan Konsultasi</a>
-              <a href="#keunggulan" className="cta-secondary">Lihat Keunggulan</a>
-            </motion.div>
-          </div>
-
-          {/* Image side */}
-          <motion.div
-            className="img-container-hero"
-            initial={{ opacity: 0, x: 24 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-          >
-            <div className="image-hero">
-              <img src="/asset/dummy/People-dummy.png" alt="Consultant Hero Image" />
-              <div className="image-glow" />
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="coach-section">
-        <div className="stats-container">
-          {[
-            { n: '169+', l: 'Konsultasi UMKM' },
-            { n: '108+', l: 'UMKM Sukses' },
-            { n: '78+', l: 'Konsultan' },
-            { n: '21', l: 'Penghargaan UMKM' }
-          ].map((s, i) => (
-            <motion.div
-              key={s.l}
-              className="stat-item"
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-10% 0px' }}
-              transition={{ delay: i * 0.08, duration: 0.5 }}
-              whileHover={{ scale: 1.04 }}
-            >
-              <div className="stat-number">{s.n}</div>
-              <div className="stat-label">{s.l}</div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Content split */}
-        <div className="content-container" id="keunggulan">
-          <motion.div
-            className="image-side"
-            initial={{ opacity: 0, x: -24 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: '-10% 0px' }}
-            transition={{ duration: 0.6 }}
-          >
-            <img 
-              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=700&fit=crop" 
-              alt="Professional Coach" 
+    <section ref={heroRef} className="relative py-20 sm:py-28 px-4 bg-gradient-to-b from-white via-orange-50/30 to-white overflow-hidden">
+      {/* Enhanced background elements */}
+      <div className="pointer-events-none absolute inset-0">
+        {!prefersReducedMotion && (
+          <>
+            {/* Animated gradient orbs */}
+            <motion.div 
+              animate={{ x: mousePosition.x * 0.02, y: mousePosition.y * 0.02 }}
+              transition={{ type: "spring", stiffness: 50, damping: 30 }}
+              className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-orange-400/30 via-amber-400/20 to-transparent blur-3xl rounded-full"
             />
+            <motion.div 
+              animate={{ x: mousePosition.x * -0.02, y: mousePosition.y * -0.02 }}
+              transition={{ type: "spring", stiffness: 50, damping: 30 }}
+              className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-blue-400/25 via-indigo-400/15 to-transparent blur-3xl rounded-full"
+            />
+            <motion.div 
+              animate={{ x: mousePosition.x * -0.01, y: mousePosition.y * 0.01 }}
+              transition={{ type: "spring", stiffness: 50, damping: 30 }}
+              className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] bg-gradient-to-br from-purple-400/20 via-fuchsia-400/15 to-transparent blur-3xl rounded-full"
+            />
+            {/* Floating shapes */}
+            <motion.div
+              animate={{ y: [0, -30, 0], rotate: [0, 180, 360] }}
+              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute top-1/4 right-1/4 w-20 h-20 border-4 border-orange-300/20 rounded-lg"
+            />
+            <motion.div
+              animate={{ y: [0, 30, 0], rotate: [360, 180, 0] }}
+              transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="absolute bottom-1/3 left-1/4 w-16 h-16 bg-gradient-to-br from-amber-400/10 to-orange-400/10 rounded-full"
+            />
+          </>
+        )}
+        {/* Grid pattern overlays (pushed further back) */}
+        <motion.div 
+          style={prefersReducedMotion ? undefined : { y }}
+          className="absolute inset-0 -z-20 bg-[linear-gradient(to_right,#f97316_1px,transparent_1px),linear-gradient(to_bottom,#f97316_1px,transparent_1px)] bg-[size:3rem_3rem] opacity-[0.02]"
+        />
+        <motion.div 
+          style={prefersReducedMotion ? undefined : { y }}
+          className="absolute inset-0 -z-20 bg-[linear-gradient(to_right,#1e3a8a_1px,transparent_1px),linear-gradient(to_bottom,#1e3a8a_1px,transparent_1px)] bg-[size:3rem_3rem] opacity-[0.015]"
+        />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        {/* Left Content */}
+        <div className="space-y-8">
+          {/* Heading with gradient */}
+          <div>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 mb-6 !leading-[1.1]">
+              <VerticalCutReveal delay={0.3} duration={0.8}>
+                <span className="block mb-2">Tumbuhkan Bisnis</span>
+                <span className="block bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-clip-text text-transparent">
+                  dengan Konsultan
+                </span>
+                <span className="block">Ahli Terpercaya</span>
+              </VerticalCutReveal>
+            </h1>
+
+            <TimelineContent
+              as="p"
+              animationNum={1}
+              timelineRef={heroRef}
+              customVariants={revealVariants}
+              className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-2xl"
+            >
+              Dapatkan <span className="font-bold text-orange-600">strategi, pendampingan, dan eksekusi</span> yang tepat untuk meningkatkan performa usaha. Fokus pada pertumbuhan; sisanya kami bantu.
+            </TimelineContent>
+          </div>
+
+          {/* Enhanced stats cards */}
+          <TimelineContent
+            as="div"
+            animationNum={2}
+            timelineRef={heroRef}
+            customVariants={revealVariants}
+          >
+            <div className="grid grid-cols-3 gap-3 sm:gap-4 bg-gradient-to-br from-white to-orange-50/50 border-2 border-orange-100/60 rounded-3xl p-4 sm:p-5 shadow-xl shadow-orange-500/10 backdrop-blur-sm">
+              {[
+                { icon: Users, num: "78+", label: "Konsultan Ahli", color: "from-orange-500 to-amber-500" },
+                { icon: Award, num: "108+", label: "UMKM Sukses", color: "from-amber-500 to-orange-500" },
+                { icon: Target, num: "169+", label: "Sesi Konsultasi", color: "from-orange-600 to-amber-600" }
+              ].map((stat, idx) => (
+                <motion.div 
+                  key={stat.label}
+                  whileHover={prefersReducedMotion ? {} : { y: -6, scale: 1.02 }}
+                  className="group text-center rounded-2xl p-3 sm:p-4 bg-white shadow-md hover:shadow-xl transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+                >
+                  <motion.div 
+                    whileHover={prefersReducedMotion ? {} : { y: -2, rotate: -3, scale: 1.04 }}
+                    transition={{ duration: 0.35, ease: [0.25, 0.4, 0.25, 1] }}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:shadow-xl`}
+                  >
+                    <stat.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                  </motion.div>
+                  <div className={`text-2xl sm:text-3xl font-black bg-gradient-to-br ${stat.color} bg-clip-text text-transparent mb-1`}>
+                    {stat.num}
+                  </div>
+                  <div className="text-xs sm:text-sm font-semibold text-slate-600">{stat.label}</div>
+                </motion.div>
+              ))}
+            </div>
+          </TimelineContent>
+
+          {/* Feature list with icons */}
+          <TimelineContent
+            as="div"
+            animationNum={3}
+            timelineRef={heroRef}
+            customVariants={revealVariants}
+          >
+            <div className="space-y-3">
+              {features.map((feature, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  whileHover={prefersReducedMotion ? {} : { x: 6, scale: 1.015 }}
+                  className="flex items-start gap-3 group"
+                >
+                  <motion.div
+                    whileHover={prefersReducedMotion ? {} : { rotate: -8, scale: 1.1 }}
+                    transition={{ type: 'spring', stiffness: 250, damping: 18 }}
+                    className={`mt-0.5 p-1.5 rounded-lg bg-gradient-to-br ${feature.color} shadow-md transition-transform`}
+                  >
+                    <feature.icon className="w-4 h-4 text-white" />
+                  </motion.div>
+                  <p className="text-sm sm:text-base text-slate-700 leading-relaxed group-hover:text-slate-900 transition-colors">
+                    {feature.text}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </TimelineContent>
+
+          {/* CTA Buttons */}
+          <TimelineContent
+            as="div"
+            animationNum={4}
+            timelineRef={heroRef}
+            customVariants={revealVariants}
+          >
+            <div className="flex flex-col sm:flex-row gap-4">
+              <motion.button
+                whileHover={prefersReducedMotion ? {} : { y: -4, scale: 1.025, backgroundPosition: '100% 0' }}
+                whileTap={{ scale: 0.98 }}
+                aria-label="Jadwalkan Konsultasi"
+                className="group relative text-white px-8 py-4 rounded-2xl font-bold text-lg inline-flex items-center justify-center gap-3 shadow-2xl shadow-blue-500/20 overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-400/40"
+                style={{
+                  backgroundImage: 'linear-gradient(135deg, #12307a 0%, #2f5fe7 50%, #7c3aed 100%)',
+                  backgroundSize: '200% 100%',
+                  backgroundPosition: '0% 0',
+                  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.18)'
+                }}
+              >
+                {!prefersReducedMotion && (
+                  <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+                )}
+                <span className="pointer-events-none absolute inset-0" style={{
+                  background: 'radial-gradient(90% 140% at 50% 50%, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.08) 36%, rgba(255,255,255,0.02) 60%, rgba(255,255,255,0) 75%)'
+                }} />
+                <Calendar className="w-5 h-5" />
+                <span className="relative">Jadwalkan Konsultasi</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform relative" />
+              </motion.button>
+
+              <motion.button
+                whileHover={prefersReducedMotion ? {} : { y: -2, scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                aria-label="Pelajari Layanan"
+                className="group relative bg-white border-2 border-slate-200 text-slate-900 px-8 py-4 rounded-2xl font-bold text-lg inline-flex items-center justify-center gap-3 hover:border-orange-300 transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/40 overflow-hidden"
+                style={{
+                  backgroundImage: prefersReducedMotion ? undefined : 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(15,23,42,0.03) 100%)'
+                }}
+              >
+                <MessageCircle className="w-5 h-5" />
+                <span>Pelajari Layanan</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                {!prefersReducedMotion && (
+                  <span className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{
+                    background: 'radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 60%)'
+                  }} />
+                )}
+              </motion.button>
+            </div>
+          </TimelineContent>
+
+          {/* Trust indicators */}
+          <TimelineContent
+            as="div"
+            animationNum={5}
+            timelineRef={heroRef}
+            customVariants={revealVariants}
+          >
+            <div className="flex items-center gap-6 pt-4 border-t-2 border-gray-200">
+              <div className="flex items-center gap-2">
+                <div className="flex -space-x-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-gradient-to-br from-orange-400 to-amber-400 flex items-center justify-center text-white font-bold text-sm" aria-hidden>
+                      {i}K
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm font-semibold text-slate-700">
+                  <span className="text-orange-600">10,000+</span> UMKM Terdampak
+                </p>
+              </div>
+            </div>
+          </TimelineContent>
+        </div>
+
+        {/* Right Content - Enhanced Image */}
+        <TimelineContent
+          as="div"
+          animationNum={6}
+          timelineRef={heroRef}
+          customVariants={revealVariants}
+        >
+          <motion.div 
+            whileHover={prefersReducedMotion ? {} : { y: -2, scale: 1.01 }}
+            className="relative md:-mt-12 lg:-mt-20 xl:-mt-84 2xl:-mt-28"
+          >
+            {/* Main image with glassmorphism card */}
+            <div className="relative z-[1] bg-gradient-to-br from-white/80 to-orange-50/60 p-3 rounded-3xl border-2 border-white/60 shadow-none">
+              <div className="relative rounded-2xl overflow-hidden">
+                <motion.img
+                  src="https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=1074&auto=format&fit=crop"
+                  alt="Kolaborasi Konsultan"
+                  className="w-full h-[400px] sm:h-[500px] object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 600px"
+                  initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 1.06 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.8 }}
+                />
+                
+                {/* Removed overlay to avoid dark edge near image */}
+                
+                {/* Floating badges */}
+
+                {/* 2) Success metric badge at bottom (refined) */}
+                <motion.div
+                  initial={{ y: prefersReducedMotion ? 0 : 50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.6, duration: 0.6 }}
+                  className="absolute bottom-6 left-6 right-6"
+                >
+                  <div className="bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-none border border-orange-100">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl">
+                          <TrendingUp className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-900">Tingkat Keberhasilan</p>
+                          <p className="text-sm text-slate-600">UMKM yang Tumbuh</p>
+                        </div>
+                      </div>
+                      <div className="text-3xl font-black bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                        94%
+                      </div>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: "94%" }}
+                        transition={{ delay: 0.9, duration: 1.2, ease: "easeOut" }}
+                        className="h-full bg-gradient-to-r from-orange-500 to-amber-500"
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Removed decorative blurred blobs around image to avoid shadow-like glow */}
+          </motion.div>
+        </TimelineContent>
+      </div>
+    </section>
+  );
+}
+
+const KonsulPage: React.FC = () => {
+  const statsRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+
+  const stats = [
+    { icon: BarChart3, n: '169+', l: 'Konsultasi UMKM', color: 'from-blue-600 to-indigo-600' },
+    { icon: Award, n: '108+', l: 'UMKM Sukses', color: 'from-purple-600 to-fuchsia-600' },
+    { icon: Users, n: '78+', l: 'Konsultan Ahli', color: 'from-cyan-500 to-sky-500' },
+    { icon: Star, n: '21', l: 'Penghargaan UMKM', color: 'from-emerald-500 to-teal-600' }
+  ];
+
+  return (
+    <div className="konsul-page bg-white">
+      <HeroKonsultanAbout />
+
+      {/* Enhanced Stats Section */}
+      <section ref={statsRef} className="relative py-16 sm:py-20 px-4 bg-gradient-to-b from-white via-orange-50/20 to-white overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(249,115,22,0.05)_0%,transparent_50%)]" />
+        
+        <div className="relative max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-bold mb-4">
+              <Zap className="w-4 h-4" />
+              Pencapaian Kami
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-4">
+              Dampak <span className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">Nyata</span> untuk UMKM
+            </h2>
           </motion.div>
 
-          <motion.div
-            className="text-side"
-            initial={{ opacity: 0, x: 24 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: '-10% 0px' }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="badge">PROGRAM KONSULTASI UMKM</span>
-            <h2 className="main-heading">Konsultasi Profesional untuk Mengembangkan dan Memajukan Usaha Anda.</h2>
-            <p className="description">
-              Konsultasi bisnis merupakan langkah penting bagi pelaku UMKM yang ingin meningkatkan kualitas usaha, memperluas jangkauan pasar, dan memperkuat strategi bisnisnya. Di tengah perubahan dunia usaha yang cepat, pendampingan yang tepat menjadi kunci untuk terus bertumbuh dan beradaptasi.
-            </p>
-            <p className="description">
-              Dengan wawasan dan pengalaman tim kami, Anda akan mendapatkan bimbingan, strategi, serta dukungan nyata untuk mengoptimalkan potensi bisnis mulai dari manajemen, pemasaran, hingga transformasi digital yang relevan dengan kebutuhan UMKM masa kini.
-            </p>
-            <div className="cta-inline">
-              <a href="#" className="cta-primary">Jadwalkan Konsultasi Anda</a>
-              <a href="#" className="cta-link">Pelajari Program →</a>
-            </div>
-          </motion.div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {stats.map((s, i) => (
+              <motion.div
+                key={s.l}
+                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: '-10% 0px' }}
+                transition={{ delay: i * 0.1, duration: 0.6 }}
+                whileHover={prefersReducedMotion ? {} : { scale: 1.055, y: -10, rotate: -1.2 }}
+                className="group relative bg-gradient-to-br from-white to-orange-50/50 border-2 border-orange-100/60 rounded-3xl p-6 sm:p-8 shadow-xl hover:shadow-2xl hover:border-orange-200 transition-all duration-300 overflow-hidden"
+              >
+                {/* Gradient overlay on hover */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${s.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+                
+                <div className="relative space-y-4">
+                  <motion.div
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.6 }}
+                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br ${s.color} flex items-center justify-center shadow-lg group-hover:shadow-xl mx-auto`}
+                  >
+                    <s.icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+                  </motion.div>
+                  
+                  <div className="text-center">
+                    <div className={`text-3xl sm:text-4xl md:text-5xl font-black bg-gradient-to-br ${s.color} bg-clip-text text-transparent mb-2`}>
+                      {s.n}
+                    </div>
+                    <div className="text-sm sm:text-base font-semibold text-slate-600">
+                      {s.l}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Enhanced Content Section */}
+      <section ref={contentRef} className="relative py-16 sm:py-20 px-4 overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 right-0 w-96 h-96 bg-gradient-to-br from-orange-200/20 to-transparent blur-3xl rounded-full" />
+          <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-gradient-to-tr from-blue-200/20 to-transparent blur-3xl rounded-full" />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Image side */}
+            <motion.div
+              initial={{ opacity: 0, x: -40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="relative"
+            >
+              <div className="relative z-[1] bg-gradient-to-br from-white/80 to-orange-50/60 p-3 rounded-3xl border-2 border-white/60 shadow-none">
+                <img 
+                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=700&fit=crop" 
+                  alt="Professional Coach" 
+                  className="w-full h-[500px] object-cover rounded-2xl"
+                />
+                
+                {/* Floating achievement badge (safe inset to avoid clipping) */}
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.5, type: "spring" }}
+                  className="pointer-events-none absolute top-3 right-3 bg-gradient-to-br from-orange-500 to-amber-500 text-white px-3 py-2.5 rounded-xl shadow-2xl ring-1 ring-white/40"
+                >
+                  <div className="text-center leading-tight">
+                    <Award className="w-6 h-6 mx-auto mb-0.5" />
+                    <div className="text-base font-extrabold">Top</div>
+                    <div className="text-[10px] font-semibold">Konsultan</div>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Decorative elements */}
+              <div className="absolute -bottom-6 -left-6 w-40 h-40 bg-gradient-to-br from-orange-400/20 to-amber-400/20 rounded-3xl blur-2xl -z-10" />
+            </motion.div>
+
+            {/* Text side */}
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="space-y-6"
+            >
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 text-orange-700 px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+                <Sparkles className="w-4 h-4" />
+                <span className="uppercase tracking-wide">Program Konsultasi UMKM</span>
+              </div>
+
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 leading-tight">
+                Konsultasi Profesional untuk{' '}
+                <span className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                  Mengembangkan dan Memajukan
+                </span>{' '}
+                Usaha Anda
+              </h2>
+
+              <div className="space-y-4 text-slate-600 leading-relaxed">
+                <p className="text-lg">
+                  Konsultasi bisnis merupakan langkah penting bagi pelaku UMKM yang ingin meningkatkan kualitas usaha, memperluas jangkauan pasar, dan memperkuat strategi bisnisnya.
+                </p>
+                <p className="text-lg">
+                  Dengan <span className="font-bold text-orange-600">wawasan dan pengalaman tim kami</span>, Anda akan mendapatkan bimbingan, strategi, serta dukungan nyata untuk mengoptimalkan potensi bisnis mulai dari manajemen, pemasaran, hingga transformasi digital.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <motion.a 
+                  href="#"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group bg-gradient-to-r from-orange-600 to-amber-600 text-white px-8 py-4 rounded-2xl font-bold text-lg inline-flex items-center justify-center gap-3 shadow-2xl shadow-orange-500/40"
+                >
+                  <Calendar className="w-5 h-5" />
+                  Jadwalkan Konsultasi Anda
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                </motion.a>
+                
+                <motion.a 
+                  href="#"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group text-orange-600 font-bold text-lg inline-flex items-center justify-center gap-2 hover:gap-3 transition-all"
+                >
+                  Pelajari Program
+                  <ArrowRight className="w-5 h-5" />
+                </motion.a>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
       
-      <ConsultantSlider />
+      <TestimonialSection />
 
-      <style>{`
-        .hero {
-<<<<<<< HEAD
-          width: 100vw;
-          position: relative;
-          left: 50%;
-          right: 50%;
-          margin-left: -50vw;
-          margin-right: -50vw;
-          background: radial-gradient(1400px 480px at 50% 0%, rgba(99,102,241,0.12), transparent 70%);
-        }
-        .bg-grid {
-          position: absolute; inset: 0; z-index: 0; height: 100%;
-          background-image: radial-gradient(#d1d5db 1px, transparent 1px);
-          background-size: 20px 20px;
-          opacity: .35;
-        }
-        .container-hero {
-          position: relative;
-          max-width: 1440px;
-          margin: 0 auto;
-          padding: 100px 40px;
-          display: grid;
-          grid-template-columns: 1.1fr 0.9fr;
-          align-items: center;
-          justify-content: space-between;
-          min-height: 88vh;
-          gap: 48px;
-        }
-        .text-hero { max-width: 640px; z-index: 2; }
-        .headline { font-size: 3.5rem; font-weight: 900; line-height: 1.15; margin-bottom: 1.25rem; color: #0f172a; letter-spacing: -0.02em; }
-        .headline span { display: block; }
-        .subline { font-size: 1.25rem; line-height: 1.7; color: #475569; margin-bottom: 1.75rem; max-width: 92%; }
-        .cta-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-        .cta-primary { background: linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a855f7 100%); color: #fff; padding: 14px 24px; border-radius: 14px; font-weight: 800; box-shadow: 0 14px 40px rgba(99,102,241,.35); text-decoration: none; transition: transform .25s, box-shadow .25s; }
-        .cta-primary:hover { transform: translateY(-2px); box-shadow: 0 18px 52px rgba(99,102,241,.45); }
-        .cta-secondary { background: #111827; color: #fff; padding: 14px 18px; border-radius: 14px; font-weight: 700; text-decoration: none; opacity: .9; transition: opacity .2s, transform .2s; }
-        .cta-secondary:hover { opacity: 1; transform: translateY(-1px); }
-
-        .img-container-hero { position: relative; z-index: 2; }
-        .image-hero { position: relative; }
-        .image-hero img { max-width: 100%; height: auto; border-radius: 16px; box-shadow: 0 28px 60px rgba(0,0,0,.12); }
-        .image-glow { position: absolute; inset: -20px; border-radius: 24px; background: radial-gradient(ellipse at 30% 20%, rgba(99,102,241,.18), transparent 40%), radial-gradient(ellipse at 70% 80%, rgba(236,72,153,.18), transparent 40%); filter: blur(30px); z-index: -1; }
-
-        .background-gradients { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 1; pointer-events: none; }
-        .gradient-orange, .gradient-blue { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.18; }
-        .gradient-orange { width: 420px; height: 420px; background: linear-gradient(135deg, #ff7a1a 0%, #ff4d00 100%); top: -110px; right: -110px; }
-        .gradient-blue { width: 520px; height: 520px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); bottom: -220px; left: -220px; }
-
-        /* Stats */
-        .coach-section { padding: 40px 20px 80px; }
-        .stats-container { display: flex; justify-content: space-around; gap: 16px; max-width: 1200px; margin: 0 auto 60px; padding: 28px 20px; background: #fff; border-radius: 18px; box-shadow: 0 16px 48px rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.06); }
-        .stat-item { text-align: center; padding: 6px 18px; border-radius: 14px; transition: transform .25s, box-shadow .25s, background .25s; }
-        .stat-item:hover { background: rgba(99,102,241,.06); box-shadow: 0 12px 36px rgba(99,102,241,.15); }
-        .stat-number { font-size: 2.5rem; font-weight: 900; color: #0f172a; margin-bottom: 6px; letter-spacing: -0.02em; }
-        .stat-label { font-size: 1rem; color: #64748b; font-weight: 600; }
-
-        /* Content */
-        .content-container { display: flex; max-width: 1200px; margin: 0 auto 100px; padding: 0 20px; gap: 60px; align-items: center; }
-        .image-side { flex: 1; }
-        .image-side img { width: 100%; border-radius: 16px; box-shadow: 0 28px 60px rgba(0,0,0,.12); }
-        .text-side { flex: 1; }
-        .badge { display: inline-block; background: #f5f3ff; color: #6d28d9; padding: 8px 16px; border-radius: 999px; font-size: .9rem; font-weight: 800; margin-bottom: 18px; letter-spacing: .02em; }
-        .main-heading { font-size: 2.25rem; line-height: 1.3; margin-bottom: 1rem; color: #0f172a; font-weight: 900; letter-spacing: -0.02em; }
-        .description { font-size: 1.08rem; line-height: 1.85; color: #475569; margin-bottom: 1.25rem; }
-        .cta-inline { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: .5rem; }
-        .cta-link { color: #6366f1; font-weight: 800; text-decoration: none; }
-        .cta-link:hover { text-decoration: underline; }
-
-        /* Responsive */
-        @media (max-width: 1280px) {
-          .headline { font-size: 3rem; }
-        }
-        @media (max-width: 1024px) {
-          .container-hero { grid-template-columns: 1fr; padding: 80px 24px; text-align: center; }
-          .subline { margin: 0 auto 1.5rem; }
-          .img-container-hero { margin-top: 28px; }
-          .stats-container { flex-wrap: wrap; gap: 20px; }
-          .stat-item { flex: 1 1 40%; }
-          .content-container { flex-direction: column; gap: 40px; }
-        }
-        @media (max-width: 768px) {
-          .headline { font-size: 2.1rem; }
-          .stat-item { flex: 1 1 100%; }
-          .main-heading { font-size: 1.75rem; }
-        }
-=======
-    width: 100vw;
-    position: relative;
-    left: 50%;
-    right: 50%;
-    margin-left: -50vw;
-    margin-right: -50vw;
-  }
-  
-  /* Desktop: Allow full freedom */
-  @media (min-width: 1025px) {
-    .hero {
-      overflow-x: visible;
-      overflow-y: visible;
-    }
-    .hero-inner {
-      overflow-x: visible;
-      overflow-y: visible;
-    }
-    .hero .circular-gallery {
-      max-width: none !important;
-      overflow: visible !important;
-    }
-    .hero .circular-gallery canvas {
-      max-width: none !important;
-      width: auto !important;
-    }
-  }
-  
-  /* iPad Pro and smaller: Apply restrictions */
-  @media (max-width: 1024px) {
-    .hero {
-      width: 100%;
-      max-width: 100vw;
-      left: 0;
-      right: 0;
-      margin-left: 0;
-      margin-right: 0;
-      overflow-x: hidden;
-      overflow-x: clip;
-      overscroll-behavior-x: none;
-    }
-  }
-  
-  /* iPad Pro specific optimizations */
-  @media (max-width: 1024px) and (min-width: 769px) {
-    .hero-text {
-      top: 28%;
-      width: min(600px, 85vw);
-      padding: 2rem 1.75rem;
-    }
-    .headline {
-      font-size: clamp(2.2rem, 5.5vw, 4rem);
-      gap: 10px;
-    }
-    .kicker {
-      font-size: clamp(0.9rem, 2vw, 1.2rem);
-      max-width: 500px;
-    }
-    .btn {
-      height: clamp(42px, 4.5vw, 48px);
-      font-size: clamp(0.9rem, 2vw, 1.1rem);
-      padding: 0 clamp(18px, 3.5vw, 24px);
-    }
-    .hero .circular-gallery {
-      margin-top: 8vh;
-      height: 20vh;
-    }
-  }
-
-  .hero-inner {
-    width: 100%;
-    height: 100vh; /* full height for maximum downward */
-    min-height: 100svh; /* better mobile viewport height */
-    position: relative;
-  }
-  
-  /* iPad Pro and smaller: Apply restrictions to inner */
-  @media (max-width: 1024px) {
-    .container-hero {
-      max-width: 100%;
-      overflow-x: hidden;
-      overflow-x: clip;
-      overscroll-behavior-x: none;
-    }
-  }
-  .hero-bg { 
-    position: absolute; 
-    inset: 0; 
-    z-index: 1; 
-    pointer-events: none;
-  }
-
-  /* Background gradient blurs */
-  .background-gradients {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: -3;
-  }
-  
-  /* Desktop: Allow background gradients full freedom */
-  @media (min-width: 1025px) {
-    .background-gradients {
-      overflow: visible;
-    }
-  }
-  
-  /* iPad Pro and smaller: Restrict background gradients */
-  @media (max-width: 1024px) {
-    .background-gradients {
-      overflow: hidden;
-    }
-  }
-  
-  /* Orange gradient - top right corner */
-  .gradient-orange {
-    position: absolute;
-    top: -25%;
-    right: -20%;
-    width: 700px;
-    height: 700px;
-    background: radial-gradient(circle, 
-      rgba(253, 87, 1, 0.5) 0%, 
-      rgba(255, 133, 51, 0.42) 25%, 
-      rgba(255, 167, 102, 0.2) 50%, 
-      rgba(255, 200, 153, 0.2) 75%, 
-      transparent 100%);
-    border-radius: 50%;
-    filter: blur(100px);
-    animation: gradientFloat 8s ease-in-out infinite;
-    z-index: -10;
-  }
-  
-  /* Desktop: Much more intense gradients */
-  @media (min-width: 1025px) {
-    .gradient-orange {
-      background: radial-gradient(circle, 
-        rgba(253, 87, 1, 0.85) 0%, 
-        rgba(255, 133, 51, 0.75) 25%, 
-        rgba(255, 167, 102, 0.6) 50%, 
-        rgba(255, 200, 153, 0.4) 75%, 
-        rgba(255, 220, 180, 0.15) 90%,
-        transparent 100%);
-      filter: blur(60px);
-      width: 800px;
-      height: 800px;
-    }
-  }
-  
-  /* Blue gradient - bottom left corner */
-  .gradient-blue {
-    position: absolute;
-    bottom: -25%;
-    left: -25%;
-    width: 800px;
-    height: 800px;
-    background: radial-gradient(circle, 
-      rgba(0, 17, 81, 0.45) 0%, 
-      rgba(0, 102, 255, 0.38) 25%, 
-      rgba(51, 153, 255, 0.28) 50%, 
-      rgba(102, 178, 255, 0.18) 75%, 
-      transparent 100%);
-    border-radius: 50%;
-    filter: blur(120px);
-    animation: gradientFloat 10s ease-in-out infinite reverse;
-    z-index: -10;
-  }
-  
-  /* Desktop: Much more intense blue gradient */
-  @media (min-width: 1025px) {
-    .gradient-blue {
-      background: radial-gradient(circle, 
-        rgba(0, 17, 81, 0.8) 0%, 
-        rgba(0, 102, 255, 0.7) 25%, 
-        rgba(51, 153, 255, 0.55) 50%, 
-        rgba(102, 178, 255, 0.35) 75%, 
-        rgba(153, 204, 255, 0.18) 90%,
-        transparent 100%);
-      filter: blur(70px);
-      width: 900px;
-      height: 900px;
-    }
-  }
-  
-
-  /* Responsive floating animations */
-  @media (max-width: 768px) {
-    .floating-animations {
-      display: block;
-    }
-    
-    /* Scale down background gradients for mobile */
-    .gradient-orange {
-      width: 400px;
-      height: 400px;
-      filter: blur(25px);
-      top: -15%;
-      right: -10%;
-    }
-    .gradient-blue {
-      width: 450px;
-      height: 450px;
-      filter: blur(30px);
-      bottom: -15%;
-      left: -15%;
-    }
-    
-    /* Scale down elements for mobile */
-    .circle-1 { width: 50px; height: 50px; }
-    .circle-2 { width: 70px; height: 70px; }
-    .circle-3 { width: 40px; height: 40px; }
-    .square-1 { width: 25px; height: 25px; }
-    .square-2 { width: 20px; height: 20px; }
-    .triangle-1 { 
-      border-left: 15px solid transparent;
-      border-right: 15px solid transparent;
-      border-bottom: 26px solid #FD5701;
-    }
-    .triangle-2 {
-      border-left: 12px solid transparent;
-      border-right: 12px solid transparent;
-      border-bottom: 21px solid #0066ff;
-    }
-    .dot { width: 8px; height: 8px; margin: 5px 0; }
-    
-    /* Scale down new elements for mobile */
-    .float-star { width: 12px; height: 12px; }
-    .float-hexagon { width: 20px; height: 18px; }
-    .float-ring { width: 30px; height: 30px; border-width: 2px; }
-    .ring-2 { width: 22px; height: 22px; }
-    .float-wave { width: 40px; height: 12px; }
-    .sparkle-container { width: 60px; height: 60px; }
-    .sparkle { width: 3px; height: 3px; }
-  }
-  
-  @media (min-width: 769px) and (max-width: 1024px) {
-    /* Scale for tablet */
-    .gradient-orange {
-      width: 600px;
-      height: 600px;
-      filter: blur(55px);
-      top: -22%;
-      right: -18%;
-    }
-    .gradient-blue {
-      width: 700px;
-      height: 700px;
-      filter: blur(65px);
-      bottom: -22%;
-      left: -22%;
-    }
-    
-    .circle-1 { width: 65px; height: 65px; }
-    .circle-2 { width: 90px; height: 90px; }
-    .circle-3 { width: 50px; height: 50px; }
-    .square-1 { width: 32px; height: 32px; }
-    .square-2 { width: 25px; height: 25px; }
-    .triangle-1 { 
-      border-left: 20px solid transparent;
-      border-right: 20px solid transparent;
-      border-bottom: 35px solid #FD5701;
-    }
-    .triangle-2 {
-      border-left: 16px solid transparent;
-      border-right: 16px solid transparent;
-      border-bottom: 28px solid #0066ff;
-    }
-    .dot { width: 10px; height: 10px; margin: 6px 0; }
-    
-    /* Scale for tablet - new elements */
-    .float-star { width: 16px; height: 16px; }
-    .float-hexagon { width: 28px; height: 24px; }
-    .float-ring { border-width: 2.5px; }
-    .ring-1 { width: 40px; height: 40px; }
-    .ring-2 { width: 28px; height: 28px; }
-    .float-wave { width: 50px; height: 16px; }
-    .sparkle-container { width: 80px; height: 80px; }
-    .sparkle { width: 3.5px; height: 3.5px; }
-  }
-  
-  /* Responsive adjustments for smaller frames */
-  @media (max-width: 768px) {
-    .hero-inner {
-      height: 100vh;
-      min-height: 100svh;
-      padding: 0 16px;
-    }
-    .hero-text { 
-      top: 32%; 
-      width: min(480px, 92vw); 
-      padding: 1.5rem 1.25rem; 
-      background: rgba(255, 255, 255, 0.02);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .hero .circular-gallery { margin-top: 10vh; height: 18vh; overflow-x: clip; max-width: 100%; position: relative; }
-    .hero .circular-gallery canvas { display:block; max-width:100%; transform: translateX(-10px) scale(0.98); transform-origin: center; }
-    .headline { 
-      font-size: clamp(1.6rem, 7vw, 3.2rem); 
-      line-height: 1.2; 
-      margin-bottom: 10px;
-      gap: 4px;
-    }
-    .headline .accent { 
-      /* Remove shadow for better readability */
-    }
-    .kicker { 
-      font-size: clamp(0.7rem, 2.5vw, 0.95rem); 
-      margin-top: 8px; 
-      line-height: 1.5;
-      max-width: 400px;
-      color: #5a6b7a;
-    }
-    .cta { 
-      gap: 10px; 
-      margin-top: 16px; 
-      flex-direction: column;
-      align-items: center;
-    }
-    .btn { 
-      height: clamp(36px, 4.5vw, 44px); 
-      padding: 0 clamp(14px, 3vw, 20px); 
-      border-radius: 10px; 
-      font-size: clamp(0.75rem, 2.5vw, 0.95rem);
-      font-weight: 600;
-      width: 100%;
-      max-width: 280px;
-      transition: all 0.3s ease;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #FD5701 0%, #ff7733 100%);
-      box-shadow: 0 6px 20px rgba(253, 87, 1, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(253, 87, 1, 0.4), 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    .btn-ghost {
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(0, 17, 81, 0.1);
-      color: #001151;
-    }
-    .btn-ghost:hover {
-      background: rgba(255, 255, 255, 1);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 17, 81, 0.1);
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .hero-inner {
-      height: 100vh;
-      min-height: 100svh;
-      padding: 0 12px;
-    }
-    .hero-text { 
-      top: 30%; 
-      width: min(400px, 94vw); 
-      padding: 1rem 0.875rem;
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(8px);
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .hero .circular-gallery { margin-top: 8vh; height: 16vh; overflow-x: clip; max-width: 100%; position: relative; }
-    .hero .circular-gallery canvas { display:block; max-width:100%; transform: translateX(-12px) scale(0.98); transform-origin: center; }
-    .headline { 
-      font-size: clamp(1.4rem, 8vw, 2.8rem) !important; 
-      line-height: 1.25; 
-      margin-bottom: 8px;
-      gap: 2px;
-    }
-    .headline .accent { 
-      /* Remove shadow for better readability */
-    }
-    .kicker { 
-      font-size: clamp(0.65rem, 3.2vw, 0.85rem); 
-      line-height: 1.4;
-      max-width: 340px;
-      margin-top: 6px;
-      color: #6b7a8a;
-    }
-    .cta { 
-      gap: 8px; 
-      margin-top: 12px; 
-      flex-direction: column;
-      align-items: center;
-    }
-    .btn { 
-      height: clamp(32px, 4vw, 40px); 
-      padding: 0 clamp(12px, 2.8vw, 16px); 
-      font-size: clamp(0.7rem, 3.2vw, 0.85rem);
-      font-weight: 600;
-      width: 100%;
-      max-width: 240px;
-      border-radius: 8px;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #FD5701 0%, #ff6622 100%);
-      box-shadow: 0 4px 16px rgba(253, 87, 1, 0.35);
-    }
-    .btn-ghost {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(0, 17, 81, 0.12);
-    }
-    /* Reduce background blur for small mobile */
-    .gradient-orange {
-      filter: blur(15px) !important;
-    }
-    .gradient-blue {
-      filter: blur(20px) !important;
-    }
-  }
-  
-  @media (max-width: 360px) {
-    .hero-text { top: 24%; width: 85vw; padding: 0.5rem 0.75rem; }
-    .hero-text .headline { font-size: clamp(1rem, 6.5vw, 1.6rem) !important; line-height: 1.2; margin-bottom: 4px; }
-    .hero .circular-gallery { height: 14vh; position: relative; }
-    .hero .circular-gallery canvas { transform: translateX(-14px) scale(0.98); }
-    .cta { margin-top: 8px; gap: 4px; }
-    .btn { height: clamp(28px, 3.5vw, 32px); padding: 0 clamp(10px, 2.5vw, 12px); font-size: clamp(0.65rem, 3.8vw, 0.85rem); }
-    /* Further reduce background blur for very small mobile */
-    .gradient-orange {
-      filter: blur(10px) !important;
-    }
-    .gradient-blue {
-      filter: blur(12px) !important;
-    }
-  }
-  
-  @media (max-width: 320px) {
-    .hero-text { top: 22%; width: 82vw; }
-    .hero .circular-gallery { margin-top: 12vh; height: 12vh; position: relative; }
-    .hero .circular-gallery canvas { transform: translateX(-16px) scale(0.98); }
-    .headline { font-size: clamp(0.95rem, 7vw, 1.5rem); }
-    .subhead { font-size: clamp(0.66rem, 3.4vw, 0.86rem); }
-    .kicker { font-size: clamp(0.5rem, 2.8vw, 0.65rem); }
-    .btn { height: clamp(26px, 3.2vw, 30px); padding: 0 clamp(8px, 2.2vw, 12px); font-size: clamp(0.6rem, 3.2vw, 0.8rem); }
-    /* Minimal background blur for tiny screens */
-    .gradient-orange {
-      filter: blur(8px) !important;
-    }
-    .gradient-blue {
-      filter: blur(10px) !important;
-    }
-  }
-
-  /* Ultra small devices (<=300px) */
-  @media (max-width: 300px) {
-    .hero-text { top: 22%; width: 82vw; }
-    .hero .circular-gallery { height: 10vh; position: relative; }
-    .hero .circular-gallery canvas { transform: translateX(-18px) scale(0.98); }
-    .headline { font-size: clamp(0.9rem, 8vw, 1.6rem); }
-    .kicker { font-size: clamp(0.55rem, 4vw, 0.75rem); }
-    .btn { height: clamp(24px, 3vw, 28px); padding: 0 clamp(8px, 2vw, 10px); font-size: clamp(0.55rem, 3.5vw, 0.75rem); }
-    /* Very minimal background blur for ultra small screens */
-    .gradient-orange {
-      filter: blur(6px) !important;
-    }
-    .gradient-blue {
-      filter: blur(8px) !important;
-    }
-  }
-
-  /* Extra ultra small devices (<=280px) */
-  @media (max-width: 280px) {
-    .hero-text { top: 22%; width: 82vw; }
-    .hero .circular-gallery { height: 9vh; position: relative; }
-    .hero .circular-gallery canvas { transform: translateX(-18px) scale(0.98); }
-    .headline { font-size: clamp(1.8rem, 12vw, 2.6rem); }
-    .kicker { font-size: clamp(0.8rem, 5vw, 1rem); }
-    .btn { height: 26px; padding: 0 8px; font-size: clamp(0.65rem, 3.5vw, 0.8rem); }
-    /* Minimal background blur for tiniest screens */
-    .gradient-orange {
-      filter: blur(4px) !important;
-    }
-    .gradient-blue {
-      filter: blur(5px) !important;
-    }
-  }
-
-  /* Isi Hero Section */
-
-  .headline {
-    display: flex;
-    flex-direction: column;
-    margin: 0;
-    margin-top: clamp(2rem, 5vw, 4rem);
-  }
-
-  .headline span {
-    display: block;
-    font-weight: 700;
-    line-height: 1.2;
-    max-width: min(600px, 90vw);
-    font-size: clamp(2rem, 5vw, 3.5rem);
-    color: #001151;
-    letter-spacing: -0.02em;
-  }
-
-  /* Media queries for responsive headline */
-  @media (max-width: 1024px) {
-    .headline {
-      margin-top: clamp(1.5rem, 4vw, 3rem);
-    }
-    .headline span {
-      font-size: clamp(1.8rem, 4.5vw, 3rem);
-    }
-  }
-
-  @media (max-width: 768px) {
-    .headline {
-      margin-top: clamp(1rem, 3vw, 2rem);
-    }
-    .headline span {
-      font-size: clamp(1.5rem, 4vw, 2.5rem);
-    }
-  }
-
-  @media (max-width: 480px) {
-    .headline {
-      margin-top: 1rem;
-    }
-    .headline span {
-      font-size: clamp(1.2rem, 3.5vw, 2rem);
-    }
-  }
-
-  /* Subline styles */
-  .subline {
-    display: block;
-    margin-top: 1.5rem;
-    font-weight: 400;
-    line-height: 1.6;
-    font-size: clamp(0.9rem, 2vw, 1.1rem);
-    color: #5a6b7a;
-    max-width: min(600px, 85vw);
-    margin-left: 0;
-    hover {
-      background-color: #6b7a8a;
-      
-    }
-  }
-
-  .text-hero {
-    position: relative;
-    margin-left: 12rem; /* Added margin-left */
-    max-width: 800px;
-    padding: 2rem;
-  }
-
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .text-hero {
-      margin-left: 2rem; /* Smaller margin for tablets */
-    }
-  }
-
-  @media (max-width: 480px) {
-    .text-hero {
-      margin-left: 1rem; /* Even smaller for mobile */
-      padding: 1rem;
-    }
-  }
-
-  /* Add to your existing style section */
-  .img-container-hero {
-    position: absolute;
-    top: 50%;
-    right: 2rem;
-    transform: translateY(-50%);
-    width: 600px;
-    height: 600px;
-    z-index: 1;
-    margin-top: 4rem;
-  }
-
-  .image-hero {
-    width: 500px;
-    height: 100%;
-    overflow: hidden;
-    border-radius: 20px;
-  }
-
-  .image-hero img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-  }
-
-  /* Responsive adjustments */
-  @media (max-width: 1440px) {
-    .img-container-hero {
-      width: 500px;
-      height: 750px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    .img-container-hero {
-      width: 400px;
-      height: 600px;
-      right: 1rem;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .img-container-hero {
-      position: relative;
-      top: 2rem;
-      right: 0;
-      transform: none;
-      width: 100%;
-      height: 400px;
-      margin: 0 auto;
-    }
-    
-    .image-hero {
-      border-radius: 12px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .img-container-hero {
-      height: 300px;
-    }
-  }
-      .coach-section {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 2rem;
-    }
-
-  /* Stats Section */
-  .stats-container {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 2rem;
-    margin-bottom: 4rem;
-    text-align: center;
-    margin-top: 15rem;
-  }
-
-  .stat-item {
-    padding: 1.5rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-
-  .stat-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  }
-
-  .stat-number {
-    font-size: clamp(2rem, 4vw, 3rem);
-    font-weight: 700;
-    color: #001151;
-    margin-bottom: 0.5rem;
-  }
-
-  .stat-label {
-    font-size: clamp(0.85rem, 1.5vw, 1rem);
-    color: #5a6b7a;
-    font-weight: 400;
-  }
-
-  /* Content Section */
-  .content-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    margin-bottom: 7rem;
-    align-items: center;
-    background: white;
-    border-radius: 20px;
-    padding: 3rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  }
-
-  .image-side {
-    position: relative;
-  }
-
-  .image-side img {
-    width: 100%;
-    height: auto;
-    border-radius: 16px;
-    object-fit: cover;
-  }
-
-  .text-side {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-
-  .badge {
-    display: inline-block;
-    background: linear-gradient(135deg, #ff8b51 0%, #FD5701 100%);
-    color: white;
-    padding: 0.5rem 1.25rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    width: fit-content;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .main-heading {
-    font-size: clamp(1.8rem, 3.5vw, 2.5rem);
-    font-weight: 700;
-    color: #001151;
-    line-height: 1.3;
-    margin: 0;
-  }
-
-  .description {
-    font-size: clamp(0.95rem, 1.8vw, 1.1rem);
-    color: #5a6b7a;
-    line-height: 1.7;
-    margin: 0;
-  }
-
-  .cta-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: #001151;
-    color: white;
-    padding: 1rem 2rem;
-    border-radius: 10px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 1rem;
-    width: fit-content;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 17, 81, 0.2);
-  }
-
-  .cta-button:hover {
-    background: #002080;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 17, 81, 0.3);
-  }
-
-  .cta-button::after {
-    content: '→';
-    font-size: 1.2rem;
-    transition: transform 0.3s ease;
-  }
-
-  .cta-button:hover::after {
-    transform: translateX(4px);
-  }
-
-  /* Responsive Design */
-  @media (max-width: 1024px) {
-    .stats-container {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1.5rem;
-      margin-bottom: 3rem;
-    }
-
-    .content-container {
-      gap: 2.5rem;
-      padding: 2rem;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .stats-container {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .stat-item {
-      padding: 1rem;
-    }
-
-    .content-container {
-      grid-template-columns: 1fr;
-      gap: 2rem;
-      padding: 1.5rem;
-    }
-
-    .image-side {
-      order: 1;
-    }
-
-    .text-side {
-      order: 2;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .coach-section {
-      padding: 0 1rem;
-    }
-
-    .stats-container {
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-    }
-
-    .stat-number {
-      font-size: 1.5rem;
-    }
-
-    .stat-label {
-      font-size: 0.75rem;
-    }
-
-    .content-container {
-      padding: 1.25rem;
-      gap: 1.5rem;
-    }
-
-    .badge {
-      font-size: 0.75rem;
-      padding: 0.4rem 1rem;
-    }
-
-    .cta-button {
-      width: 100%;
-      justify-content: center;
-      padding: 0.875rem 1.5rem;
-    }
-  }
->>>>>>> 4ae731802932f70cd05934b7969fe8faabd4c876
-      `}</style>
+      <Footer />
     </div>
   );
 };
