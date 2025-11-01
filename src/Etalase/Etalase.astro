@@ -3,6 +3,7 @@
   import Kategori from '../components/Etalase/Kategori.jsx';
   import EtalaseWrapper from '../components/Etalase/EtalaseWrapper.jsx';
   import BackgroundCarousel from '../components/Etalase/BacgroundCarousel.tsx';
+  import SellPromotion from '../components/Etalase/SellPromotion.tsx';
   import React, { useState } from 'react';
 
   let selectedCategory = "";
@@ -24,18 +25,16 @@
       <BackgroundCarousel client:load />
     </section>
 
-    <section class="sell-promotion">
-      <div class="sell-text">
-        <h3>Ingin Jualan di Sini?</h3>
-        <p>Gabung bersama kami dan kembangkan bisnismu dengan mudah!</p>
-      </div>
-      <button>Daftar Sekarang</button>
-    </section>
 
       <main>
         <section>
           <Kategori client:load />
         </section>
+
+        <section>
+          <SellPromotion client:load />
+        </section>
+
         <section>
           <FetchData client:load />
         </section>

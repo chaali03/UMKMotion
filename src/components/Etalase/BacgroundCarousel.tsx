@@ -170,7 +170,7 @@ export default function BackgroundCarousel() {
       </div>
 
       {/* CSS: ULTRA MINI + MARGIN + HOVER PAUSE */}
-      <style jsx>{`
+      <style>{`
         .carousel-container {
           position: relative;
           width: 100%;
