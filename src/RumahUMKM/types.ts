@@ -28,6 +28,8 @@ export interface UMKMLocation {
   products: Product[];
   description: string;
   verified: boolean;
+  isOpen?: boolean;
+  photos?: string[];
   owner?: {
     name: string;
     avatar?: string;
