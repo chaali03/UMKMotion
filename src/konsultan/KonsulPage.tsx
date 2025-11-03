@@ -1,4 +1,9 @@
 import React, { useEffect, useState } from 'react';
+<<<<<<< HEAD
+=======
+import TestimonialSection from './testimonial/TestimonialSection';
+import Footer from '../LandingPage/components/footer/Footer';
+>>>>>>> d7c43b8e63c6852283ed069d007a62a99f893512
 import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { TimelineContent } from "@/components/ui/timeline-animation";
 import VerticalCutReveal from "@/components/ui/vertical-cut-reveal";
@@ -278,7 +283,11 @@ function HeroKonsultanAbout() {
             <div className="relative z-[1] bg-gradient-to-br from-white/80 to-orange-50/60 p-3 rounded-3xl border-2 border-white/60 shadow-none">
               <div className="relative rounded-2xl overflow-hidden">
                 <motion.img
+<<<<<<< HEAD
                   src="./../public/assets/dummy/People-dummy.png"
+=======
+                  src="https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=1074&auto=format&fit=crop"
+>>>>>>> d7c43b8e63c6852283ed069d007a62a99f893512
                   alt="Kolaborasi Konsultan"
                   className="w-full h-[400px] sm:h-[500px] object-cover"
                   loading="lazy"
@@ -513,7 +522,13 @@ const KonsulPage: React.FC = () => {
         </div>
       </section>
       
+<<<<<<< HEAD
 
+=======
+      <TestimonialSection />
+
+      <Footer />
+>>>>>>> d7c43b8e63c6852283ed069d007a62a99f893512
     </div>
   );
 };

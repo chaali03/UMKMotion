@@ -162,7 +162,8 @@ export default function Konten() {
               className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 overflow-visible"
             >
               <motion.div 
-                whileHover={{ scale: 1.05, y: -5 }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 250, damping: 20 }}
                 className="group relative bg-gradient-to-br from-white to-orange-50/50 backdrop-blur-xl border border-orange-200/60 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 shadow-xl shadow-orange-500/10 hover:shadow-2xl hover:shadow-orange-500/20 transition-all duration-500 overflow-visible"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-600/0 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl sm:rounded-3xl" />
@@ -179,7 +180,8 @@ export default function Konten() {
               </motion.div>
               
               <motion.div 
-                whileHover={{ scale: 1.05, y: -5 }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 250, damping: 20 }}
                 className="group relative bg-gradient-to-br from-white to-amber-50/50 backdrop-blur-xl border border-amber-200/60 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 shadow-xl shadow-amber-500/10 hover:shadow-2xl hover:shadow-amber-500/20 transition-all duration-500 overflow-visible"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-amber-600/0 to-amber-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl sm:rounded-3xl" />
@@ -205,7 +207,7 @@ export default function Konten() {
               className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 overflow-visible"
             >
               <motion.button
-                whileHover={{ scale: isMobile ? 1 : 1.05, boxShadow: "0 20px 60px -15px rgba(249, 115, 22, 0.5)" }}
+                whileHover={{ y: isMobile ? 0 : -3, scale: isMobile ? 1 : 1.01 }}
                 whileTap={{ scale: 0.98 }}
                 className="group relative bg-gradient-to-r from-orange-600 via-amber-600 to-orange-600 bg-size-200 hover:bg-pos-100 text-white px-6 sm:px-8 md:px-10 py-4 sm:py-5 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg shadow-2xl shadow-orange-500/40 transition-all duration-500 flex items-center justify-center gap-2 sm:gap-3 overflow-hidden w-full sm:w-auto"
                 onClick={() => window.location.href = "/rumah-umkm"}
@@ -256,7 +258,7 @@ export default function Konten() {
             className="relative order-1 lg:order-2 overflow-visible"
           >
             <motion.div 
-              whileHover={{ scale: isMobile ? 1 : 1.02 }}
+              whileHover={{ y: isMobile ? 0 : -2, scale: isMobile ? 1 : 1.01 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="relative rounded-2xl sm:rounded-3xl overflow-visible backdrop-blur-sm group"
             >
@@ -265,7 +267,7 @@ export default function Konten() {
                 <div className="relative rounded-xl sm:rounded-2xl overflow-hidden">
                   {/* Map Image - Focused on Indonesia */}
                   <img
-                    src="https://images.unsplash.com/photo-1569163139394-de4798aa62b0?w=1200&auto=format&fit=crop"
+                    src="/asset/Peta/Peta.png"
                     alt="Peta Indonesia - UMKM Interaktif"
                     className="w-full h-full object-cover aspect-[4/3] brightness-95"
                   />
@@ -303,7 +305,7 @@ export default function Konten() {
                           
                           {/* Main Pin Icon */}
                           <div className="relative">
-                            <div className="w-7 sm:w-8 md:w-10 h-7 sm:h-8 md:h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center shadow-lg border-2 sm:border-3 border-white">
+                            <div className="w-7 sm:w-8 md:w-10 h-7 sm:h-8 md:h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center border-2 sm:border-3 border-white">
                               <MapPin className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-white fill-white" />
                             </div>
                           </div>
@@ -333,7 +335,7 @@ export default function Konten() {
                     transition={{ delay: 2, duration: 0.8 }}
                     className="absolute top-3 sm:top-4 md:top-6 left-3 sm:left-4 md:left-6 z-20"
                   >
-                    <div className="bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-2.5 sm:p-3 md:p-4 shadow-xl border border-orange-100 max-w-[140px] sm:max-w-[180px] md:max-w-[200px]">
+                    <div className="bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-2.5 sm:p-3 md:p-4 border border-orange-100 max-w-[140px] sm:max-w-[180px] md:max-w-[200px]">
                       <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
                         <div className="p-1.5 sm:p-2 bg-gradient-to-br from-orange-500 to-amber-500 rounded-md sm:rounded-lg">
                           <Store className="w-3 sm:w-4 md:w-5 h-3 sm:h-4 md:h-5 text-white" />
@@ -353,7 +355,7 @@ export default function Konten() {
                     transition={{ delay: 2.3, duration: 0.8 }}
                     className="absolute top-3 sm:top-4 md:top-6 right-3 sm:right-4 md:right-6 z-20"
                   >
-                    <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 shadow-xl border-2 border-white/50">
+                    <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 border-2 border-white/50">
                       <div className="flex items-center gap-1.5 sm:gap-2 text-white mb-0.5 sm:mb-1">
                         <div className="w-1.5 sm:w-2 md:w-2.5 h-1.5 sm:h-2 md:h-2.5 bg-white rounded-full animate-pulse" />
                         <span className="text-[10px] sm:text-xs md:text-sm font-bold">LIVE</span>
@@ -369,7 +371,7 @@ export default function Konten() {
                     transition={{ delay: 2.6, duration: 0.8 }}
                     className="absolute bottom-3 sm:bottom-4 md:bottom-6 left-3 sm:left-4 md:left-6 right-3 sm:right-4 md:right-6 z-20"
                   >
-                    <div className="bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 shadow-2xl border border-orange-100">
+                    <div className="bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 border border-orange-100">
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
                         <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
                           <div className="p-2 sm:p-2.5 md:p-3 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg sm:rounded-xl">
@@ -393,9 +395,7 @@ export default function Konten() {
                 </div>
               </div>
 
-              {/* Decorative Glow Elements - Outside map to prevent cutting */}
-              <div className="absolute -top-6 sm:-top-8 -right-6 sm:-right-8 w-24 sm:w-32 md:w-40 h-24 sm:h-32 md:h-40 bg-gradient-to-br from-orange-400/30 to-amber-400/30 rounded-full blur-3xl -z-10 animate-pulse" />
-              <div className="absolute -bottom-6 sm:-bottom-8 -left-6 sm:-left-8 w-24 sm:w-32 md:w-40 h-24 sm:h-32 md:h-40 bg-gradient-to-tr from-amber-400/30 to-orange-400/30 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDelay: '1s' }} />
+              {/* Decorative Glow Elements removed to eliminate shadow under map */}
             </motion.div>
           </TimelineContent>
         </div>
@@ -437,15 +437,15 @@ export default function Konten() {
               className="overflow-visible"
             >
               <motion.div
-                whileHover={{ y: isMobile ? 0 : -10, scale: isMobile ? 1 : 1.02 }}
+                whileHover={{ y: isMobile ? 0 : -6, scale: isMobile ? 1 : 1.02 }}
                 className={`group relative bg-gradient-to-br ${service.bgGradient} backdrop-blur-xl border border-white/60 rounded-2xl sm:rounded-3xl p-6 sm:p-7 md:p-8 hover:shadow-2xl transition-all duration-500 overflow-visible h-full`}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl sm:rounded-3xl" />
                 
                 <div className="relative space-y-3 sm:space-y-4 md:space-y-5">
                   <motion.div 
-                    whileHover={{ rotate: isMobile ? 0 : 360, scale: isMobile ? 1 : 1.1 }}
-                    transition={{ duration: 0.6 }}
+                    whileHover={{ y: isMobile ? 0 : -4, rotate: isMobile ? 0 : -3, scale: isMobile ? 1 : 1.06 }}
+                    transition={{ duration: 0.35, ease: [0.25, 0.4, 0.25, 1] }}
                     className={`w-12 sm:w-14 md:w-16 h-12 sm:h-14 md:h-16 bg-gradient-to-br ${service.gradient} rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl`}
                   >
                     <service.icon className="w-6 sm:w-7 md:w-8 h-6 sm:h-7 md:h-8 text-white" />
@@ -533,7 +533,7 @@ export default function Konten() {
               </div>
               
               <motion.button 
-                whileHover={{ scale: isMobile ? 1 : 1.08, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
+                whileHover={{ y: isMobile ? 0 : -4, scale: isMobile ? 1 : 1.02 }}
                 whileTap={{ scale: 0.95 }}
                 className="group/btn relative bg-white hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 text-slate-900 px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 rounded-xl sm:rounded-2xl font-black text-base sm:text-lg md:text-xl shadow-2xl transition-all duration-300 flex items-center gap-3 sm:gap-4 whitespace-nowrap overflow-hidden w-full md:w-auto justify-center"
                 onClick={() => window.location.href = "/rumah-umkm"}

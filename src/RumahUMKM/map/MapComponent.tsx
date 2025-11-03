@@ -112,6 +112,14 @@ const MAP_STYLES = [
   },
 ];
 
+// Fallback public style (no API key required)
+const FALLBACK_STYLE = {
+  id: 'fallback',
+  name: 'Fallback',
+  url: 'https://demotiles.maplibre.org/style.json',
+  icon: MapIcon
+};
+
 export default function MapboxComponent({
   center,
   umkmLocations,
@@ -138,6 +146,8 @@ export default function MapboxComponent({
   const [bearing, setBearing] = useState(0);
   const [pitch, setPitch] = useState(0);
   const [userHeading, setUserHeading] = useState<number | null>(null);
+  const errorHandledRef = useRef(false);
+  const rafPending = useRef(false);
 
   // Initialize map
   useEffect(() => {
@@ -155,8 +165,8 @@ export default function MapboxComponent({
           maxZoom: 20,
           minZoom: 2,
           attributionControl: false,
-          antialias: true,
-          fadeDuration: 300
+          antialias: false,
+          fadeDuration: 150
         });
 
         // Add custom controls
@@ -180,21 +190,40 @@ export default function MapboxComponent({
           console.log('Map loaded successfully');
           setMapReady(true);
           
-          // Add smooth animations
+          // Throttle view state updates to reduce re-renders
           if (map.current) {
-            map.current.on('rotate', () => {
-              setBearing(map.current?.getBearing() || 0);
-            });
-            
-            map.current.on('pitch', () => {
-              setPitch(map.current?.getPitch() || 0);
-            });
+            const updateViewState = () => {
+              if (rafPending.current) return;
+              rafPending.current = true;
+              requestAnimationFrame(() => {
+                if (!map.current) return;
+                setBearing(map.current.getBearing() || 0);
+                setPitch(map.current.getPitch() || 0);
+                rafPending.current = false;
+              });
+            };
+            map.current.on('rotate', updateViewState);
+            map.current.on('pitch', updateViewState);
           }
         });
         
         map.current.on('error', (e) => {
+          if (errorHandledRef.current) return;
+          // Log once
           console.error('Map error:', e);
-          setMapError('Failed to load map. Please try refreshing the page.');
+          // Try switching to fallback style if current style fails (e.g., API key/rate limit)
+          if (map.current && currentStyle.id !== FALLBACK_STYLE.id) {
+            errorHandledRef.current = true;
+            setMapError('Gagal memuat style peta, beralih ke style cadangan.');
+            map.current.setStyle(FALLBACK_STYLE.url);
+            setCurrentStyle({ ...FALLBACK_STYLE, icon: MapIcon as any });
+            map.current.once('styledata', () => {
+              setMapReady(true);
+              setMapError(null);
+            });
+          } else {
+            setMapError('Failed to load map. Please try refreshing the page.');
+          }
         });
         
       } catch (error) {
@@ -211,18 +240,21 @@ export default function MapboxComponent({
     };
   }, []);
 
-  // Update map center
+  // Update map center (debounced)
   useEffect(() => {
-    if (map.current && mapReady) {
+    if (!map.current || !mapReady) return;
+    const id = window.setTimeout(() => {
+      if (!map.current) return;
       map.current.flyTo({
         center: [validCenter[1], validCenter[0]],
-        duration: 1500,
+        duration: 1000,
         essential: true
       });
-    }
+    }, 150);
+    return () => window.clearTimeout(id);
   }, [validCenter[0], validCenter[1], mapReady]);
 
-  // Handle UMKM markers
+  // Handle UMKM markers (create/update/remove) without fitting bounds
   useEffect(() => {
     if (!map.current || !mapReady) return;
 
@@ -279,21 +311,20 @@ export default function MapboxComponent({
       }
     });
 
-    // Fit bounds to show all markers
-    if (umkmLocations.length > 0 && map.current) {
-      const bounds = new maplibregl.LngLatBounds();
-      umkmLocations.forEach(umkm => {
-        bounds.extend([umkm.lng, umkm.lat]);
-      });
-      bounds.extend([validCenter[1], validCenter[0]]);
-      
-      map.current.fitBounds(bounds, {
-        padding: { top: 100, bottom: 100, left: 100, right: 100 },
-        maxZoom: 15,
-        duration: 1500
-      });
-    }
   }, [umkmLocations, selectedUMKM, onSelectUMKM, mapReady]);
+
+  // Fit bounds when the list of locations changes (not on selection)
+  useEffect(() => {
+    if (!map.current || !mapReady || umkmLocations.length === 0) return;
+    const bounds = new maplibregl.LngLatBounds();
+    umkmLocations.forEach(umkm => bounds.extend([umkm.lng, umkm.lat]));
+    bounds.extend([validCenter[1], validCenter[0]]);
+    map.current.fitBounds(bounds, {
+      padding: { top: 80, bottom: 80, left: 80, right: 80 },
+      maxZoom: 15,
+      duration: 900
+    });
+  }, [umkmLocations, mapReady]);
 
   // Handle user marker with pulse animation
   useEffect(() => {
@@ -345,6 +376,8 @@ export default function MapboxComponent({
       // Wait for style to load before re-adding markers
       map.current.once('styledata', () => {
         setMapReady(true);
+        setMapError(null);
+        errorHandledRef.current = false;
       });
     }
   }, []);
@@ -391,7 +424,7 @@ export default function MapboxComponent({
   }, [isFullscreen]);
 
   return (
-    <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50' : 'h-full w-full'}`}>
+    <div className={`relative ${isFullscreen ? 'fixed inset-0 z-[9999]' : 'h-full w-full'}`}>
       {/* Loading State */}
       <AnimatePresence>
         {!mapReady && !mapError && (
@@ -399,7 +432,7 @@ export default function MapboxComponent({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 z-20"
+            className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-orange-100 via-blue-100 to-pink-100 z-[100]"
           >
             <div className="text-center">
               <motion.div
@@ -413,7 +446,7 @@ export default function MapboxComponent({
                 }}
                 className="mb-4"
               >
-                <MapIcon className="w-16 h-16 text-purple-600 mx-auto" />
+                <MapIcon className="w-16 h-16 text-orange-600 mx-auto" />
               </motion.div>
               <motion.p
                 animate={{ opacity: [0.5, 1, 0.5] }}
@@ -435,7 +468,7 @@ export default function MapboxComponent({
                       repeat: Infinity,
                       delay: i * 0.2
                     }}
-                    className="w-2 h-2 bg-purple-600 rounded-full"
+                    className="w-2 h-2 bg-orange-600 rounded-full"
                   />
                 ))}
               </div>
@@ -451,7 +484,7 @@ export default function MapboxComponent({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900 z-20"
+            className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900 z-[100]"
           >
             <div className="text-center p-8 max-w-md">
               <motion.div
@@ -470,7 +503,7 @@ export default function MapboxComponent({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => window.location.reload()}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 mx-auto"
+                className="px-6 py-3 bg-gradient-to-r from-orange-600 to-blue-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 mx-auto"
               >
                 <RefreshCw className="w-5 h-5" />
                 Refresh Page
@@ -490,24 +523,24 @@ export default function MapboxComponent({
         }} 
       />
 
-      {/* Custom Controls Overlay */}
+      {/* Custom Controls Overlay - FIXED Z-INDEX */}
       {mapReady && (
         <>
-          {/* Top Controls */}
-          <div className="absolute top-4 left-4 right-4 z-10 flex items-start justify-between pointer-events-none">
+          {/* Top Controls - Increased Z-Index */}
+          <div className="absolute top-3 sm:top-4 md:top-5 lg:top-6 left-3 sm:left-4 md:left-5 lg:left-6 right-3 sm:right-4 md:right-5 lg:right-6 z-[60] flex items-start justify-between gap-2 pointer-events-none">
             {/* Map Style Selector */}
             <div className="pointer-events-auto">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowStyleSelector(!showStyleSelector)}
-                className="bg-white/95 backdrop-blur-lg p-3 rounded-xl shadow-xl hover:shadow-2xl transition-all border border-gray-200 flex items-center gap-2"
+                className="bg-white/95 backdrop-blur-lg p-2.5 sm:p-3 md:p-3.5 rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl transition-all border-2 border-orange-200 flex items-center gap-2"
               >
-                <Layers className="w-5 h-5 text-gray-700" />
-                <span className="text-sm font-semibold text-gray-700 hidden sm:inline">
+                <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-orange-700" />
+                <span className="text-xs sm:text-sm font-bold text-gray-700 hidden sm:inline">
                   {currentStyle.name}
                 </span>
-                <ChevronRight className={`w-4 h-4 text-gray-500 transition-transform ${showStyleSelector ? 'rotate-90' : ''}`} />
+                <ChevronRight className={`w-3 h-3 sm:w-4 sm:h-4 text-gray-500 transition-transform ${showStyleSelector ? 'rotate-90' : ''}`} />
               </motion.button>
 
               {/* Style Selector Dropdown */}
@@ -517,27 +550,27 @@ export default function MapboxComponent({
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="mt-2 bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden border border-gray-200"
+                    className="mt-2 bg-white/95 backdrop-blur-lg rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden border-2 border-orange-200"
                   >
                     {MAP_STYLES.map((style) => {
                       const Icon = style.icon;
                       return (
                         <motion.button
                           key={style.id}
-                          whileHover={{ backgroundColor: 'rgba(147, 51, 234, 0.1)' }}
+                          whileHover={{ backgroundColor: 'rgba(249, 115, 22, 0.1)' }}
                           onClick={() => handleStyleChange(style)}
-                          className={`w-full px-4 py-3 flex items-center gap-3 transition-colors ${
-                            currentStyle.id === style.id ? 'bg-purple-50' : ''
+                          className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3 transition-colors ${
+                            currentStyle.id === style.id ? 'bg-orange-50' : ''
                           }`}
                         >
-                          <Icon className={`w-5 h-5 ${currentStyle.id === style.id ? 'text-purple-600' : 'text-gray-600'}`} />
-                          <span className={`text-sm font-medium ${currentStyle.id === style.id ? 'text-purple-600' : 'text-gray-700'}`}>
+                          <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${currentStyle.id === style.id ? 'text-orange-600' : 'text-gray-600'}`} />
+                          <span className={`text-xs sm:text-sm font-bold ${currentStyle.id === style.id ? 'text-orange-600' : 'text-gray-700'}`}>
                             {style.name}
                           </span>
                           {currentStyle.id === style.id && (
                             <motion.div
                               layoutId="selectedStyle"
-                              className="ml-auto w-2 h-2 bg-purple-600 rounded-full"
+                              className="ml-auto w-2 h-2 bg-orange-600 rounded-full"
                             />
                           )}
                         </motion.button>
@@ -553,26 +586,26 @@ export default function MapboxComponent({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleFullscreen}
-              className="bg-white/95 backdrop-blur-lg p-3 rounded-xl shadow-xl hover:shadow-2xl transition-all border border-gray-200 pointer-events-auto"
+              className="bg-white/95 backdrop-blur-lg p-2.5 sm:p-3 md:p-3.5 rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl transition-all border-2 border-blue-200 pointer-events-auto"
             >
               {isFullscreen ? (
-                <Minimize2 className="w-5 h-5 text-gray-700" />
+                <Minimize2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-700" />
               ) : (
-                <Maximize2 className="w-5 h-5 text-gray-700" />
+                <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-700" />
               )}
             </motion.button>
           </div>
 
-          {/* Right Side Controls */}
-          <div className="absolute right-4 top-24 z-10 flex flex-col gap-2">
+          {/* Right Side Controls - Increased Z-Index */}
+          <div className="absolute right-3 sm:right-4 md:right-5 lg:right-6 top-20 sm:top-24 md:top-28 z-[60] flex flex-col gap-2 sm:gap-2.5">
             {/* Zoom In */}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleZoomIn}
-              className="bg-white/95 backdrop-blur-lg p-3 rounded-xl shadow-lg hover:shadow-xl transition-all border border-gray-200"
+              className="bg-white/95 backdrop-blur-lg p-2.5 sm:p-3 md:p-3.5 rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl transition-all border-2 border-orange-200"
             >
-              <ZoomIn className="w-5 h-5 text-gray-700" />
+              <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5 text-orange-700" />
             </motion.button>
 
             {/* Zoom Out */}
@@ -580,9 +613,9 @@ export default function MapboxComponent({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleZoomOut}
-              className="bg-white/95 backdrop-blur-lg p-3 rounded-xl shadow-lg hover:shadow-xl transition-all border border-gray-200"
+              className="bg-white/95 backdrop-blur-lg p-2.5 sm:p-3 md:p-3.5 rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl transition-all border-2 border-orange-200"
             >
-              <ZoomOut className="w-5 h-5 text-gray-700" />
+              <ZoomOut className="w-4 h-4 sm:w-5 sm:h-5 text-orange-700" />
             </motion.button>
 
             {/* Center on User */}
@@ -590,9 +623,9 @@ export default function MapboxComponent({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleCenterUser}
-              className="bg-white/95 backdrop-blur-lg p-3 rounded-xl shadow-lg hover:shadow-xl transition-all border border-gray-200 mt-2"
+              className="bg-white/95 backdrop-blur-lg p-2.5 sm:p-3 md:p-3.5 rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl transition-all border-2 border-blue-200 mt-1 sm:mt-2"
             >
-              <Locate className="w-5 h-5 text-blue-600" />
+              <Locate className="w-4 h-4 sm:w-5 sm:h-5 text-blue-700" />
             </motion.button>
 
             {/* Reset Bearing */}
@@ -604,29 +637,30 @@ export default function MapboxComponent({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleResetBearing}
-                className="bg-white/95 backdrop-blur-lg p-3 rounded-xl shadow-lg hover:shadow-xl transition-all border border-gray-200"
+                className="bg-white/95 backdrop-blur-lg p-2.5 sm:p-3 md:p-3.5 rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl transition-all border-2 border-orange-200"
               >
-                <Compass className="w-5 h-5 text-purple-600" style={{ transform: `rotate(${-bearing}deg)` }} />
+                <Compass className="w-4 h-4 sm:w-5 sm:h-5 text-orange-700" style={{ transform: `rotate(${-bearing}deg)` }} />
               </motion.button>
             )}
           </div>
 
-          {/* Bottom Info Bar */}
-          <div className="absolute bottom-4 left-4 z-10">
+          {/* Bottom Info Bar - Increased Z-Index */}
+          <div className="absolute bottom-3 sm:bottom-4 md:bottom-5 lg:bottom-6 left-3 sm:left-4 md:left-5 lg:left-6 z-[60]">
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="bg-white/95 backdrop-blur-lg px-4 py-2 rounded-xl shadow-lg border border-gray-200"
+              className="bg-white/95 backdrop-blur-lg px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 rounded-xl sm:rounded-2xl shadow-xl border-2 border-orange-200"
             >
-              <div className="flex items-center gap-4 text-xs text-gray-600">
-                <div className="flex items-center gap-1">
-                  <Store className="w-4 h-4 text-purple-600" />
-                  <span className="font-semibold">{umkmLocations.length} UMKM</span>
+              <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-600" />
+                  <span className="font-bold text-gray-800">{umkmLocations.length}</span>
+                  <span className="font-semibold hidden sm:inline">UMKM</span>
                 </div>
-                <div className="w-px h-4 bg-gray-300"></div>
-                <div className="flex items-center gap-1">
-                  <Navigation2 className="w-4 h-4 text-blue-600" />
-                  <span className="font-medium">Live Tracking</span>
+                <div className="w-px h-3 sm:h-4 bg-gray-300"></div>
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <Navigation2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
+                  <span className="font-semibold">Live</span>
                 </div>
               </div>
             </motion.div>
@@ -635,15 +669,17 @@ export default function MapboxComponent({
       )}
 
       {/* Custom CSS */}
-      <style jsx global>{`
+      <style>{`
         /* Custom Marker Styles */
         .custom-marker {
           cursor: pointer;
           transition: all 0.3s ease;
+          z-index: 40 !important;
         }
 
         .custom-marker:hover {
           transform: translateY(-5px);
+          z-index: 50 !important;
         }
 
         .custom-marker.selected {
@@ -653,10 +689,10 @@ export default function MapboxComponent({
         .marker-pin {
           width: 40px;
           height: 40px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
           border-radius: 50% 50% 50% 0;
           transform: rotate(-45deg);
-          box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+          box-shadow: 0 10px 20px rgba(249, 115, 22, 0.3);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -665,10 +701,10 @@ export default function MapboxComponent({
         }
 
         .marker-pin.marker-selected {
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+          background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
           width: 50px;
           height: 50px;
-          box-shadow: 0 15px 30px rgba(245, 87, 108, 0.4);
+          box-shadow: 0 15px 30px rgba(59, 130, 246, 0.5);
         }
 
         .marker-icon {
@@ -682,7 +718,7 @@ export default function MapboxComponent({
           width: 100%;
           height: 100%;
           border-radius: 50%;
-          background: rgba(102, 126, 234, 0.4);
+          background: rgba(249, 115, 22, 0.4);
           animation: pulse 2s infinite;
         }
 
@@ -698,6 +734,7 @@ export default function MapboxComponent({
           white-space: nowrap;
           font-size: 12px;
           animation: fadeIn 0.3s ease;
+          z-index: 1000;
         }
 
         /* User Marker Styles */
@@ -705,6 +742,7 @@ export default function MapboxComponent({
           position: relative;
           width: 40px;
           height: 40px;
+          z-index: 50 !important;
         }
 
         .user-marker-pulse {
@@ -740,6 +778,10 @@ export default function MapboxComponent({
         }
 
         /* Popup Styles */
+        .custom-popup-container {
+          z-index: 70 !important;
+        }
+
         .custom-popup-container .maplibregl-popup-content {
           padding: 0;
           border-radius: 16px;
@@ -803,7 +845,7 @@ export default function MapboxComponent({
 
         .popup-category {
           display: inline-block;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
           color: white;
           padding: 4px 12px;
           border-radius: 12px;
@@ -907,7 +949,7 @@ export default function MapboxComponent({
           backdrop-filter: blur(10px);
           border-radius: 12px !important;
           box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
-          border: 1px solid rgba(0,0,0,0.1) !important;
+          border: 2px solid rgba(249, 115, 22, 0.2) !important;
         }
 
         .maplibregl-ctrl-group button {
@@ -928,10 +970,18 @@ export default function MapboxComponent({
           background: rgba(255, 255, 255, 0.95) !important;
           backdrop-filter: blur(10px);
           border-radius: 8px !important;
-          border: 1px solid rgba(0,0,0,0.1) !important;
+          border: 2px solid rgba(249, 115, 22, 0.2) !important;
           padding: 4px 8px !important;
           font-size: 11px !important;
           font-weight: 600 !important;
+          color: #f97316 !important;
+        }
+
+        /* Ensure controls are always visible */
+        .maplibregl-ctrl-top-right,
+        .maplibregl-ctrl-bottom-right,
+        .maplibregl-ctrl-bottom-left {
+          z-index: 55 !important;
         }
       `}</style>
     </div>

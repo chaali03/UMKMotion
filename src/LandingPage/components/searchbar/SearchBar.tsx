@@ -615,7 +615,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         <div className="search-header">
           <div className="header-badge">
             <Sparkles color="white" />
-            <span>TEMUKAN UMKM TERBAIK</span>
+            <span className="text-white">TEMUKAN UMKM TERBAIK</span>
           </div>
           <h2 className="search-title">
             Cari UMKM Pilihan Anda
