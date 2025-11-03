@@ -13,7 +13,7 @@ interface CarouselSlide {
 const carouselData: CarouselSlide[] = [
   {
     id: 1,
-    image: '/asset/umkm/umkm5.jpg',
+    image: '/asset/optimized/umkm/umkm5.webp',
     title: 'Etalase UMKM Kreatif',
     desc: 'Temukan produk unggulan lokal dengan kualitas terbaik. Dukung pengusaha kecil!',
     cta: 'Lihat Produk',
@@ -21,7 +21,7 @@ const carouselData: CarouselSlide[] = [
   },
   {
     id: 2,
-    image: '/asset/umkm/umkm1.jpg',
+    image: '/asset/optimized/umkm/umkm1.webp',
     title: 'Handmade dengan Cinta',
     desc: 'Setiap produk dibuat dengan tangan dan penuh dedikasi oleh UMKM Indonesia.',
     cta: 'Jelajahi Sekarang',
@@ -29,7 +29,7 @@ const carouselData: CarouselSlide[] = [
   },
   {
     id: 3,
-    image: '/asset/umkm/umkm2.jpg',
+    image: '/asset/optimized/umkm/umkm2.webp',
     title: 'Belanja Cerdas, Dukung Lokal',
     desc: 'Harga terjangkau, kualitas terjamin. Langsung dari pengrajin ke tanganmu.',
     cta: 'Mulai Belanja',
@@ -37,7 +37,7 @@ const carouselData: CarouselSlide[] = [
   },
   {
     id: 4,
-    image: '/asset/umkm/umkm3.jpg',
+    image: '/asset/optimized/umkm/umkm3.webp',
     title: 'Produk Eksklusif Musiman',
     desc: 'Koleksi terbatas edisi spesial hanya ada di sini. Jangan sampai kehabisan!',
     cta: 'Lihat Koleksi',
@@ -45,7 +45,7 @@ const carouselData: CarouselSlide[] = [
   },
   {
     id: 5,
-    image: '/asset/umkm/umkm4.jpg',
+    image: '/asset/optimized/umkm/umkm4.webp',
     title: '100% Asli Indonesia',
     desc: 'Bangga pakai produk dalam negeri. Kualitas dunia, harga lokal.',
     cta: 'Belanja Sekarang',

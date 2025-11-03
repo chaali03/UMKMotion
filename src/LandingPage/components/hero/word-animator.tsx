@@ -32,7 +32,7 @@ const WordAnimator: React.FC<WordAnimatorProps> = ({
       }}
       className={cn(" text-left overflow-hidden border rounded-md ", className)}
     >
-      <span className="absolute top-0 left-0 w-full h-full content-[''] z-10 pointer-events-none bg-[url('/noise.gif')] opacity-10"></span>
+      <span className="absolute top-0 left-0 w-full h-full content-[''] z-10 pointer-events-none bg-[radial-gradient(circle,rgba(0,0,0,0.2)_1px,transparent_1px)] [background-size:8px_8px] opacity-10"></span>
       <AnimatePresence mode="popLayout">
         <motion.span
           key={currentIndex}

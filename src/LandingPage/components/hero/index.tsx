@@ -296,12 +296,12 @@ const Index = () => {
                 <CircularGallery
                   className="h-full w-full"
                   items={[
-                    { image: "/asset/umkm/umkm1.png", text: "UMKM 1" },
-                    { image: "/asset/umkm/umkm2.jpg", text: "UMKM 2" },
-                    { image: "/asset/umkm/umkm3.jpeg", text: "UMKM 3" },
-                    { image: "/asset/umkm/umkm4.jpeg", text: "UMKM 4" },
-                    { image: "/asset/umkm/umkm5.jpg", text: "UMKM 5" },
-                    { image: "/asset/umkm/umkm6.jpg", text: "UMKM 6" },
+                    { image: "/asset/optimized/umkm/umkm1.webp", text: "UMKM 1" },
+                    { image: "/asset/optimized/umkm/umkm2.webp", text: "UMKM 2" },
+                    { image: "/asset/optimized/umkm/umkm3.webp", text: "UMKM 3" },
+                    { image: "/asset/optimized/umkm/umkm4.webp", text: "UMKM 4" },
+                    { image: "/asset/optimized/umkm/umkm5.webp", text: "UMKM 5" },
+                    { image: "/asset/optimized/umkm/umkm6.webp", text: "UMKM 6" },
                   ]}
                 />
               </div>

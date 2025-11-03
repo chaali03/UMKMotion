@@ -335,7 +335,7 @@ export default function Footer() {
       {/* FOOTER IMAGE BANNER */}
       <div className="relative w-full">
         <img 
-          src="/asset/Footer/FooterImg.png" 
+          src="/asset/optimized/Footer/FooterImg.webp" 
           alt="UMKMotion Footer Banner"
           className="w-full h-auto"
         />

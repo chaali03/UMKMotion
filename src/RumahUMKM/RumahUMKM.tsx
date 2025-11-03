@@ -3,8 +3,7 @@
 // React and Hooks
 import React, { useState, useEffect, useRef } from 'react';
 
-// Leaflet Map
-import 'leaflet/dist/leaflet.css';
+// Map styles
 import "./mapbox-custom.css";
 
 // Animation
@@ -31,8 +30,11 @@ import {
 // Types
 import type { UMKMLocation } from './types';
 
-// Import MapComponent directly
-import MapboxComponent from './map/MapboxComponent';
+// Import lazy map components
+import { LazyMapComponent, LazyMapboxComponent, withSuspense } from '@/utils/lazy-imports';
+
+const MapComponent = withSuspense(LazyMapComponent, <div className="h-96 bg-gray-100 animate-pulse rounded-lg"></div>);
+const MapboxComponent = withSuspense(LazyMapboxComponent, <div className="h-96 bg-gray-100 animate-pulse rounded-lg"></div>);
 
 // Loading component for Suspense
 const MapLoading = () => (
@@ -898,7 +900,7 @@ export default function RumahUMKM() {
         </div>
       </div>
 
-      <style jsx global>{`
+      <style>{`
         @media (max-width: 1023px) {
           body {
             overflow: ${showSidebar ? 'auto' : 'hidden'};

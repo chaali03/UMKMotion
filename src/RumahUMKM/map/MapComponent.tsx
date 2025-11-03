@@ -165,7 +165,6 @@ export default function MapboxComponent({
           maxZoom: 20,
           minZoom: 2,
           attributionControl: false,
-          antialias: false,
           fadeDuration: 150
         });
 
