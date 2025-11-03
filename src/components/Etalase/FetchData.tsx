@@ -3,21 +3,25 @@ import React, { useEffect, useState } from "react";
 function FetchData() {
   const [category, setCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [allProducts, setAllProducts] = useState([]);
-  const [displayedProducts, setDisplayedProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [displayedProducts, setDisplayedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
   const PRODUCTS_PER_PAGE = 15;
 
+  // === LISTENER UNTUK KATEGORI & SEARCH ===
   useEffect(() => {
-    const handleCategoryChange = (e) => {
-      setCategory(e.detail);
+    const handleCategoryChange = (e: any) => {
+      const newCat = e.detail;
+      setCategory(newCat);
+      setSearchQuery("");
       setDisplayedProducts([]);
       setAllProducts([]);
     };
-    const handleSearchChange = (e) => {
+
+    const handleSearchChange = (e: any) => {
       setSearchQuery(e.detail);
       setDisplayedProducts([]);
       setAllProducts([]);
@@ -32,7 +36,8 @@ function FetchData() {
     };
   }, []);
 
-  const convertToIDR = (priceText) => {
+  // === KONVERSI HARGA KE IDR ===
+  const convertToIDR = (priceText: string) => {
     if (!priceText) return null;
     const match = String(priceText).match(/[\d.,]+/);
     if (!match) return null;
@@ -42,13 +47,15 @@ function FetchData() {
     return "Rp " + idr.toLocaleString("id-ID");
   };
 
-  const renderStars = (rating) => {
+  // === RENDER BINTANG ===
+  const renderStars = (rating: string) => {
     if (!rating) return "N/A";
     const full = Math.round(Number(rating));
     return "★★★★★".substring(0, full) + "☆☆☆☆☆".substring(0, 5 - full);
   };
 
-  const extractDiscount = (product) => {
+  // === HITUNG DISKON ===
+  const extractDiscount = (product: any) => {
     const priceStr = product.product_price;
     const originalPriceStr = product.product_original_price || product.product_price;
     if (priceStr && originalPriceStr && priceStr !== originalPriceStr) {
@@ -62,6 +69,7 @@ function FetchData() {
     return product.product_discount || "69%";
   };
 
+  // === BONUS RANDOM ===
   const generateBonusText = () => {
     const bonuses = [
       "Gratis Ongkir",
@@ -72,19 +80,20 @@ function FetchData() {
     return bonuses[Math.floor(Math.random() * bonuses.length)];
   };
 
+  // === FETCH PRODUK ===
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       setHasMore(true);
       try {
-        const API_KEY = "393a29388emsh561d8e403683269p1e70d3jsnd26b2d32346f";
+        const API_KEY = "e1b2904af0msh5056d518b4cd0edp1ad29fjsnda102070f8d2";
         const HOST = "real-time-amazon-data.p.rapidapi.com";
 
         let query = "";
         if (searchQuery) {
           query = searchQuery;
         } else if (category && category !== "all") {
-          const map = {
+          const map: Record<string, string> = {
             all: "best sellers",
             food: "grocery",
             services: "services",
@@ -116,7 +125,7 @@ function FetchData() {
         const apiProducts = result.data?.products || [];
 
         const transformed = apiProducts
-          .map(p => {
+          .map((p: any) => {
             const priceIDR = convertToIDR(p.product_price);
             if (!priceIDR) return null;
 
@@ -124,7 +133,7 @@ function FetchData() {
               product_title: p.product_title || "Produk Premium",
               product_photo: p.product_photo || "/asset/umkm/umkm1.jpg",
               product_price: priceIDR,
-              product_original_price: p.product_original_price,
+              product_original_price: p.product_original_price || p.product_price,
               product_star_rating: p.product_star_rating,
               product_num_ratings: p.product_num_ratings,
               seller_name: p.seller_name || "Toko Resmi",
@@ -153,6 +162,7 @@ function FetchData() {
     fetchProducts();
   }, [category, searchQuery]);
 
+  // === LOAD MORE ===
   const loadMore = () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
@@ -169,7 +179,7 @@ function FetchData() {
 
   return (
     <>
-      <style jsx>{`
+      <style>{`
         .product-container {
           font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
           background: #f9f9f9;
@@ -206,7 +216,6 @@ function FetchData() {
           border-color: #e0e0e0;
         }
 
-        /* === DISKON BADGE === */
         .discount-badge {
           position: absolute;
           top: 6px;
@@ -246,7 +255,6 @@ function FetchData() {
           box-shadow: 0 4px 12px rgba(255, 59, 59, 0.6);
         }
 
-        /* === CART ICON === */
         .cart-icon-badge {
           position: absolute;
           top: 6px;
@@ -278,7 +286,6 @@ function FetchData() {
           stroke-width: 2.3;
         }
 
-        /* GAMBAR */
         .product-image {
           width: 100%;
           height: 160px;
@@ -297,7 +304,6 @@ function FetchData() {
           transform: scale(1.04);
         }
 
-        /* INFO */
         .product-info {
           padding: 6px 8px 8px;
           display: flex;
@@ -439,7 +445,6 @@ function FetchData() {
           cursor: not-allowed;
         }
 
-        /* RESPONSIVE */
         @media (max-width: 768px) {
           .product-list {
             grid-template-columns: repeat(2, 1fr);
@@ -478,7 +483,6 @@ function FetchData() {
             gap: 3px;
           }
 
-          /* CART LEBIH BESAR DI MOBILE */
           .cart-icon-badge {
             width: 36px;
             height: 36px;
@@ -573,17 +577,20 @@ function FetchData() {
   );
 }
 
-function ProductCard({ image, shortTitle, price, rating, sold, seller, discount, bonusText, product }) {
-  const handleCardClick = (e) => {
-    if (e.target.closest(".btn-buy") || e.target.closest(".cart-icon-badge")) return;
+// === PRODUCT CARD ===
+function ProductCard({ image, shortTitle, price, rating, sold, seller, discount, bonusText, product }: any) {
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (e.target instanceof Element && (e.target.closest(".btn-buy") || e.target.closest(".cart-icon-badge"))) return;
+
+    // SIMPAN SEMUA DATA + ASIN KE LOCALSTORAGE
     localStorage.setItem("selectedProduct", JSON.stringify(product));
     window.location.href = "/buyingpage";
   };
 
-  const handleAddToCart = (e) => {
+  const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    const existing = cart.find(p => p.asin === product.asin);
+    const existing = cart.find((p: any) => p.asin === product.asin);
     if (existing) {
       existing.quantity = (existing.quantity || 1) + 1;
     } else {
@@ -593,7 +600,7 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
     alert("Berhasil ditambahkan ke keranjang!");
   };
 
-  const handleBuyNow = (e) => {
+  const handleBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
     localStorage.setItem("selectedProduct", JSON.stringify(product));
     window.location.href = "/buyingpage";
