@@ -156,12 +156,15 @@ const umkmData: UMKMLocation[] = [
 
 export default function RumahUMKM() {
   const [selectedUMKM, setSelectedUMKM] = useState<UMKMLocation | null>(null);
-  const [userLocation, setUserLocation] = useState<[number, number]>([-6.2088, 106.8456]);
+  // [lat, lon]
+  const INDONESIA_CENTER: [number, number] = [-2.5, 118.0];
+  const [userLocation, setUserLocation] = useState<[number, number]>(INDONESIA_CENTER);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
   const [showFilters, setShowFilters] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [isClient, setIsClient] = useState(false);
+  const [hasGeoPermission, setHasGeoPermission] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'detail' | 'directions'>('list');
   const [selectedRoute, setSelectedRoute] = useState<'car' | 'walk' | 'bike'>('car');
@@ -169,6 +172,8 @@ export default function RumahUMKM() {
   const [showMap, setShowMap] = useState(false);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
   const [outsideHandleLeft, setOutsideHandleLeft] = useState<number>(0);
+  const galleryTrackRef = useRef<HTMLDivElement | null>(null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   const categories = [
     { id: "Semua", icon: Store, color: "orange" },
@@ -217,30 +222,99 @@ export default function RumahUMKM() {
     return () => window.removeEventListener('resize', calc);
   }, [showSidebar]);
 
-  // Get user location
+  // Get user location (robust): quick fix, then refine; fallback to watch on error/timeout
   useEffect(() => {
-    if (typeof window !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation([position.coords.latitude, position.coords.longitude]);
-          console.log('User location:', position.coords.latitude, position.coords.longitude);
-        },
-        (error) => {
-          console.log("Using default location (Jakarta):", error.message);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        }
-      );
+    if (typeof window === 'undefined' || !('geolocation' in navigator)) return;
+
+    // Require HTTPS or localhost for geolocation in most browsers
+    const isSecureContext = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+    if (!isSecureContext) {
+      setUserLocation(INDONESIA_CENTER);
+      setHasGeoPermission(false);
+      return;
     }
+
+    let tempWatchId: number | null = null;
+    let cleared = false;
+
+    const clearTempWatch = () => {
+      if (tempWatchId != null) {
+        try {
+          const cw: unknown = (navigator as any)?.geolocation?.clearWatch;
+          if (typeof cw === 'function') {
+            (cw as (id: number) => void)(tempWatchId);
+          }
+        } catch {}
+        tempWatchId = null;
+      }
+    };
+
+    // 1) Try a fast, low-accuracy fix to place the camera quickly
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (cleared) return;
+        setUserLocation([pos.coords.latitude, pos.coords.longitude]);
+        setHasGeoPermission(true);
+      },
+      () => {
+        // 2) If it fails or times out, fall back to a temporary high-accuracy watch
+        if (cleared) return;
+        tempWatchId = navigator.geolocation.watchPosition(
+          (p) => {
+            if (cleared) return;
+            setUserLocation([p.coords.latitude, p.coords.longitude]);
+            setHasGeoPermission(true);
+            clearTempWatch();
+          },
+          () => {
+            // Final fallback to Indonesia center
+            if (cleared) return;
+            setUserLocation(INDONESIA_CENTER);
+            setHasGeoPermission(false);
+            clearTempWatch();
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 1000,
+            timeout: 10000,
+          }
+        );
+        // Safety stop after 12s
+        window.setTimeout(() => {
+          if (!cleared) {
+            clearTempWatch();
+          }
+        }, 12000);
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 3500,
+        maximumAge: 120000
+      }
+    );
+
+    return () => {
+      cleared = true;
+      clearTempWatch();
+    };
   }, []);
 
   useEffect(() => {
     if (selectedUMKM && window.innerWidth < 1024) {
       setShowSidebar(true);
     }
+  }, [selectedUMKM]);
+
+  // Sync gallery index with scroll position
+  useEffect(() => {
+    const track = galleryTrackRef.current;
+    if (!track) return;
+    const handler = () => {
+      const idx = Math.round(track.scrollLeft / track.clientWidth);
+      setGalleryIndex(idx);
+    };
+    track.addEventListener('scroll', handler, { passive: true });
+    return () => track.removeEventListener('scroll', handler as EventListener);
   }, [selectedUMKM]);
 
   // Filter UMKM
@@ -452,26 +526,106 @@ export default function RumahUMKM() {
 
                 {viewMode === 'detail' && selectedUMKM && (
                   <div>
-                    {/* Image Gallery */}
-                    <div className="relative h-40 md:h-48 lg:h-56 bg-gradient-to-br from-orange-200 to-orange-100">
-                      <img 
-                        src={selectedUMKM.image} 
-                        alt={selectedUMKM.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300?text=No+Image';
-                        }}
-                      />
-                      {selectedUMKM.photos && selectedUMKM.photos.length > 1 && (
+                    {/* Image Carousel */}
+                    <div className="relative h-44 md:h-52 lg:h-60 bg-gradient-to-br from-orange-200 to-orange-100 overflow-hidden">
+                      {(() => {
+                        const slides = [
+                          selectedUMKM.image,
+                          ...((selectedUMKM.photos?.filter(p => p !== selectedUMKM.image)) || [])
+                        ];
+                        const total = slides.length;
+                        return (
+                          <>
+                      <div
+                        ref={galleryTrackRef}
+                        className="h-full w-full flex overflow-x-auto snap-x snap-mandatory hide-scrollbar"
+                        style={{ WebkitOverflowScrolling: 'touch' as any }}
+                      >
+                        {slides.map((src, idx) => (
+                          <img
+                            key={idx}
+                            src={src}
+                            alt={`${selectedUMKM.name} ${idx + 1}`}
+                            className="h-full w-full min-w-full flex-none object-cover snap-center"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600x300?text=No+Image';
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Photo count badge */}
+                      {total > 1 && (
                         <div className="absolute bottom-2 md:bottom-3 right-2 md:right-3 bg-black/70 backdrop-blur-sm text-white px-2 md:px-3 py-1 md:py-1.5 rounded-full text-xs md:text-sm flex items-center gap-1">
                           <ImageIcon className="w-3 h-3 md:w-4 md:h-4" />
-                          {selectedUMKM.photos.length} Foto
+                          {total} Foto
                         </div>
                       )}
+
+                      {/* Prev/Next Controls */}
+                      {total > 1 && (
+                        <>
+                          {(() => { const atStart = galleryIndex === 0; const atEnd = galleryIndex === total - 1; return (
+                          <div className="gmap-carousel-nav z-20">
+                          <button
+                            aria-label="Prev"
+                            className={`absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-9 md:h-9 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/55 z-20 ${atStart ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (atStart) return; const el = galleryTrackRef.current; if (!el) return;
+                              const next = Math.max(0, galleryIndex - 1);
+                              setGalleryIndex(next);
+                              const left = next * el.clientWidth;
+                              try { el.scrollTo({ left, behavior: 'smooth' }); } catch { el.scrollLeft = left; }
+                            }}
+                          >
+                            ‹
+                          </button>
+                          <button
+                            aria-label="Next"
+                            className={`absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-9 md:h-9 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/55 z-20 ${atEnd ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (atEnd) return; const el = galleryTrackRef.current; if (!el) return;
+                              const next = Math.min(total - 1, galleryIndex + 1);
+                              setGalleryIndex(next);
+                              const left = next * el.clientWidth;
+                              try { el.scrollTo({ left, behavior: 'smooth' }); } catch { el.scrollLeft = left; }
+                            }}
+                          >
+                            ›
+                          </button>
+                          </div>
+                          ); })()}
+                        </>
+                      )}
+
+                      {/* Dots Indicator */}
+                      {total > 1 && (
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                          {slides.map((_, i) => (
+                            <button
+                              key={i}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                const el = galleryTrackRef.current; if (!el) return;
+                                setGalleryIndex(i);
+                                const left = i * el.clientWidth;
+                                try { el.scrollTo({ left, behavior: 'smooth' }); } catch { el.scrollLeft = left; }
+                              }}
+                              className={`w-1.5 h-1.5 rounded-full ${galleryIndex === i ? 'bg-white' : 'bg-white/50'}`}
+                              aria-label={`Slide ${i+1}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                          </>
+                        );
+                      })()}
                     </div>
 
                     {/* Details */}
-                    <div className="p-3 md:p-4">
+                    <div className="p-3 md:p-4 pt-4 md:pt-5">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1 min-w-0 pr-2">
                           <h2 className="text-lg md:text-xl lg:text-2xl font-bold bg-gradient-to-r from-orange-700 to-orange-500 bg-clip-text text-transparent mb-2">
@@ -490,7 +644,7 @@ export default function RumahUMKM() {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4 border-b">
+                      <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4 border-b pb-2">
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 md:w-5 md:h-5 text-yellow-500 fill-yellow-500" />
                           <span className="text-lg md:text-xl font-bold">{selectedUMKM.rating}</span>
@@ -808,6 +962,7 @@ export default function RumahUMKM() {
           {isClient && (
             <MapboxComponent 
               center={userLocation}
+              zoom={hasGeoPermission ? 13 : 5}
               umkmLocations={filteredUMKM}
               selectedUMKM={selectedUMKM}
               onSelectUMKM={handleSelectUMKM}

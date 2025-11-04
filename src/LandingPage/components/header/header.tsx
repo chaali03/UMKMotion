@@ -150,6 +150,11 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
         .nav-item-glow:hover::before {
           opacity: 0.6;
         }
+
+        /* Hide header when map fullscreen is active */
+        .map-fullscreen-active header {
+          display: none !important;
+        }
       `}</style>
 
       <header className={cn(

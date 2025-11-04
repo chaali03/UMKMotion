@@ -5,14 +5,11 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import '../mapbox-custom.css';
 import type { UMKMLocation } from '../types';
-import { 
-  MapPin, Navigation, Star, Phone, Clock, 
-  Loader, AlertCircle, RefreshCw, Layers,
-  Maximize2, Minimize2, Locate, Compass,
-  ZoomIn, ZoomOut, Map as MapIcon, Satellite,
-  Navigation2, Route, TrendingUp, Store,
-  Heart, Share2, ExternalLink, X, ChevronRight,
-  CheckCircle, Circle, ArrowRight, Sparkles
+import {
+  MapPin, Layers, Search, X, Locate,
+  Star, Clock, Phone, ExternalLink, Maximize2, Minimize2,
+  Navigation, Share2, Heart, Globe, Instagram, Mail,
+  Award, TrendingUp, DollarSign, Calendar, MessageCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -27,164 +24,311 @@ interface MapboxComponentProps {
   zoom?: number;
 }
 
-// Create custom marker element
-const createCustomMarker = (umkm: UMKMLocation, isSelected: boolean) => {
+// Google Maps style marker
+const createGoogleMarker = (umkm: UMKMLocation, isSelected: boolean) => {
   const el = document.createElement('div');
-  // Ensure we don't have empty class names
-  const className = ['custom-marker'];
-  if (isSelected) className.push('selected');
-  el.className = className.join(' ').trim();
-  
-  // Get category color
+  el.className = isSelected ? 'gmap-marker selected' : 'gmap-marker';
+
   const categoryColors: { [key: string]: string } = {
-    'Kuliner': '#ef4444',
-    'Fashion': '#ec4899',
-    'Kerajinan': '#f59e0b',
-    'Teknologi': '#3b82f6'
+    'Kuliner': '#ea4335',
+    'Fashion': '#4285f4',
+    'Kerajinan': '#fbbc04',
+    'Teknologi': '#34a853'
   };
-  
-  const color = categoryColors[umkm.category] || '#8b5cf6';
-  
+
+  const color = categoryColors[umkm.category] || '#ea4335';
+
   el.innerHTML = `
-    <div class="marker-container">
-      <div class="marker-pin" style="background: ${color};">
-        <div class="marker-inner">
-          ${umkm.verified ? 
-            '<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' :
-            '<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="8"/></svg>'
-          }
-        </div>
-        <div class="marker-tail" style="background: ${color};"></div>
-      </div>
-      ${isSelected ? `
-        <div class="marker-label">
-          <span class="label-text">${umkm.name}</span>
-          <div class="label-arrow" style="border-top-color: white;"></div>
-        </div>
-      ` : ''}
-      <div class="marker-pulse" style="background: ${color};"></div>
-      ${umkm.isOpen ? '<div class="marker-status"></div>' : ''}
+    <div class="gmap-pin" style="background-color: ${color};">
+      <div class="gmap-pin-top"></div>
     </div>
+    <div class="gmap-shadow"></div>
   `;
-  
+
   return el;
 };
 
-// Create enhanced popup content
-const createPopupContent = (umkm: UMKMLocation) => {
-  return `
-    <div class="enhanced-popup">
-      <div class="popup-image-wrapper">
-        <img src="${umkm.image}" alt="${umkm.name}" class="popup-image" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'"/>
-        <div class="popup-overlay">
-          ${umkm.verified ? `
-            <div class="verified-badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-              </svg>
-              Verified
-            </div>
-          ` : ''}
-          <div class="category-badge">${umkm.category}</div>
+// Enhanced Google Maps style popup with rich details
+const createGooglePopup = (umkm: UMKMLocation) => {
+  const stars = '★'.repeat(Math.floor(umkm.rating)) + '☆'.repeat(5 - Math.floor(umkm.rating));
+  const photosLabel = umkm.photos && umkm.photos.length ? `${umkm.photos.length} Foto` : 'Foto';
+
+  // Use existing fields with safe fallbacks
+  const openingHours = (umkm as any).openingHours || umkm.openHours || 'Jam tidak tersedia';
+  const address = umkm.address || '';
+  const phone = umkm.phone || '';
+  const website = (umkm as any).website || '';
+  const priceRange = (umkm as any).priceRange || '';
+  const totalVisits = (umkm as any).totalVisits || '';
+  const isOpen = umkm.isOpen !== false;
+
+  // Featured products derived from umkm.products if present
+  const featuredProducts = (umkm as any).featuredProducts || (umkm.products ? umkm.products.map((p: any) => ({
+    name: p.name,
+    price: `Rp ${Number(p.price).toLocaleString('id-ID')}`,
+    image: p.image
+  })) : []);
+
+  // Gallery images use umkm.photos if available
+  const galleryImages: string[] = (umkm as any).galleryImages || umkm.photos || [];
+
+  // Optional top review (fallback sample)
+  const topReview = (umkm as any).topReview || {
+    author: 'Pengguna',
+    rating: Math.round(umkm.rating),
+    text: umkm.description || 'Belum ada ulasan.',
+    date: ''
+  };
+
+  return `<div class="gmap-popup-enhanced">
+    <!-- Hero Carousel with Overlay Info -->
+    <div class="gmap-hero">
+      <div class="gmap-hero-track">
+        ${[umkm.image, ...(galleryImages || [])].filter(Boolean).slice(0, 5).map(img => 
+          `<img src="${img}" alt="${umkm.name}" class="gmap-hero-img" onerror="this.src='https://via.placeholder.com/600x300?text=UMKM'"/>`
+        ).join('')}
+      </div>
+      <button class="gmap-hero-nav prev" onclick="const t=this.closest('.gmap-hero').querySelector('.gmap-hero-track'); t && t.scrollBy({left:-Math.max(280, t.clientWidth*0.9), behavior:'smooth'});" aria-label="Prev">
+        ‹
+      </button>
+      <button class="gmap-hero-nav next" onclick="const t=this.closest('.gmap-hero').querySelector('.gmap-hero-track'); t && t.scrollBy({left:Math.max(280, t.clientWidth*0.9), behavior:'smooth'});" aria-label="Next">
+        ›
+      </button>
+      <div class="gmap-hero-overlay">
+        <div class="gmap-photo-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          <span>${photosLabel}</span>
+        </div>
+        ${umkm.verified ? `
+          <div class="gmap-verified-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Terverifikasi
+          </div>
+        ` : ''}
+      </div>
+      <button class="gmap-hero-favorite" onclick="this.classList.toggle('active')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="gmap-content">
+      <!-- Header -->
+      <div class="gmap-header">
+        <h3 class="gmap-title">${umkm.name}</h3>
+        <div class="gmap-meta">
+          <div class="gmap-chips">
+            <span class="gmap-chip category">${umkm.category}</span>
+            <span class="gmap-chip status ${isOpen ? 'open' : 'closed'}">
+              <span class="status-dot"></span>
+              ${isOpen ? 'Buka' : 'Tutup'}
+            </span>
+          </div>
         </div>
       </div>
-      
-      <div class="popup-body">
-        <h3 class="popup-title">${umkm.name}</h3>
-        
-        <div class="popup-rating">
-          <div class="rating-stars">
-            ${'★'.repeat(Math.floor(umkm.rating))}${'☆'.repeat(5 - Math.floor(umkm.rating))}
-          </div>
-          <span class="rating-value">${umkm.rating}</span>
-          <span class="rating-count">(${umkm.reviews})</span>
-        </div>
 
-        <div class="popup-info-grid">
-          <div class="info-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-            <span>${umkm.distance} km</span>
+      <!-- Rating & Stats -->
+      <div class="gmap-stats">
+        <div class="gmap-rating-box">
+          <div class="gmap-rating-main">
+            <span class="gmap-rating-number">${umkm.rating}</span>
+            <div class="gmap-stars">${stars}</div>
           </div>
-          
-          <div class="info-item ${umkm.isOpen ? 'text-green' : 'text-red'}">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-            <span>${umkm.isOpen ? 'Buka Sekarang' : 'Tutup'}</span>
-          </div>
-          
-          <div class="info-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-            </svg>
-            <span>Hubungi</span>
-          </div>
-          
-          <div class="info-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 11l3 3L22 4"></path>
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-            </svg>
-            <span>${umkm.products?.length || 0} Produk</span>
+          <div class="gmap-rating-meta">
+            <span class="gmap-reviews">${umkm.reviews} ulasan</span>
+            <span class="gmap-separator">•</span>
+            <span class="gmap-visits">${totalVisits} pengunjung</span>
           </div>
         </div>
-
-        <p class="popup-description">${umkm.description}</p>
-
-        <div class="popup-actions">
-          <button class="action-btn primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
-            </svg>
-            Lihat Detail
-          </button>
-          <button class="action-btn secondary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 11l3 3L22 4"></path>
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-            </svg>
-            Rute
-          </button>
+        <div class="gmap-price-range">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="1" x2="12" y2="23"></line>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+          </svg>
+          ${priceRange}
         </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="gmap-actions">
+        <button class="gmap-action-btn primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 11 12 14 22 4"></polyline>
+            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+          </svg>
+          <span>Rute</span>
+        </button>
+        <button class="gmap-action-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"></path>
+          </svg>
+          <span>Telepon</span>
+        </button>
+        <button class="gmap-action-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+          <span>Bagikan</span>
+        </button>
+        <button class="gmap-action-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"></path>
+          </svg>
+          <span>Simpan</span>
+        </button>
+      </div>
+
+      <!-- Detailed Info -->
+      <div class="gmap-details">
+        <div class="gmap-detail-item">
+          <svg class="detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <div class="detail-content">
+            <div class="detail-label">Jam Buka</div>
+            <div class="detail-value">${openingHours}</div>
+          </div>
+        </div>
+
+        <div class="gmap-detail-item">
+          <svg class="detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <div class="detail-content">
+            <div class="detail-label">Alamat</div>
+            <div class="detail-value">${address}</div>
+          </div>
+        </div>
+
+        <div class="gmap-detail-item">
+          <svg class="detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"></path>
+          </svg>
+          <div class="detail-content">
+            <div class="detail-label">Telepon</div>
+            <div class="detail-value clickable">${phone}</div>
+          </div>
+        </div>
+
+        <div class="gmap-detail-item">
+          <svg class="detail-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"></path>
+          </svg>
+          <div class="detail-content">
+            <div class="detail-label">Website</div>
+            <div class="detail-value clickable">${website}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Featured Products -->
+      <div class="gmap-section">
+        <h4 class="gmap-section-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          Menu Unggulan
+        </h4>
+        <div class="gmap-products">
+          ${featuredProducts.map((product: any) => `
+            <div class="gmap-product-card">
+              <img src="${product.image}" alt="${product.name}" class="product-img" onerror="this.src='https://via.placeholder.com/200x150?text=Product'"/>
+              <div class="product-info">
+                <div class="product-name">${product.name}</div>
+                <div class="product-price">${product.price}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Top Review -->
+      <div class="gmap-section">
+        <h4 class="gmap-section-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path>
+          </svg>
+          Ulasan Teratas
+        </h4>
+        <div class="gmap-review-card">
+          <div class="review-header">
+            <div class="review-avatar">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <div class="review-meta">
+              <div class="review-author">${topReview.author}</div>
+              <div class="review-stars">${'★'.repeat(topReview.rating)}</div>
+            </div>
+            <div class="review-date">${topReview.date}</div>
+          </div>
+          <div class="review-text">${topReview.text}</div>
+        </div>
+      </div>
+
+      <!-- Photo Gallery -->
+      <div class="gmap-section">
+        <h4 class="gmap-section-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          Galeri Foto
+        </h4>
+        <div class="gmap-gallery">
+          ${galleryImages.slice(0, 4).map((img: string, idx: number) => `
+            <div class="gmap-gallery-item ${idx === 3 ? 'has-more' : ''}">
+              <img src="${img}" alt="Gallery ${idx + 1}" onerror="this.src='https://via.placeholder.com/300x200?text=Photo'"/>
+              ${idx === 3 ? `<div class="gallery-more">+${(umkm.photos?.length || 0) - 3}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="gmap-section">
+        <h4 class="gmap-section-title">Tentang</h4>
+        <div class="gmap-description">${umkm.description || 'UMKM yang menyediakan produk berkualitas dengan pelayanan terbaik. Kami berkomitmen untuk memberikan pengalaman terbaik bagi setiap pelanggan.'}</div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="gmap-footer">
+        <button class="gmap-footer-btn full">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          Kunjungi Website
+        </button>
       </div>
     </div>
+  </div>
   `;
 };
 
-// Map styles
-const MAP_STYLES = [
-  {
-    id: 'basic',
-    name: 'Basic',
-    url: 'https://api.maptiler.com/maps/basic-v2/style.json?key=zmmYiAMYNdgJx6UqpbNU',
-    icon: MapIcon,
-    preview: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-  },
-  {
-    id: 'streets',
-    name: 'Streets',
-    url: 'https://api.maptiler.com/maps/streets-v2/style.json?key=zmmYiAMYNdgJx6UqpbNU',
-    icon: Route,
-    preview: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
-  },
-  {
-    id: 'outdoor',
-    name: 'Outdoor',
-    url: 'https://api.maptiler.com/maps/outdoor-v2/style.json?key=zmmYiAMYNdgJx6UqpbNU',
-    icon: TrendingUp,
-    preview: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-  },
-  {
-    id: 'satellite',
-    name: 'Satellite',
-    url: 'https://api.maptiler.com/maps/hybrid/style.json?key=zmmYiAMYNdgJx6UqpbNU',
-    icon: Satellite,
-    preview: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
-  },
+const MAP_TYPES = [
+  { id: 'default', name: 'Default', url: 'https://api.maptiler.com/maps/streets-v2/style.json?key=zmmYiAMYNdgJx6UqpbNU' },
+  { id: 'satellite', name: 'Satellite', url: 'https://api.maptiler.com/maps/hybrid/style.json?key=zmmYiAMYNdgJx6UqpbNU' },
+  { id: 'terrain', name: 'Terrain', url: 'https://api.maptiler.com/maps/outdoor-v2/style.json?key=zmmYiAMYNdgJx6UqpbNU' }
 ];
 
 export default function MapboxComponent({
@@ -199,80 +343,82 @@ export default function MapboxComponent({
   const markers = useRef<{ [key: string]: maplibregl.Marker }>({});
   const userMarker = useRef<maplibregl.Marker | null>(null);
 
-  const validCenter: [number, number] = Array.isArray(center) && 
-    center.length === 2 && 
-    typeof center[0] === 'number' && 
-    typeof center[1] === 'number' ? 
-    center : [-6.2088, 106.8456];
+  const validCenter: [number, number] = Array.isArray(center) && center.length === 2 ? center : [38.883333, -77.0];
 
   const [mapReady, setMapReady] = useState(false);
-  const [mapError, setMapError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentStyle, setCurrentStyle] = useState(MAP_STYLES[0]);
-  const [showStyleSelector, setShowStyleSelector] = useState(false);
-  const [bearing, setBearing] = useState(0);
-  const [pitch, setPitch] = useState(0);
-  const [currentZoom, setCurrentZoom] = useState(zoom);
+  const [currentMapType, setCurrentMapType] = useState(MAP_TYPES[0]);
+  const [showMapTypeSelector, setShowMapTypeSelector] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isToolbarOpen, setIsToolbarOpen] = useState(true);
+  const geoWatchId = useRef<number | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Toggle fullscreen body class
+  useEffect(() => {
+    const cls = 'map-fullscreen-active';
+    if (typeof document !== 'undefined') {
+      if (isFullscreen) {
+        document.body.classList.add(cls);
+      } else {
+        document.body.classList.remove(cls);
+      }
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove(cls);
+      }
+    };
+  }, [isFullscreen]);
 
   // Initialize map
   useEffect(() => {
     if (typeof window === 'undefined' || !mapContainer.current || map.current) return;
-    
-      try {
+
+    try {
       map.current = new maplibregl.Map({
-          container: mapContainer.current,
-        style: currentStyle.url,
+        container: mapContainer.current,
+        style: currentMapType.url,
         center: [validCenter[1], validCenter[0]],
         zoom: zoom,
-        maxPitch: 60,
-        minPitch: 0,
-        maxZoom: 20,
-        minZoom: 2,
+        fadeDuration: 0,
         attributionControl: false,
-        antialias: true,
-        fadeDuration: 300
+        cooperativeGestures: true,
+        dragRotate: false,
+        pitchWithRotate: false,
+        touchPitch: false,
+        maxTileCacheSize: 1024
       });
 
-      const navControl = new maplibregl.NavigationControl({
-        showCompass: true,
-        showZoom: false,
-        visualizePitch: true
-      });
-      
-      map.current.addControl(navControl, 'top-right');
-      
-      const scale = new maplibregl.ScaleControl({
-        maxWidth: 100,
-        unit: 'metric'
-      });
-      map.current.addControl(scale, 'bottom-left');
+      map.current.addControl(
+        new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 
+        'bottom-left'
+      );
 
       map.current.once('load', () => {
-        setMapReady(true);
+        map.current?.jumpTo({
+          center: [validCenter[1], validCenter[0]],
+          zoom: zoom,
+          bearing: 0,
+          pitch: 0
+        });
         
-        if (map.current) {
-          map.current.on('rotate', () => {
-            setBearing(map.current?.getBearing() || 0);
+        try {
+          const style = map.current!.getStyle();
+          style.layers?.forEach((lyr) => {
+            if ((lyr as any).type === 'raster') {
+              map.current!.setPaintProperty(lyr.id, 'raster-fade-duration', 100);
+            }
           });
-          
-          map.current.on('pitch', () => {
-            setPitch(map.current?.getPitch() || 0);
-          });
-
-          map.current.on('zoom', () => {
-            setCurrentZoom(map.current?.getZoom() || zoom);
-          });
-        }
-      });
-      
-      map.current.on('error', (e) => {
-        console.error('Map error:', e);
-        setMapError('Failed to load map');
+        } catch {}
+        setMapReady(true);
       });
       
     } catch (error) {
-      console.error('Error initializing map:', error);
-      setMapError('Failed to initialize map');
+      console.error('Map initialization error:', error);
     }
 
     return () => {
@@ -282,17 +428,6 @@ export default function MapboxComponent({
       }
     };
   }, []);
-
-  // Update map center
-  useEffect(() => {
-    if (map.current && mapReady) {
-      map.current.flyTo({
-        center: [validCenter[1], validCenter[0]],
-        duration: 1500,
-        essential: true
-      });
-    }
-  }, [validCenter[0], validCenter[1], mapReady]);
 
   // Handle UMKM markers
   useEffect(() => {
@@ -310,1094 +445,1572 @@ export default function MapboxComponent({
       
       if (markers.current[umkm.id]) {
         markers.current[umkm.id].setLngLat([umkm.lng, umkm.lat]);
-        const element = markers.current[umkm.id].getElement();
-        const className = ['custom-marker'];
-        if (isSelected) className.push('selected');
-        element.className = className.join(' ').trim();
-        element.innerHTML = createCustomMarker(umkm, isSelected).innerHTML;
       } else {
-        const el = createCustomMarker(umkm, isSelected);
+        const el = createGoogleMarker(umkm, isSelected);
         
         const popup = new maplibregl.Popup({ 
-          offset: 40,
-          closeButton: false,
-          closeOnClick: false,
-          className: 'enhanced-popup-container',
-          maxWidth: '360px'
-        }).setHTML(createPopupContent(umkm));
+          offset: 25,
+          closeButton: true,
+          className: 'gmap-popup-container-enhanced',
+          maxWidth: '380px'
+        }).setHTML(createGooglePopup(umkm));
         
         const marker = new maplibregl.Marker(el)
-            .setLngLat([umkm.lng, umkm.lat])
-            .setPopup(popup)
+          .setLngLat([umkm.lng, umkm.lat])
+          .setPopup(popup)
           .addTo(map.current!);
           
-        el.addEventListener('click', (e) => {
-          e.stopPropagation();
-              onSelectUMKM(umkm);
+        el.addEventListener('click', () => {
+          onSelectUMKM(umkm);
           marker.togglePopup();
         });
         
-        el.addEventListener('mouseenter', () => {
-          if (!isSelected) {
-            marker.togglePopup();
-          }
-        });
-        
-        el.addEventListener('mouseleave', () => {
-          if (!isSelected) {
-            marker.togglePopup();
-          }
-        });
-        
-          markers.current[umkm.id] = marker;
-        }
+        markers.current[umkm.id] = marker;
+      }
     });
-
-    if (umkmLocations.length > 0 && map.current) {
-      const bounds = new maplibregl.LngLatBounds();
-      umkmLocations.forEach(umkm => {
-        bounds.extend([umkm.lng, umkm.lat]);
-      });
-      bounds.extend([validCenter[1], validCenter[0]]);
-      
-      map.current.fitBounds(bounds, {
-        padding: { top: 80, bottom: 80, left: 80, right: 80 },
-        maxZoom: 15,
-        duration: 1500
-      });
-    }
   }, [umkmLocations, selectedUMKM, onSelectUMKM, mapReady]);
 
-  // Handle user marker
+  // Create a distinct user marker once if geolocation is available (no follow)
   useEffect(() => {
-    if (!map.current || !mapReady) return;
+    if (!map.current || !mapReady || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        if (!userMarker.current) {
+          const el = document.createElement('div');
+          el.className = 'gmap-user-marker';
+          el.innerHTML = `
+            <div class="gmap-user-glow" style="background-color: #1a73e8;"></div>
+            <div class="gmap-user-arrow" aria-hidden="true"></div>
+            <div class="gmap-user-dot" title="Lokasi Anda" style="background-color: #1a73e8;">
+              <div class="gmap-user-core" style="background-color: #ffffff;"></div>
+            </div>
+            <div class="gmap-user-ring" style="background-color: #1a73e8;"></div>
+          `;
+          el.style.zIndex = '10000';
+          el.style.pointerEvents = 'none';
+          userMarker.current = new maplibregl.Marker({ element: el, anchor: 'center' })
+            .setLngLat([longitude, latitude])
+            .addTo(map.current!);
+        } else {
+          userMarker.current.setLngLat([longitude, latitude]);
+        }
+      },
+      () => {},
+      { enableHighAccuracy: false, timeout: 3500, maximumAge: 120000 }
+    );
+  }, [mapReady]);
 
-    if (userMarker.current) {
-      userMarker.current.setLngLat([validCenter[1], validCenter[0]]);
-    } else {
-      const el = document.createElement('div');
-      el.className = 'user-marker-enhanced';
-      el.innerHTML = `
-        <div class="user-pulse-ring"></div>
-        <div class="user-pulse-ring" style="animation-delay: 0.5s;"></div>
-        <div class="user-pulse-ring" style="animation-delay: 1s;"></div>
-        <div class="user-dot">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-            <circle cx="12" cy="12" r="10"/>
-          </svg>
-        </div>
-      `;
-      
-      const popup = new maplibregl.Popup({ 
-        offset: 25, 
-        className: 'user-popup-enhanced' 
-      }).setHTML(`
-        <div class="user-popup-content">
-          <div class="user-popup-icon">📍</div>
-          <span class="user-popup-text">Lokasi Anda</span>
-        </div>
-      `);
-      
-      userMarker.current = new maplibregl.Marker(el)
-        .setLngLat([validCenter[1], validCenter[0]])
-        .setPopup(popup)
-        .addTo(map.current);
-    }
-  }, [validCenter[0], validCenter[1], mapReady]);
+  // Pause follow when user drags map
+  useEffect(() => {
+    if (!map.current) return;
+    const handler = () => setIsFollowing(false);
+    map.current.on('dragstart', handler);
+    return () => { 
+      map.current && map.current.off('dragstart', handler); 
+    };
+  }, [mapReady]);
 
-  const handleStyleChange = useCallback((style: typeof MAP_STYLES[0]) => {
+  const handleMapTypeChange = useCallback((mapType: typeof MAP_TYPES[0]) => {
     if (map.current) {
       setMapReady(false);
-      map.current.setStyle(style.url);
-      setCurrentStyle(style);
-      setShowStyleSelector(false);
-      
+      const currentCenter = map.current.getCenter();
+      const currentZoom = map.current.getZoom();
+      const currentBearing = map.current.getBearing();
+      const currentPitch = map.current.getPitch();
+
+      map.current.setStyle(mapType.url);
+      setCurrentMapType(mapType);
+      setShowMapTypeSelector(false);
       map.current.once('styledata', () => {
+        map.current?.jumpTo({ center: currentCenter, zoom: currentZoom, bearing: currentBearing, pitch: currentPitch });
         setMapReady(true);
       });
     }
   }, []);
 
-  const handleZoomIn = useCallback(() => {
-    map.current?.zoomIn({ duration: 500 });
-  }, []);
-
-  const handleZoomOut = useCallback(() => {
-    map.current?.zoomOut({ duration: 500 });
-  }, []);
-
-  const handleCenterUser = useCallback(() => {
-    if (map.current) {
-      map.current.flyTo({
-        center: [validCenter[1], validCenter[0]],
-        zoom: 16,
-        duration: 1500,
-        essential: true
-      });
+  useEffect(() => {
+    if (map.current && mapReady) {
+      map.current.jumpTo({ center: [validCenter[1], validCenter[0]], zoom, bearing: 0, pitch: 0 });
     }
-  }, [validCenter]);
+  }, [validCenter[0], validCenter[1], zoom, mapReady]);
 
-  const handleResetBearing = useCallback(() => {
-    map.current?.easeTo({
-      bearing: 0,
-      pitch: 0,
-      duration: 1000
-    });
+  const handleZoomIn = () => map.current?.zoomIn();
+  const handleZoomOut = () => map.current?.zoomOut();
+
+  // 🎯 FUNGSI UTAMA UNTUK LOKASI TERKINI
+  const handleLocateMe = () => {
+    const m = map.current;
+    if (!navigator.geolocation || !m) {
+      alert('Geolocation tidak didukung oleh browser Anda');
+      return;
+    }
+
+    const toggleOn = !isFollowing;
+    setIsLocating(true);
+
+    if (toggleOn) {
+      // Aktifkan mode follow - dapatkan posisi terkini
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          
+          // Buat atau update user marker
+          if (userMarker.current) {
+            userMarker.current.setLngLat([longitude, latitude]);
+          } else {
+            const el = document.createElement('div');
+            el.className = 'gmap-user-marker';
+            el.innerHTML = `
+              <div class="gmap-user-glow"></div>
+              <div class="gmap-user-arrow" aria-hidden="true"></div>
+              <div class="gmap-user-dot" title="Lokasi Anda">
+                <div class="gmap-user-core"></div>
+              </div>
+              <div class="gmap-user-ring"></div>
+            `;
+            el.style.zIndex = '10000';
+            el.style.pointerEvents = 'none';
+            userMarker.current = new maplibregl.Marker(el)
+              .setLngLat([longitude, latitude])
+              .addTo(m);
+          }
+          
+          // Zoom dan pusat ke lokasi user dengan animasi smooth
+          m.flyTo({ 
+            center: [longitude, latitude], 
+            zoom: Math.max(17, m.getZoom()), 
+            duration: 1200,
+            essential: true
+          });
+          
+          // Mulai real-time tracking
+          if (geoWatchId.current == null) {
+            geoWatchId.current = navigator.geolocation.watchPosition(
+              (p) => {
+                const { latitude: lat, longitude: lon } = p.coords;
+                userMarker.current?.setLngLat([lon, lat]);
+                
+                // Ikuti pergerakan user jika mode follow aktif
+                if (isFollowing) {
+                  m.easeTo({ 
+                    center: [lon, lat], 
+                    duration: 500 
+                  });
+                }
+              },
+              (error) => {
+                console.error('Watch position error:', error);
+              },
+              { 
+                enableHighAccuracy: true, 
+                maximumAge: 1000,
+                timeout: 5000 
+              }
+            );
+          }
+          
+          setIsLocating(false);
+          setIsFollowing(true);
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          let errorMsg = 'Tidak dapat mengakses lokasi Anda. ';
+          
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMsg += 'Izin lokasi ditolak. Silakan aktifkan di pengaturan browser.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMsg += 'Informasi lokasi tidak tersedia.';
+              break;
+            case error.TIMEOUT:
+              errorMsg += 'Permintaan lokasi timeout.';
+              break;
+            default:
+              errorMsg += 'Terjadi kesalahan yang tidak diketahui.';
+          }
+          
+          alert(errorMsg);
+          setIsLocating(false);
+        },
+        { 
+          enableHighAccuracy: true, 
+          timeout: 10000, 
+          maximumAge: 0
+        }
+      );
+    } else {
+      // Matikan mode follow
+      if (geoWatchId.current != null) {
+        navigator.geolocation.clearWatch(geoWatchId.current);
+        geoWatchId.current = null;
+      }
+      setIsLocating(false);
+      setIsFollowing(false);
+    }
+  };
+
+  // Cleanup geolocation watch
+  useEffect(() => {
+    return () => {
+      if (geoWatchId.current != null && navigator.geolocation?.clearWatch) {
+        navigator.geolocation.clearWatch(geoWatchId.current);
+        geoWatchId.current = null;
+      }
+    };
   }, []);
-
-  const toggleFullscreen = useCallback(() => {
-    setIsFullscreen(!isFullscreen);
-  }, [isFullscreen]);
 
   return (
-    <div className={`map-wrapper ${isFullscreen ? 'fullscreen' : ''}`}>
-      {/* Loading State */}
-      <AnimatePresence>
-        {!mapReady && !mapError && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="map-loading"
-          >
-            <div className="loading-content">
-              <motion.div
-                animate={{ 
-                  rotate: 360,
-                  scale: [1, 1.2, 1]
-                }}
-                transition={{ 
-                  rotate: { duration: 2, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 1.5, repeat: Infinity }
-                }}
-                className="loading-icon"
-              >
-                <MapIcon className="w-16 h-16 text-purple-600" />
-              </motion.div>
-              <motion.p
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="loading-text"
-              >
-                Memuat peta interaktif...
-              </motion.p>
-              <div className="loading-dots">
-                {[0, 1, 2].map((i) => (
-                  <motion.div
-                    key={i}
-                    animate={{ 
-                      y: [0, -15, 0],
-                      opacity: [0.5, 1, 0.5]
-                    }}
-                    transition={{ 
-                      duration: 1,
-                      repeat: Infinity,
-                      delay: i * 0.2
-                    }}
-                    className="loading-dot"
-                  />
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Error State */}
-      <AnimatePresence>
-        {mapError && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="map-error"
-          >
-            <div className="error-content">
-              <motion.div
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 0.5, repeat: 3 }}
-                className="error-icon"
-              >
-                <AlertCircle className="w-20 h-20 text-red-500" />
-              </motion.div>
-              <h3 className="error-title">Oops! Map Error</h3>
-              <p className="error-message">{mapError}</p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => window.location.reload()}
-                className="error-button"
-              >
-                <RefreshCw className="w-5 h-5" />
-                Refresh Page
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Map Container */}
-      <div ref={mapContainer} className="map-container" />
-
-      {/* Custom Controls */}
-      {mapReady && (
-        <>
-          {/* Top Left - Style Selector */}
-          <div className="control-panel top-left">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowStyleSelector(!showStyleSelector)}
-              className="control-button main"
+    <div className={`gmap-container ${isFullscreen ? 'fullscreen' : ''}`}>
+      {/* Search */}
+      <div className="gmap-search-wrapper">
+        <motion.div
+          className="gmap-search-box"
+          layout
+          initial={false}
+          animate={isSearchOpen ? 'open' : 'closed'}
+          variants={{
+            open: { width: 'min(280px, 70vw)', paddingLeft: 14, paddingRight: 8, borderRadius: 12, boxShadow: '0 6px 14px rgba(0,0,0,0.14)', backgroundColor: '#ffffff' },
+            closed: { width: 48, paddingLeft: 0, paddingRight: 0, borderRadius: 26, boxShadow: '0 4px 10px rgba(0,0,0,0.14)', backgroundColor: '#1a73e8' }
+          }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          style={{ justifyContent: isSearchOpen ? 'flex-start' : 'center', gap: isSearchOpen ? 12 : 0 }}
+          onClick={() => { if (!isSearchOpen) setIsSearchOpen(true); }}
+        >
+          <Search
+            className="gmap-search-icon"
+            size={18}
+            style={{
+              color: isSearchOpen ? '#70757a' : '#ffffff',
+              transform: isSearchOpen ? 'none' : 'translateX(1.5px)'
+            }}
+          />
+          <motion.input
+            type="text"
+            placeholder="Cari UMKM di peta"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="gmap-search-input"
+            ref={searchInputRef}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.stopPropagation();
+                setIsSearchOpen(false);
+                setSearchQuery('');
+                searchInputRef.current?.blur();
+              }
+            }}
+            animate={isSearchOpen ? { opacity: 1, width: 'auto' } : { opacity: 0, width: 0 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            style={{ pointerEvents: isSearchOpen ? 'auto' : 'none' }}
+          />
+          {isSearchOpen && !!searchQuery && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setSearchQuery(''); searchInputRef.current?.focus(); }}
+              className="gmap-search-clear"
+              aria-label="Clear"
             >
-              <Layers className="w-5 h-5" />
-              <span className="button-text">{currentStyle.name}</span>
-              <ChevronRight className={`w-4 h-4 chevron ${showStyleSelector ? 'rotate' : ''}`} />
-            </motion.button>
+              <X size={16} />
+            </button>
+          )}
+          {isSearchOpen && !searchQuery && (
+            <button
+              type="button"
+              className="gmap-search-close"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsSearchOpen(false);
+                setSearchQuery('');
+                searchInputRef.current?.blur();
+              }}
+              aria-label="Close search"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </motion.div>
+      </div>
 
-            <AnimatePresence>
-              {showStyleSelector && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  className="style-selector"
+      {/* Map */}
+      <div ref={mapContainer} className="gmap-view" />
+
+    {/* Controls */}
+    {mapReady && (
+      <>
+        {/* Toolbar Horizontal: zoom-out | map types | locate | fullscreen | zoom-in */}
+        <div className={`gmap-toolbar top-right ${isToolbarOpen ? 'open' : 'closed'}`}>
+          <button 
+            className="toolbar-toggle" 
+            aria-label={isToolbarOpen ? 'Tutup toolbar' : 'Buka toolbar'}
+            onClick={() => setIsToolbarOpen(!isToolbarOpen)}
+          >
+            {isToolbarOpen ? '⟨' : '⟩'}
+          </button>
+
+          {isToolbarOpen && (
+            <>
+            <button onClick={handleZoomOut} className="toolbar-btn" aria-label="Zoom out">−</button>
+
+            <div className="gmap-segment">
+              {MAP_TYPES.map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => handleMapTypeChange(type)}
+                  className={`segment-btn ${currentMapType.id === type.id ? 'active' : ''}`}
                 >
-                  {MAP_STYLES.map((style) => {
-                    const Icon = style.icon;
-                    return (
-                      <motion.button
-                        key={style.id}
-                        whileHover={{ x: 5 }}
-                        onClick={() => handleStyleChange(style)}
-                        className={`style-option ${currentStyle.id === style.id ? 'active' : ''}`}
-                      >
-                        <div className="style-preview" style={{ background: style.preview }}></div>
-                        <Icon className="style-icon" />
-                        <span className="style-name">{style.name}</span>
-                        {currentStyle.id === style.id && (
-                          <CheckCircle className="check-icon" />
-                        )}
-                      </motion.button>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Top Right - Fullscreen */}
-          <div className="control-panel top-right">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={toggleFullscreen}
-              className="control-button icon-only"
-              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            >
-              {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-            </motion.button>
-          </div>
-
-          {/* Right Side - Zoom & Location Controls */}
-          <div className="control-panel right">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleZoomIn}
-              className="control-button icon-only"
-              title="Zoom In"
-            >
-              <ZoomIn className="w-5 h-5" />
-            </motion.button>
-
-            <div className="zoom-level">
-              {currentZoom.toFixed(1)}
+                  {type.name}
+                </button>
+              ))}
             </div>
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleZoomOut}
-              className="control-button icon-only"
-              title="Zoom Out"
+            <button 
+              onClick={handleLocateMe}
+              className={`toolbar-icon ${isFollowing ? 'active' : ''} ${isLocating ? 'loading' : ''}`}
+              aria-label="Lokasi saya"
+              disabled={isLocating}
             >
-              <ZoomOut className="w-5 h-5" />
-            </motion.button>
+              {isLocating ? (
+                <svg className="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <circle cx="12" cy="12" r="10" strokeDasharray="60" strokeDashoffset="15" />
+                </svg>
+              ) : (
+                <Locate size={18} />
+              )}
+            </button>
 
-            <div className="control-divider"></div>
+            <button onClick={() => setIsFullscreen(!isFullscreen)} className="toolbar-icon" aria-label="Fullscreen">
+              {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+            </button>
 
-            <motion.button
-              whileHover={{ scale: 1.05, rotate: 180 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleCenterUser}
-              className="control-button icon-only highlight"
-              title="Center on My Location"
-            >
-              <Locate className="w-5 h-5" />
-            </motion.button>
+            <button onClick={handleZoomIn} className="toolbar-btn" aria-label="Zoom in">+</button>
+            </>
+          )}
+        </div>
+      </>
+    )}
 
-            {(bearing !== 0 || pitch !== 0) && (
-              <motion.button
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleResetBearing}
-                className="control-button icon-only"
-                title="Reset Bearing"
-              >
-                <Compass className="w-5 h-5" style={{ transform: `rotate(${-bearing}deg)` }} />
-              </motion.button>
-            )}
-          </div>
-
-          {/* Bottom - Info Bar */}
-          <div className="control-panel bottom">
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="info-bar"
-            >
-              <div className="info-item">
-                <Store className="info-icon" />
-                <span className="info-text">
-                  <strong>{umkmLocations.length}</strong> UMKM
-                </span>
-              </div>
-              <div className="info-divider"></div>
-              <div className="info-item">
-                <Navigation2 className="info-icon animate-pulse" />
-                <span className="info-text">Live Tracking</span>
-              </div>
-              <div className="info-divider"></div>
-              <div className="info-item">
-                <Sparkles className="info-icon" />
-                <span className="info-text">Interactive Map</span>
-              </div>
-            </motion.div>
-          </div>
-        </>
-      )}
-
-      {/* Styles */}
-      <style jsx="true" global="true">{`
-        .map-wrapper {
+    <style>{`
+      /* Container */
+      .gmap-container {
+        position: relative;
+        height: 100%;
+        width: 100%;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #e5e3df;
+        font-family: 'Roboto', -apple-system, sans-serif;
+      }
+        /* Container */
+        .gmap-container {
           position: relative;
           height: 100%;
           width: 100%;
           border-radius: 16px;
           overflow: hidden;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: #e5e3df;
+          font-family: 'Roboto', -apple-system, sans-serif;
         }
 
-        .map-wrapper.fullscreen {
+        .gmap-container.fullscreen {
           position: fixed;
           inset: 0;
           z-index: 9999;
           border-radius: 0;
         }
 
-        .map-container {
+        .gmap-view {
           height: 100%;
           width: 100%;
         }
 
-        /* Loading State */
-        .map-loading {
+        .maplibregl-canvas { 
+          will-change: transform; 
+          transform: translateZ(0); 
+        }
+
+        /* Search Bar */
+        .gmap-search-wrapper {
           position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          z-index: 20;
-        }
-
-        .loading-content {
-          text-align: center;
-          color: white;
-        }
-
-        .loading-text {
-          margin-top: 1rem;
-          font-size: 1.125rem;
-          font-weight: 600;
-        }
-
-        .loading-dots {
-          display: flex;
-          gap: 0.5rem;
-          justify-content: center;
-          margin-top: 1rem;
-        }
-
-        .loading-dot {
-          width: 0.5rem;
-          height: 0.5rem;
-          background: white;
-          border-radius: 50%;
-        }
-
-        /* Error State */
-        .map-error {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: white;
-          z-index: 20;
-        }
-
-        .error-content {
-          text-align: center;
-          padding: 2rem;
-          max-width: 400px;
-        }
-
-        .error-title {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #1f2937;
-          margin: 1rem 0 0.5rem;
-        }
-
-        .error-message {
-          color: #6b7280;
-          margin-bottom: 1.5rem;
-        }
-
-        .error-button {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1.5rem;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          border-radius: 0.75rem;
-          font-weight: 600;
-          box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-          border: none;
-          cursor: pointer;
-        }
-
-        /* Control Panels */
-        .control-panel {
-          position: absolute;
+          top: 10px;
+          left: 10px;
           z-index: 10;
+          width: auto;
+        }
+
+        /* Lower search bar slightly on mobile and tablet */
+        @media (max-width: 640px) {
+          .gmap-search-wrapper { top: 24px; }
+        }
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .gmap-search-wrapper { top: 18px; }
+        }
+
+        .gmap-search-box {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 0 16px;
+          background: rgba(255,255,255,0.9);
+          border-radius: 12px;
+          box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+          height: 46px;
+          overflow: hidden;
+          transition: box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+        }
+
+        .gmap-search-icon {
+          color: #70757a;
+          flex-shrink: 0;
+        }
+
+        .gmap-search-input {
+          flex: 1;
+          border: none;
+          outline: none;
+          font-size: 16px;
+          color: #202124;
+          background: transparent;
+          transition: color 0.2s ease;
+        }
+
+        .gmap-search-input::placeholder {
+          color: #8a8f94;
+          transition: color 0.2s ease;
+        }
+
+        .gmap-search-clear, .gmap-search-close {
+          background: none;
+          border: none;
+          padding: 4px;
+          cursor: pointer;
+          color: #70757a;
+          display: flex;
+          align-items: center;
+        }
+
+        .gmap-search-clear:hover, .gmap-search-close:hover {
+          color: #202124;
+        }
+
+        /* Controls */
+        .gmap-control { position: absolute; z-index: 10; }
+
+        .gmap-control.bottom-left {
+          top: 70px; 
+          left: 10px;
+          bottom: auto;
+        }
+
+        .gmap-control.bottom-right {
+          bottom: 120px;
+          right: 10px;
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 12px;
+          animation: floatIn 300ms cubic-bezier(.2,.8,.2,1) both;
         }
 
-        .control-panel.top-left {
-          top: 1rem;
-          left: 1rem;
+        /* Entrance + pulse animations */
+        @keyframes floatIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
-        .control-panel.top-right {
-          top: 1rem;
-          right: 1rem;
+        @keyframes pulseRing {
+          0% { opacity: 0.55; transform: scale(0.96); }
+          70% { opacity: 0; transform: scale(1.18); }
+          100% { opacity: 0; transform: scale(1.18); }
         }
 
-        .control-panel.right {
-          right: 1rem;
-          top: 50%;
-          transform: translateY(-50%);
-        }
-
-        .control-panel.bottom {
-          bottom: 1rem;
-          left: 1rem;
-        }
-
-        .control-button {
+        /* Toolbar */
+        .gmap-toolbar {
+          position: absolute;
+          top: 70px;
+          right: 10px;
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1rem;
-          background: rgba(255, 255, 255, 0.98);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(0, 0, 0, 0.08);
-          border-radius: 0.75rem;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-          cursor: pointer;
-          transition: all 0.3s ease;
-          color: #374151;
-          font-weight: 600;
-          font-size: 0.875rem;
+          gap: 10px;
+          background: rgba(255,255,255,0.9);
+          border: 1px solid rgba(0,0,0,0.06);
+          border-radius: 14px;
+          box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+          padding: 6px;
+          backdrop-filter: saturate(140%) blur(6px);
+          animation: floatIn 300ms cubic-bezier(.2,.8,.2,1) both;
         }
 
-        .control-button:hover {
-          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
-          transform: translateY(-2px);
+        .gmap-toolbar.top-right { left: auto; bottom: auto; }
+
+        @media (max-width: 640px) { .gmap-toolbar { top: 86px; } }
+        @media (min-width: 641px) and (max-width: 1024px) { .gmap-toolbar { top: 78px; } }
+
+        /* Collapsible states */
+        .gmap-toolbar.open { opacity: 1; transform: translateY(0); }
+        .gmap-toolbar.closed {
+          padding: 6px;
+          gap: 0;
+          border-radius: 9999px;
+        }
+        .gmap-toolbar.closed > :not(.toolbar-toggle) { display: none; }
+
+        /* Toggle button */
+        .toolbar-toggle {
+          width: 40px; height: 40px;
+          display: flex; align-items: center; justify-content: center;
+          background: white; border: 1px solid rgba(0,0,0,0.06);
+          border-radius: 9999px; color: #334155; cursor: pointer;
+          font-size: 18px; line-height: 1; font-weight: 600;
+          transition: transform .12s ease, box-shadow .2s, background .2s, color .2s;
+          box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+        }
+        .toolbar-toggle:hover { background: #f8fafc; color: #111827; }
+        .toolbar-toggle:active { transform: scale(0.96); }
+
+        .toolbar-btn {
+          width: 40px; height: 40px;
+          display: flex; align-items: center; justify-content: center;
+          background: white; border: 1px solid rgba(0,0,0,0.06);
+          border-radius: 10px; color: #334155;
+          font-size: 20px; font-weight: 300; cursor: pointer;
+          transition: transform .12s ease, box-shadow .2s, background .2s, color .2s;
+        }
+        .toolbar-btn:hover { background: #f8fafc; color: #111827; box-shadow: 0 6px 14px rgba(0,0,0,0.12); }
+        .toolbar-btn:active { transform: scale(0.96); }
+
+        .toolbar-icon {
+          width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+          background: white; border: 1px solid rgba(0,0,0,0.06);
+          border-radius: 10px; color: #4b5563; cursor: pointer;
+          transition: transform .12s ease, box-shadow .2s, background .2s, color .2s;
+        }
+        .toolbar-icon:hover { background: #f8fafc; color: #111827; box-shadow: 0 6px 14px rgba(0,0,0,0.12); }
+        .toolbar-icon:active { transform: scale(0.96); }
+
+        .toolbar-icon.active { background: #1a73e8; color: #fff; border-color: rgba(26,115,232,0.25); box-shadow: 0 10px 24px rgba(26,115,232,0.35); }
+        .toolbar-icon.loading { opacity: .85; cursor: progress; }
+
+        .gmap-segment { display: flex; background: #f1f5f9; padding: 4px; border-radius: 10px; gap: 4px; border: 1px solid rgba(0,0,0,0.06); }
+        .segment-btn { padding: 8px 10px; font-size: 12px; color: #334155; background: transparent; border: none; border-radius: 8px; cursor: pointer; transition: background .2s, color .2s; }
+        .segment-btn:hover { background: rgba(255,255,255,0.9); color: #111827; }
+        .segment-btn.active { background: #ffffff; color: #1a73e8; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+
+        @media (max-width: 640px) {
+          .gmap-control.top-right { top: 86px; }
+        }
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .gmap-control.top-right { top: 78px; }
         }
 
-        .control-button.icon-only {
-          padding: 0.75rem;
+        /* Align the bottom-left control just below search bar on small screens */
+        @media (max-width: 640px) {
+          .gmap-control.bottom-left { top: 86px; }
+        }
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .gmap-control.bottom-left { top: 78px; }
         }
 
-        .control-button.highlight {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
+        /* Map Type Selector */
+        .gmap-type-selector {
+          position: relative;
+        }
+
+        .gmap-type-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 12px;
+          background: white;
           border: none;
+          border-radius: 2px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+          color: #202124;
+          transition: box-shadow 0.2s;
         }
 
-        .control-button.main {
-          min-width: 140px;
-          justify-content: space-between;
+        .gmap-type-btn:hover {
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
 
-        .button-text {
-          flex: 1;
-          text-align: left;
-        }
-
-        .chevron {
-          transition: transform 0.3s ease;
-        }
-
-        .chevron.rotate {
-          transform: rotate(90deg);
-        }
-
-        .control-divider {
-          height: 1px;
-          background: rgba(0, 0, 0, 0.1);
-          margin: 0.25rem 0;
-        }
-
-        .zoom-level {
-          text-align: center;
-          padding: 0.5rem;
-          font-size: 0.75rem;
-          font-weight: 700;
-          color: #667eea;
-        }
-
-        /* Style Selector */
-        .style-selector {
-          margin-top: 0.5rem;
-          background: rgba(255, 255, 255, 0.98);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(0, 0, 0, 0.08);
-          border-radius: 0.75rem;
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        .gmap-type-menu {
+          position: absolute;
+          top: calc(100% + 8px); /* open downward under the button */
+          left: 0;
+          background: white;
+          border-radius: 2px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
           overflow: hidden;
+          min-width: 140px;
         }
 
-        .style-option {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
+        .gmap-type-option {
+          display: block;
           width: 100%;
-          padding: 0.875rem 1rem;
-          background: transparent;
+          padding: 12px 16px;
+          background: white;
           border: none;
-          cursor: pointer;
-          transition: all 0.2s ease;
           text-align: left;
+          font-size: 14px;
+          color: #202124;
+          cursor: pointer;
+          transition: background 0.2s;
         }
 
-        .style-option:hover {
-          background: rgba(102, 126, 234, 0.08);
+        .gmap-type-option:hover {
+          background: #f1f3f4;
         }
 
-        .style-option.active {
-          background: rgba(102, 126, 234, 0.12);
-        }
-
-        .style-preview {
-          width: 2rem;
-          height: 2rem;
-          border-radius: 0.5rem;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .style-icon {
-          width: 1.25rem;
-          height: 1.25rem;
-          color: #6b7280;
-        }
-
-        .style-name {
-          flex: 1;
-          font-weight: 600;
-          color: #374151;
-          font-size: 0.875rem;
-        }
-
-        .check-icon {
-          width: 1.125rem;
-          height: 1.125rem;
-          color: #667eea;
-        }
-
-        /* Info Bar */
-        .info-bar {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          padding: 0.875rem 1.25rem;
-          background: rgba(255, 255, 255, 0.98);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(0, 0, 0, 0.08);
-          border-radius: 0.75rem;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        }
-
-        .info-item {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .info-icon {
-          width: 1.125rem;
-          height: 1.125rem;
-          color: #667eea;
-        }
-
-        .info-text {
-          font-size: 0.875rem;
-          color: #6b7280;
+        .gmap-type-option.active {
+          background: #e8f0fe;
+          color: #1a73e8;
           font-weight: 500;
         }
 
-        .info-text strong {
-          color: #1f2937;
-          font-weight: 700;
+        /* Zoom Control */
+        .gmap-zoom-control {
+          background: rgba(255,255,255,0.9);
+          border-radius: 12px;
+          border: 1px solid rgba(0,0,0,0.06);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+          backdrop-filter: saturate(140%) blur(6px);
+          overflow: hidden;
+          animation: floatIn 320ms cubic-bezier(.2,.8,.2,1) both;
         }
 
-        .info-divider {
-          width: 1px;
-          height: 1.25rem;
-          background: rgba(0, 0, 0, 0.1);
-        }
-
-        /* Custom Markers */
-        .marker-container {
-          position: relative;
-          cursor: pointer;
-        }
-
-        .marker-pin {
-          position: relative;
-          width: 40px;
-          height: 50px;
-          background: #667eea;
-          border-radius: 50% 50% 50% 0;
-          transform: rotate(-45deg);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+        .gmap-zoom-btn {
           display: flex;
           align-items: center;
           justify-content: center;
-          animation: markerBounce 2s ease-in-out infinite;
-          transition: all 0.3s ease;
+          width: 44px;
+          height: 44px;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          font-size: 20px;
+          font-weight: 300;
+          color: #4b5563;
+          transition: background 0.2s, transform 0.12s ease, color 0.2s;
         }
 
-        .custom-marker:hover .marker-pin {
-          transform: rotate(-45deg) scale(1.15);
-          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+        .gmap-zoom-btn:hover {
+          background: rgba(0,0,0,0.05);
+          color: #111827;
         }
 
-        .custom-marker.selected .marker-pin {
-          width: 50px;
-          height: 62px;
-          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+        .gmap-zoom-btn:active { transform: scale(0.96); }
+
+        .gmap-zoom-divider {
+          height: 1px;
+          background: rgba(0,0,0,0.08);
         }
 
-        .marker-inner {
-          transform: rotate(45deg);
+        /* 🎯 LOCATE BUTTON - STYLING UTAMA */
+        .gmap-locate-btn,
+        .gmap-fullscreen-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 48px;
+          background: rgba(255,255,255,0.9);
+          border: 1px solid rgba(0,0,0,0.06);
+          border-radius: 12px;
+          box-shadow: 0 8px 20px rgba(0,0,0,0.14);
+          backdrop-filter: saturate(140%) blur(6px);
+          cursor: pointer;
+          color: #4b5563;
+          transition: transform 0.12s ease, box-shadow 0.2s, background 0.2s, color 0.2s;
+          animation: floatIn 360ms cubic-bezier(.2,.8,.2,1) both;
         }
 
-        .marker-tail {
+        .gmap-locate-btn {
+          background: #1a73e8;
+          color: #fff;
+          border-color: rgba(26,115,232,0.2);
+        }
+
+        .gmap-locate-btn:hover {
+          background: #165fcb;
+          box-shadow: 0 12px 26px rgba(26,115,232,0.35);
+        }
+
+        .gmap-locate-btn.loading {
+          opacity: 0.85;
+          cursor: progress;
+        }
+
+        .gmap-locate-btn.active {
+          background: #0f5ed7;
+          box-shadow: 0 16px 32px rgba(26,115,232,0.45);
+          position: relative;
+        }
+
+        /* Active pulse ring for locate */
+        .gmap-locate-btn.active::after {
+          content: "";
           position: absolute;
-          bottom: -8px;
-          left: 50%;
-          transform: translateX(-50%) rotate(45deg);
-          width: 12px;
-          height: 12px;
-          background: inherit;
-          border-radius: 0 0 4px 0;
+          inset: -6px;
+          border-radius: 14px;
+          border: 2px solid rgba(26,115,232,0.35);
+          animation: pulseRing 1.6s ease-out infinite;
+          pointer-events: none;
         }
 
-        .marker-pulse {
+        /* Loading Spinner */
+        .spin {
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        .gmap-fullscreen-btn:hover {
+          background: #f1f3f4;
+        }
+
+        /* 🎯 USER LOCATION MARKER - UNIK (TEAL) DAN MENYALA */
+        .gmap-user-marker { 
+          position: relative;
+          width: 48px;
+          height: 48px;
+          z-index: 1000;
+        }
+
+        .gmap-user-glow {
           position: absolute;
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          width: 60px;
-          height: 60px;
-          background: rgba(102, 126, 234, 0.3);
+          width: 44px;
+          height: 44px;
+          background: radial-gradient(circle, rgba(26,115,232,0.35) 0%, rgba(26,115,232,0) 70%);
           border-radius: 50%;
-          animation: markerPulse 2s ease-out infinite;
+          filter: blur(2px);
+          animation: userGlow 2.2s ease-in-out infinite;
         }
 
-        .marker-status {
+        .gmap-user-dot {
           position: absolute;
-          top: -4px;
-          right: -4px;
-          width: 14px;
-          height: 14px;
-          background: #10b981;
-          border: 3px solid white;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 18px;
+          height: 18px;
+          background: #1a73e8; /* blue */
+          border: 3px solid #ffffff;
           border-radius: 50%;
-          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.5);
-          animation: statusPulse 2s ease-in-out infinite;
+          box-shadow: 0 2px 8px rgba(26,115,232,0.65);
+          z-index: 2;
         }
 
-        .marker-label {
+        .gmap-user-core {
           position: absolute;
-          top: -45px;
+          top: 50%;
           left: 50%;
-          transform: translateX(-50%);
-          background: white;
-          padding: 0.5rem 0.875rem;
-          border-radius: 0.5rem;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-          white-space: nowrap;
-          animation: labelFadeIn 0.3s ease;
+          transform: translate(-50%, -50%);
+          width: 6px;
+          height: 6px;
+          background: #ffffff;
+          border-radius: 50%;
         }
 
-        .label-text {
-          font-size: 0.875rem;
-          font-weight: 700;
-          color: #1f2937;
-        }
-
-        .label-arrow {
+        .gmap-user-ring {
           position: absolute;
-          bottom: -6px;
+          top: 50%;
           left: 50%;
-          transform: translateX(-50%);
+          transform: translate(-50%, -50%);
+          width: 48px;
+          height: 48px;
+          border: 2px solid rgba(26,115,232,0.55);
+          border-radius: 50%;
+          animation: userRing 1.8s ease-out infinite;
+        }
+
+        @keyframes userRing {
+          0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.9; }
+          70% { transform: translate(-50%, -50%) scale(1.25); opacity: 0.1; }
+          100% { transform: translate(-50%, -50%) scale(1.35); opacity: 0; }
+        }
+
+        @keyframes userGlow {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 0.2; }
+        }
+
+        /* Small navigation arrow above the dot */
+        .gmap-user-arrow {
+          position: absolute;
+          top: calc(50% - 20px);
+          left: 50%;
+          transform: translate(-50%, -100%);
           width: 0;
           height: 0;
           border-left: 6px solid transparent;
           border-right: 6px solid transparent;
-          border-top: 6px solid white;
+          border-bottom: 10px solid #1a73e8; /* blue */
+          filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
         }
 
-        /* User Marker */
-        .user-marker-enhanced {
-          position: relative;
-          width: 50px;
-          height: 50px;
-        }
-
-        .user-pulse-ring {
+        /* Label and pill for extra distinction */
+        .gmap-user-label {
           position: absolute;
-          top: 50%;
+          top: calc(50% + 28px);
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 10px;
+          color: #6b7280; /* gray-500 */
+          background: #fff;
+          padding: 2px 6px;
+          border-radius: 9999px;
+          border: 1px solid #e5e7eb;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+          white-space: nowrap;
+          user-select: none;
+          pointer-events: none;
+        }
+
+        .gmap-user-pill {
+          position: absolute;
+          top: calc(50% + 12px);
           left: 50%;
           transform: translate(-50%, -50%);
+          font-size: 10px;
+          color: #fff;
+          background: #1a73e8; /* blue */
+          padding: 2px 6px;
+          border-radius: 9999px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+          white-space: nowrap;
+          user-select: none;
+          pointer-events: none;
+        }
+
+        /* Nudge the entire controls stack slightly upward */
+        .gmap-zoom-controls,
+        .gmap-locate-btn,
+        .gmap-fullscreen-btn {
+          position: relative;
+          top: -10px; /* move up a bit */
+        }
+
+        /* Markers */
+        .gmap-marker {
+          cursor: pointer;
+          position: relative;
+        }
+
+        .gmap-pin {
+          width: 24px;
+          height: 32px;
+          position: relative;
+          animation: markerDrop 0.5s ease;
+        }
+
+        @keyframes markerDrop {
+          0% { transform: translateY(-200px); opacity: 0; }
+          60% { transform: translateY(0); opacity: 1; }
+          80% { transform: translateY(-10px); }
+          100% { transform: translateY(0); }
+        }
+
+        .gmap-pin-top {
           width: 100%;
           height: 100%;
-          border-radius: 50%;
-          background: rgba(66, 133, 244, 0.25);
-          animation: userPulseRing 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+          background: inherit;
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          border: 2px solid rgba(0,0,0,0.2);
         }
 
-        .user-dot {
+        .gmap-shadow {
           position: absolute;
-          top: 50%;
+          bottom: -8px;
           left: 50%;
-          transform: translate(-50%, -50%);
-          width: 20px;
-          height: 20px;
-          background: #4285f4;
+          transform: translateX(-50%);
+          width: 16px;
+          height: 6px;
+          background: rgba(0,0,0,0.3);
           border-radius: 50%;
-          border: 4px solid white;
-          box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4);
-          z-index: 2;
+          filter: blur(2px);
         }
 
-        /* Popup Styles */
-        .enhanced-popup-container .maplibregl-popup-content {
+        .gmap-marker:hover .gmap-pin {
+          transform: scale(1.15);
+        }
+
+        /* Enhanced Popup Styles */
+        .gmap-popup-container-enhanced .maplibregl-popup-content {
           padding: 0;
-          border-radius: 1rem;
+          border-radius: 12px;
+          box-shadow: 0 6px 18px rgba(0,0,0,0.18);
           overflow: hidden;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
           min-width: 320px;
-          max-width: 360px;
-          border: 2px solid rgba(255, 255, 255, 0.5);
+          max-width: 380px;
         }
 
-        .enhanced-popup-container .maplibregl-popup-tip {
+        .gmap-popup-container-enhanced .maplibregl-popup-close-button {
+          font-size: 24px;
+          color: #fff;
+          padding: 12px;
+          right: 8px;
+          top: 8px;
+          background: rgba(0,0,0,0.3);
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.2s;
+          z-index: 10;
+        }
+
+        .gmap-popup-container-enhanced .maplibregl-popup-close-button:hover {
+          background: rgba(0,0,0,0.5);
+        }
+
+        .gmap-popup-container-enhanced .maplibregl-popup-tip {
           border-top-color: white;
         }
 
-        .enhanced-popup {
-          font-family: system-ui, -apple-system, sans-serif;
+        /* Popup Enhanced */
+        .gmap-popup-enhanced {
+          font-family: 'Roboto', -apple-system, sans-serif;
+          background: #fff;
+          max-height: 600px;
+          overflow-y: auto;
         }
 
-        .popup-image-wrapper {
+        /* Make popup more compact on mobile */
+        @media (max-width: 640px) {
+          .gmap-hero { height: 130px; }
+          .gmap-content { padding: 8px; }
+          .gmap-title { font-size: 15px; }
+          .gmap-stats { padding: 8px 0 8px; margin-bottom: 8px; }
+          .gmap-rating-number { font-size: 17px; }
+          .gmap-stars { font-size: 11px; }
+          .gmap-rating-meta { font-size: 11px; gap: 4px; }
+          .gmap-price-range { padding: 5px 8px; font-size: 11px; }
+          .gmap-actions { gap: 8px; margin-bottom: 8px; }
+          .gmap-action-btn { padding: 8px 6px; font-size: 10.5px; border-radius: 9px; }
+          .gmap-hero-nav { width: 26px; height: 26px; font-size: 16px; }
+        }
+
+        /* Slightly compact on tablets */
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .gmap-hero { height: 160px; }
+          .gmap-content { padding: 10px; }
+          .gmap-title { font-size: 16px; }
+          .gmap-rating-number { font-size: 19px; }
+          .gmap-stars { font-size: 12.5px; }
+          .gmap-stats { padding: 10px 0 10px; }
+          .gmap-action-btn { padding: 10px 7px; }
+        }
+
+        /* Hero Image */
+        .gmap-hero {
           position: relative;
-          height: 180px;
+          height: 190px;
           overflow: hidden;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
-        .popup-image {
+        .gmap-hero-track {
+          display: flex;
+          gap: 8px;
+          height: 100%;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .gmap-hero-track::-webkit-scrollbar { display: none; }
+
+        .gmap-hero-img {
+          flex: 0 0 100%;
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: transform 0.5s ease;
+          display: block;
+          scroll-snap-align: center;
+          border: 0;
         }
 
-        .enhanced-popup:hover .popup-image {
+        .gmap-hero-nav {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: none;
+          background: rgba(0,0,0,0.35);
+          color: #fff;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          line-height: 1;
+        }
+        .gmap-hero-nav.prev { left: 8px; }
+        .gmap-hero-nav.next { right: 8px; }
+
+        .gmap-hero-overlay {
+          position: absolute;
+          bottom: 12px;
+          left: 12px;
+          right: 12px;
+          display: flex;
+          gap: 8px;
+          align-items: flex-end;
+        }
+
+        .gmap-photo-badge {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: rgba(32,33,36,0.76);
+          backdrop-filter: blur(8px);
+          color: #fff;
+          font-size: 12px;
+          font-weight: 500;
+          padding: 6px 10px;
+          border-radius: 8px;
+        }
+
+        .gmap-photo-badge:hover {
+          background: rgba(32,33,36,0.9);
+        }
+
+        .gmap-verified-badge {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          background: rgba(26,115,232,0.9);
+          backdrop-filter: blur(10px);
+          color: #fff;
+          font-size: 11px;
+          font-weight: 600;
+          padding: 6px 10px;
+          border-radius: 8px;
+        }
+
+        .gmap-hero-favorite {
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.9);
+          backdrop-filter: blur(10px);
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+          color: #666;
+        }
+
+        .gmap-hero-favorite:hover {
+          background: white;
           transform: scale(1.1);
         }
 
-        .popup-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          padding: 1rem;
-          background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%);
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
+        .gmap-hero-favorite.active {
+          color: #ea4335;
         }
 
-        .verified-badge {
-          display: flex;
-          align-items: center;
-          gap: 0.375rem;
-          padding: 0.375rem 0.75rem;
-          background: rgba(59, 130, 246, 0.95);
-          backdrop-filter: blur(10px);
-          color: white;
-          border-radius: 1rem;
-          font-size: 0.75rem;
-          font-weight: 700;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        .gmap-hero-favorite svg {
+          fill: currentColor;
+          stroke: none;
         }
 
-        .category-badge {
-          padding: 0.375rem 0.875rem;
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(10px);
-          color: #667eea;
-          border-radius: 1rem;
-          font-size: 0.75rem;
-          font-weight: 700;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        /* Content */
+        .gmap-content {
+          padding: 14px;
         }
 
-        .popup-body {
-          padding: 1.25rem;
-          background: white;
+        /* Header */
+        .gmap-header {
+          margin-bottom: 12px;
         }
 
-        .popup-title {
-          font-size: 1.25rem;
-          font-weight: 800;
-          color: #1f2937;
-          margin-bottom: 0.75rem;
+        .gmap-title {
+          font-size: 18px;
+          font-weight: 600;
+          color: #202124;
+          margin: 0 0 6px 0;
           line-height: 1.3;
         }
 
-        .popup-rating {
+        .gmap-meta {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          margin-bottom: 1rem;
-          padding-bottom: 1rem;
-          border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+          gap: 8px;
         }
 
-        .rating-stars {
-          color: #fbbf24;
-          font-size: 1rem;
-          letter-spacing: 0.125rem;
+        .gmap-chips {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
         }
 
-        .rating-value {
-          font-size: 0.875rem;
+        .gmap-chip {
+          font-size: 12px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+
+        .gmap-chip.category {
+          background: #fff7ed;
+          color: #f97316;
+          border: 1px solid #fed7aa;
+        }
+
+        .gmap-chip.status {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .gmap-chip.status.open {
+          background: #e6f4ea;
+          color: #137333;
+        }
+
+        .gmap-chip.status.closed {
+          background: #fce8e6;
+          color: #c5221f;
+        }
+
+        .status-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: currentColor;
+        }
+
+        /* Stats */
+        .gmap-stats {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 0 12px;
+          border-bottom: 1px solid #e8eaed;
+          margin-bottom: 12px;
+        }
+
+        .gmap-rating-box {
+          flex: 1;
+        }
+
+        .gmap-rating-main {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 4px;
+        }
+
+        .gmap-rating-number {
+          font-size: 22px;
           font-weight: 700;
-          color: #1f2937;
+          color: #202124;
         }
 
-        .rating-count {
-          font-size: 0.875rem;
-          color: #9ca3af;
+        .gmap-stars {
+          color: #fbbc04;
+          font-size: 14px;
+          letter-spacing: 2px;
         }
 
-        .popup-info-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 0.75rem;
-          margin-bottom: 1rem;
-        }
-
-        .info-item {
+        .gmap-rating-meta {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          font-size: 0.875rem;
-          color: #6b7280;
+          gap: 6px;
+          font-size: 13px;
+          color: #5f6368;
+        }
+        .gmap-rating-meta .gmap-reviews { color: #f97316; }
+
+        .gmap-separator {
+          color: #dadce0;
+        }
+
+        .gmap-price-range {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 12px;
+          background: #f8f9fa;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 500;
+          color: #2563eb;
+        }
+
+        /* Actions */
+        .gmap-actions {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+          margin-bottom: 14px;
+        }
+
+        .gmap-action-btn {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          padding: 12px 8px;
+          background: #f8f9fa;
+          border: 1px solid #e8eaed;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+          color: #5f6368;
+          font-size: 12px;
+          font-weight: 500;
+        }
+
+        .gmap-action-btn:hover {
+          background: #fff7ed;
+          border-color: #fed7aa;
+          color: #f97316;
+        }
+
+        .gmap-action-btn.primary {
+          background: #f97316;
+          border-color: #f97316;
+          color: white;
+        }
+
+        .gmap-action-btn.primary:hover {
+          background: #ea580c;
+        }
+
+        /* Details */
+        .gmap-details {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+
+        .gmap-detail-item {
+          display: flex;
+          gap: 12px;
+          align-items: flex-start;
+        }
+
+        .detail-icon {
+          flex-shrink: 0;
+          color: #5f6368;
+          margin-top: 2px;
+        }
+
+        .detail-content {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .detail-label {
+          font-size: 11px;
+          color: #5f6368;
+          text-transform: uppercase;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          margin-bottom: 4px;
+        }
+
+        .detail-value {
+          font-size: 14px;
+          color: #202124;
+          line-height: 1.4;
+        }
+
+        .detail-value.clickable {
+          color: #1a73e8;
+          cursor: pointer;
+          text-decoration: none;
+        }
+
+        .detail-value.clickable:hover {
+          text-decoration: underline;
+        }
+
+        /* Sections */
+        .gmap-section {
+          margin-bottom: 16px;
+          padding-bottom: 16px;
+          border-bottom: 1px solid #e8eaed;
+        }
+
+        .gmap-section:last-child {
+          border-bottom: none;
+          margin-bottom: 0;
+          padding-bottom: 0;
+        }
+
+        .gmap-section-title {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #202124;
+          margin: 0 0 10px 0;
+        }
+
+        .gmap-section-title svg {
+          color: #5f6368;
+        }
+
+        /* Products */
+        .gmap-products {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+        }
+
+        .gmap-product-card {
+          background: #f8f9fa;
+          border-radius: 8px;
+          overflow: hidden;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .gmap-product-card:hover {
+          box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+
+        .product-img {
+          width: 100%;
+          height: 80px;
+          object-fit: cover;
+          display: block;
+        }
+
+        .product-info {
+          padding: 8px;
+        }
+
+        .product-name {
+          font-size: 12px;
+          font-weight: 500;
+          color: #202124;
+          margin-bottom: 4px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .product-price {
+          font-size: 11px;
+          color: #137333;
           font-weight: 600;
         }
 
-        .info-item.text-green {
-          color: #10b981;
+        /* Review Card */
+        .gmap-review-card {
+          background: #f8f9fa;
+          padding: 12px;
+          border-radius: 8px;
         }
 
-        .info-item.text-red {
-          color: #ef4444;
-        }
-
-        .popup-description {
-          font-size: 0.875rem;
-          color: #6b7280;
-          line-height: 1.6;
-          margin-bottom: 1rem;
-        }
-
-        .popup-actions {
+        .review-header {
           display: flex;
-          gap: 0.5rem;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 8px;
         }
 
-        .action-btn {
+        .review-avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: #e8eaed;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #5f6368;
+          flex-shrink: 0;
+        }
+
+        .review-meta {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .review-author {
+          font-size: 13px;
+          font-weight: 600;
+          color: #202124;
+          margin-bottom: 2px;
+        }
+
+        .review-stars {
+          color: #fbbc04;
+          font-size: 12px;
+        }
+
+        .review-date {
+          font-size: 11px;
+          color: #5f6368;
+        }
+
+        .review-text {
+          font-size: 13px;
+          color: #202124;
+          line-height: 1.5;
+        }
+
+        /* Gallery */
+        .gmap-gallery {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 6px;
+        }
+
+        .gmap-gallery-item {
+          position: relative;
+          aspect-ratio: 1;
+          border-radius: 8px;
+          overflow: hidden;
+          cursor: pointer;
+          transition: transform 0.2s;
+        }
+
+        .gmap-gallery-item img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        .gmap-gallery-item.has-more::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0.5);
+        }
+
+        .gallery-more {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 18px;
+          font-weight: 600;
+          z-index: 1;
+        }
+
+        /* Description */
+        .gmap-description {
+          font-size: 13px;
+          color: #5f6368;
+          line-height: 1.6;
+        }
+
+        /* Footer */
+        .gmap-footer {
+          display: flex;
+          gap: 8px;
+          padding-top: 12px;
+        }
+
+        .gmap-footer-btn {
           flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1rem;
-          border-radius: 0.75rem;
-          font-size: 0.875rem;
-          font-weight: 700;
+          gap: 8px;
+          padding: 12px 16px;
+          background: #f97316;
+          color: white;
           border: none;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: background 0.15s ease;
         }
 
-        .action-btn.primary {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        .gmap-footer-btn:hover { 
+          background: #ea580c; 
         }
 
-        .action-btn.primary:hover {
-          box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-          transform: translateY(-2px);
+        /* Scrollbar */
+        .gmap-popup-enhanced::-webkit-scrollbar {
+          width: 6px;
         }
 
-        .action-btn.secondary {
-          background: white;
-          color: #667eea;
-          border: 2px solid #667eea;
+        .gmap-popup-enhanced::-webkit-scrollbar-track {
+          background: #f1f3f4;
         }
 
-        .action-btn.secondary:hover {
-          background: rgba(102, 126, 234, 0.08);
+        .gmap-popup-enhanced::-webkit-scrollbar-thumb {
+          background: #dadce0;
+          border-radius: 3px;
         }
 
-        .user-popup-enhanced .maplibregl-popup-content {
-          background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
-          border-radius: 0.75rem;
-          padding: 0.75rem 1rem;
-          box-shadow: 0 8px 24px rgba(66, 133, 244, 0.3);
+        .gmap-popup-enhanced::-webkit-scrollbar-thumb:hover {
+          background: #bdc1c6;
         }
 
-        .user-popup-enhanced .maplibregl-popup-tip {
-          border-top-color: #4285f4;
-        }
-
-        .user-popup-content {
+        /* Attribution */
+        .maplibregl-ctrl-bottom-left,
+        .maplibregl-ctrl-bottom-right {
           display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: white;
-          font-weight: 700;
-          font-size: 0.875rem;
+          flex-direction: column;
+          gap: 8px;
         }
 
-        .user-popup-icon {
-          font-size: 1.25rem;
+        .maplibregl-ctrl-scale {
+          background: rgba(255,255,255,0.8);
+          border: none;
+          border-radius: 2px;
+          padding: 2px 6px;
+          font-size: 11px;
+          color: #202124;
         }
 
-        /* Animations */
-        @keyframes markerBounce {
-          0%, 100% {
-            transform: rotate(-45deg) translateY(0);
-          }
-          50% {
-            transform: rotate(-45deg) translateY(-12px);
-          }
-        }
-
-        @keyframes markerPulse {
-          0% {
-            transform: translate(-50%, -50%) scale(0.8);
-            opacity: 0.8;
-          }
-          50% {
-            transform: translate(-50%, -50%) scale(1.5);
-            opacity: 0;
-          }
-          100% {
-            transform: translate(-50%, -50%) scale(0.8);
-            opacity: 0;
-          }
-        }
-
-        @keyframes statusPulse {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          50% {
-            transform: scale(1.2);
-            opacity: 0.8;
-          }
-        }
-
-        @keyframes labelFadeIn {
-          from {
-            opacity: 0;
-            transform: translateX(-50%) translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-          }
-        }
-
-        @keyframes userPulseRing {
-          0% {
-            transform: translate(-50%, -50%) scale(0.5);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(-50%, -50%) scale(2);
-            opacity: 0;
-          }
+        .maplibregl-ctrl-compass {
+          display: none !important;
         }
 
         /* Responsive */
         @media (max-width: 640px) {
-          .control-panel.top-left,
-          .control-panel.top-right,
-          .control-panel.right,
-          .control-panel.bottom {
-            transform: scale(0.9);
+          .gmap-search-wrapper {
+            width: calc(100% - 20px);
           }
 
-          .info-bar {
-            flex-direction: column;
-            gap: 0.5rem;
-            align-items: flex-start;
+          .gmap-control.bottom-right {
+            bottom: 80px;
           }
 
-          .info-divider {
-            width: 100%;
-            height: 1px;
+          .gmap-popup-container-enhanced .maplibregl-popup-content {
+            min-width: 300px;
+          }
+
+          .gmap-actions {
+            grid-template-columns: repeat(2, 1fr);
+          }
+
+          .gmap-products {
+            grid-template-columns: repeat(2, 1fr);
           }
         }
       `}</style>

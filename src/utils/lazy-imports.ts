@@ -2,7 +2,8 @@
 import React, { lazy, Suspense } from 'react';
 
 // Map components - only load when needed
-export const LazyMapComponent = lazy(() => import('@/RumahUMKM/map/MapComponent'));
+// Note: MapComponent file does not exist anymore; point to MapboxComponent to avoid build errors
+export const LazyMapComponent = lazy(() => import('@/RumahUMKM/map/MapboxComponent'));
 export const LazyMapboxComponent = lazy(() => import('@/RumahUMKM/map/MapboxComponent'));
 
 // 3D components - only load when needed  
