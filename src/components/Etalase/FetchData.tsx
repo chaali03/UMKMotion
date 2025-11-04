@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState } from "react";
 
 function FetchData() {
@@ -10,8 +12,6 @@ function FetchData() {
   const [hasMore, setHasMore] = useState(true);
 
   const PRODUCTS_PER_PAGE = 15;
-
-  // === CACHE UNTUK DETAIL PRODUK (biar ga fetch ulang) ===
   const detailCache = new Map<string, any>();
 
   // === LISTENER UNTUK KATEGORI & SEARCH ===
@@ -52,7 +52,7 @@ function FetchData() {
 
   // === RENDER BINTANG ===
   const renderStars = (rating: string) => {
-    if (!rating) return "N/A";
+    if (!rating) return "☆☆☆☆☆";
     const full = Math.round(Number(rating));
     return "★★★★★".substring(0, full) + "☆☆☆☆☆".substring(0, 5 - full);
   };
@@ -74,22 +74,61 @@ function FetchData() {
 
   // === BONUS RANDOM ===
   const generateBonusText = () => {
-    const bonuses = [
-      "Gratis Ongkir",
-      "+Hadiah Gratis",
-      "Cashback 10%",
-      "Diskon Ekstra"
-    ];
+    const bonuses = ["Gratis Ongkir", "+Hadiah Gratis", "Cashback 10%", "Diskon Ekstra"];
     return bonuses[Math.floor(Math.random() * bonuses.length)];
   };
 
-  // === FETCH PRODUK + DETAIL (product_photos, bullet_points, dll) ===
+  // === HANDLE KLIK PRODUK → SIMPAN FULL DATA + DESKRIPSI + REKOMENDASI ===
+  const handleProductClick = async (product: any) => {
+    // SIMPAN FULL PRODUCT + product_description
+    localStorage.setItem("selectedProduct", JSON.stringify({
+      ...product,
+      product_description: product.product_description || "Deskripsi produk tidak tersedia.",
+    }));
+
+    const currentCategory = product.category || "unknown";
+    let otherCategoryProducts = allProducts
+      .filter((p: any) => p.asin !== product.asin && (p.category || "unknown") !== currentCategory)
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 6);
+
+    if (otherCategoryProducts.length < 3) {
+      otherCategoryProducts = allProducts
+        .filter((p: any) => p.asin !== product.asin)
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 6);
+    }
+
+    const recommendations = otherCategoryProducts.map((p: any) => ({
+      asin: p.asin,
+      product_title: p.product_title,
+      product_photo: p.product_photo,
+      product_price: p.product_price,
+      product_original_price: p.product_original_price,
+      product_star_rating: p.product_star_rating,
+      product_num_ratings: p.product_num_ratings,
+      seller_name: p.seller_name,
+      discount: p.discount,
+      bonusText: p.bonusText,
+      product_url: p.product_url,
+      product_photos: p.product_photos,
+      bullet_points: p.bullet_points,
+      specifications: p.specifications,
+      category: p.category,
+      product_description: p.product_description || "Deskripsi produk tidak tersedia.", // TAMBAH
+    }));
+
+    localStorage.setItem("recommendedProducts", JSON.stringify(recommendations));
+    window.location.href = "/buyingpage";
+  };
+
+  // === FETCH PRODUK LISTING ===
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       setHasMore(true);
       try {
-        const API_KEY = "174b92f382msh6b5dcea345cce45p1a65fcjsn578ec16b7467";
+        const API_KEY = "f97c4b3d2fmsh9022774549cef8ap11e0dcjsn05539ffc1b9c";
         const HOST = "real-time-amazon-data.p.rapidapi.com";
 
         let query = "";
@@ -127,23 +166,24 @@ function FetchData() {
         const result = await res.json();
         const apiProducts = result.data?.products || [];
 
-        // === FETCH DETAIL UNTUK SETIAP PRODUK ===
         const transformed = await Promise.all(
           apiProducts.map(async (p: any) => {
             const priceIDR = convertToIDR(p.product_price);
             if (!priceIDR) return null;
 
-            // Default data
             let productPhotos = [p.product_photo || "/asset/umkm/umkm1.jpg"];
             let bulletPoints: string[] = [];
             let specifications: Array<{ name: string; value: string }> = [];
+            let productCategory = "Lainnya";
+            let productDescription = "Deskripsi produk tidak tersedia."; // DEFAULT
 
-            // Cek cache dulu
             if (detailCache.has(p.asin)) {
               const cached = detailCache.get(p.asin);
               productPhotos = cached.product_photos || productPhotos;
               bulletPoints = cached.bullet_points || bulletPoints;
               specifications = cached.specifications || specifications;
+              productCategory = cached.category || productCategory;
+              productDescription = cached.product_description || productDescription;
             } else {
               try {
                 const detailUrl = `https://${HOST}/product-details?asin=${p.asin}&country=US`;
@@ -159,28 +199,29 @@ function FetchData() {
                   const detailData = await detailRes.json();
                   const d = detailData.data;
 
-                  if (d?.product_photos?.length > 0) {
-                    productPhotos = d.product_photos;
-                  }
-                  if (d?.bullet_points) {
-                    bulletPoints = d.bullet_points;
-                  }
-                  if (d?.specifications) {
-                    specifications = d.specifications;
-                  }
+                  if (d?.product_photos?.length > 0) productPhotos = d.product_photos;
+                  if (d?.bullet_points) bulletPoints = d.bullet_points;
+                  if (d?.specifications) specifications = d.specifications;
+                  if (d?.category_path?.[0]?.name) productCategory = d.category_path[0].name;
+                  if (d?.product_description) productDescription = d.product_description; // AMBIL DESKRIPSI
 
-                  // Simpan ke cache
-                  detailCache.set(p.asin, { product_photos: productPhotos, bullet_points: bulletPoints, specifications });
+                  detailCache.set(p.asin, {
+                    product_photos: productPhotos,
+                    bullet_points: bulletPoints,
+                    specifications,
+                    category: productCategory,
+                    product_description: productDescription, // SIMPAN DI CACHE
+                  });
                 }
               } catch (err) {
-                console.warn(`Gagal fetch detail ASIN ${p.asin}`, err);
+                console.warn(`Gagal detail ASIN ${p.asin}`, err);
               }
             }
 
             return {
               product_title: p.product_title || "Produk Premium",
               product_photo: p.product_photo || "/asset/umkm/umkm1.jpg",
-              product_photos: productPhotos, // GAMBAR DARI SISI LAIN
+              product_photos: productPhotos,
               product_price: priceIDR,
               product_original_price: p.product_original_price || p.product_price,
               product_star_rating: p.product_star_rating,
@@ -192,6 +233,8 @@ function FetchData() {
               product_url: p.product_url,
               bullet_points: bulletPoints,
               specifications: specifications,
+              category: productCategory,
+              product_description: productDescription, // TAMBAH INI
             };
           })
         );
@@ -595,7 +638,7 @@ function FetchData() {
                 const shortTitle = fullTitle.length > 60 ? fullTitle.slice(0, 57) + "..." : fullTitle;
                 const price = item.product_price;
                 const rating = renderStars(item.product_star_rating);
-                const sold = item.product_num_ratings ? `${(item.product_num_ratings / 1000).toFixed(1)}K terjual` : "N/A";
+                const sold = item.product_num_ratings ? `${(parseInt(item.product_num_ratings) / 1000).toFixed(1)}K terjual` : "N/A";
                 const seller = item.seller_name;
 
                 return (
@@ -610,6 +653,7 @@ function FetchData() {
                     discount={item.discount}
                     bonusText={item.bonusText}
                     product={item}
+                    onProductClick={handleProductClick}
                   />
                 );
               })}
@@ -630,15 +674,7 @@ function FetchData() {
 }
 
 // === PRODUCT CARD ===
-function ProductCard({ image, shortTitle, price, rating, sold, seller, discount, bonusText, product }: any) {
-  const handleCardClick = (e: React.MouseEvent) => {
-    if (e.target instanceof Element && (e.target.closest(".btn-buy") || e.target.closest(".cart-icon-badge"))) return;
-
-    // SIMPAN SEMUA DATA TERMASUK product_photos KE LOCALSTORAGE
-    localStorage.setItem("selectedProduct", JSON.stringify(product));
-    window.location.href = "/buyingpage";
-  };
-
+function ProductCard({ image, shortTitle, price, rating, sold, seller, discount, bonusText, product, onProductClick }: any) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     let cart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -652,14 +688,8 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
     alert("Berhasil ditambahkan ke keranjang!");
   };
 
-  const handleBuyNow = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    localStorage.setItem("selectedProduct", JSON.stringify(product));
-    window.location.href = "/buyingpage";
-  };
-
   return (
-    <div className="product-card" onClick={handleCardClick}>
+    <div className="product-card" onClick={() => onProductClick(product)}>
       <div className="discount-badge">{discount}</div>
       <div className="cart-icon-badge" onClick={handleAddToCart} title="Tambah ke Keranjang">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -686,7 +716,10 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
         </div>
 
         <div className="action-buttons">
-          <button className="btn-buy" onClick={handleBuyNow}>
+          <button className="btn-buy" onClick={(e) => {
+            e.stopPropagation();
+            onProductClick(product);
+          }}>
             <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 12l2 2 4-4" />
               <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />

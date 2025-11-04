@@ -14,11 +14,11 @@ interface Product {
   bonusText?: string;
   asin: string;
   product_url?: string;
-
   product_description?: string;
   bullet_points?: string[];
   product_photos?: string[];
   specifications?: Array<{ name: string; value: string }>;
+  category?: string;
 }
 
 const fallback: Product = {
@@ -32,7 +32,7 @@ const fallback: Product = {
   discount: "52%",
   asin: "B0CJF94M8J",
   product_url: "#",
-  product_description: "Ini adalah deskripsi produk yang sangat panjang. Bisa sampai ratusan kata. Tapi kita batasi tampilan awalnya supaya tidak memakan tempat. Pengguna bisa klik 'Lihat lebih banyak' untuk membaca semuanya. Produk ini sangat berkualitas, ramah lingkungan, dan cocok untuk dapur modern. Terbuat dari kaca premium, tahan panas, anti bocor, dan mudah dibersihkan. Dilengkapi nozzle spray halus untuk minyak zaitun, minyak goreng, atau bumbu cair lainnya.",
+  product_description: "Ini adalah deskripsi produk yang sangat panjang...",
   bullet_points: [
     "Kapasitas 470ml, cukup untuk penggunaan sehari-hari",
     "2 in 1: spray & tuang langsung",
@@ -49,7 +49,8 @@ const fallback: Product = {
     { name: "Dimensi", value: "7 x 7 x 24 cm" },
     { name: "Warna", value: "Hitam Transparan" },
     { name: "Sertifikasi", value: "FDA, LFGB, Global Recycled Standard" }
-  ]
+  ],
+  category: "Dapur"
 };
 
 export default function BuyingPage() {
@@ -63,8 +64,9 @@ export default function BuyingPage() {
   const [touchEnd, setTouchEnd] = useState(0);
   const [loadingDetail, setLoadingDetail] = useState(true);
   const [showFullDetail, setShowFullDetail] = useState(false);
+  const [recommendations, setRecommendations] = useState<Product[]>([]);
+  const [loadingRecs, setLoadingRecs] = useState(true);
 
-  // === THUMBNAIL SETTINGS ===
   const MAX_THUMBS = 8;
   const THUMB_WIDTH_DESKTOP = 120;
   const THUMB_GAP = 8;
@@ -77,7 +79,6 @@ export default function BuyingPage() {
   const carouselImages = (product.product_photos || [product.product_photo]).slice(0, MAX_THUMBS);
   const hasMoreThanThumbs = (product.product_photos?.length || 0) > MAX_THUMBS;
 
-  // === RATING DATA ===
   const [ratingData, setRatingData] = useState({
     average: 5.0,
     totalRatings: 13,
@@ -86,7 +87,6 @@ export default function BuyingPage() {
     distribution: { 5: 13, 4: 0, 3: 0, 2: 0, 1: 0 } as Record<1 | 2 | 3 | 4 | 5, number>,
   });
 
-  // === DETEKSI CLIENT & RESIZE ===
   useEffect(() => {
     setIsClient(true);
     const updateThumbWidth = () => {
@@ -97,7 +97,21 @@ export default function BuyingPage() {
     return () => window.removeEventListener('resize', updateThumbWidth);
   }, []);
 
-  // === FETCH DETAIL ===
+  // === BACA REKOMENDASI ===
+  useEffect(() => {
+    const recs = localStorage.getItem("recommendedProducts");
+    if (recs) {
+      try {
+        const parsed = JSON.parse(recs);
+        setRecommendations(parsed);
+      } catch (err) {
+        console.error("Gagal parse rekomendasi:", err);
+      }
+    }
+    setLoadingRecs(false);
+  }, []);
+
+  // === LOAD DETAIL PRODUK ===
   useEffect(() => {
     const loadProductDetail = async () => {
       if (typeof window === "undefined") return;
@@ -110,66 +124,10 @@ export default function BuyingPage() {
 
       try {
         const localProduct = JSON.parse(stored);
-        const asin = localProduct.asin;
-
-        if (!asin) throw new Error("ASIN tidak ditemukan");
-
         setProduct(localProduct);
         setLoadingDetail(false);
-
-        const API_KEY = "174b92f382msh6b5dcea345cce45p1a65fcjsn578ec16b7467";
-        const HOST = "real-time-amazon-data.p.rapidapi.com";
-
-        const url = `https://${HOST}/product-details?asin=${asin}&country=US`;
-        const res = await fetch(url, {
-          method: "GET",
-          headers: {
-            "x-rapidapi-key": API_KEY,
-            "x-rapidapi-host": HOST,
-          },
-        });
-
-        if (!res.ok) throw new Error("Gagal fetch detail");
-
-        const result = await res.json();
-        const detail = result.data;
-
-        const merged: Product = {
-          ...localProduct,
-          product_title: detail.product_title || localProduct.product_title,
-          product_photo: detail.product_photos?.[0] || localProduct.product_photo,
-          product_description: detail.product_description,
-          bullet_points: detail.bullet_points,
-          product_photos: detail.product_photos?.slice(0, MAX_THUMBS) || [localProduct.product_photo],
-          specifications: detail.specifications,
-          product_star_rating: detail.product_star_rating || localProduct.product_star_rating,
-          product_num_ratings: detail.product_num_ratings || localProduct.product_num_ratings,
-        };
-
-        const ratings = parseInt(detail.product_num_ratings || "0") || 0;
-        const avg = parseFloat(detail.product_star_rating || "0") || 0;
-        const distribution = detail.rating_distribution || { 5: ratings, 4: 0, 3: 0, 2: 0, 1: 0 };
-
-        setRatingData({
-          average: avg,
-          totalRatings: ratings,
-          totalReviews: Math.floor(ratings * 0.3),
-          satisfaction: Math.round((distribution[5] / ratings) * 100) || 100,
-          distribution: {
-            5: distribution[5] || 0,
-            4: distribution[4] || 0,
-            3: distribution[3] || 0,
-            2: distribution[2] || 0,
-            1: distribution[1] || 0,
-          },
-        });
-
-        setProduct(merged);
-        localStorage.setItem("selectedProduct", JSON.stringify(merged));
       } catch (err) {
-        console.error("Detail gagal:", err);
-        const localProduct = JSON.parse(stored);
-        setProduct({ ...localProduct, product_photos: localProduct.product_photos?.slice(0, MAX_THUMBS) });
+        console.error("Gagal load produk:", err);
         setLoadingDetail(false);
       }
     };
@@ -177,6 +135,7 @@ export default function BuyingPage() {
     loadProductDetail();
   }, []);
 
+  // === RENDER BINTANG ===
   const renderStars = (rating?: string) => {
     if (!rating) return "☆☆☆☆☆";
     const num = parseFloat(rating) || 0;
@@ -184,6 +143,12 @@ export default function BuyingPage() {
     const half = num % 1 >= 0.5 ? 1 : 0;
     const empty = 5 - full - half;
     return "★".repeat(full) + (half ? "★" : "") + "☆".repeat(empty);
+  };
+
+  // === HANDLE KLIK REKOMENDASI ===
+  const handleRecommendationClick = (item: Product) => {
+    localStorage.setItem("selectedProduct", JSON.stringify(item));
+    window.location.reload();
   };
 
   const stars = renderStars(product.product_star_rating);
@@ -366,7 +331,6 @@ export default function BuyingPage() {
           transform: scale(1.2); 
         }
 
-        /* THUMBNAIL - DESKTOP ONLY */
         .thumbnail-carousel-container {
           position: relative;
           display: flex;
@@ -438,81 +402,6 @@ export default function BuyingPage() {
           color: #166534;
         }
 
-        /* MOBILE: INFO DI BAWAH GAMBAR */
-        .mobile-info-section {
-          padding: 16px;
-          background: white;
-          border-bottom: 1px solid #eee;
-        }
-
-        .mobile-product-title {
-          font-size: 16px;
-          font-weight: 600;
-          line-height: 1.4;
-          color: #1a1a1a;
-          margin-bottom: 8px;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        .mobile-price-section {
-          display: flex;
-          align-items: baseline;
-          gap: 8px;
-          margin-bottom: 12px;
-        }
-
-        .mobile-current-price {
-          font-size: 22px;
-          font-weight: 800;
-          color: #dc2626;
-        }
-
-        .mobile-original-price {
-          font-size: 14px;
-          color: #999;
-          text-decoration: line-through;
-        }
-
-        .mobile-discount {
-          background: #dc2626;
-          color: white;
-          font-size: 12px;
-          font-weight: 700;
-          padding: 2px 6px;
-          border-radius: 4px;
-        }
-
-        .mobile-action-buttons {
-          display: flex;
-          gap: 8px;
-        }
-
-        .mobile-btn {
-          flex: 1;
-          padding: 12px;
-          border-radius: 8px;
-          font-weight: 600;
-          font-size: 14px;
-          text-align: center;
-          cursor: pointer;
-        }
-
-        .mobile-btn-buy {
-          background: #166534;
-          color: white;
-          border: none;
-        }
-
-        .mobile-btn-cart {
-          background: white;
-          color: #166534;
-          border: 2px solid #166534;
-        }
-
-        /* DETAIL SECTION - SEMUA DEVICE */
         .details-section { 
           padding: 16px;
           background: white;
@@ -745,6 +634,7 @@ export default function BuyingPage() {
           padding: 20px; 
           box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
           animation: fadeIn 0.6s ease; 
+          margin: 0 auto 40px;
         }
 
         @media (max-width: 768px) { 
@@ -869,6 +759,97 @@ export default function BuyingPage() {
             display: none; 
           } 
         }
+
+        .recommendation-container {
+          max-width: 1200px;
+          margin: 0 auto 60px;
+          background: white;
+          border-radius: 16px;
+          padding: 24px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .recommendation-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 16px;
+        }
+
+        .rec-card {
+          border: 1px solid #eee;
+          border-radius: 12px;
+          overflow: hidden;
+          transition: all 0.2s ease;
+          background: #fff;
+          cursor: pointer;
+        }
+
+        .rec-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+          border-color: #10b981;
+        }
+
+        .rec-image {
+          width: 100%;
+          height: 160px;
+          overflow: hidden;
+          background: #f8f8f8;
+        }
+
+        .rec-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.3s ease;
+        }
+
+        .rec-card:hover .rec-image img {
+          transform: scale(1.05);
+        }
+
+        .rec-info {
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .rec-title {
+          font-size: 13px;
+          font-weight: 600;
+          color: #1a1a1a;
+          line-height: 1.4;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .rec-price {
+          font-size: 15px;
+          font-weight: 800;
+          color: #dc2626;
+        }
+
+        .rec-rating {
+          font-size: 12px;
+          color: #f59e0b;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        @media (max-width: 768px) {
+          .recommendation-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+          }
+          .rec-image { height: 130px; }
+          .rec-info { padding: 10px; }
+          .rec-title { font-size: 12px; }
+          .rec-price { font-size: 14px; }
+        }
       `}</style>
 
       <div className="page-container">
@@ -909,7 +890,6 @@ export default function BuyingPage() {
                 ))}
               </div>
 
-              {/* THUMBNAIL - HILANG DI MOBILE */}
               <div className="thumbnail-carousel-container">
                 {hasMoreThanThumbs && thumbStart > 0 && (
                   <button className="thumb-nav thumb-nav-left" onClick={() => setThumbStart(Math.max(0, thumbStart - 1))}>
@@ -942,10 +922,9 @@ export default function BuyingPage() {
                   </button>
                 )}
               </div>
-
             </div>
 
-            {/* DETAIL SECTION - 1x SAJA, UNTUK SEMUA DEVICE */}
+            {/* DETAIL SECTION */}
             <div className="details-section">
               <h1 className="product-title">{product.product_title}</h1>
               <div className="rating-reviews">
@@ -1081,6 +1060,55 @@ export default function BuyingPage() {
             </div>
           </div>
         </div>
+
+        {/* REKOMENDASI DARI KATEGORI LAIN */}
+        {!loadingRecs && (
+          <div className="recommendation-container">
+            <h2 className="section-title">
+              {recommendations.length > 0 ? "KAMU MUNGKIN SUKA (DARI KATEGORI LAIN)" : "BELUM ADA REKOMENDASI"}
+            </h2>
+
+            {recommendations.length > 0 ? (
+              <div className="recommendation-grid">
+                {recommendations.map((item, i) => {
+                  const shortTitle = item.product_title.length > 50 
+                    ? item.product_title.slice(0, 47) + "..." 
+                    : item.product_title;
+
+                  return (
+                    <div
+                      key={i}
+                      className="rec-card"
+                      onClick={() => handleRecommendationClick(item)}
+                    >
+                      <div className="rec-image">
+                        <img 
+                          src={item.product_photo || "/asset/umkm/umkm1.jpg"} 
+                          alt={shortTitle} 
+                          loading="lazy" 
+                        />
+                      </div>
+                      <div className="rec-info">
+                        <h3 className="rec-title">{shortTitle}</h3>
+                        <div className="rec-price">{item.product_price || "Rp -"}</div>
+                        <div className="rec-rating">
+                          ★ {renderStars(item.product_star_rating)} ({item.product_num_ratings || 0})
+                        </div>
+                        <div style={{ fontSize: "11px", color: "#10b981", fontWeight: "600", marginTop: "2px" }}>
+                          {item.category || "Lainnya"}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p style={{ textAlign: "center", color: "#666", fontSize: "14px", padding: "20px 0" }}>
+                Belum ada rekomendasi. Coba klik produk lain.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* MOBILE ACTION BAR */}
