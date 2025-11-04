@@ -1,6 +1,7 @@
 ---
 // src/pages/index.astro
 import BuyComponent from '../components/Buying/buy.jsx';
+import CommentSection from '../components/Buying/CommentSection.tsx';
 ---
 
 <!DOCTYPE html>
@@ -13,5 +14,9 @@ import BuyComponent from '../components/Buying/buy.jsx';
   </head>
   <body>
     <BuyComponent client:load />
-  </body>
+
+
+    <!-- Mau nampilin data lokal komen user = false -->
+    <!-- gaMau nampilin data lokal komen user dan hapus semua data komen lokal user = true -->
+    <CommentSection client:load clearOnMount={true} />  </body>
 </html>

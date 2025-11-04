@@ -117,7 +117,7 @@ export default function BuyingPage() {
         setProduct(localProduct);
         setLoadingDetail(false);
 
-        const API_KEY = "e1b2904af0msh5056d518b4cd0edp1ad29fjsnda102070f8d2";
+        const API_KEY = "174b92f382msh6b5dcea345cce45p1a65fcjsn578ec16b7467";
         const HOST = "real-time-amazon-data.p.rapidapi.com";
 
         const url = `https://${HOST}/product-details?asin=${asin}&country=US`;
@@ -740,7 +740,6 @@ export default function BuyingPage() {
 
         .rating-container { 
           max-width: 1200px; 
-          margin: 0 auto 100px; 
           background: white; 
           border-radius: 16px; 
           padding: 20px; 
@@ -750,7 +749,6 @@ export default function BuyingPage() {
 
         @media (max-width: 768px) { 
           .rating-container { 
-            margin: 0 0 100px; 
             padding: 16px; 
             border-radius: 12px; 
           } 

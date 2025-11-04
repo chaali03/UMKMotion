@@ -11,6 +11,9 @@ function FetchData() {
 
   const PRODUCTS_PER_PAGE = 15;
 
+  // === CACHE UNTUK DETAIL PRODUK (biar ga fetch ulang) ===
+  const detailCache = new Map<string, any>();
+
   // === LISTENER UNTUK KATEGORI & SEARCH ===
   useEffect(() => {
     const handleCategoryChange = (e: any) => {
@@ -80,13 +83,13 @@ function FetchData() {
     return bonuses[Math.floor(Math.random() * bonuses.length)];
   };
 
-  // === FETCH PRODUK ===
+  // === FETCH PRODUK + DETAIL (product_photos, bullet_points, dll) ===
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       setHasMore(true);
       try {
-        const API_KEY = "e1b2904af0msh5056d518b4cd0edp1ad29fjsnda102070f8d2";
+        const API_KEY = "174b92f382msh6b5dcea345cce45p1a65fcjsn578ec16b7467";
         const HOST = "real-time-amazon-data.p.rapidapi.com";
 
         let query = "";
@@ -110,8 +113,8 @@ function FetchData() {
           query = "best sellers";
         }
 
-        const url = `https://${HOST}/search?query=${encodeURIComponent(query)}&page=1&country=US&sort_by=RELEVANCE`;
-        const res = await fetch(url, {
+        const searchUrl = `https://${HOST}/search?query=${encodeURIComponent(query)}&page=1&country=US&sort_by=RELEVANCE`;
+        const res = await fetch(searchUrl, {
           method: "GET",
           headers: {
             "x-rapidapi-key": API_KEY,
@@ -124,14 +127,60 @@ function FetchData() {
         const result = await res.json();
         const apiProducts = result.data?.products || [];
 
-        const transformed = apiProducts
-          .map((p: any) => {
+        // === FETCH DETAIL UNTUK SETIAP PRODUK ===
+        const transformed = await Promise.all(
+          apiProducts.map(async (p: any) => {
             const priceIDR = convertToIDR(p.product_price);
             if (!priceIDR) return null;
+
+            // Default data
+            let productPhotos = [p.product_photo || "/asset/umkm/umkm1.jpg"];
+            let bulletPoints: string[] = [];
+            let specifications: Array<{ name: string; value: string }> = [];
+
+            // Cek cache dulu
+            if (detailCache.has(p.asin)) {
+              const cached = detailCache.get(p.asin);
+              productPhotos = cached.product_photos || productPhotos;
+              bulletPoints = cached.bullet_points || bulletPoints;
+              specifications = cached.specifications || specifications;
+            } else {
+              try {
+                const detailUrl = `https://${HOST}/product-details?asin=${p.asin}&country=US`;
+                const detailRes = await fetch(detailUrl, {
+                  method: "GET",
+                  headers: {
+                    "x-rapidapi-key": API_KEY,
+                    "x-rapidapi-host": HOST,
+                  },
+                });
+
+                if (detailRes.ok) {
+                  const detailData = await detailRes.json();
+                  const d = detailData.data;
+
+                  if (d?.product_photos?.length > 0) {
+                    productPhotos = d.product_photos;
+                  }
+                  if (d?.bullet_points) {
+                    bulletPoints = d.bullet_points;
+                  }
+                  if (d?.specifications) {
+                    specifications = d.specifications;
+                  }
+
+                  // Simpan ke cache
+                  detailCache.set(p.asin, { product_photos: productPhotos, bullet_points: bulletPoints, specifications });
+                }
+              } catch (err) {
+                console.warn(`Gagal fetch detail ASIN ${p.asin}`, err);
+              }
+            }
 
             return {
               product_title: p.product_title || "Produk Premium",
               product_photo: p.product_photo || "/asset/umkm/umkm1.jpg",
+              product_photos: productPhotos, // GAMBAR DARI SISI LAIN
               product_price: priceIDR,
               product_original_price: p.product_original_price || p.product_price,
               product_star_rating: p.product_star_rating,
@@ -140,14 +189,17 @@ function FetchData() {
               discount: extractDiscount(p),
               bonusText: generateBonusText(),
               asin: p.asin,
-              product_url: p.product_url
+              product_url: p.product_url,
+              bullet_points: bulletPoints,
+              specifications: specifications,
             };
           })
-          .filter(Boolean);
+        );
 
-        setAllProducts(transformed);
-        setDisplayedProducts(transformed.slice(0, PRODUCTS_PER_PAGE));
-        setHasMore(transformed.length > PRODUCTS_PER_PAGE);
+        const filtered = transformed.filter(Boolean);
+        setAllProducts(filtered);
+        setDisplayedProducts(filtered.slice(0, PRODUCTS_PER_PAGE));
+        setHasMore(filtered.length > PRODUCTS_PER_PAGE);
       } catch (err) {
         console.error("Gagal fetch:", err);
         setAllProducts([]);
@@ -582,7 +634,7 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
   const handleCardClick = (e: React.MouseEvent) => {
     if (e.target instanceof Element && (e.target.closest(".btn-buy") || e.target.closest(".cart-icon-badge"))) return;
 
-    // SIMPAN SEMUA DATA + ASIN KE LOCALSTORAGE
+    // SIMPAN SEMUA DATA TERMASUK product_photos KE LOCALSTORAGE
     localStorage.setItem("selectedProduct", JSON.stringify(product));
     window.location.href = "/buyingpage";
   };
