@@ -144,6 +144,7 @@ export default function Footer() {
                       placeholder="Email kamu..."
                       className="flex-1 bg-transparent px-2 py-2 sm:py-2.5 text-sm sm:text-base text-slate-700 placeholder-slate-400 outline-none min-w-0"
                       required
+                      suppressHydrationWarning
                     />
                   </div>
                   <motion.button
@@ -151,6 +152,7 @@ export default function Footer() {
                     whileTap={{ scale: 0.95 }}
                     type="submit"
                     className="group relative overflow-hidden rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-white shadow-lg shadow-orange-300/50 transition-all duration-300 hover:shadow-xl hover:shadow-orange-400/60"
+                    suppressHydrationWarning
                   >
                     <span className="relative flex items-center justify-center gap-1.5 sm:gap-2">
                       {isSubmitted ? (
@@ -275,7 +277,7 @@ export default function Footer() {
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 md:gap-6">
             <p className="text-slate-600">
-              © {new Date().getFullYear()} <span className="font-bold bg-gradient-to-r from-orange-600 to-blue-600 bg-clip-text text-transparent">UMKMotion</span>. Crafted with{" "}
+              {new Date().getFullYear()} <span className="font-bold bg-gradient-to-r from-orange-600 to-blue-600 bg-clip-text text-transparent">UMKMotion</span>. Crafted with{" "}
               <motion.span
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 1, repeat: Infinity }}
@@ -313,6 +315,7 @@ export default function Footer() {
             whileHover={!isMobile ? { y: -3, scale: 1.02 } : {}}
             whileTap={{ scale: 0.95 }}
             className="group relative overflow-hidden inline-flex items-center gap-2 rounded-xl sm:rounded-2xl border-2 border-gray-200 bg-gradient-to-br from-white to-orange-50/30 px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-bold text-slate-700 shadow-lg transition-all duration-300 hover:border-orange-300 hover:shadow-xl hover:shadow-orange-200/50 w-full sm:w-auto justify-center"
+            suppressHydrationWarning
           >
             {!isMobile && (
               <motion.div
