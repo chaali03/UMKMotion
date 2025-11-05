@@ -166,7 +166,7 @@ const Index = () => {
               <div className="flex items-center gap-2.5 rounded-full bg-white dark:bg-gray-900 px-3 py-2 text-xs sm:text-sm">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] px-2.5 py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
                   <Sparkles className="h-3 w-3" />
-                  NEW
+                  BARU
                 </span>
                 <span className="font-bold bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] bg-clip-text text-transparent tracking-tight">
                   Jelajahi UMKM Unggulan
