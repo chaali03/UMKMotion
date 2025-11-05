@@ -105,7 +105,11 @@ export default function RegisterPage() {
           justify-content: center;
           position: relative;
           overflow: hidden;
-          background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 25%, #fed7aa 50%, #fdba74 75%, #fb923c 100%);
+          background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/asset/register/register.webp');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          background-attachment: fixed;
           font-family: 'Inter', -apple-system, sans-serif;
         }
 
@@ -657,7 +661,7 @@ export default function RegisterPage() {
             {/* Mobile only hero image/banner (hidden on exit) */}
             {!leaving && (
               <div className="mobile-hero">
-                <img src="/asset/register /register.webp" alt="Register hero" />
+                <img src="/asset/register/register.webp" alt="Register hero" />
               </div>
             )}
             <motion.div className="welcome-badge" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
