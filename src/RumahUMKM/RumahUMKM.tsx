@@ -22,7 +22,7 @@ import {
   Compass, MapPinned, Route, Car, Footprints as Walk, Bike,
   Info, Image as ImageIcon, ExternalLink, Copy,
   Zap, Award, Users, Eye, ArrowLeft, Home,
-  CheckCircle, AlertCircle, Circle, Store,
+  CheckCircle, Check, AlertCircle, Circle, Store,
   Maximize2, Minimize2, Layers, Grid3x3,
   Building2, MapIcon, LayoutGrid, List
 } from 'lucide-react';
@@ -163,6 +163,7 @@ export default function RumahUMKM() {
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
   const [showFilters, setShowFilters] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [hasGeoPermission, setHasGeoPermission] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
@@ -322,7 +323,8 @@ export default function RumahUMKM() {
     const matchesSearch = umkm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          umkm.category.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "Semua" || umkm.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const matchesVerified = !verifiedOnly || !!umkm.verified;
+    return matchesSearch && matchesCategory && matchesVerified;
   });
 
   const toggleFavorite = (id: string) => {
@@ -468,11 +470,7 @@ export default function RumahUMKM() {
                                 (e.target as HTMLImageElement).src = 'https://via.placeholder.com/80?text=No+Image';
                               }}
                             />
-                            {umkm.verified && (
-                              <div className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-600 to-blue-400 rounded-full p-0.5">
-                                <CheckCircle className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />
-                              </div>
-                            )}
+                            {/* Verified icon overlay removed per request */}
                           </div>
                           
                           <div className="flex-1 min-w-0">
@@ -635,13 +633,7 @@ export default function RumahUMKM() {
                             {selectedUMKM.category}
                           </span>
                         </div>
-                        {selectedUMKM.verified && (
-                          <div className="bg-gradient-to-r from-blue-600 to-blue-400 text-white px-2 md:px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 flex-shrink-0 shadow-lg">
-                            <CheckCircle className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                            <span className="hidden sm:inline">Verified</span>
-                            <span className="sm:hidden">✓</span>
-                          </div>
-                        )}
+                        {/* Verified pill removed per request */}
                       </div>
 
                       <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4 border-b pb-2">

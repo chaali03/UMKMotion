@@ -393,6 +393,32 @@ export default function MapboxComponent({
         maxTileCacheSize: 1024
       });
 
+      // Provide placeholder images for any missing sprite icons to avoid maplibre errors
+      try {
+        map.current.on('styleimagemissing', (e: any) => {
+          const id = (e?.id ?? '').toString();
+          if (map.current && map.current.hasImage(id)) return;
+          // draw a simple circle placeholder (even for blank IDs)
+          const size = 32;
+          const canvas = document.createElement('canvas');
+          canvas.width = size; canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0,0,size,size);
+            ctx.beginPath(); ctx.arc(size/2, size/2, size/2 - 2, 0, Math.PI*2);
+            ctx.fillStyle = '#9ca3af'; // gray
+            ctx.fill();
+            ctx.lineWidth = 2; ctx.strokeStyle = '#6b7280'; ctx.stroke();
+            const data = ctx.getImageData(0,0,size,size);
+            try { id && map.current?.addImage(id, data, { pixelRatio: 2 }); } catch {}
+            // also try to satisfy the notorious single-space id
+            if (id.trim() === '' && !(map.current?.hasImage(' ') ?? true)) {
+              try { map.current?.addImage(' ', data, { pixelRatio: 2 }); } catch {}
+            }
+          }
+        });
+      } catch {}
+
       map.current.addControl(
         new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 
         'bottom-left'
@@ -413,6 +439,36 @@ export default function MapboxComponent({
               map.current!.setPaintProperty(lyr.id, 'raster-fade-duration', 100);
             }
           });
+          // proactively add a simple 'office' placeholder if requested by style
+          if (map.current && !map.current.hasImage('office')) {
+            const size = 32;
+            const canvas = document.createElement('canvas');
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0,0,size,size);
+              ctx.fillStyle = '#1a73e8';
+              ctx.fillRect(8, 8, size-16, size-16);
+              const data = ctx.getImageData(0,0,size,size);
+              try { map.current.addImage('office', data, { pixelRatio: 2 }); } catch {}
+            }
+          }
+          // also register a placeholder for the single-space id if ever requested by style
+          if (map.current && !map.current.hasImage(' ')) {
+            const size = 32;
+            const canvas = document.createElement('canvas');
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0,0,size,size);
+              ctx.beginPath(); ctx.arc(size/2, size/2, size/2 - 2, 0, Math.PI*2);
+              ctx.fillStyle = '#9ca3af';
+              ctx.fill();
+              ctx.lineWidth = 2; ctx.strokeStyle = '#6b7280'; ctx.stroke();
+              const data = ctx.getImageData(0,0,size,size);
+              try { map.current.addImage(' ', data, { pixelRatio: 2 }); } catch {}
+            }
+          }
         } catch {}
         setMapReady(true);
       });
@@ -551,10 +607,53 @@ export default function MapboxComponent({
 
     if (toggleOn) {
       // Aktifkan mode follow - dapatkan posisi terkini
+      // util jarak (meter)
+      const toRad = (d: number) => (d * Math.PI) / 180;
+      const distMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371000;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+        return 2 * R * Math.asin(Math.sqrt(a));
+      };
+
+      // konversi akurasi (meter) -> pixel untuk circle-radius
+      const metersPerPixelAtLat = (zoom: number, lat: number) => 156543.03392 * Math.cos(lat * Math.PI / 180) / Math.pow(2, zoom);
+      const updateAccuracyCircle = (lat: number, lon: number, accuracyM: number) => {
+        if (!m) return;
+        const srcId = 'user-accuracy-src';
+        const layerId = 'user-accuracy-circle';
+        const data = { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] } }] } as any;
+        if (m.getSource(srcId)) {
+          (m.getSource(srcId) as any).setData(data);
+        } else {
+          m.addSource(srcId, { type: 'geojson', data });
+          m.addLayer({
+            id: layerId,
+            type: 'circle',
+            source: srcId,
+            paint: {
+              'circle-color': 'rgba(26,115,232,0.15)',
+              'circle-stroke-color': 'rgba(26,115,232,0.35)',
+              'circle-stroke-width': 1.2,
+              'circle-opacity': 1,
+              'circle-radius': 20
+            }
+          });
+        }
+        const z = m.getZoom() ?? 17;
+        const px = Math.max(6, Math.min(300, accuracyM / Math.max(0.0001, metersPerPixelAtLat(z, lat))));
+        try { m.setPaintProperty(layerId, 'circle-radius', px); } catch {}
+      };
+
+      // state lokal untuk smoothing & filter
+      let lastLat: number | null = null;
+      let lastLon: number | null = null;
+
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const { latitude, longitude } = pos.coords;
-          
+          const { latitude, longitude, accuracy, heading } = pos.coords as GeolocationCoordinates & { accuracy: number, heading: number | null };
+
           // Buat atau update user marker
           if (userMarker.current) {
             userMarker.current.setLngLat([longitude, latitude]);
@@ -575,75 +674,96 @@ export default function MapboxComponent({
               .setLngLat([longitude, latitude])
               .addTo(m);
           }
-          
+
+          // Rotate arrow by heading if available
+          try {
+            const root = userMarker.current?.getElement();
+            const arrow = root?.querySelector('.gmap-user-arrow') as HTMLElement | null;
+            if (arrow && typeof heading === 'number' && !Number.isNaN(heading)) {
+              arrow.style.transform = `translate(-50%, -100%) rotate(${heading}deg)`;
+            }
+          } catch {}
+
+          // Update accuracy circle
+          if (typeof accuracy === 'number') updateAccuracyCircle(latitude, longitude, Math.max(accuracy, 5));
+
           // Zoom dan pusat ke lokasi user dengan animasi smooth
-          m.flyTo({ 
-            center: [longitude, latitude], 
-            zoom: Math.max(17, m.getZoom()), 
-            duration: 1200,
-            essential: true
-          });
-          
+          // Hanya center jika akurasi cukup baik atau zoom belum dekat
+          if ((accuracy ?? 9999) <= 50 || (m.getZoom() ?? 0) < 15) {
+            m.flyTo({ 
+              center: [longitude, latitude], 
+              zoom: 19, 
+              duration: 1000,
+              essential: true
+            });
+          }
+          lastLat = latitude; lastLon = longitude;
+
           // Mulai real-time tracking
           if (geoWatchId.current == null) {
             geoWatchId.current = navigator.geolocation.watchPosition(
               (p) => {
-                const { latitude: lat, longitude: lon } = p.coords;
+                const { latitude: rawLat, longitude: rawLon, accuracy: acc, heading: hdg } = p.coords as GeolocationCoordinates & { accuracy: number, heading: number | null };
+
+                // Filter berdasarkan akurasi (abaikan update jika > 60m)
+                if ((acc ?? 9999) > 60) return;
+
+                // Smoothing adaptif: semakin akurat, semakin responsif
+                // alpha tinggi = ikut cepat
+                const alpha = acc != null ? Math.max(0.2, Math.min(0.75, 0.8 - Math.min(acc, 50) / 100)) : 0.4;
+
+                // Noise threshold adaptif (1-3m)
+                const minMove = acc != null ? Math.max(1, Math.min(3, acc / 20)) : 2;
+
+                let lat = rawLat, lon = rawLon;
+                if (lastLat != null && lastLon != null) {
+                  if (distMeters(lastLat, lastLon, rawLat, rawLon) < minMove) return;
+                  lat = alpha * rawLat + (1 - alpha) * lastLat;
+                  lon = alpha * rawLon + (1 - alpha) * lastLon;
+                }
+                lastLat = lat; lastLon = lon;
+
                 userMarker.current?.setLngLat([lon, lat]);
-                
-                // Ikuti pergerakan user jika mode follow aktif
+
+                // Update heading pada arrow jika ada
+                try {
+                  const root = userMarker.current?.getElement();
+                  const arrow = root?.querySelector('.gmap-user-arrow') as HTMLElement | null;
+                  if (arrow && typeof hdg === 'number' && !Number.isNaN(hdg)) {
+                    arrow.style.transform = `translate(-50%, -100%) rotate(${hdg}deg)`;
+                  }
+                } catch {}
+
+                // Update akurasi circle
+                if (typeof acc === 'number') updateAccuracyCircle(lat, lon, Math.max(acc, 5));
+
+                // Ikuti pergerakan user jika mode follow aktif (lebih responsif)
                 if (isFollowing) {
-                  m.easeTo({ 
-                    center: [lon, lat], 
-                    duration: 500 
-                  });
+                  // Hanya geser center, biarkan zoom level user apa adanya
+                  m.easeTo({ center: [lon, lat], duration: 250 });
                 }
               },
               (error) => {
                 console.error('Watch position error:', error);
               },
               { 
-                enableHighAccuracy: true, 
-                maximumAge: 1000,
-                timeout: 5000 
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 30000 
               }
             );
           }
-          
-          setIsLocating(false);
-          setIsFollowing(true);
         },
         (error) => {
           console.error('Geolocation error:', error);
-          let errorMsg = 'Tidak dapat mengakses lokasi Anda. ';
-          
-          switch(error.code) {
-            case error.PERMISSION_DENIED:
-              errorMsg += 'Izin lokasi ditolak. Silakan aktifkan di pengaturan browser.';
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMsg += 'Informasi lokasi tidak tersedia.';
-              break;
-            case error.TIMEOUT:
-              errorMsg += 'Permintaan lokasi timeout.';
-              break;
-            default:
-              errorMsg += 'Terjadi kesalahan yang tidak diketahui.';
-          }
-          
-          alert(errorMsg);
-          setIsLocating(false);
+          // fallback handled earlier in separate getCurrentPosition call if present
         },
-        { 
-          enableHighAccuracy: true, 
-          timeout: 10000, 
-          maximumAge: 0
-        }
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 5000 }
       );
     } else {
       // Matikan mode follow
       if (geoWatchId.current != null) {
-        navigator.geolocation.clearWatch(geoWatchId.current);
+        try { navigator.geolocation.clearWatch(geoWatchId.current); } catch {}
         geoWatchId.current = null;
       }
       setIsLocating(false);
@@ -683,7 +803,7 @@ export default function MapboxComponent({
             size={18}
             style={{
               color: isSearchOpen ? '#70757a' : '#ffffff',
-              transform: isSearchOpen ? 'none' : 'translateX(1.5px)'
+              transform: isSearchOpen ? 'none' : 'translateX(14px)'
             }}
           />
           <motion.input
@@ -746,14 +866,15 @@ export default function MapboxComponent({
             aria-label={isToolbarOpen ? 'Tutup toolbar' : 'Buka toolbar'}
             onClick={() => setIsToolbarOpen(!isToolbarOpen)}
           >
-            {isToolbarOpen ? '⟨' : '⟩'}
+            <svg className="toggle-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 16l-6-8h12z" fill="currentColor"/>
+            </svg>
           </button>
 
-          {isToolbarOpen && (
-            <>
-            <button onClick={handleZoomOut} className="toolbar-btn" aria-label="Zoom out">−</button>
+          <div className={`toolbar-content ${isToolbarOpen ? 'open' : 'closed'}`} aria-hidden={!isToolbarOpen}>
+            <button onClick={handleZoomOut} className="toolbar-btn toolbar-item" aria-label="Zoom out">−</button>
 
-            <div className="gmap-segment">
+            <div className="gmap-segment toolbar-item">
               {MAP_TYPES.map((type) => (
                 <button
                   key={type.id}
@@ -767,7 +888,7 @@ export default function MapboxComponent({
 
             <button 
               onClick={handleLocateMe}
-              className={`toolbar-icon ${isFollowing ? 'active' : ''} ${isLocating ? 'loading' : ''}`}
+              className={`toolbar-icon toolbar-item ${isFollowing ? 'active' : ''} ${isLocating ? 'loading' : ''}`}
               aria-label="Lokasi saya"
               disabled={isLocating}
             >
@@ -780,13 +901,12 @@ export default function MapboxComponent({
               )}
             </button>
 
-            <button onClick={() => setIsFullscreen(!isFullscreen)} className="toolbar-icon" aria-label="Fullscreen">
+            <button onClick={() => setIsFullscreen(!isFullscreen)} className="toolbar-icon toolbar-item" aria-label="Fullscreen">
               {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
             </button>
 
-            <button onClick={handleZoomIn} className="toolbar-btn" aria-label="Zoom in">+</button>
-            </>
-          )}
+            <button onClick={handleZoomIn} className="toolbar-btn toolbar-item" aria-label="Zoom in">+</button>
+          </div>
         </div>
       </>
     )}
@@ -919,16 +1039,26 @@ export default function MapboxComponent({
         }
 
         @keyframes pulseRing {
-          0% { opacity: 0.55; transform: scale(0.96); }
-          70% { opacity: 0; transform: scale(1.18); }
-          100% { opacity: 0; transform: scale(1.18); }
+          0% { opacity: 0.5; transform: scale(0.92); }
+          60% { opacity: 0.08; transform: scale(1.25); }
+          100% { opacity: 0; transform: scale(1.32); }
+        }
+
+        @keyframes bump {
+          0%, 100% { transform: scale(1); }
+          40% { transform: scale(1.06); }
+        }
+
+        @keyframes glowPulse {
+          0%, 100% { box-shadow: 0 10px 24px rgba(0,0,0,0.16); }
+          50% { box-shadow: 0 14px 30px rgba(26,115,232,0.35); }
         }
 
         /* Toolbar */
         .gmap-toolbar {
           position: absolute;
-          top: 70px;
-          right: 10px;
+          top: 300px;
+          right: 12px;
           display: flex;
           align-items: center;
           gap: 10px;
@@ -943,11 +1073,16 @@ export default function MapboxComponent({
 
         .gmap-toolbar.top-right { left: auto; bottom: auto; }
 
-        @media (max-width: 640px) { .gmap-toolbar { top: 86px; } }
-        @media (min-width: 641px) and (max-width: 1024px) { .gmap-toolbar { top: 78px; } }
+        @media (max-width: 640px) { .gmap-toolbar { top: 140px; } }
+        @media (min-width: 641px) and (max-width: 1024px) { .gmap-toolbar { top: 160px; } }
 
         /* Collapsible states */
-        .gmap-toolbar.open { opacity: 1; transform: translateY(0); }
+        .gmap-toolbar.open { 
+          opacity: 1; 
+          transform: translateY(0); 
+          flex-direction: column; 
+          align-items: stretch; 
+        }
         .gmap-toolbar.closed {
           padding: 6px;
           gap: 0;
@@ -957,16 +1092,62 @@ export default function MapboxComponent({
 
         /* Toggle button */
         .toolbar-toggle {
-          width: 40px; height: 40px;
+          width: 52px; height: 52px;
           display: flex; align-items: center; justify-content: center;
           background: white; border: 1px solid rgba(0,0,0,0.06);
           border-radius: 9999px; color: #334155; cursor: pointer;
           font-size: 18px; line-height: 1; font-weight: 600;
-          transition: transform .12s ease, box-shadow .2s, background .2s, color .2s;
-          box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+          transition: transform .18s ease, box-shadow .2s, background .2s, color .2s;
+          box-shadow: 0 10px 24px rgba(0,0,0,0.16);
+          margin-left: auto; /* push toggle to the right in row layout */
+          align-self: flex-end; /* keep it at the right in column layout */
+          position: relative;
+          animation: bump 2.1s ease-in-out infinite, glowPulse 2.1s ease-in-out infinite;
         }
         .toolbar-toggle:hover { background: #f8fafc; color: #111827; }
         .toolbar-toggle:active { transform: scale(0.96); }
+        .toggle-icon { transition: transform .18s ease; }
+        .gmap-toolbar.open .toggle-icon { transform: rotate(180deg); }
+
+        /* Make triangle a bit larger visually */
+        .toolbar-toggle .toggle-icon { width: 18px; height: 18px; }
+
+        /* Attention pulse to hint click */
+        .toolbar-toggle::after {
+          content: "";
+          position: absolute;
+          inset: -6px;
+          border-radius: 9999px;
+          border: 2px solid rgba(26,115,232,0.28);
+          animation: pulseRing 1.4s ease-out infinite;
+          pointer-events: none;
+        }
+
+        /* Second staggered ring for stronger hint */
+        .toolbar-toggle::before {
+          content: "";
+          position: absolute;
+          inset: -10px;
+          border-radius: 9999px;
+          border: 2px solid rgba(26,115,232,0.22);
+          animation: pulseRing 1.4s ease-out infinite;
+          animation-delay: .5s;
+          pointer-events: none;
+        }
+
+        /* When open, remove attention animations and rings */
+        .gmap-toolbar.open .toolbar-toggle { animation: none; }
+        .gmap-toolbar.open .toolbar-toggle::after,
+        .gmap-toolbar.open .toolbar-toggle::before { animation: none; opacity: 0; }
+
+        .toolbar-content {
+          overflow: hidden;
+          display: grid;
+          gap: 8px;
+          transition: max-height .28s cubic-bezier(.2,.8,.2,1), opacity .22s ease, transform .22s ease;
+          will-change: max-height, transform, opacity;
+          margin-top: 6px; /* small breathing space under toggle */
+        }
 
         .toolbar-btn {
           width: 40px; height: 40px;
@@ -975,6 +1156,20 @@ export default function MapboxComponent({
           border-radius: 10px; color: #334155;
           font-size: 20px; font-weight: 300; cursor: pointer;
           transition: transform .12s ease, box-shadow .2s, background .2s, color .2s;
+        }
+
+        /* When toolbar drops down, make items stretch nicely */
+        .gmap-toolbar.open .toolbar-btn,
+        .gmap-toolbar.open .toolbar-icon,
+        .gmap-toolbar.open .gmap-segment { width: 100%; }
+        .gmap-toolbar.open .gmap-segment { 
+          justify-content: flex-start; 
+          flex-direction: column; 
+          gap: 6px;
+        }
+        .gmap-toolbar.open .segment-btn { 
+          width: 100%; 
+          text-align: center; 
         }
         .toolbar-btn:hover { background: #f8fafc; color: #111827; box-shadow: 0 6px 14px rgba(0,0,0,0.12); }
         .toolbar-btn:active { transform: scale(0.96); }
@@ -1443,7 +1638,7 @@ export default function MapboxComponent({
 
         .gmap-hero-nav {
           position: absolute;
-          top: 50%;
+          top: 70%;
           transform: translateY(-50%);
           width: 32px;
           height: 32px;
