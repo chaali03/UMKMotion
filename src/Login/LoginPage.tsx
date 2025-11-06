@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles, MapPin, BarChart3, Megaphone } from "lucide-react";
+import { signInWithEmail, signInWithGoogle } from "../lib/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -41,7 +42,14 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 2000);
+    try {
+      await signInWithEmail(email, password);
+      navigateWithExit("/");
+    } catch (err) {
+      alert("Login gagal. Periksa email/password dan coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const navigateWithExit = (href: string) => {
@@ -750,6 +758,17 @@ export default function LoginPage() {
                 <motion.button
                   type="button"
                   className="btn btn-google"
+                  onClick={async () => {
+                    setIsLoading(true);
+                    try {
+                      await signInWithGoogle();
+                      navigateWithExit("/");
+                    } catch (err) {
+                      alert("Login Google gagal. Coba lagi.");
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >

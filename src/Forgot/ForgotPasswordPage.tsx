@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
+import { sendPasswordReset } from "../lib/auth";
 
 const carouselItems = [
   { src: "/asset/optimized/umkm/umkm1.webp", title: "Kuliner Nusantara" },
@@ -28,12 +29,16 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await sendPasswordReset(email);
       setIsSuccess(true);
-    }, 2000);
+    } catch (err) {
+      console.error("Reset password error", err);
+      // Keep simple UX: show non-blocking feedback
+      alert("Gagal mengirim email reset. Periksa alamat email dan coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBackToLogin = () => {

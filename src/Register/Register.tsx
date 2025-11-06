@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Sparkles, MapPin, BarChart3, Megaphone, UserPlus, User } from "lucide-react";
+import { signUpWithEmail } from "../lib/auth";
+import { sendEmailOtp, verifyEmailOtp } from "../lib/otp";
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
@@ -13,6 +15,10 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
   const [slideIndex, setSlideIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -56,22 +62,128 @@ export default function RegisterPage() {
     setCurrentStep(1);
   };
 
-  const nextFromEmail = (e: React.FormEvent) => {
+  const nextFromEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
     if (!validateEmail(email)) return setErrors({ email: "Email tidak valid" });
-    if (verificationCode.length !== 6) return setErrors({ code: "Kode verifikasi 6 digit" });
-    setIsLoading(true);
-    setTimeout(() => { setIsLoading(false); setCurrentStep(2); }, 800);
+    // If OTP not sent, send it; otherwise attempt verify if code provided
+    if (!otpSent) {
+      await handleSendOtp();
+    } else {
+      await handleVerifyOtp();
+    }
   };
 
-  const submitPassword = (e: React.FormEvent) => {
+  const handleSendOtp = async () => {
+    if (!validateEmail(email)) { 
+      setErrors({ email: "Email tidak valid" }); 
+      return; 
+    }
+    
+    try {
+      setIsSendingOtp(true);
+      setErrors({}); // Clear previous errors
+      
+      await sendEmailOtp(email, { ttlSeconds: 600, subject: "Kode Verifikasi UMKMotion" });
+      
+      setOtpSent(true);
+      setOtpCooldown(60);
+      setVerificationCode(""); // Clear previous verification code
+      
+      // Show success feedback
+      if (typeof window !== 'undefined') {
+        console.log('📧 Kode verifikasi berhasil dikirim ke', email);
+        // Show success message to user
+        alert(`✅ Kode verifikasi telah dikirim ke ${email}\n\nSilakan cek inbox Anda (juga folder spam jika tidak muncul).`);
+      }
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Gagal mengirim kode. Coba lagi.";
+      setErrors({ email: errorMessage });
+      
+      // Auto clear error after 8 seconds
+      setTimeout(() => {
+        setErrors(prev => ({ ...prev, email: '' }));
+      }, 8000);
+      
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (verificationCode.length !== 6) { 
+      setErrors({ code: "Kode verifikasi harus 6 digit" }); 
+      return; 
+    }
+    
+    try {
+      setIsVerifyingOtp(true);
+      setErrors({}); // Clear previous errors
+      
+      await verifyEmailOtp(email, verificationCode);
+      
+      // Success - move to next step
+      setCurrentStep(2);
+      
+      // Show success feedback
+      if (typeof window !== 'undefined') {
+        // Optional: Show success toast/notification
+        console.log('✅ Kode verifikasi berhasil diverifikasi');
+      }
+      
+    } catch (err: any) {
+      // Enhanced error handling
+      let errorMessage = "Kode salah atau kadaluarsa";
+      
+      if (err.message?.includes('kadaluarsa')) {
+        errorMessage = "Kode verifikasi sudah kadaluarsa. Silakan kirim ulang.";
+      } else if (err.message?.includes('digunakan')) {
+        errorMessage = "Kode sudah digunakan. Silakan kirim ulang.";
+      } else if (err.message?.includes('tidak ditemukan')) {
+        errorMessage = "Kode tidak valid. Periksa kembali kode yang Anda masukkan.";
+      }
+      
+      setErrors({ code: errorMessage });
+      
+      // Auto clear error after 5 seconds
+      setTimeout(() => {
+        setErrors(prev => ({ ...prev, code: '' }));
+      }, 5000);
+      
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!otpCooldown) return;
+    const t = setInterval(() => setOtpCooldown((s) => (s > 0 ? s - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, [otpCooldown]);
+
+  // Auto-submit when verification code is complete (6 digits)
+  useEffect(() => {
+    if (verificationCode.length === 6 && otpSent && !isVerifyingOtp) {
+      handleVerifyOtp();
+    }
+  }, [verificationCode, otpSent, isVerifyingOtp]);
+
+  const submitPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
     if (password.length < 8) return setErrors({ password: "Minimal 8 karakter" });
     if (password !== confirmPassword) return setErrors({ confirm: "Password tidak cocok" });
     setIsLoading(true);
-    setTimeout(() => { setIsLoading(false); window.location.href = "/login"; }, 1000);
+    try {
+      await signUpWithEmail(email, password);
+      alert("Akun berhasil dibuat. Kamu sudah verifikasi dengan kode OTP sebelumnya.");
+      window.location.href = "/login";
+    } catch (err) {
+      alert("Gagal membuat akun. Coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const goBack = () => {
@@ -395,6 +507,33 @@ export default function RegisterPage() {
           box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
         }
 
+        .input-field.input-complete {
+          border-color: #22c55e;
+          background: #f0fdf4;
+        }
+
+        .input-field.input-error {
+          border-color: #ef4444;
+          background: #fef2f2;
+        }
+
+        .input-field:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .helper-text.success {
+          background: #f0fdf4;
+          border-left-color: #22c55e;
+          color: #16a34a;
+        }
+
+        .helper-text.error {
+          background: #fef2f2;
+          border-left-color: #ef4444;
+          color: #dc2626;
+        }
+
         .toggle-password {
           position: absolute;
           right: 1rem;
@@ -522,6 +661,26 @@ export default function RegisterPage() {
 
         .footer-text a:hover {
           color: #1d4ed8;
+        }
+
+        .link-btn {
+          background: none;
+          border: none;
+          color: #2563eb;
+          font-weight: 600;
+          cursor: pointer;
+          text-decoration: underline;
+          transition: color 0.2s ease;
+        }
+
+        .link-btn:hover:not(:disabled) {
+          color: #1d4ed8;
+        }
+
+        .link-btn:disabled {
+          color: #94a3b8;
+          cursor: not-allowed;
+          text-decoration: none;
         }
 
         /* Loading Spinner */
@@ -715,22 +874,105 @@ export default function RegisterPage() {
                   </div>
                   {errors.email && <div className="helper-text">{errors.email}</div>}
                 </div>
-                <div className="input-group">
-                  <label htmlFor="code" className="input-label">Kode Verifikasi</label>
-                  <div className="input-wrapper">
-                    <input id="code" type="text" className="input-field" placeholder="000000" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))} maxLength={6} />
+                {otpSent && (
+                  <div className="input-group">
+                    <label htmlFor="code" className="input-label">
+                      Kode Verifikasi
+                      {isVerifyingOtp && (
+                        <span style={{ marginLeft: '8px', fontSize: '0.8em', color: '#2563eb' }}>
+                          Memverifikasi...
+                        </span>
+                      )}
+                    </label>
+                    <div className="input-wrapper">
+                      <input 
+                        id="code" 
+                        type="text" 
+                        className={`input-field ${verificationCode.length === 6 ? 'input-complete' : ''} ${errors.code ? 'input-error' : ''}`}
+                        placeholder="••••••" 
+                        value={verificationCode} 
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))} 
+                        maxLength={6}
+                        disabled={isVerifyingOtp}
+                        autoComplete="one-time-code"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        autoFocus
+                        style={{ 
+                          textAlign: 'center', 
+                          fontSize: '1.2rem',
+                          letterSpacing: '0.5rem',
+                          fontWeight: '600'
+                        }}
+                      />
+                    </div>
+                    {errors.code && (
+                      <motion.div 
+                        className="helper-text error" 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={{ background: '#fef2f2', borderLeftColor: '#ef4444', color: '#dc2626' }}
+                      >
+                        {errors.code}
+                      </motion.div>
+                    )}
+                    {verificationCode.length === 6 && !errors.code && !isVerifyingOtp && (
+                      <motion.div 
+                        className="helper-text success"
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={{ background: '#f0fdf4', borderLeftColor: '#22c55e', color: '#16a34a' }}
+                      >
+                        ✅ Kode lengkap, memverifikasi...
+                      </motion.div>
+                    )}
+                    {otpSent && (
+                      <p className="text-sm text-gray-600 text-center mb-4" style={{ marginTop: '0.5rem' }}>
+                        Kode verifikasi telah dikirim ke {email}
+                      </p>
+                    )}
                   </div>
-                  {errors.code && <div className="helper-text">{errors.code}</div>}
-                </div>
+                )}
 
                 <div className="btn-group">
                   <button type="button" className="btn btn-back" onClick={goBack}>
                     <ArrowLeft size={18} />
                   </button>
-                  <button type="submit" className="btn btn-primary" disabled={isLoading} style={{ flex: 1 }}>
-                    {isLoading ? <div className="spinner" /> : <>Lanjutkan <ArrowRight size={18} /></>}
-                  </button>
+                  {!otpSent ? (
+                    <button type="button" className="btn btn-primary" disabled={isSendingOtp} onClick={handleSendOtp} style={{ flex: 1 }}>
+                      {isSendingOtp ? <div className="spinner" /> : <>Kirim Kode <ArrowRight size={18} /></>}
+                    </button>
+                  ) : (
+                    <button type="button" className="btn btn-primary" disabled={isVerifyingOtp || verificationCode.length !== 6} onClick={handleVerifyOtp} style={{ flex: 1 }}>
+                      {isVerifyingOtp ? <div className="spinner" /> : <>Verifikasi <ArrowRight size={18} /></>}
+                    </button>
+                  )}
                 </div>
+                {otpSent && (
+                  <p className="footer-text" style={{ marginTop: '0.75rem' }}>
+                    Tidak menerima kode? {" "}
+                    {otpCooldown > 0 ? (
+                      <div className="text-center" style={{ display: 'inline-block', marginLeft: '0.25rem' }}>
+                        <div className="text-sm text-gray-500">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                            <span>Kirim ulang dalam {otpCooldown} detik</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-1 mt-2" style={{ width: '120px', margin: '0.5rem auto 0' }}>
+                            <div 
+                              className="bg-blue-500 h-1 rounded-full transition-all duration-1000"
+                              style={{ width: `${((60 - otpCooldown) / 60) * 100}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <button type="button" className="link-btn" onClick={handleSendOtp} disabled={isSendingOtp}>
+                        {isSendingOtp ? 'Mengirim...' : 'Kirim ulang'}
+                      </button>
+                    )}
+                  </p>
+                )}
               </motion.form>
             )}
 
