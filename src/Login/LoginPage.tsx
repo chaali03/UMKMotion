@@ -698,7 +698,7 @@ export default function LoginPage() {
                     <label htmlFor="password" className="input-label">
                       Password
                     </label>
-                    <a href="#forgot" className="forgot-link">
+                    <a href="/forgotpassword" className="forgot-link">
                       Lupa kata sandi?
                     </a>
                   </div>
