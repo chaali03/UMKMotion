@@ -13,12 +13,10 @@ import {
   BookOpenText, 
   MapPin,
   Store,
-  TrendingUp,
-  Award,
-  Send,
-  Heart,
   Sparkles,
   CheckCircle2,
+  Send,
+  Heart,
   Zap
 } from "lucide-react";
 
@@ -45,10 +43,11 @@ const socialLinks = [
 export default function Footer() {
   const ref = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const inView = useInView(ref, { once: true, margin: "-10% 0px -10% 0px" });
+  const [isMobile, setIsMobile] = useState(false);
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const inView = useInView(ref, { once: true, margin: "-10% 0px -10% 0px" });
+
 
   useEffect(() => {
     const checkMobile = () => {
@@ -58,17 +57,6 @@ export default function Footer() {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "end start"]
-  });
-
-  const y1 = useTransform(scrollYProgress, [0, 1], [150, -150]);
-  const y2 = useTransform(scrollYProgress, [0, 1], [-150, 150]);
-  const rotate1 = useTransform(scrollYProgress, [0, 1], [0, 180]);
-  const rotate2 = useTransform(scrollYProgress, [0, 1], [0, -180]);
-  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
 
   const container = {
     hidden: { opacity: 0 },
@@ -110,40 +98,14 @@ export default function Footer() {
 
   return (
     <footer ref={containerRef} className="relative bg-white overflow-visible">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Top divider */}
-        <motion.div
-          initial={{ scaleX: 0, opacity: 0 }}
-          animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ duration: 1.2, ease: [0.25, 0.4, 0.25, 1] }}
-          className="absolute top-0 left-0 right-0 h-px origin-center bg-gradient-to-r from-transparent via-gray-300 to-transparent"
-        />
 
-        {/* Animated gradient orbs - Hidden on mobile untuk performance */}
-        {!isMobile && (
-          <>
-            <motion.div 
-              style={{ y: y1, rotate: rotate1, opacity }}
-              className="absolute -top-64 -left-64 h-[400px] w-[400px] rounded-full bg-gradient-to-br from-orange-400/15 via-amber-400/10 to-transparent blur-3xl"
-            />
-            <motion.div 
-              style={{ y: y2, rotate: rotate2, opacity }}
-              className="absolute -bottom-64 -right-64 h-[400px] w-[400px] rounded-full bg-gradient-to-tl from-blue-600/15 via-indigo-500/10 to-transparent blur-3xl"
-            />
-          </>
-        )}
-      </div>
-
-      <div className="relative mx-auto max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8">
-
-        {/* Main Footer Content */}
-        <motion.div
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 lg:py-24">
+        <motion.div 
           ref={ref}
           variants={container}
           initial="hidden"
           animate={inView ? "show" : "hidden"}
-          className="grid grid-cols-1 gap-8 sm:gap-10 lg:grid-cols-12 lg:gap-8 py-8 sm:py-12 md:py-16 lg:py-20"
+          className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-16"
         >
           {/* Brand Section */}
           <motion.div variants={item} className="space-y-5 sm:space-y-6 lg:col-span-5 xl:col-span-4 overflow-visible">
@@ -182,21 +144,16 @@ export default function Footer() {
                       placeholder="Email kamu..."
                       className="flex-1 bg-transparent px-2 py-2 sm:py-2.5 text-sm sm:text-base text-slate-700 placeholder-slate-400 outline-none min-w-0"
                       required
+                      suppressHydrationWarning
                     />
                   </div>
                   <motion.button
-                    whileHover={!isMobile ? { scale: 1.05 } : {}}
+                    whileHover={!isMobile ? { y: -2, scale: 1.01 } : {}}
                     whileTap={{ scale: 0.95 }}
                     type="submit"
                     className="group relative overflow-hidden rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-white shadow-lg shadow-orange-300/50 transition-all duration-300 hover:shadow-xl hover:shadow-orange-400/60"
+                    suppressHydrationWarning
                   >
-                    {!isMobile && (
-                      <motion.span 
-                        className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0"
-                        animate={{ x: ['-200%', '200%'] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                      />
-                    )}
                     <span className="relative flex items-center justify-center gap-1.5 sm:gap-2">
                       {isSubmitted ? (
                         <>
@@ -237,7 +194,7 @@ export default function Footer() {
                     initial={{ opacity: 0, scale: 0 }}
                     animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0 }}
                     transition={{ delay: 0.5 + index * 0.1, type: "spring", stiffness: 200 }}
-                    whileHover={!isMobile ? { scale: 1.15, rotate: 5, y: -3 } : {}}
+                    whileHover={!isMobile ? { y: -2, scale: 1.06 } : {}}
                     whileTap={{ scale: 0.9 }}
                     className="group relative overflow-hidden rounded-xl border-2 border-gray-200 bg-white p-2.5 sm:p-3 shadow-md transition-all duration-300 hover:border-orange-300 hover:shadow-xl hover:shadow-orange-200/40"
                   >
@@ -269,91 +226,29 @@ export default function Footer() {
                   >
                     <motion.a
                       href={link.href}
-                      className="relative z-10 flex items-center justify-between rounded-lg sm:rounded-xl border border-gray-200 bg-white px-3 sm:px-4 py-2.5 sm:py-3 md:py-3.5 text-xs sm:text-sm md:text-base font-medium text-slate-700 transition-all duration-500 overflow-visible"
-                      whileHover={!isMobile ? { 
-                        scale: 1.02,
-                        y: -2,
-                        borderColor: "#fdba74",
-                        boxShadow: "0 20px 25px -5px rgba(249, 115, 22, 0.1), 0 10px 10px -5px rgba(249, 115, 22, 0.04)"
-                      } : {}}
+                      className="relative z-10 flex items-center justify-between rounded-lg sm:rounded-xl border border-gray-200 bg-white px-3 sm:px-4 py-2.5 sm:py-3 md:py-3.5 text-xs sm:text-sm md:text-base font-medium text-slate-700 transition-all duration-300 overflow-visible"
+                      whileHover={!isMobile ? { y: -3, scale: 1.01, borderColor: "#fdba74" } : {}}
                       whileTap={{ scale: 0.98 }}
                     >
-                      {/* Hover Background Effect */}
-                      <motion.div 
-                        className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 opacity-0 z-0"
-                        whileHover={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      />
-                      
-                      {/* Animated Border Glow */}
-                      <motion.div 
-                        className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-400 to-amber-400 opacity-0 z-0"
-                        whileHover={{ opacity: 0.1 }}
-                        transition={{ duration: 0.3 }}
-                      />
-                      
-                      {/* Floating Particles Effect */}
-                      {!isMobile && (
-                        <>
-                          <motion.div
-                            className="absolute -top-1 -right-1 w-2 h-2 bg-orange-400 rounded-full opacity-0 z-20"
-                            whileHover={{ 
-                              opacity: [0, 1, 0],
-                              scale: [0, 1.5, 0],
-                              transition: { duration: 0.8, times: [0, 0.5, 1] }
-                            }}
-                          />
-                          <motion.div
-                            className="absolute -bottom-1 -left-1 w-1.5 h-1.5 bg-amber-400 rounded-full opacity-0 z-20"
-                            whileHover={{ 
-                              opacity: [0, 1, 0],
-                              scale: [0, 1.8, 0],
-                              transition: { duration: 0.8, delay: 0.2, times: [0, 0.5, 1] }
-                            }}
-                          />
-                        </>
-                      )}
-
                       <span className="relative z-10 inline-flex items-center gap-2">
-                        <motion.div
-                          whileHover={!isMobile ? { 
-                            scale: 1.2,
-                            rotate: [0, -10, 10, 0],
-                            transition: { duration: 0.5 }
-                          } : {}}
-                        >
+                        <motion.div whileHover={!isMobile ? { scale: 1.08, y: -1 } : {}}>
                           <link.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-500 flex-shrink-0" />
                         </motion.div>
-                        <motion.span
-                          whileHover={!isMobile ? { 
-                            background: "linear-gradient(45deg, #ea580c, #d97706)",
-                            backgroundClip: "text",
-                            WebkitBackgroundClip: "text",
-                            color: "transparent",
-                            transition: { duration: 0.3 }
-                          } : {}}
-                        >
+                        <motion.span whileHover={!isMobile ? { color: "#ea580c" } : {}}>
                           {link.label}
                         </motion.span>
                       </span>
                       
-                      <motion.div
-                        className="relative z-10 flex items-center"
-                        whileHover={!isMobile ? { 
-                          x: 3,
-                          y: -3,
-                          transition: { type: "spring", stiffness: 400, damping: 10 }
-                        } : {}}
-                      >
+                      <motion.div className="relative z-10 flex items-center" whileHover={!isMobile ? { x: 2, y: -2 } : {}}>
                         <ArrowUpRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-slate-400 transition-all duration-300 group-hover:text-orange-600 flex-shrink-0" />
                       </motion.div>
                     </motion.a>
 
-                    {/* Extended Hover Glow Effect */}
+                    {/* Simplified hover background */}
                     <motion.div 
-                      className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-200 to-amber-200 blur-md opacity-0 -z-10"
-                      whileHover={{ opacity: 0.3, scale: 1.05 }}
-                      transition={{ duration: 0.4 }}
+                      className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 opacity-0 -z-10"
+                      whileHover={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
                     />
                   </motion.li>
                 ))}
@@ -382,7 +277,7 @@ export default function Footer() {
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 md:gap-6">
             <p className="text-slate-600">
-              © {new Date().getFullYear()} <span className="font-bold bg-gradient-to-r from-orange-600 to-blue-600 bg-clip-text text-transparent">UMKMotion</span>. Crafted with{" "}
+              {new Date().getFullYear()} <span className="font-bold bg-gradient-to-r from-orange-600 to-blue-600 bg-clip-text text-transparent">UMKMotion</span>. Crafted with{" "}
               <motion.span
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 1, repeat: Infinity }}
@@ -417,9 +312,10 @@ export default function Footer() {
           {/* Scroll to top button */}
           <motion.button
             onClick={scrollToTop}
-            whileHover={!isMobile ? { scale: 1.05, y: -4 } : {}}
+            whileHover={!isMobile ? { y: -3, scale: 1.02 } : {}}
             whileTap={{ scale: 0.95 }}
             className="group relative overflow-hidden inline-flex items-center gap-2 rounded-xl sm:rounded-2xl border-2 border-gray-200 bg-gradient-to-br from-white to-orange-50/30 px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-bold text-slate-700 shadow-lg transition-all duration-300 hover:border-orange-300 hover:shadow-xl hover:shadow-orange-200/50 w-full sm:w-auto justify-center"
+            suppressHydrationWarning
           >
             {!isMobile && (
               <motion.div
@@ -439,54 +335,28 @@ export default function Footer() {
         </motion.div>
       </div>
 
-      {/* Marquee Banner - Responsive */}
-      <div className="relative select-none border-t-2 border-gray-200 bg-gradient-to-r from-slate-950 via-blue-950 to-slate-950 py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 overflow-hidden">
-        {/* Gradient overlays - Adjusted for mobile */}
-        <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 bg-gradient-to-r from-slate-950 to-transparent z-10" />
-        <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 bg-gradient-to-l from-slate-950 to-transparent z-10" />
-        
-        <motion.div
-          initial={{ x: "0%" }}
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{ 
-            ease: "linear", 
-            duration: isMobile ? 20 : 28, 
-            repeat: Infinity, 
-            repeatType: "loop" 
-          }}
-          className="flex whitespace-nowrap items-center will-change-transform"
-          style={{ transform: 'translateZ(0)' }}
-        >
-          {[0, 1].map((loop) => (
-            <div key={loop} className="flex items-center gap-6 sm:gap-10 md:gap-14 lg:gap-20 xl:gap-24 px-6 sm:px-10 md:px-14 lg:px-16 xl:px-20">
-              <motion.span 
-                className="bg-gradient-to-r from-orange-400 via-amber-400 to-orange-400 bg-clip-text text-[12vw] sm:text-[10vw] md:text-[8vw] lg:text-[6vw] xl:text-[5vw] font-black leading-none text-transparent"
-                animate={!isMobile ? { backgroundPosition: ['0%', '100%'] } : {}}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-              >
-                UMKMOTION
-              </motion.span>
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: isMobile ? 6 : 8, repeat: Infinity, ease: "linear" }}
-                className="h-6 w-6 sm:h-10 sm:w-10 md:h-12 md:w-12 lg:h-14 lg:w-14 xl:h-16 xl:w-16 rounded-lg sm:rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 shadow-xl sm:shadow-2xl shadow-orange-500/50 flex-shrink-0"
-              />
-              <motion.span 
-                className="bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 bg-clip-text text-[12vw] sm:text-[10vw] md:text-[8vw] lg:text-[6vw] xl:text-[5vw] font-black leading-none text-transparent"
-                animate={!isMobile ? { backgroundPosition: ['100%', '0%'] } : {}}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-              >
-                ✨ TEMUKAN UMKM ✨
-              </motion.span>
-              <motion.div
-                animate={{ rotate: -360 }}
-                transition={{ duration: isMobile ? 6 : 8, repeat: Infinity, ease: "linear" }}
-                className="h-6 w-6 sm:h-10 sm:w-10 md:h-12 md:w-12 lg:h-14 lg:w-14 xl:h-16 xl:w-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 shadow-xl sm:shadow-2xl shadow-blue-500/50 flex-shrink-0"
-              />
-            </div>
-          ))}
-        </motion.div>
+      {/* FOOTER IMAGE BANNER */}
+      <div className="relative w-full">
+        <img 
+          src="/asset/optimized/Footer/FooterImg.webp" 
+          alt="UMKMotion Footer Banner"
+          className="w-full h-auto"
+        />
       </div>
+
+      {/* Bottom accent line */}
+      <motion.div
+        className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-purple-500 to-blue-500"
+        animate={{
+          backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
+        }}
+        transition={{
+          duration: 5,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+        style={{ backgroundSize: '200% 200%' }}
+      />
     </footer>
   );
 }

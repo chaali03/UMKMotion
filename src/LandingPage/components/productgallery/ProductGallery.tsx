@@ -1,10 +1,14 @@
 "use client";
-import { motion, useSpring, useMotionValue, useTransform } from "framer-motion";
+import { motion, useSpring } from "framer-motion";
 import { type MouseEvent, useRef, useState } from "react";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { 
+  ArrowRight, Sparkles,
+  Utensils, Wrench, Shirt, Palette,
+  HeartPulse, Sprout, Laptop, Armchair, Ellipsis
+} from "lucide-react";
 
 interface ProductCategory {
-  icon: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   title: string;
   count: string;
   img: string;
@@ -15,82 +19,82 @@ interface ProductCategory {
 
 const categories: ProductCategory[] = [
   {
-    icon: `<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path>`,
+    icon: Utensils,
     title: 'Kuliner',
     count: '13,485',
-    img: '/asset/umkm/umkm1.png',
+    img: '/asset/optimized/umkm/umkm1.webp',
     id: '01',
     color: '#f97316',
     gradient: 'from-orange-500 to-red-500'
   },
   {
-    icon: `<path d="M12 12h.01"></path><path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path><path d="M22 13a18.15 18.15 0 0 1-20 0"></path><rect width="20" height="14" x="2" y="6" rx="2"></rect>`,
+    icon: Wrench,
     title: 'Jasa',
     count: '8,284',
-    img: '/asset/umkm/umkm2.jpg',
+    img: '/asset/optimized/umkm/umkm2.webp',
     id: '02',
     color: '#3b82f6',
     gradient: 'from-blue-500 to-indigo-500'
   },
   {
-    icon: `<path d="M6 19v-3"></path><path d="M10 19v-3"></path><path d="M14 19v-3"></path><path d="M18 19v-3"></path><path d="M8 11V9"></path><path d="M16 11V9"></path><rect width="18" height="18" x="3" y="3" rx="2"></rect>`,
+    icon: Shirt,
     title: 'Fashion & Aksesoris',
     count: '3,829',
-    img: '/asset/umkm/umkm3.jpeg',
+    img: '/asset/optimized/umkm/umkm3.webp',
     id: '03',
     color: '#ec4899',
     gradient: 'from-pink-500 to-rose-500'
   },
   {
-    icon: `<path d="M12 2v20"></path><path d="M2 12h20"></path><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>`,
+    icon: Palette,
     title: 'Kerajinan/Kriya',
     count: '2,824',
-    img: '/asset/umkm/umkm4.jpeg',
+    img: '/asset/optimized/umkm/umkm4.webp',
     id: '04',
     color: '#8b5cf6',
     gradient: 'from-purple-500 to-violet-500'
   },
   {
-    icon: `<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>`,
+    icon: HeartPulse,
     title: 'Kesehatan & Kecantikan',
     count: '2,789',
-    img: '/asset/umkm/umkm5.jpg',
+    img: '/asset/optimized/umkm/umkm5.webp',
     id: '05',
     color: '#14b8a6',
     gradient: 'from-teal-500 to-emerald-500'
   },
   {
-    icon: `<path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"></path><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"></path><path d="M12 3v6"></path>`,
+    icon: Sprout,
     title: 'Pertanian & Perkebunan',
     count: '1,815',
-    img: '/asset/umkm/umkm6.jpg',
+    img: '/asset/optimized/umkm/umkm6.webp',
     id: '06',
     color: '#22c55e',
     gradient: 'from-green-500 to-lime-500'
   },
   {
-    icon: `<rect width="16" height="20" x="4" y="2" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path>`,
+    icon: Laptop,
     title: 'Komputer & Elektronik',
     count: '1,419',
-    img: '/asset/umkm/umkm1.png',
+    img: '/asset/optimized/umkm/umkm1.webp',
     id: '07',
     color: '#0ea5e9',
     gradient: 'from-cyan-500 to-blue-500'
   },
   {
-    icon: `<rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M3 9h18"></path><path d="M9 21V9"></path>`,
+    icon: Armchair,
     title: 'Furniture',
     count: '1,256',
-    img: '/asset/umkm/umkm2.jpg',
+    img: '/asset/optimized/umkm/umkm2.webp',
     id: '08',
     color: '#f59e0b',
     gradient: 'from-amber-500 to-orange-500'
   },
   {
-    icon: `<circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path>`,
+    icon: Ellipsis,
     title: 'Lainnya',
     count: '756',
-    img: '/asset/umkm/umkm4.jpeg',
+    img: '/asset/optimized/umkm/umkm4.webp',
     id: '9',
     color: '#64748b',
     gradient: 'from-gray-500 to-slate-500'
@@ -789,11 +793,10 @@ export default function ProductGallery() {
                 whileHover={{ y: -4, rotate: 5 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                  dangerouslySetInnerHTML={{ __html: item.icon }}
-                />
+                {(() => {
+                  const Icon = item.icon;
+                  return <Icon />;
+                })()}
               </motion.div>
 
               <div className="category-info">

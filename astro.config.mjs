@@ -12,6 +12,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   integrations: [react()],
 
+  // Performance optimizations
+  build: {
+    inlineStylesheets: 'auto',
+  },
+
+  // Prefetch optimization
+  prefetch: {
+    prefetchAll: false,
+    defaultStrategy: 'viewport'
+  },
+
   vite: {
     plugins: [tailwindcss()],
     resolve: {
@@ -19,6 +30,23 @@ export default defineConfig({
         'src': path.resolve(__dirname, './src'),
         '@': path.resolve(__dirname, './src')
       }
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Separate heavy libraries
+            'vendor-animation': ['framer-motion', 'gsap'],
+            'vendor-maps': ['@react-google-maps/api', 'mapbox-gl', 'maplibre-gl'],
+            'vendor-3d': ['three', '@react-three/fiber', '@react-three/drei', 'cobe'],
+            'vendor-ui': ['lucide-react', '@radix-ui/react-icons']
+          }
+        }
+      }
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom'],
+      exclude: ['@react-three/fiber', '@react-three/drei']
     }
   }
 });

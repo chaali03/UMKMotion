@@ -1,20 +1,9 @@
 "use client";
 
-import { useMediaQuery } from "../../../hooks/use-media-query";
-import ThemeSwitch from "../../../lib/theme-switch";
 import { cn } from "../../../lib/utils";
 import { AlignJustify, X, Home, Store, Building2, Users, Lightbulb, User, ShoppingCart, BookOpen, Info, LogIn, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Drawer } from "vaul";
-
-function XIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <title>X</title>
-      <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
-    </svg>
-  );
-}
 
 interface HomeHeaderProps {
   localTheme: "light" | "dark";
@@ -149,6 +138,11 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
 
         .nav-item-glow:hover::before {
           opacity: 0.6;
+        }
+
+        /* Hide header when map fullscreen is active */
+        .map-fullscreen-active header {
+          display: none !important;
         }
       `}</style>
 
@@ -315,19 +309,6 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                 <div className="flex items-center gap-2.5 justify-end">
                   <nav className="flex items-center gap-2.5">
                     <a
-                      href="https://twitter.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group inline-flex h-11 border-2 border-gray-200 dark:border-neutral-800 px-3.5 rounded-xl items-center justify-center hover:border-gray-300 dark:hover:border-neutral-700 transition-all duration-300 hover:shadow-lg hover:scale-105 bg-white dark:bg-neutral-900"
-                    >
-                      <XIcon className="h-4 w-4 fill-zinc-950 dark:fill-white transition-transform duration-300 group-hover:scale-110" />
-                    </a>
-                    <ThemeSwitch
-                      localTheme={localTheme}
-                      setLocalTheme={setLocalTheme}
-                      className="border-2 border-gray-200 dark:border-neutral-800 w-11 rounded-xl h-11 hover:border-gray-300 dark:hover:border-neutral-700 transition-all duration-300 hover:shadow-lg hover:scale-105 bg-white dark:bg-neutral-900"
-                    />
-                    <a
                       href="/login"
                       className="shimmer-effect group relative bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] hover:from-[#ff8534] hover:to-[#ff6914] text-white h-11 items-center flex justify-center px-5 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-300 font-semibold text-sm gap-2 hover:scale-[1.02]"
                     >
@@ -342,19 +323,6 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
             {/* Mobile Right Actions */}
             {isMobile && (
               <nav className="flex items-center gap-2">
-                <a
-                  href="https://twitter.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-11 border-2 border-gray-200 dark:border-neutral-800 px-3 rounded-xl items-center justify-center hover:border-gray-300 dark:hover:border-neutral-700 transition-all duration-300 bg-white dark:bg-neutral-900"
-                >
-                  <XIcon className="h-4 w-4 fill-zinc-950 dark:fill-white" />
-                </a>
-                <ThemeSwitch
-                  localTheme={localTheme}
-                  setLocalTheme={setLocalTheme}
-                  className="border-2 border-gray-200 dark:border-neutral-800 w-11 rounded-xl h-11 bg-white dark:bg-neutral-900"
-                />
                 <a
                   href="/login"
                   className="bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] text-white h-11 items-center flex justify-center px-4 rounded-xl shadow-lg font-semibold text-sm"

@@ -615,7 +615,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         <div className="search-header">
           <div className="header-badge">
             <Sparkles color="white" />
-            <span>TEMUKAN UMKM TERBAIK</span>
+            <span className="text-white">TEMUKAN UMKM TERBAIK</span>
           </div>
           <h2 className="search-title">
             Cari UMKM Pilihan Anda
@@ -644,6 +644,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                     onKeyDown={handleKeyPress}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
+                    suppressHydrationWarning
                   />
                   {isFocused && (
                     <div className="search-count">
@@ -657,6 +658,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                 className="search-button" 
                 onClick={handleSearch}
                 disabled={!query.trim()}
+                suppressHydrationWarning
               >
                 <Search strokeWidth={2.5} />
                 <span>Cari Sekarang</span>

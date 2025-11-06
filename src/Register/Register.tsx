@@ -1,61 +1,215 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, User } from "lucide-react";
-
-const carouselItems = [
-  { src: "/asset/umkm/umkm1.png", title: "Kuliner Nusantara" },
-  { src: "/asset/umkm/umkm2.jpg", title: "Fashion Lokal" },
-  { src: "/asset/umkm/umkm3.jpeg", title: "Kerajinan Tangan" },
-  { src: "/asset/umkm/umkm4.jpeg", title: "Produk Digital" },
-];
+import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Sparkles, MapPin, BarChart3, Megaphone, UserPlus, User } from "lucide-react";
+import { signUpWithEmail } from "../lib/auth";
+import { sendEmailOtp, verifyEmailOtp } from "../lib/otp";
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
+  const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(false);
-  const [isHoveringLogin, setIsHoveringLogin] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [leaving, setLeaving] = useState(false);
 
-  // Carousel auto-rotate
+  const slides = [
+    {
+      icon: <Sparkles size={32} color="#111827" />,
+      title: "Mulai Perjalananmu",
+      text:
+        "Daftarkan akunmu dalam tiga langkah sederhana. Nikmati akses ke fitur peta usaha, promosi, dan komunitas dukungan untuk mempercepat pertumbuhan bisnismu.",
+    },
+    {
+      icon: <UserPlus size={32} color="#111827" />,
+      title: "Bangun Identitas Bisnis",
+      text:
+        "Gunakan nama lengkap dan nickname agar profilmu terlihat profesional, mudah dicari pelanggan, dan konsisten di seluruh fitur UMKMotion.",
+    },
+    {
+      icon: <Lock size={32} color="#111827" />,
+      title: "Keamanan Diutamakan",
+      text:
+        "Lindungi aksesmu dengan verifikasi email dan password yang kuat. Data usahamu tersimpan aman sehingga kamu bisa fokus berkembang.",
+    },
+  ];
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % carouselItems.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
+    if (paused) return;
+    const id = setInterval(() => setSlideIndex((i) => (i + 1) % slides.length), 3500);
+    return () => clearInterval(id);
+  }, [paused, slides.length]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const validateEmail = (v: string) => /[^\s@]+@[^\s@]+\.[^\s@]+/.test(v);
+  
+  const nextFromName = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      alert("Password tidak cocok!");
-      return;
+    setErrors({});
+    if (!fullName || fullName.length < 3) return setErrors({ fullName: "Nama minimal 3 karakter" });
+    if (!nickname || nickname.length < 3) return setErrors({ nickname: "Nickname minimal 3 karakter" });
+    setCurrentStep(1);
+  };
+
+  const nextFromEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+    if (!validateEmail(email)) return setErrors({ email: "Email tidak valid" });
+    // If OTP not sent, send it; otherwise attempt verify if code provided
+    if (!otpSent) {
+      await handleSendOtp();
+    } else {
+      await handleVerifyOtp();
     }
-    if (!agreeTerms) {
-      alert("Anda harus menyetujui syarat dan ketentuan");
-      return;
+  };
+
+  const handleSendOtp = async () => {
+    if (!validateEmail(email)) { 
+      setErrors({ email: "Email tidak valid" }); 
+      return; 
     }
+    
+    try {
+      setIsSendingOtp(true);
+      setErrors({}); // Clear previous errors
+      
+      await sendEmailOtp(email, { ttlSeconds: 600, subject: "Kode Verifikasi UMKMotion" });
+      
+      setOtpSent(true);
+      setOtpCooldown(60);
+      setVerificationCode(""); // Clear previous verification code
+      
+      // Show success feedback
+      if (typeof window !== 'undefined') {
+        console.log('📧 Kode verifikasi berhasil dikirim ke', email);
+        // Show success message to user
+        alert(`✅ Kode verifikasi telah dikirim ke ${email}\n\nSilakan cek inbox Anda (juga folder spam jika tidak muncul).`);
+      }
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Gagal mengirim kode. Coba lagi.";
+      setErrors({ email: errorMessage });
+      
+      // Auto clear error after 8 seconds
+      setTimeout(() => {
+        setErrors(prev => ({ ...prev, email: '' }));
+      }, 8000);
+      
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (verificationCode.length !== 6) { 
+      setErrors({ code: "Kode verifikasi harus 6 digit" }); 
+      return; 
+    }
+    
+    try {
+      setIsVerifyingOtp(true);
+      setErrors({}); // Clear previous errors
+      
+      await verifyEmailOtp(email, verificationCode);
+      
+      // Success - move to next step
+      setCurrentStep(2);
+      
+      // Show success feedback
+      if (typeof window !== 'undefined') {
+        // Optional: Show success toast/notification
+        console.log('✅ Kode verifikasi berhasil diverifikasi');
+      }
+      
+    } catch (err: any) {
+      // Enhanced error handling
+      let errorMessage = "Kode salah atau kadaluarsa";
+      
+      if (err.message?.includes('kadaluarsa')) {
+        errorMessage = "Kode verifikasi sudah kadaluarsa. Silakan kirim ulang.";
+      } else if (err.message?.includes('digunakan')) {
+        errorMessage = "Kode sudah digunakan. Silakan kirim ulang.";
+      } else if (err.message?.includes('tidak ditemukan')) {
+        errorMessage = "Kode tidak valid. Periksa kembali kode yang Anda masukkan.";
+      }
+      
+      setErrors({ code: errorMessage });
+      
+      // Auto clear error after 5 seconds
+      setTimeout(() => {
+        setErrors(prev => ({ ...prev, code: '' }));
+      }, 5000);
+      
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!otpCooldown) return;
+    const t = setInterval(() => setOtpCooldown((s) => (s > 0 ? s - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, [otpCooldown]);
+
+  // Auto-submit when verification code is complete (6 digits)
+  useEffect(() => {
+    if (verificationCode.length === 6 && otpSent && !isVerifyingOtp) {
+      handleVerifyOtp();
+    }
+  }, [verificationCode, otpSent, isVerifyingOtp]);
+
+  const submitPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+    if (password.length < 8) return setErrors({ password: "Minimal 8 karakter" });
+    if (password !== confirmPassword) return setErrors({ confirm: "Password tidak cocok" });
     setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 2000);
+    try {
+      await signUpWithEmail(email, password);
+      alert("Akun berhasil dibuat. Kamu sudah verifikasi dengan kode OTP sebelumnya.");
+      window.location.href = "/login";
+    } catch (err) {
+      alert("Gagal membuat akun. Coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleRegister = () => {
-    console.log("Google register");
+  const goBack = () => {
+    if (currentStep > 0) setCurrentStep((s) => s - 1);
   };
 
-  const handleBackToHome = () => {
-    window.location.href = "/";
+  const navigateWithExit = (href: string) => {
+    if (leaving) return;
+    setLeaving(true);
+    setTimeout(() => {
+      window.location.href = href;
+    }, 350);
   };
 
   return (
-    <div className="register-container">
+    <div className="container">
       <style>{`
-        .register-container {
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        .container {
           min-height: 100vh;
           width: 100%;
           display: flex;
@@ -63,272 +217,224 @@ export default function RegisterPage() {
           justify-content: center;
           position: relative;
           overflow: hidden;
-          background: #FF6914;
+          background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/asset/register/register.webp');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          background-attachment: fixed;
+          font-family: 'Inter', -apple-system, sans-serif;
         }
 
-        /* Back to Home Button */
-        .back-to-home {
+        /* Animated Background Gradient */
+        .bg-animated {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            135deg,
+            #eff6ff 0%,
+            #dbeafe 25%,
+            #bfdbfe 50%,
+            #93c5fd 75%,
+            #60a5fa 100%
+          );
+          background-size: 400% 400%;
+          animation: gradientFlow 15s ease infinite;
+        }
+
+        @keyframes gradientFlow {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        /* Floating Shapes */
+        .shape {
+          position: absolute;
+          border-radius: 50%;
+          opacity: 0.1;
+          filter: blur(40px);
+        }
+
+        .shape-1 {
+          width: 500px;
+          height: 500px;
+          background: #fff;
+          top: -250px;
+          right: -250px;
+          animation: float1 20s ease-in-out infinite;
+        }
+
+        .shape-2 {
+          width: 400px;
+          height: 400px;
+          background: #fff;
+          bottom: -200px;
+          left: -200px;
+          animation: float2 18s ease-in-out infinite;
+        }
+
+        @keyframes float1 {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          50% { transform: translate(-50px, 50px) rotate(180deg); }
+        }
+
+        @keyframes float2 {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          50% { transform: translate(50px, -50px) rotate(-180deg); }
+        }
+
+        /* Back Button */
+        .back-btn {
           position: fixed;
           top: 2rem;
           left: 2rem;
-          z-index: 50;
+          z-index: 100;
+          padding: 0.75rem 1.25rem;
+          background: rgba(0, 0, 0, 0.08);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(0, 0, 0, 0.12);
+          border-radius: 12px;
+          color: #0f172a;
+          font-size: 0.875rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          padding: 0.75rem 1.25rem;
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(10px);
-          border: 1.5px solid rgba(255, 255, 255, 0.3);
-          border-radius: 12px;
-          color: #334155;
-          font-size: 0.9375rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 
-            0 4px 6px -1px rgba(0, 0, 0, 0.1),
-            0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
-        .back-to-home:hover {
+        .back-btn:hover {
+          background: rgba(0, 0, 0, 0.12);
           transform: translateX(-4px);
-          background: rgba(255, 255, 255, 1);
-          border-color: #ff7a1a;
-          color: #ff7a1a;
-          box-shadow: 
-            0 10px 15px -3px rgba(0, 0, 0, 0.1),
-            0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
-        .back-to-home:active {
-          transform: translateX(-2px);
-        }
-
-        .back-to-home svg {
+        .back-btn svg {
           width: 18px;
           height: 18px;
-          stroke-width: 2.5;
-          transition: transform 0.3s ease;
         }
 
-        .back-to-home:hover svg {
-          transform: translateX(-2px);
-        }
-
-        .back-text {
-          display: inline;
-        }
-
-        /* Enhanced Grid pattern */
-        .grid-pattern {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          background-image: 
-            radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
-          background-size: 100% 100%, 100% 100%, 20px 20px;
-          z-index: 0;
-        }
-
-        /* Enhanced Card */
-        .register-card {
+        /* Main Card - SAME AS LOGIN */
+        .card {
           position: relative;
           z-index: 10;
           width: 90%;
-          max-width: 1100px;
-          display: grid;
-          grid-template-columns: 45% 55%;
+          max-width: 900px;
           background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(30px);
-          border-radius: 32px;
+          backdrop-filter: blur(20px);
+          border-radius: 24px;
           overflow: hidden;
           box-shadow: 
-            0 0 0 1px rgba(255, 255, 255, 0.6),
-            0 20px 60px rgba(0, 0, 0, 0.1),
-            0 40px 100px rgba(0, 0, 0, 0.05);
-          transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            0 20px 60px rgba(0, 0, 0, 0.3),
+            0 0 0 1px rgba(255, 255, 255, 0.1);
+          display: grid;
+          grid-template-columns: 1fr 1fr;
         }
 
-        .register-card:hover {
-          transform: translateY(-10px);
-          box-shadow: 
-            0 0 0 1px rgba(255, 255, 255, 0.8),
-            0 30px 80px rgba(0, 0, 0, 0.15),
-            0 50px 120px rgba(0, 0, 0, 0.08);
-        }
-
-        /* Enhanced Image section */
-        .image-section {
-          position: relative;
-          background: #ff8a3d;
+        /* Left Side - Brand - SAME AS LOGIN */
+        .brand-side {
           padding: 3rem;
+          background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
+          justify-content: center;
+          align-items: center;
+          text-align: center;
+          position: relative;
           overflow: hidden;
         }
 
-        .image-section::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: 
-            url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-          opacity: 1;
-          animation: patternMove 30s linear infinite;
-        }
-
-        @keyframes patternMove {
-          0% { transform: translate(0, 0); }
-          100% { transform: translate(60px, 60px); }
-        }
-
-        .image-section::after {
+        .brand-side::before {
           content: '';
           position: absolute;
           width: 300px;
           height: 300px;
-          background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+          background: rgba(255, 255, 255, 0.1);
           border-radius: 50%;
-          bottom: -100px;
-          right: -100px;
-          animation: pulse 4s ease-in-out infinite;
+          top: -150px;
+          right: -150px;
         }
 
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); opacity: 0.3; }
-          50% { transform: scale(1.1); opacity: 0.5; }
-        }
-
-        .carousel-wrapper {
-          position: relative;
-          flex: 1;
-          border-radius: 24px;
-          overflow: hidden;
-          box-shadow: 
-            0 0 0 1px rgba(255, 255, 255, 0.2),
-            0 25px 70px rgba(0, 0, 0, 0.4);
-          z-index: 2;
-          transition: transform 0.3s ease;
-        }
-
-        .carousel-wrapper:hover {
-          transform: scale(1.02);
-        }
-
-        .carousel-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .image-overlay {
+        .brand-side::after {
+          content: '';
           position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          padding: 1.5rem;
-          background: rgba(0, 0, 0, 0.4);
-          color: white;
-          font-weight: 600;
-          font-size: 1.1rem;
-          z-index: 3;
+          width: 250px;
+          height: 250px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 50%;
+          bottom: -125px;
+          left: -125px;
         }
 
-        .carousel-dots {
-          display: flex;
-          gap: 10px;
-          justify-content: center;
-          margin-top: 1.5rem;
-          z-index: 2;
+        .brand-title {
+          font-size: 2rem;
+          font-weight: 800;
+          color: white;
+          margin-bottom: 1rem;
           position: relative;
+          z-index: 2;
+        }
+
+        .brand-text {
+          font-size: 1rem;
+          color: rgba(255, 255, 255, 0.9);
+          line-height: 1.6;
+          max-width: 300px;
+          position: relative;
+          z-index: 2;
+        }
+
+        .decorative-dots {
+          position: absolute;
+          bottom: 2rem;
+          display: flex;
+          gap: 0.5rem;
         }
 
         .dot {
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
+          width: 8px;
+          height: 8px;
           background: rgba(255, 255, 255, 0.4);
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          border-radius: 50%;
+          transition: all 0.2s ease;
           cursor: pointer;
-          border: 2px solid transparent;
-        }
-
-        .dot:hover {
-          background: rgba(255, 255, 255, 0.6);
-          transform: scale(1.2);
         }
 
         .dot.active {
-          width: 32px;
-          border-radius: 6px;
           background: white;
-          box-shadow: 0 4px 12px rgba(255, 255, 255, 0.4);
+          width: 16px;
+          border-radius: 6px;
         }
 
-        /* Enhanced Form section */
-        .form-section {
-          padding: 2.5rem 3.5rem;
+        /* Right Side - Form - SAME AS LOGIN */
+        .form-side {
+          padding: 3rem 2.5rem;
           display: flex;
           flex-direction: column;
           justify-content: center;
-          position: relative;
-          overflow-y: auto;
-          max-height: 100vh;
         }
 
-        .form-section::-webkit-scrollbar {
-          width: 6px;
+        .form-header {
+          margin-bottom: 2rem;
         }
 
-        .form-section::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-radius: 10px;
+        .welcome-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(37, 99, 235, 0.12));
+          border: 1px solid rgba(37, 99, 235, 0.25);
+          border-radius: 50px;
+          color: #2563eb;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          margin-bottom: 1.5rem;
         }
 
-        .form-section::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 10px;
-        }
-
-        .form-section::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
-
-        .form-section::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          right: 0;
-          width: 200px;
-          height: 200px;
-          background: radial-gradient(circle, rgba(255, 122, 26, 0.05) 0%, transparent 70%);
-          border-radius: 50%;
-          pointer-events: none;
-        }
-
-        .logo-badge {
-          width: 100px;
-          height: 100px;
-          margin-bottom: 1.25rem;
-          padding: 0;
-          background: transparent;
-          border-radius: 24px;
-          transition: all 0.3s ease;
-        }
-
-        .logo-badge:hover {
-          transform: scale(1.05) rotate(2deg);
-        }
-
-        .logo-badge img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          opacity: 0.9;
+        .welcome-badge svg {
+          width: 14px;
+          height: 14px;
         }
 
         .form-title {
@@ -336,257 +442,161 @@ export default function RegisterPage() {
           font-weight: 800;
           color: #1a1a1a;
           margin-bottom: 0.5rem;
-          background: linear-gradient(135deg, #1a1a1a 0%, #ff7a1a 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          letter-spacing: -0.5px;
         }
 
         .form-subtitle {
           font-size: 0.9375rem;
           color: #64748b;
-          margin-bottom: 1.75rem;
-          font-weight: 400;
-          line-height: 1.5;
         }
 
-        /* INPUT STYLES */
+        /* Input Styles - SAME AS LOGIN */
         .input-group {
-          margin-bottom: 1rem;
+          margin-bottom: 1.25rem;
         }
 
         .input-label {
           display: block;
-          font-size: 0.8125rem;
+          font-size: 0.875rem;
           font-weight: 600;
           color: #334155;
           margin-bottom: 0.5rem;
-          letter-spacing: 0.01em;
-          transition: color 0.2s ease;
-        }
-
-        .input-group:focus-within .input-label {
-          color: #ff7a1a;
         }
 
         .input-wrapper {
           position: relative;
-          width: 100%;
         }
 
         .input-icon {
           position: absolute;
-          left: 14px;
+          left: 1rem;
           top: 50%;
           transform: translateY(-50%);
           color: #94a3b8;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          pointer-events: none;
-          z-index: 2;
+          transition: color 0.2s ease;
         }
-        
+
         .input-icon svg {
-          width: 18px;
-          height: 18px;
-          stroke-width: 2;
+          width: 20px;
+          height: 20px;
         }
 
         .input-wrapper:focus-within .input-icon {
-          color: #ff7a1a;
-          transform: translateY(-50%) scale(1.05);
+          color: #2563eb;
         }
 
         .input-field {
           width: 100%;
-          height: 44px;
-          padding: 0 14px 0 44px;
-          border: 1.5px solid #e2e8f0;
-          border-radius: 10px;
+          height: 48px;
+          padding: 0 1rem 0 3rem;
+          background: #f8fafc;
+          border: 2px solid transparent;
+          border-radius: 12px;
           font-size: 0.9375rem;
-          font-weight: 400;
-          line-height: 1.5;
           color: #1e293b;
-          background-color: #ffffff;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          box-sizing: border-box;
+          transition: all 0.2s ease;
           outline: none;
         }
 
         .input-field::placeholder {
           color: #94a3b8;
-          font-weight: 400;
-        }
-
-        .input-field:hover:not(:focus) {
-          border-color: #cbd5e1;
-          background-color: #f8fafc;
         }
 
         .input-field:focus {
-          border-color: #ff7a1a;
-          background-color: #ffffff;
-          box-shadow: 
-            0 0 0 3px rgba(255, 122, 26, 0.08),
-            0 1px 2px 0 rgba(0, 0, 0, 0.05);
-          transform: translateY(-1px);
+          background: white;
+          border-color: #2563eb;
+          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
         }
 
-        .input-field:focus::placeholder {
-          color: #cbd5e1;
+        .input-field.input-complete {
+          border-color: #22c55e;
+          background: #f0fdf4;
         }
 
-        .input-field.has-toggle {
-          padding-right: 48px;
+        .input-field.input-error {
+          border-color: #ef4444;
+          background: #fef2f2;
+        }
+
+        .input-field:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .helper-text.success {
+          background: #f0fdf4;
+          border-left-color: #22c55e;
+          color: #16a34a;
+        }
+
+        .helper-text.error {
+          background: #fef2f2;
+          border-left-color: #ef4444;
+          color: #dc2626;
         }
 
         .toggle-password {
           position: absolute;
-          right: 6px;
+          right: 1rem;
           top: 50%;
           transform: translateY(-50%);
-          background: transparent;
+          background: none;
           border: none;
-          padding: 0;
-          margin: 0;
           color: #94a3b8;
           cursor: pointer;
-          width: 36px;
-          height: 36px;
+          padding: 0.5rem;
           display: flex;
           align-items: center;
-          justify-content: center;
-          border-radius: 6px;
-          transition: color 0.2s ease, background-color 0.2s ease;
-          z-index: 3;
-        }
-        
-        .toggle-password svg {
-          width: 18px;
-          height: 18px;
-          stroke-width: 2;
-          display: block;
-        }
-
-        .toggle-password:hover {
-          color: #ff7a1a;
-          background: rgba(255, 122, 26, 0.08);
-        }
-
-        .toggle-password:active {
-          background: rgba(255, 122, 26, 0.12);
-        }
-
-        /* Checkbox Terms */
-        .checkbox-group {
-          margin: 1.25rem 0;
-          display: flex;
-          align-items: start;
-          gap: 0.75rem;
-        }
-
-        .checkbox-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
-
-        .checkbox-input {
-          width: 18px;
-          height: 18px;
-          border: 2px solid #cbd5e1;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          appearance: none;
-          background: white;
-          position: relative;
-        }
-
-        .checkbox-input:checked {
-          background: #ff7a1a;
-          border-color: #ff7a1a;
-        }
-
-        .checkbox-input:checked::after {
-          content: '✓';
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          color: white;
-          font-size: 12px;
-          font-weight: bold;
-        }
-
-        .checkbox-input:hover {
-          border-color: #ff7a1a;
-        }
-
-        .checkbox-label {
-          font-size: 0.875rem;
-          color: #64748b;
-          line-height: 1.5;
-          cursor: pointer;
-          user-select: none;
-        }
-
-        .checkbox-label a {
-          color: #ff7a1a;
-          font-weight: 600;
-          text-decoration: none;
           transition: color 0.2s ease;
         }
 
-        .checkbox-label a:hover {
-          color: #ff4d00;
-          text-decoration: underline;
+        .toggle-password:hover {
+          color: #f97316;
         }
 
-        .btn-primary {
+        .toggle-password svg {
+          width: 20px;
+          height: 20px;
+        }
+
+        /* Helper Text */
+        .helper-text {
+          margin-top: 0.5rem;
+          padding: 0.75rem;
+          background: #eff6ff;
+          border-left: 3px solid #2563eb;
+          border-radius: 8px;
+          font-size: 0.8125rem;
+          color: #1e40af;
+          line-height: 1.4;
+        }
+
+        /* Buttons - SAME AS LOGIN */
+        .btn {
           width: 100%;
-          height: 44px;
-          padding: 0;
-          background: #ff7a1a;
-          color: white;
-          border: none;
-          border-radius: 10px;
+          height: 48px;
+          border-radius: 12px;
           font-size: 0.9375rem;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          margin-top: 1rem;
+          transition: all 0.3s ease;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
-          box-shadow: 
-            0 1px 2px 0 rgba(0, 0, 0, 0.05),
-            0 0 0 1px rgba(255, 122, 26, 0.1);
-          position: relative;
-          overflow: hidden;
+          border: none;
+          outline: none;
         }
 
-        .btn-primary::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: rgba(255, 255, 255, 0.2);
-          transition: left 0.6s ease;
-        }
-
-        .btn-primary:hover::before {
-          left: 100%;
+        .btn-primary {
+          background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+          color: white;
+          margin-top: 1rem;
+          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
         }
 
         .btn-primary:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 
-            0 4px 12px rgba(255, 122, 26, 0.25),
-            0 0 0 1px rgba(255, 122, 26, 0.1);
+          box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
         }
 
         .btn-primary:active:not(:disabled) {
@@ -598,15 +608,33 @@ export default function RegisterPage() {
           cursor: not-allowed;
         }
 
+        .btn-back {
+          flex: 0 0 auto;
+          width: 48px;
+          padding: 0;
+          background: #f1f5f9;
+          color: #475569;
+        }
+
+        .btn-back:hover {
+          background: #e2e8f0;
+        }
+
+        .btn-group {
+          display: flex;
+          gap: 0.75rem;
+          margin-top: 1rem;
+        }
+
+        /* Divider */
         .divider {
           display: flex;
           align-items: center;
           gap: 1rem;
           margin: 1.5rem 0;
           color: #94a3b8;
-          font-size: 0.75rem;
-          font-weight: 600;
-          letter-spacing: 0.05em;
+          font-size: 0.8125rem;
+          font-weight: 500;
         }
 
         .divider::before,
@@ -617,115 +645,97 @@ export default function RegisterPage() {
           background: #e2e8f0;
         }
 
-        .btn-google {
-          width: 100%;
-          height: 44px;
-          padding: 0;
-          background: white;
-          border: 1.5px solid #e2e8f0;
-          border-radius: 10px;
-          font-size: 0.9375rem;
-          font-weight: 600;
-          color: #334155;
-          cursor: pointer;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.75rem;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .btn-google::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 0;
-          height: 100%;
-          background: rgba(66, 133, 244, 0.04);
-          transition: width 0.4s ease;
-        }
-
-        .btn-google:hover::before {
-          width: 100%;
-        }
-
-        .btn-google:hover {
-          border-color: #cbd5e1;
-          background-color: #f8fafc;
-          transform: translateY(-2px);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        }
-
-        .btn-google:active {
-          transform: translateY(0);
-        }
-
-        .login-text {
+        .footer-text {
           text-align: center;
           margin-top: 1.5rem;
           font-size: 0.9375rem;
           color: #64748b;
-          line-height: 1.5;
         }
 
-        .login-link {
-          color: #ff7a1a;
-          font-weight: 700;
+        .footer-text a {
+          color: #2563eb;
+          font-weight: 600;
           text-decoration: none;
-          transition: all 0.2s ease;
-          position: relative;
-          padding-bottom: 2px;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
+          transition: color 0.2s ease;
         }
 
-        .login-link::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 1.5px;
-          background: #ff7a1a;
-          transform: scaleX(0);
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .footer-text a:hover {
+          color: #1d4ed8;
         }
 
-        .login-link:hover {
-          color: #ff4d00;
+        .link-btn {
+          background: none;
+          border: none;
+          color: #2563eb;
+          font-weight: 600;
+          cursor: pointer;
+          text-decoration: underline;
+          transition: color 0.2s ease;
         }
 
-        .login-link:hover::after {
-          transform: scaleX(1);
+        .link-btn:hover:not(:disabled) {
+          color: #1d4ed8;
         }
 
-        /* Responsive */
+        .link-btn:disabled {
+          color: #94a3b8;
+          cursor: not-allowed;
+          text-decoration: none;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+          width: 20px;
+          height: 20px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-top-color: white;
+          border-radius: 50%;
+          animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        /* Mobile Hero (hidden on desktop) */
+        .mobile-hero {
+          display: none;
+        }
+
+        /* Responsive - SAME AS LOGIN */
         @media (max-width: 1024px) {
-          .register-card {
+          .card {
             grid-template-columns: 1fr;
-            max-width: 480px;
+            max-width: 450px;
           }
 
-          .image-section {
+          .brand-side {
             display: none;
           }
 
-          .form-section {
+          .form-side {
             padding: 2.5rem 2rem;
           }
 
-          .back-to-home {
-            top: 1.5rem;
-            left: 1.5rem;
+          .mobile-hero {
+            display:block;
+            width: 100%;
+            height: 160px;
+            margin-bottom: 1rem;
+            border-radius: 16px;
+            overflow:hidden;
+            background: #eef2ff;
           }
+          .mobile-hero img { width: 100%; height: 100%; object-fit: cover; display:block; }
         }
 
         @media (max-width: 640px) {
-          .form-section {
+          .card {
+            width: 95%;
+            margin: 1rem;
+          }
+
+          .form-side {
             padding: 2rem 1.5rem;
           }
 
@@ -733,372 +743,278 @@ export default function RegisterPage() {
             font-size: 1.75rem;
           }
 
-          .logo-badge {
-            width: 85px;
-            height: 85px;
-          }
-
-          .input-field,
-          .btn-primary,
-          .btn-google {
-            height: 42px;
-          }
-
-          .toggle-password {
-            width: 34px;
-            height: 34px;
-          }
-
-          .back-to-home {
+          .back-btn {
             top: 1rem;
             left: 1rem;
             padding: 0.625rem 1rem;
-            font-size: 0.875rem;
           }
 
-          .back-to-home svg {
-            width: 16px;
-            height: 16px;
-          }
-
-          .back-text {
+          .back-btn span {
             display: none;
           }
         }
-
-        /* Loading spinner */
-        .spinner {
-          width: 18px;
-          height: 18px;
-          border: 2.5px solid rgba(255, 255, 255, 0.3);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: spin 0.7s linear infinite;
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        /* Focus visible */
-        *:focus-visible {
-          outline: 2px solid #ff7a1a;
-          outline-offset: 2px;
-        }
-
-        .input-field:focus-visible,
-        .checkbox-input:focus-visible {
-          outline: none;
-        }
       `}</style>
 
-      {/* Back to Home Button */}
+      {/* Background */}
+      <div className="bg-animated" />
+      <div className="shape shape-1" />
+      <div className="shape shape-2" />
+
+      {/* Back Button */}
       <motion.button
-        className="back-to-home"
-        onClick={handleBackToHome}
+        className="back-btn"
+        onClick={() => (window.location.href = "/")}
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
+        transition={{ duration: 0.5 }}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
         <ArrowLeft />
-        <span className="back-text">Kembali ke Beranda</span>
+        <span>Kembali</span>
       </motion.button>
 
-      {/* Background elements */}
-      <div className="grid-pattern" />
-
-      {/* Main card */}
-      <motion.div
-        className="register-card"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-      >
-        {/* Left: Image carousel */}
-        <div className="image-section">
+      {/* Main Card */}
+      <AnimatePresence mode="wait">
+        {!leaving && (
           <motion.div
-            className="carousel-wrapper"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
+            className="card"
+            initial={{ opacity: 0, y: 10, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, x: 40, scale: 0.92, transition: { duration: 0.3 } }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
           >
+        {/* Left - Brand with animated slides */}
+        <div
+          className="brand-side"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
+          {!leaving && (
             <AnimatePresence mode="wait">
               <motion.div
-                key={currentImageIndex}
-                initial={{ opacity: 0, scale: 1.1 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.7 }}
-                style={{ width: '100%', height: '100%', position: 'relative' }}
+                key={slideIndex}
+                initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                transition={{ duration: 0.35 }}
+                className="flex flex-col items-center"
               >
-                <img
-                  src={carouselItems[currentImageIndex].src}
-                  alt={carouselItems[currentImageIndex].title}
-                  className="carousel-image"
-                />
-                <div className="image-overlay">
-                  {carouselItems[currentImageIndex].title}
-                </div>
+                <div className="mb-3">{slides[slideIndex].icon}</div>
+                <h1 className="brand-title">{slides[slideIndex].title}</h1>
+                <p className="brand-text">{slides[slideIndex].text}</p>
               </motion.div>
             </AnimatePresence>
-          </motion.div>
+          )}
 
-          <div className="carousel-dots">
-            {carouselItems.map((_, index) => (
-              <motion.div
-                key={index}
-                className={`dot ${index === currentImageIndex ? 'active' : ''}`}
-                onClick={() => setCurrentImageIndex(index)}
-                whileHover={{ scale: 1.2 }}
-                whileTap={{ scale: 0.9 }}
-              />
+          <div className="decorative-dots">
+            {slides.map((_, i) => (
+              <div key={i} className={"dot" + (i === slideIndex ? " active" : "")} onClick={() => setSlideIndex(i)} />
             ))}
           </div>
         </div>
 
-        {/* Right: Form */}
-        <div className="form-section">
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-          >
-            <motion.div
-              className="logo-badge"
-              whileHover={{ scale: 1.05, rotate: 2 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <img src="/logo.png" alt="Logo" />
+        {/* Right - Register Form */}
+        <div className="form-side">
+          <div className="form-header">
+            {/* Mobile only hero image/banner (hidden on exit) */}
+            {!leaving && (
+              <div className="mobile-hero">
+                <img src="/asset/register/register.webp" alt="Register hero" />
+              </div>
+            )}
+            <motion.div className="welcome-badge" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              <Sparkles />
+              <span>{currentStep === 0 ? "Langkah 1 dari 3" : currentStep === 1 ? "Langkah 2 dari 3" : "Langkah 3 dari 3"}</span>
             </motion.div>
+            <h2 className="form-title">{currentStep === 0 ? "Data Profil" : currentStep === 1 ? "Email & Verifikasi" : "Buat Password"}</h2>
+            <p className="form-subtitle">{currentStep === 0 ? "Isi nama lengkap dan nickname kamu." : currentStep === 1 ? "Masukkan email dan kode verifikasi 6 digit." : "Amankan akunmu dengan password yang kuat."}</p>
+          </div>
 
-            <h2 className="form-title">
-              Daftar Akun Baru
-            </h2>
-            <p className="form-subtitle">
-              Bergabunglah dan mulai perjalanan bisnis Anda bersama kami
-            </p>
-
-            <form onSubmit={handleSubmit}>
-              {/* Full Name Input */}
-              <div className="input-group">
-                <label htmlFor="fullName" className="input-label">
-                  Nama Lengkap
-                </label>
-                <div className="input-wrapper">
-                  <User className="input-icon" />
-                  <motion.input
-                    type="text"
-                    id="fullName"
-                    className="input-field"
-                    placeholder="Masukkan nama lengkap"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                    whileFocus={{ scale: 1.001 }}
-                  />
+          <AnimatePresence mode="wait">
+            {/* Step 1: Name */}
+            {currentStep === 0 && (
+              <motion.form key="step-name" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }} onSubmit={nextFromName}>
+                <div className="input-group">
+                  <label htmlFor="name" className="input-label">Nama Lengkap</label>
+                  <div className="input-wrapper">
+                    <User className="input-icon" />
+                    <input id="name" type="text" className="input-field" placeholder="Nama lengkap kamu" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                  </div>
+                  {errors.fullName && <div className="helper-text">{errors.fullName}</div>}
                 </div>
-              </div>
-
-              {/* Email Input */}
-              <div className="input-group">
-                <label htmlFor="email" className="input-label">
-                  Alamat Email
-                </label>
-                <div className="input-wrapper">
-                  <Mail className="input-icon" />
-                  <motion.input
-                    type="email"
-                    id="email"
-                    className="input-field"
-                    placeholder="nama@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    whileFocus={{ scale: 1.001 }}
-                  />
+                <div className="input-group">
+                  <label htmlFor="nick" className="input-label">Nickname</label>
+                  <div className="input-wrapper">
+                    <User className="input-icon" />
+                    <input id="nick" type="text" className="input-field" placeholder="Panggilan kamu" value={nickname} onChange={(e) => setNickname(e.target.value)} />
+                  </div>
+                  {errors.nickname && <div className="helper-text">{errors.nickname}</div>}
                 </div>
-              </div>
 
-              {/* Password Input */}
-              <div className="input-group">
-                <label htmlFor="password" className="input-label">
-                  Kata Sandi
-                </label>
-                <div className="input-wrapper">
-                  <Lock className="input-icon" />
-                  <motion.input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    className="input-field has-toggle"
-                    placeholder="Minimal 8 karakter"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    whileFocus={{ scale: 1.001 }}
-                  />
-                  <button
-                    type="button"
-                    className="toggle-password"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-                  >
-                    {showPassword ? <EyeOff /> : <Eye />}
-                  </button>
+                <button type="submit" className="btn btn-primary">
+                  Lanjutkan <ArrowRight size={18} />
+                </button>
+
+                <p className="footer-text">
+                  Sudah punya akun? {" "}
+                  <button type="button" onClick={() => navigateWithExit("/login")} style={{ background: "none", border: "none", color: "#f97316", fontWeight: 700, cursor: "pointer" }}>Masuk</button>
+                </p>
+              </motion.form>
+            )}
+
+            {/* Step 2: Email */}
+            {currentStep === 1 && (
+              <motion.form key="step-email" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }} onSubmit={nextFromEmail}>
+                <div className="input-group">
+                  <label htmlFor="email" className="input-label">Email</label>
+                  <div className="input-wrapper">
+                    <Mail className="input-icon" />
+                    <input id="email" type="email" className="input-field" placeholder="contoh@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </div>
+                  {errors.email && <div className="helper-text">{errors.email}</div>}
                 </div>
-              </div>
-
-              {/* Confirm Password Input */}
-              <div className="input-group">
-                <label htmlFor="confirmPassword" className="input-label">
-                  Konfirmasi Kata Sandi
-                </label>
-                <div className="input-wrapper">
-                  <Lock className="input-icon" />
-                  <motion.input
-                    type={showConfirmPassword ? "text" : "password"}
-                    id="confirmPassword"
-                    className="input-field has-toggle"
-                    placeholder="Masukkan password kembali"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    whileFocus={{ scale: 1.001 }}
-                  />
-                  <button
-                    type="button"
-                    className="toggle-password"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    aria-label={showConfirmPassword ? "Sembunyikan password" : "Tampilkan password"}
-                  >
-                    {showConfirmPassword ? <EyeOff /> : <Eye />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Terms and Conditions */}
-              <div className="checkbox-group">
-                <div className="checkbox-wrapper">
-                  <input
-                    type="checkbox"
-                    id="terms"
-                    className="checkbox-input"
-                    checked={agreeTerms}
-                    onChange={(e) => setAgreeTerms(e.target.checked)}
-                    required
-                  />
-                </div>
-                <label htmlFor="terms" className="checkbox-label">
-                  Saya setuju dengan{' '}
-                  <a href="#terms" onClick={(e) => e.preventDefault()}>
-                    Syarat & Ketentuan
-                  </a>
-                  {' '}dan{' '}
-                  <a href="#privacy" onClick={(e) => e.preventDefault()}>
-                    Kebijakan Privasi
-                  </a>
-                </label>
-              </div>
-
-              {/* Submit Button */}
-              <motion.button 
-                type="submit" 
-                disabled={isLoading}
-                className="btn-primary"
-                whileHover={{ scale: 1.005 }}
-                whileTap={{ scale: 0.995 }}
-              >
-                {isLoading ? (
-                  <div className="spinner" />
-                ) : (
-                  <>
-                    Daftar Sekarang
-                    <ArrowRight size={18} strokeWidth={2.5} />
-                  </>
+                {otpSent && (
+                  <div className="input-group">
+                    <label htmlFor="code" className="input-label">
+                      Kode Verifikasi
+                      {isVerifyingOtp && (
+                        <span style={{ marginLeft: '8px', fontSize: '0.8em', color: '#2563eb' }}>
+                          Memverifikasi...
+                        </span>
+                      )}
+                    </label>
+                    <div className="input-wrapper">
+                      <input 
+                        id="code" 
+                        type="text" 
+                        className={`input-field ${verificationCode.length === 6 ? 'input-complete' : ''} ${errors.code ? 'input-error' : ''}`}
+                        placeholder="••••••" 
+                        value={verificationCode} 
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))} 
+                        maxLength={6}
+                        disabled={isVerifyingOtp}
+                        autoComplete="one-time-code"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        autoFocus
+                        style={{ 
+                          textAlign: 'center', 
+                          fontSize: '1.2rem',
+                          letterSpacing: '0.5rem',
+                          fontWeight: '600'
+                        }}
+                      />
+                    </div>
+                    {errors.code && (
+                      <motion.div 
+                        className="helper-text error" 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={{ background: '#fef2f2', borderLeftColor: '#ef4444', color: '#dc2626' }}
+                      >
+                        {errors.code}
+                      </motion.div>
+                    )}
+                    {verificationCode.length === 6 && !errors.code && !isVerifyingOtp && (
+                      <motion.div 
+                        className="helper-text success"
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={{ background: '#f0fdf4', borderLeftColor: '#22c55e', color: '#16a34a' }}
+                      >
+                        ✅ Kode lengkap, memverifikasi...
+                      </motion.div>
+                    )}
+                    {otpSent && (
+                      <p className="text-sm text-gray-600 text-center mb-4" style={{ marginTop: '0.5rem' }}>
+                        Kode verifikasi telah dikirim ke {email}
+                      </p>
+                    )}
+                  </div>
                 )}
-              </motion.button>
-            </form>
 
-            {/* Divider */}
-            <div className="divider">
-              <span>ATAU</span>
-            </div>
+                <div className="btn-group">
+                  <button type="button" className="btn btn-back" onClick={goBack}>
+                    <ArrowLeft size={18} />
+                  </button>
+                  {!otpSent ? (
+                    <button type="button" className="btn btn-primary" disabled={isSendingOtp} onClick={handleSendOtp} style={{ flex: 1 }}>
+                      {isSendingOtp ? <div className="spinner" /> : <>Kirim Kode <ArrowRight size={18} /></>}
+                    </button>
+                  ) : (
+                    <button type="button" className="btn btn-primary" disabled={isVerifyingOtp || verificationCode.length !== 6} onClick={handleVerifyOtp} style={{ flex: 1 }}>
+                      {isVerifyingOtp ? <div className="spinner" /> : <>Verifikasi <ArrowRight size={18} /></>}
+                    </button>
+                  )}
+                </div>
+                {otpSent && (
+                  <p className="footer-text" style={{ marginTop: '0.75rem' }}>
+                    Tidak menerima kode? {" "}
+                    {otpCooldown > 0 ? (
+                      <div className="text-center" style={{ display: 'inline-block', marginLeft: '0.25rem' }}>
+                        <div className="text-sm text-gray-500">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                            <span>Kirim ulang dalam {otpCooldown} detik</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-1 mt-2" style={{ width: '120px', margin: '0.5rem auto 0' }}>
+                            <div 
+                              className="bg-blue-500 h-1 rounded-full transition-all duration-1000"
+                              style={{ width: `${((60 - otpCooldown) / 60) * 100}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <button type="button" className="link-btn" onClick={handleSendOtp} disabled={isSendingOtp}>
+                        {isSendingOtp ? 'Mengirim...' : 'Kirim ulang'}
+                      </button>
+                    )}
+                  </p>
+                )}
+              </motion.form>
+            )}
 
-            {/* Google Register */}
-            <motion.button 
-              type="button" 
-              className="btn-google"
-              onClick={handleGoogleRegister}
-              whileHover={{ scale: 1.005 }}
-              whileTap={{ scale: 0.995 }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              Daftar dengan Google
-            </motion.button>
+            {/* Step 3: Password */}
+            {currentStep === 2 && (
+              <motion.form key="step-pass" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }} onSubmit={submitPassword}>
+                <div className="input-group">
+                  <label htmlFor="password" className="input-label">Password</label>
+                  <div className="input-wrapper">
+                    <Lock className="input-icon" />
+                    <input id="password" type={showPassword ? "text" : "password"} className="input-field" placeholder="Minimal 8 karakter" value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <button type="button" className="toggle-password" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff /> : <Eye />}</button>
+                  </div>
+                  {errors.password && <div className="helper-text">{errors.password}</div>}
+                </div>
+                <div className="input-group">
+                  <label htmlFor="confirm" className="input-label">Konfirmasi Password</label>
+                  <div className="input-wrapper">
+                    <Lock className="input-icon" />
+                    <input id="confirm" type={showConfirmPassword ? "text" : "password"} className="input-field" placeholder="Ketik ulang password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                    <button type="button" className="toggle-password" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>{showConfirmPassword ? <EyeOff /> : <Eye />}</button>
+                  </div>
+                  {errors.confirm && <div className="helper-text">{errors.confirm}</div>}
+                </div>
 
-            {/* Login Link with Animated Arrow */}
-            <p className="login-text">
-              Sudah punya akun?{' '}
-              <motion.a 
-                href="/login" 
-                className="login-link"
-                onMouseEnter={() => setIsHoveringLogin(true)}
-                onMouseLeave={() => setIsHoveringLogin(false)}
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.location.href = '/login';
-                }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                initial={{ opacity: 0.9 }}
-                animate={{ 
-                  opacity: 1,
-                }}
-                transition={{ duration: 0.2 }}
-              >
-                <motion.span
-                  initial={{ x: 0 }}
-                  animate={{ 
-                    x: isHoveringLogin ? 2 : 0,
-                  }}
-                  transition={{ 
-                    type: "spring",
-                    stiffness: 400,
-                    damping: 20 
-                  }}
-                >
-                  Masuk sekarang
-                </motion.span>
-                <motion.span
-                  initial={{ opacity: 0, x: -5 }}
-                  animate={{ 
-                    opacity: isHoveringLogin ? 1 : 0,
-                    x: isHoveringLogin ? 0 : -5,
-                  }}
-                  transition={{ 
-                    duration: 0.2,
-                    ease: "easeOut"
-                  }}
-                  style={{ 
-                    display: 'inline-block',
-                    marginLeft: isHoveringLogin ? '2px' : '0px'
-                  }}
-                >
-                  <ArrowRight size={16} strokeWidth={2.5} />
-                </motion.span>
-              </motion.a>
-            </p>
-          </motion.div>
+                <div className="btn-group">
+                  <button type="button" className="btn btn-back" onClick={goBack}>
+                    <ArrowLeft size={18} />
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={isLoading} style={{ flex: 1 }}>
+                    {isLoading ? <div className="spinner" /> : <>Buat Akun <UserPlus size={18} /></>}
+                  </button>
+                </div>
+
+                <p className="footer-text">Sudah punya akun? <button type="button" onClick={() => navigateWithExit("/login")} style={{ background: "none", border: "none", color: "#f97316", fontWeight: 700, cursor: "pointer" }}>Masuk</button></p>
+              </motion.form>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
+        )}
+    </AnimatePresence>
     </div>
   );
 }

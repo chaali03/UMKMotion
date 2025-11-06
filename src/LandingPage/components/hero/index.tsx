@@ -10,7 +10,7 @@ import NewItemsLoading from "./new-items-loading";
 import WordAnimator from "./word-animator";
 
 const Index = () => {
-  const [localTheme, setLocalTheme] = useState<"light" | "dark">("light");
+  // Dark mode disabled on landing page
   const [blocks, setBlocks] = useState<React.ReactNode[]>([]);
 
   const activeDivs = useMemo(
@@ -63,12 +63,12 @@ const Index = () => {
   const words = ["UMKM ", "Kuliner ", "Fashion ", "Kerajinan ", "Teknologi "];
 
   return (
-    <div className={localTheme === "dark" ? "dark" : "light"}>
-      <HomeHeader localTheme={localTheme} setLocalTheme={setLocalTheme} />
-      <section className="h-screen relative pb-20 dark:bg-black bg-white overflow-x-clip overflow-y-visible">
+    <div className="light">
+      <HomeHeader localTheme={"light"} setLocalTheme={() => {}} />
+      <section className="h-screen relative pb-20 bg-white overflow-x-clip overflow-y-visible">
         {/* Enhanced reveal styles */}
         <style>{`
-          .hero-reveal{opacity:0;transform:translateY(28px) scale(.98);filter:blur(8px);transition:opacity .65s cubic-bezier(.22,.85,.3,1),transform .75s cubic-bezier(.22,.85,.3,1),filter .65s cubic-bezier(.22,.85,.3,1)}
+          .hero-reveal{opacity:0;transform:translateY(24px) scale(.985);filter:blur(6px);transition:opacity .6s cubic-bezier(.22,.85,.3,1),transform .7s cubic-bezier(.22,.85,.3,1),filter .6s cubic-bezier(.22,.85,.3,1)}
           .hero-reveal.show{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
           
           @keyframes gradient-shift {
@@ -78,17 +78,22 @@ const Index = () => {
 
           @keyframes float-subtle {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-6px); }
           }
 
           @keyframes pulse-glow {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 0.8; }
+            0%, 100% { opacity: 0.35; }
+            50% { opacity: 0.6; }
           }
 
-          .gradient-shift { animation: gradient-shift 8s ease infinite; background-size: 200% 200%; }
-          .float-subtle { animation: float-subtle 6s ease-in-out infinite; }
-          .pulse-glow { animation: pulse-glow 4s ease-in-out infinite; }
+          .gradient-shift { animation: gradient-shift 12s linear infinite; background-size: 200% 200%; }
+          .float-subtle { animation: float-subtle 8s ease-in-out infinite; }
+          .pulse-glow { animation: pulse-glow 6s ease-in-out infinite; }
+
+          @media (prefers-reduced-motion: reduce) {
+            .hero-reveal{transition:none !important;filter:none !important;transform:none !important;opacity:1 !important}
+            .gradient-shift,.float-subtle,.pulse-glow{animation:none !important}
+          }
         `}</style>
 
         {/* Enhanced grid pattern */}
@@ -98,12 +103,12 @@ const Index = () => {
         <div className="absolute inset-0 top-0 left-0 h-screen w-full items-center px-5 py-24 bg-[radial-gradient(ellipse_at_top,transparent_0%,white_60%)] dark:bg-[radial-gradient(ellipse_at_top,transparent_0%,#000000_60%)]" />
         
         {/* Enhanced gradient orbs */}
-        <div className="pointer-events-none absolute inset-x-0 -top-20 h-[60vh] bg-[radial-gradient(1400px_480px_at_50%_0%,rgba(99,102,241,0.4),transparent_70%)] dark:bg-[radial-gradient(1400px_480px_at_50%_0%,rgba(99,102,241,0.25),transparent_70%)] blur-[1px] -z-0 pulse-glow" />
+        <div className="pointer-events-none absolute inset-x-0 -top-20 h-[60vh] bg-[radial-gradient(1400px_480px_at_50%_0%,rgba(99,102,241,0.28),transparent_70%)] dark:bg-[radial-gradient(1400px_480px_at_50%_0%,rgba(99,102,241,0.2),transparent_70%)] blur-[0.5px] -z-0 pulse-glow" />
         
         {/* Additional gradient orbs for depth */}
         <div className="pointer-events-none absolute inset-0 -z-0">
-          <div className="absolute top-1/4 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(255,122,26,0.15),transparent_70%)] blur-3xl pulse-glow" style={{ animationDelay: '1s' }} />
-          <div className="absolute bottom-1/4 left-0 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(139,92,246,0.15),transparent_70%)] blur-3xl pulse-glow" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-1/4 right-0 w-[560px] h-[560px] bg-[radial-gradient(circle,rgba(255,122,26,0.12),transparent_70%)] blur-2xl pulse-glow" style={{ animationDelay: '1s' }} />
+          <div className="absolute bottom-1/4 left-0 w-[480px] h-[480px] bg-[radial-gradient(circle,rgba(139,92,246,0.12),transparent_70%)] blur-2xl pulse-glow" style={{ animationDelay: '2s' }} />
         </div>
 
         {/* Enhanced side glow */}
@@ -161,10 +166,10 @@ const Index = () => {
               <div className="flex items-center gap-2.5 rounded-full bg-white dark:bg-gray-900 px-3 py-2 text-xs sm:text-sm">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] px-2.5 py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
                   <Sparkles className="h-3 w-3" />
-                  NEW
+                  BARU
                 </span>
                 <span className="font-bold bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] bg-clip-text text-transparent tracking-tight">
-                  Introducing Premium Features
+                  Jelajahi UMKM Unggulan
                 </span>
                 <svg
                   className="h-4 w-4 text-[#6366f1] transition-transform duration-300 group-hover:translate-x-1"
@@ -289,19 +294,19 @@ const Index = () => {
           {/* Enhanced Circular Gallery */}
           <div data-hero-reveal data-delay=".24s" className="hero-reveal relative z-[2] w-full -mt-8 sm:-mt-10 lg:-mt-48 2xl:-mt-44">
             {/* Decorative glow */}
-            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-64 bg-gradient-to-r from-orange-500/10 via-purple-500/10 to-blue-500/10 blur-3xl -z-10" />
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-64 bg-gradient-to-r from-orange-500/8 via-purple-500/8 to-blue-500/8 blur-2xl -z-10" />
             
             <div className="mx-auto w-full max-w-6xl xl:max-w-[126rem] 2xl:max-w-[140rem] px-4">
               <div className="h-72 md:h-96 lg:h-[28rem] xl:h-[32rem] 2xl:h-[38rem] float-subtle">
                 <CircularGallery
                   className="h-full w-full"
                   items={[
-                    { image: "/asset/umkm/umkm1.png", text: "UMKM 1" },
-                    { image: "/asset/umkm/umkm2.jpg", text: "UMKM 2" },
-                    { image: "/asset/umkm/umkm3.jpeg", text: "UMKM 3" },
-                    { image: "/asset/umkm/umkm4.jpeg", text: "UMKM 4" },
-                    { image: "/asset/umkm/umkm5.jpg", text: "UMKM 5" },
-                    { image: "/asset/umkm/umkm6.jpg", text: "UMKM 6" },
+                    { image: "/asset/optimized/umkm/umkm1.webp", text: "UMKM 1" },
+                    { image: "/asset/optimized/umkm/umkm2.webp", text: "UMKM 2" },
+                    { image: "/asset/optimized/umkm/umkm3.webp", text: "UMKM 3" },
+                    { image: "/asset/optimized/umkm/umkm4.webp", text: "UMKM 4" },
+                    { image: "/asset/optimized/umkm/umkm5.webp", text: "UMKM 5" },
+                    { image: "/asset/optimized/umkm/umkm6.webp", text: "UMKM 6" },
                   ]}
                 />
               </div>
