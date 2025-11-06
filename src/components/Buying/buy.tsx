@@ -175,7 +175,7 @@ export default function BuyingPage() {
 
   const handleBuyNow = () => {
     handleAddToCart();
-    window.location.href = "/checkout";
+    window.location.href = "/checkoutpage";
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -972,8 +972,8 @@ export default function BuyingPage() {
               </div>
 
               <div className="action-buttons-desktop">
-                <button className="btn-buy" onClick={handleBuyNow}>Buy Now</button>
-                <button className="btn-cart" onClick={handleAddToCart}>Add To Cart</button>
+                <button className="btn-buy" onClick={handleBuyNow}>Beli</button>
+                <button className="btn-cart" onClick={handleAddToCart}>Tambahkan Keranjang</button>
               </div>
 
               <div className="item-info">

@@ -128,7 +128,7 @@ function FetchData() {
       setLoading(true);
       setHasMore(true);
       try {
-        const API_KEY = "f97c4b3d2fmsh9022774549cef8ap11e0dcjsn05539ffc1b9c";
+        const API_KEY = "1c9fe7e0e3msh9d92210bd4a3301p1cbf2fjsn42ae2491e9d4";
         const HOST = "real-time-amazon-data.p.rapidapi.com";
 
         let query = "";
