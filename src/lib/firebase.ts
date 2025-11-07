@@ -5,15 +5,59 @@ import { getStorage } from 'firebase/storage';
 
 // Astro: use PUBLIC_ vars for client bundle; fallback to process.env only when available (SSR)
 const publicEnv = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {};
+const winEnv = (typeof window !== 'undefined' && (window as any).ENV) || {};
 const isServer = typeof process !== 'undefined' && typeof process.env !== 'undefined';
 const firebaseConfig = {
-  apiKey: publicEnv.PUBLIC_FIREBASE_API_KEY || (isServer ? (process.env.PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY) : undefined),
-  authDomain: publicEnv.PUBLIC_FIREBASE_AUTH_DOMAIN || (isServer ? (process.env.PUBLIC_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN) : undefined),
-  projectId: publicEnv.PUBLIC_FIREBASE_PROJECT_ID || (isServer ? (process.env.PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID) : undefined),
-  storageBucket: publicEnv.PUBLIC_FIREBASE_STORAGE_BUCKET || (isServer ? (process.env.PUBLIC_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET) : undefined),
-  messagingSenderId: publicEnv.PUBLIC_FIREBASE_MESSAGING_SENDER_ID || (isServer ? (process.env.PUBLIC_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID) : undefined),
-  appId: publicEnv.PUBLIC_FIREBASE_APP_ID || (isServer ? (process.env.PUBLIC_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID) : undefined),
+  apiKey:
+    publicEnv.PUBLIC_FIREBASE_API_KEY ||
+    winEnv.FIREBASE_API_KEY ||
+    (isServer ? (process.env.PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY) : undefined),
+  authDomain:
+    publicEnv.PUBLIC_FIREBASE_AUTH_DOMAIN ||
+    winEnv.FIREBASE_AUTH_DOMAIN ||
+    (isServer ? (process.env.PUBLIC_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN) : undefined),
+  projectId:
+    publicEnv.PUBLIC_FIREBASE_PROJECT_ID ||
+    winEnv.FIREBASE_PROJECT_ID ||
+    (isServer ? (process.env.PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID) : undefined),
+  storageBucket:
+    publicEnv.PUBLIC_FIREBASE_STORAGE_BUCKET ||
+    winEnv.FIREBASE_STORAGE_BUCKET ||
+    (isServer ? (process.env.PUBLIC_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET) : undefined),
+  messagingSenderId:
+    publicEnv.PUBLIC_FIREBASE_MESSAGING_SENDER_ID ||
+    winEnv.FIREBASE_MESSAGING_SENDER_ID ||
+    (isServer ? (process.env.PUBLIC_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID) : undefined),
+  appId:
+    publicEnv.PUBLIC_FIREBASE_APP_ID ||
+    winEnv.FIREBASE_APP_ID ||
+    (isServer ? (process.env.PUBLIC_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID) : undefined),
 } as const;
+
+// Helpful diagnostics during hydration
+if (typeof window !== 'undefined') {
+  if (!firebaseConfig.apiKey) {
+    // eslint-disable-next-line no-console
+    console.error('[UMKMotion] Firebase apiKey is missing. Ensure PUBLIC_FIREBASE_* vars are set in .env.');
+    // eslint-disable-next-line no-console
+    console.warn('[UMKMotion] Sources check:', {
+      hasImportMeta: !!publicEnv,
+      hasWindowENV: !!(window as any).ENV,
+      publicKeys: {
+        apiKey: !!publicEnv.PUBLIC_FIREBASE_API_KEY,
+        authDomain: !!publicEnv.PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: !!publicEnv.PUBLIC_FIREBASE_PROJECT_ID,
+        appId: !!publicEnv.PUBLIC_FIREBASE_APP_ID,
+      },
+      windowENVKeys: {
+        apiKey: !!winEnv.FIREBASE_API_KEY,
+        authDomain: !!winEnv.FIREBASE_AUTH_DOMAIN,
+        projectId: !!winEnv.FIREBASE_PROJECT_ID,
+        appId: !!winEnv.FIREBASE_APP_ID,
+      },
+    });
+  }
+}
 
 // Initialize Firebase (guard for HMR)
 const app = getApps().length ? getApps()[0]! : initializeApp(firebaseConfig as any);

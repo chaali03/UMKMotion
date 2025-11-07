@@ -1,0 +1,14 @@
+---
+import HomePage from "../../Home/homepage.astro";
+export const prerender = false;
+
+const authCookie = Astro.cookies.get('auth')?.value
+  || Astro.cookies.get('session')?.value
+  || Astro.cookies.get('token')?.value;
+
+if (!authCookie) {
+  return Astro.redirect('/login');
+}
+---
+
+<HomePage />

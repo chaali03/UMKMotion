@@ -1,15 +1,66 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Sparkles, MapPin, BarChart3, Megaphone, UserPlus, User } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Sparkles, User, CheckCircle2, XCircle, Loader2, AlertCircle, Shield, UserPlus } from "lucide-react";
 import { signUpWithEmail } from "../lib/auth";
 import { sendEmailOtp, verifyEmailOtp } from "../lib/otp";
 
+// Password strength checker component
+const PasswordStrength = ({ password }: { password: string }) => {
+  const checks = {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+  };
+
+  const strength = Object.values(checks).filter(Boolean).length;
+  const strengthLabel = strength <= 1 ? "Lemah" : strength <= 3 ? "Sedang" : strength <= 4 ? "Kuat" : "Sangat Kuat";
+  const strengthColor = strength <= 1 ? "#ef4444" : strength <= 3 ? "#f59e0b" : strength <= 4 ? "#10b981" : "#22c55e";
+
+  return (
+    <div className="password-strength-wrapper">
+      <div className="password-strength-bar">
+        <motion.div
+          className="password-strength-fill"
+          initial={{ width: 0 }}
+          animate={{ width: `${(strength / 5) * 100}%`, backgroundColor: strengthColor }}
+          transition={{ duration: 0.3 }}
+        />
+      </div>
+      <div className="password-checks">
+        <CheckItem valid={checks.length} text="Min. 8 karakter" />
+        <CheckItem valid={checks.uppercase} text="Huruf besar" />
+        <CheckItem valid={checks.number} text="Angka" />
+      </div>
+    </div>
+  );
+};
+
+const CheckItem = ({ valid, text }: { valid: boolean; text: string }) => (
+  <motion.div
+    className="check-item"
+    initial={{ opacity: 0, x: -10 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.2 }}
+  >
+    {valid ? (
+      <CheckCircle2 size={14} className="check-icon valid" />
+    ) : (
+      <XCircle size={14} className="check-icon invalid" />
+    )}
+    <span className={valid ? "check-text valid" : "check-text invalid"}>{text}</span>
+  </motion.div>
+);
+
 export default function RegisterPage() {
+  // State Management
+  const [currentStep, setCurrentStep] = useState(0);
   const [fullName, setFullName] = useState("");
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,187 +70,278 @@ export default function RegisterPage() {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isCheckingNickname, setIsCheckingNickname] = useState(false);
+  const [nicknameStatus, setNicknameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const nicknameCheckTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Notification State
+  const [notification, setNotification] = useState<{
+    type: "success" | "error" | "info";
+    title: string;
+    message: string;
+  } | null>(null);
+
+  // Slideshow
   const [slideIndex, setSlideIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [leaving, setLeaving] = useState(false);
 
   const slides = [
     {
-      icon: <Sparkles size={32} color="#111827" />,
+      icon: <Sparkles size={40} color="#fff" />,
       title: "Mulai Perjalananmu",
-      text:
-        "Daftarkan akunmu dalam tiga langkah sederhana. Nikmati akses ke fitur peta usaha, promosi, dan komunitas dukungan untuk mempercepat pertumbuhan bisnismu.",
+      text: "Bergabung dengan ribuan UMKM yang telah berkembang bersama kami.",
     },
     {
-      icon: <UserPlus size={32} color="#111827" />,
-      title: "Bangun Identitas Bisnis",
-      text:
-        "Gunakan nama lengkap dan nickname agar profilmu terlihat profesional, mudah dicari pelanggan, dan konsisten di seluruh fitur UMKMotion.",
+      icon: <Shield size={40} color="#fff" />,
+      title: "Keamanan Terjamin",
+      text: "Data Anda dilindungi dengan enkripsi tingkat enterprise.",
     },
     {
-      icon: <Lock size={32} color="#111827" />,
-      title: "Keamanan Diutamakan",
-      text:
-        "Lindungi aksesmu dengan verifikasi email dan password yang kuat. Data usahamu tersimpan aman sehingga kamu bisa fokus berkembang.",
+      icon: <UserPlus size={40} color="#fff" />,
+      title: "Mudah & Cepat",
+      text: "Hanya 3 langkah untuk membuat akun dan mulai bertumbuh.",
     },
   ];
 
+  // Slideshow effect
   useEffect(() => {
     if (paused) return;
-    const id = setInterval(() => setSlideIndex((i) => (i + 1) % slides.length), 3500);
-    return () => clearInterval(id);
+    const interval = setInterval(() => {
+      setSlideIndex((prev) => (prev + 1) % slides.length);
+    }, 4000);
+    return () => clearInterval(interval);
   }, [paused, slides.length]);
 
-  const validateEmail = (v: string) => /[^\s@]+@[^\s@]+\.[^\s@]+/.test(v);
-  
-  const nextFromName = (e: React.FormEvent) => {
+  // Notification auto-dismiss
+  useEffect(() => {
+    if (!notification) return;
+    const timer = setTimeout(() => setNotification(null), 5000);
+    return () => clearTimeout(timer);
+  }, [notification]);
+
+  // OTP Cooldown
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const timer = setInterval(() => setOtpCooldown((prev) => prev - 1), 1000);
+    return () => clearInterval(timer);
+  }, [otpCooldown]);
+
+  // Notification Helper
+  const showNotification = (type: "success" | "error" | "info", title: string, message: string) => {
+    setNotification({ type, title, message });
+  };
+
+  // API Functions
+  const checkUserExists = async (email?: string, nickname?: string) => {
+    try {
+      const response = await fetch("/api/check-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, nickname }),
+      });
+      return await response.json();
+    } catch (err) {
+      console.error("Error checking user:", err);
+      return { emailExists: false, nicknameExists: false };
+    }
+  };
+
+  // Debounced Nickname Check
+  useEffect(() => {
+    if (nickname.length < 3) {
+      setNicknameStatus('idle');
+      return;
+    }
+
+    if (nicknameCheckTimeout.current) {
+      clearTimeout(nicknameCheckTimeout.current);
+    }
+
+    setNicknameStatus('checking');
+    
+    nicknameCheckTimeout.current = setTimeout(async () => {
+      const { nicknameExists } = await checkUserExists(undefined, nickname);
+      setNicknameStatus(nicknameExists ? 'taken' : 'available');
+      if (nicknameExists) {
+        setErrors((prev) => ({ ...prev, nickname: "Nickname sudah digunakan" }));
+      } else {
+        setErrors((prev) => ({ ...prev, nickname: "" }));
+      }
+    }, 800);
+
+    return () => {
+      if (nicknameCheckTimeout.current) {
+        clearTimeout(nicknameCheckTimeout.current);
+      }
+    };
+  }, [nickname]);
+
+  // Step 1: Name Handler
+  const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    if (!fullName || fullName.length < 3) return setErrors({ fullName: "Nama minimal 3 karakter" });
-    if (!nickname || nickname.length < 3) return setErrors({ nickname: "Nickname minimal 3 karakter" });
+
+    if (fullName.length < 3) {
+      setErrors({ fullName: "Nama minimal 3 karakter" });
+      return;
+    }
+    if (nickname.length < 3) {
+      setErrors({ nickname: "Nickname minimal 3 karakter" });
+      return;
+    }
+    if (nicknameStatus === 'taken') {
+      setErrors({ nickname: "Nickname sudah digunakan" });
+      return;
+    }
+
     setCurrentStep(1);
   };
 
-  const nextFromEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    if (!validateEmail(email)) return setErrors({ email: "Email tidak valid" });
-    // If OTP not sent, send it; otherwise attempt verify if code provided
-    if (!otpSent) {
-      await handleSendOtp();
-    } else {
-      await handleVerifyOtp();
-    }
-  };
-
+  // Step 2: Email & OTP Handler
   const handleSendOtp = async () => {
-    if (!validateEmail(email)) { 
-      setErrors({ email: "Email tidak valid" }); 
-      return; 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrors({ email: "Format email tidak valid" });
+      return;
     }
-    
+
+    setIsSendingOtp(true);
+    setErrors({});
+
     try {
-      setIsSendingOtp(true);
-      setErrors({}); // Clear previous errors
-      
-      await sendEmailOtp(email, { ttlSeconds: 600, subject: "Kode Verifikasi UMKMotion" });
-      
+      const { emailExists } = await checkUserExists(email, undefined);
+      if (emailExists) {
+        setErrors({ email: "Email sudah terdaftar" });
+        showNotification("error", "Email Sudah Terdaftar", "Gunakan email lain atau login ke akun Anda.");
+        setIsSendingOtp(false);
+        return;
+      }
+
+      await sendEmailOtp(email, { ttlSeconds: 300, subject: "Kode Verifikasi UMKMotion" });
       setOtpSent(true);
       setOtpCooldown(60);
-      setVerificationCode(""); // Clear previous verification code
+      showNotification("success", "Kode Terkirim", `Kode verifikasi telah dikirim ke ${email}`);
       
-      // Show success feedback
-      if (typeof window !== 'undefined') {
-        console.log('📧 Kode verifikasi berhasil dikirim ke', email);
-        // Show success message to user
-        alert(`✅ Kode verifikasi telah dikirim ke ${email}\n\nSilakan cek inbox Anda (juga folder spam jika tidak muncul).`);
-      }
-      
+      // Auto focus first OTP input
+      setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Gagal mengirim kode. Coba lagi.";
+      const errorMessage = err instanceof Error ? err.message : "Gagal mengirim kode";
       setErrors({ email: errorMessage });
-      
-      // Auto clear error after 8 seconds
-      setTimeout(() => {
-        setErrors(prev => ({ ...prev, email: '' }));
-      }, 8000);
-      
+      showNotification("error", "Gagal Mengirim Kode", errorMessage);
     } finally {
       setIsSendingOtp(false);
     }
   };
 
-  const handleVerifyOtp = async () => {
-    if (verificationCode.length !== 6) { 
-      setErrors({ code: "Kode verifikasi harus 6 digit" }); 
-      return; 
+  // OTP Input Handlers
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value.slice(-1);
+    setOtp(newOtp);
+
+    // Auto focus next input
+    if (value && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
     }
-    
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").trim().slice(0, 6);
+    if (/^\d{6}$/.test(pastedData)) {
+      const newOtp = pastedData.split("");
+      setOtp(newOtp);
+      otpInputRefs.current[5]?.focus();
+    }
+  };
+
+  // Auto verify when OTP is complete
+  useEffect(() => {
+    const otpCode = otp.join("");
+    if (otpCode.length === 6 && !isVerifyingOtp) {
+      handleVerifyOtp();
+    }
+  }, [otp]);
+
+  const handleVerifyOtp = async () => {
+    const otpCode = otp.join("");
+    if (otpCode.length !== 6) return;
+
+    setIsVerifyingOtp(true);
+    setErrors({});
+
     try {
-      setIsVerifyingOtp(true);
-      setErrors({}); // Clear previous errors
-      
-      await verifyEmailOtp(email, verificationCode);
-      
-      // Success - move to next step
+      await verifyEmailOtp(email, otpCode);
+      showNotification("success", "Email Terverifikasi", "Silakan lanjutkan ke langkah berikutnya");
       setCurrentStep(2);
-      
-      // Show success feedback
-      if (typeof window !== 'undefined') {
-        // Optional: Show success toast/notification
-        console.log('✅ Kode verifikasi berhasil diverifikasi');
+    } catch (err) {
+      let errorMessage = "Kode verifikasi tidak valid";
+      if (err instanceof Error) {
+        if (err.message.includes("kadaluarsa")) errorMessage = "Kode sudah kadaluarsa";
+        else if (err.message.includes("tidak ditemukan")) errorMessage = "Kode tidak valid";
       }
-      
-    } catch (err: any) {
-      // Enhanced error handling
-      let errorMessage = "Kode salah atau kadaluarsa";
-      
-      if (err.message?.includes('kadaluarsa')) {
-        errorMessage = "Kode verifikasi sudah kadaluarsa. Silakan kirim ulang.";
-      } else if (err.message?.includes('digunakan')) {
-        errorMessage = "Kode sudah digunakan. Silakan kirim ulang.";
-      } else if (err.message?.includes('tidak ditemukan')) {
-        errorMessage = "Kode tidak valid. Periksa kembali kode yang Anda masukkan.";
-      }
-      
-      setErrors({ code: errorMessage });
-      
-      // Auto clear error after 5 seconds
-      setTimeout(() => {
-        setErrors(prev => ({ ...prev, code: '' }));
-      }, 5000);
-      
+      setErrors({ otp: errorMessage });
+      showNotification("error", "Verifikasi Gagal", errorMessage);
+      setOtp(Array(6).fill(""));
+      otpInputRefs.current[0]?.focus();
     } finally {
       setIsVerifyingOtp(false);
     }
   };
 
-  useEffect(() => {
-    if (!otpCooldown) return;
-    const t = setInterval(() => setOtpCooldown((s) => (s > 0 ? s - 1 : 0)), 1000);
-    return () => clearInterval(t);
-  }, [otpCooldown]);
-
-  // Auto-submit when verification code is complete (6 digits)
-  useEffect(() => {
-    if (verificationCode.length === 6 && otpSent && !isVerifyingOtp) {
-      handleVerifyOtp();
-    }
-  }, [verificationCode, otpSent, isVerifyingOtp]);
-
-  const submitPassword = async (e: React.FormEvent) => {
+  // Step 3: Password Handler
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    if (password.length < 8) return setErrors({ password: "Minimal 8 karakter" });
-    if (password !== confirmPassword) return setErrors({ confirm: "Password tidak cocok" });
+
+    if (password.length < 8) {
+      setErrors({ password: "Password minimal 8 karakter" });
+      return;
+    }
+    if (password !== confirmPassword) {
+      setErrors({ confirm: "Password tidak cocok" });
+      return;
+    }
+
     setIsLoading(true);
+
     try {
-      await signUpWithEmail(email, password);
-      alert("Akun berhasil dibuat. Kamu sudah verifikasi dengan kode OTP sebelumnya.");
-      window.location.href = "/login";
-    } catch (err) {
-      alert("Gagal membuat akun. Coba lagi.");
+      await signUpWithEmail(email, password, fullName, nickname);
+      showNotification("success", "Akun Berhasil Dibuat!", "Mengalihkan ke halaman login...");
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
+    } catch (err: any) {
+      let errorMessage = "Gagal membuat akun";
+      if (err.code === "auth/email-already-in-use") {
+        errorMessage = "Email sudah terdaftar";
+      }
+      showNotification("error", "Registrasi Gagal", errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
   const goBack = () => {
-    if (currentStep > 0) setCurrentStep((s) => s - 1);
-  };
-
-  const navigateWithExit = (href: string) => {
-    if (leaving) return;
-    setLeaving(true);
-    setTimeout(() => {
-      window.location.href = href;
-    }, 350);
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+      setErrors({});
+    }
   };
 
   return (
-    <div className="container">
+    <div className="register-container">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -209,78 +351,59 @@ export default function RegisterPage() {
           box-sizing: border-box;
         }
 
-        .container {
+        .register-container {
           min-height: 100vh;
           width: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
           position: relative;
-          overflow: hidden;
-          background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/asset/register/register.webp');
-          background-size: cover;
-          background-position: center;
-          background-repeat: no-repeat;
-          background-attachment: fixed;
+          background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 20%, #93c5fd 40%, #60a5fa 60%, #3b82f6 80%, #2563eb 100%);
           font-family: 'Inter', -apple-system, sans-serif;
+          overflow: hidden;
         }
 
-        /* Animated Background Gradient */
-        .bg-animated {
+        /* Animated Background */
+        .register-container::before {
+          content: '';
           position: absolute;
           inset: 0;
-          background: linear-gradient(
-            135deg,
-            #eff6ff 0%,
-            #dbeafe 25%,
-            #bfdbfe 50%,
-            #93c5fd 75%,
-            #60a5fa 100%
-          );
-          background-size: 400% 400%;
-          animation: gradientFlow 15s ease infinite;
+          background: 
+            radial-gradient(circle at 15% 25%, rgba(255, 255, 255, 0.35) 0%, transparent 45%),
+            radial-gradient(circle at 85% 75%, rgba(59, 130, 246, 0.25) 0%, transparent 50%);
+          animation: bgPulse 8s ease-in-out infinite;
         }
 
-        @keyframes gradientFlow {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
+        @keyframes bgPulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.8; }
         }
 
-        /* Floating Shapes */
-        .shape {
+        /* Floating shapes */
+        .floating-shape {
           position: absolute;
           border-radius: 50%;
-          opacity: 0.1;
-          filter: blur(40px);
+          background: rgba(37, 99, 235, 0.15);
+          backdrop-filter: blur(20px);
         }
 
-        .shape-1 {
-          width: 500px;
-          height: 500px;
-          background: #fff;
-          top: -250px;
-          right: -250px;
-          animation: float1 20s ease-in-out infinite;
-        }
-
-        .shape-2 {
-          width: 400px;
-          height: 400px;
-          background: #fff;
-          bottom: -200px;
-          left: -200px;
-          animation: float2 18s ease-in-out infinite;
-        }
+        .shape-1 { width: 300px; height: 300px; top: -150px; left: -150px; animation: float1 20s infinite; }
+        .shape-2 { width: 200px; height: 200px; bottom: -100px; right: -100px; animation: float2 15s infinite; }
+        .shape-3 { width: 150px; height: 150px; top: 50%; right: 10%; animation: float3 18s infinite; }
 
         @keyframes float1 {
           0%, 100% { transform: translate(0, 0) rotate(0deg); }
-          50% { transform: translate(-50px, 50px) rotate(180deg); }
+          50% { transform: translate(30px, -30px) rotate(180deg); }
         }
 
         @keyframes float2 {
           0%, 100% { transform: translate(0, 0) rotate(0deg); }
-          50% { transform: translate(50px, -50px) rotate(-180deg); }
+          50% { transform: translate(-30px, 30px) rotate(-180deg); }
+        }
+
+        @keyframes float3 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(20px, -20px) scale(1.1); }
         }
 
         /* Back Button */
@@ -289,13 +412,13 @@ export default function RegisterPage() {
           top: 2rem;
           left: 2rem;
           z-index: 100;
-          padding: 0.75rem 1.25rem;
-          background: rgba(0, 0, 0, 0.08);
+          padding: 0.75rem 1.5rem;
+          background: rgba(37, 99, 235, 0.25);
           backdrop-filter: blur(10px);
-          border: 1px solid rgba(0, 0, 0, 0.12);
-          border-radius: 12px;
-          color: #0f172a;
-          font-size: 0.875rem;
+          border: 1px solid rgba(37, 99, 235, 0.4);
+          border-radius: 50px;
+          color: white;
+          font-size: 0.9rem;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.3s ease;
@@ -305,41 +428,35 @@ export default function RegisterPage() {
         }
 
         .back-btn:hover {
-          background: rgba(0, 0, 0, 0.12);
+          background: rgba(37, 99, 235, 0.35);
           transform: translateX(-4px);
         }
 
-        .back-btn svg {
-          width: 18px;
-          height: 18px;
-        }
-
-        /* Main Card - SAME AS LOGIN */
-        .card {
+        /* Main Card */
+        .register-card {
           position: relative;
           z-index: 10;
           width: 90%;
-          max-width: 900px;
-          background: rgba(255, 255, 255, 0.95);
+          max-width: 950px;
+          background: rgba(255, 255, 255, 0.98);
           backdrop-filter: blur(20px);
           border-radius: 24px;
           overflow: hidden;
-          box-shadow: 
-            0 20px 60px rgba(0, 0, 0, 0.3),
-            0 0 0 1px rgba(255, 255, 255, 0.1);
+          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
           display: grid;
           grid-template-columns: 1fr 1fr;
         }
 
-        /* Left Side - Brand - SAME AS LOGIN */
+        /* Left Side - Brand */
         .brand-side {
           padding: 3rem;
-          background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
           display: flex;
           flex-direction: column;
           justify-content: center;
           align-items: center;
           text-align: center;
+          color: white;
           position: relative;
           overflow: hidden;
         }
@@ -347,66 +464,63 @@ export default function RegisterPage() {
         .brand-side::before {
           content: '';
           position: absolute;
-          width: 300px;
-          height: 300px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 50%;
-          top: -150px;
-          right: -150px;
+          width: 400px;
+          height: 400px;
+          background: radial-gradient(circle, rgba(37, 99, 235, 0.18) 0%, transparent 70%);
+          top: -200px;
+          right: -200px;
         }
 
-        .brand-side::after {
-          content: '';
-          position: absolute;
-          width: 250px;
-          height: 250px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 50%;
-          bottom: -125px;
-          left: -125px;
+        .brand-content {
+          position: relative;
+          z-index: 2;
+        }
+
+        .brand-icon {
+          margin-bottom: 2rem;
+          opacity: 0.95;
         }
 
         .brand-title {
-          font-size: 2rem;
+          font-size: 2.2rem;
           font-weight: 800;
-          color: white;
           margin-bottom: 1rem;
-          position: relative;
-          z-index: 2;
+          line-height: 1.2;
         }
 
         .brand-text {
-          font-size: 1rem;
-          color: rgba(255, 255, 255, 0.9);
-          line-height: 1.6;
-          max-width: 300px;
-          position: relative;
-          z-index: 2;
+          font-size: 1.05rem;
+          line-height: 1.7;
+          opacity: 0.95;
+          max-width: 320px;
         }
 
-        .decorative-dots {
+        .slide-dots {
           position: absolute;
           bottom: 2rem;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
           gap: 0.5rem;
+          z-index: 3;
         }
 
         .dot {
           width: 8px;
           height: 8px;
-          background: rgba(255, 255, 255, 0.4);
           border-radius: 50%;
-          transition: all 0.2s ease;
+          background: rgba(37, 99, 235, 0.4);
           cursor: pointer;
+          transition: all 0.3s ease;
         }
 
         .dot.active {
-          background: white;
-          width: 16px;
-          border-radius: 6px;
+          width: 24px;
+          border-radius: 4px;
+          background: #2563eb;
         }
 
-        /* Right Side - Form - SAME AS LOGIN */
+        /* Right Side - Form */
         .form-side {
           padding: 3rem 2.5rem;
           display: flex;
@@ -418,47 +532,42 @@ export default function RegisterPage() {
           margin-bottom: 2rem;
         }
 
-        .welcome-badge {
+        .step-badge {
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
           padding: 0.5rem 1rem;
-          background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(37, 99, 235, 0.12));
-          border: 1px solid rgba(37, 99, 235, 0.25);
+          background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
           border-radius: 50px;
-          color: #2563eb;
-          font-size: 0.8125rem;
+          color: #6366f1;
+          font-size: 0.85rem;
           font-weight: 600;
           margin-bottom: 1.5rem;
-        }
-
-        .welcome-badge svg {
-          width: 14px;
-          height: 14px;
         }
 
         .form-title {
           font-size: 2rem;
           font-weight: 800;
-          color: #1a1a1a;
+          color: #1f2937;
           margin-bottom: 0.5rem;
         }
 
         .form-subtitle {
-          font-size: 0.9375rem;
-          color: #64748b;
+          font-size: 0.95rem;
+          color: #6b7280;
+          line-height: 1.5;
         }
 
-        /* Input Styles - SAME AS LOGIN */
+        /* Input Styles */
         .input-group {
-          margin-bottom: 1.25rem;
+          margin-bottom: 1.5rem;
         }
 
         .input-label {
           display: block;
           font-size: 0.875rem;
           font-weight: 600;
-          color: #334155;
+          color: #374151;
           margin-bottom: 0.5rem;
         }
 
@@ -471,34 +580,22 @@ export default function RegisterPage() {
           left: 1rem;
           top: 50%;
           transform: translateY(-50%);
-          color: #94a3b8;
-          transition: color 0.2s ease;
-        }
-
-        .input-icon svg {
-          width: 20px;
-          height: 20px;
-        }
-
-        .input-wrapper:focus-within .input-icon {
-          color: #2563eb;
+          color: #9ca3af;
+          pointer-events: none;
+          transition: color 0.2s;
         }
 
         .input-field {
           width: 100%;
-          height: 48px;
+          height: 52px;
           padding: 0 1rem 0 3rem;
-          background: #f8fafc;
-          border: 2px solid transparent;
+          background: #f9fafb;
+          border: 2px solid #e5e7eb;
           border-radius: 12px;
-          font-size: 0.9375rem;
-          color: #1e293b;
+          font-size: 0.95rem;
+          color: #111827;
           transition: all 0.2s ease;
           outline: none;
-        }
-
-        .input-field::placeholder {
-          color: #94a3b8;
         }
 
         .input-field:focus {
@@ -507,75 +604,108 @@ export default function RegisterPage() {
           box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
         }
 
-        .input-field.input-complete {
-          border-color: #22c55e;
-          background: #f0fdf4;
+        .input-field:focus + .input-icon {
+          color: #2563eb;
         }
 
-        .input-field.input-error {
+        .input-field.error {
           border-color: #ef4444;
           background: #fef2f2;
         }
 
         .input-field:disabled {
-          opacity: 0.6;
+          background: #f3f4f6;
           cursor: not-allowed;
+          opacity: 0.6;
         }
 
-        .helper-text.success {
-          background: #f0fdf4;
-          border-left-color: #22c55e;
-          color: #16a34a;
-        }
-
-        .helper-text.error {
-          background: #fef2f2;
-          border-left-color: #ef4444;
-          color: #dc2626;
-        }
-
-        .toggle-password {
+        .input-feedback {
           position: absolute;
           right: 1rem;
           top: 50%;
           transform: translateY(-50%);
-          background: none;
-          border: none;
-          color: #94a3b8;
-          cursor: pointer;
-          padding: 0.5rem;
+        }
+
+        .error-text {
+          margin-top: 0.5rem;
+          font-size: 0.875rem;
+          color: #ef4444;
           display: flex;
           align-items: center;
-          transition: color 0.2s ease;
+          gap: 0.375rem;
         }
 
-        .toggle-password:hover {
-          color: #f97316;
-        }
-
-        .toggle-password svg {
-          width: 20px;
-          height: 20px;
-        }
-
-        /* Helper Text */
-        .helper-text {
+        .success-text {
           margin-top: 0.5rem;
-          padding: 0.75rem;
-          background: #eff6ff;
-          border-left: 3px solid #2563eb;
-          border-radius: 8px;
-          font-size: 0.8125rem;
-          color: #1e40af;
-          line-height: 1.4;
+          font-size: 0.875rem;
+          color: #10b981;
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
         }
 
-        /* Buttons - SAME AS LOGIN */
+        /* OTP Input */
+        .otp-container {
+          display: flex;
+          gap: 0.75rem;
+          justify-content: space-between;
+        }
+
+        .otp-input {
+          width: 50px !important;
+          height: 60px !important;
+          padding: 0 !important;
+          text-align: center;
+          font-size: 1.5rem !important;
+          font-weight: 700;
+          letter-spacing: 0;
+        }
+
+        /* Password Strength */
+        .password-strength-wrapper {
+          margin-top: 1rem;
+          padding: 1rem;
+          background: #f9fafb;
+          border-radius: 8px;
+        }
+
+        .password-strength-bar {
+          height: 6px;
+          background: #e5e7eb;
+          border-radius: 3px;
+          overflow: hidden;
+          margin-bottom: 0.75rem;
+        }
+
+        .password-strength-fill {
+          height: 100%;
+          border-radius: 3px;
+          transition: all 0.3s ease;
+        }
+
+        .password-checks {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 0.5rem;
+        }
+
+        .check-item {
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          font-size: 0.8rem;
+        }
+
+        .check-icon.valid { color: #10b981; }
+        .check-icon.invalid { color: #d1d5db; }
+        .check-text.valid { color: #059669; font-weight: 500; }
+        .check-text.invalid { color: #9ca3af; }
+
+        /* Buttons */
         .btn {
-          width: 100%;
-          height: 48px;
+          height: 52px;
           border-radius: 12px;
-          font-size: 0.9375rem;
+          font-size: 0.95rem;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.3s ease;
@@ -588,79 +718,37 @@ export default function RegisterPage() {
         }
 
         .btn-primary {
-          background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+          width: 100%;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
           color: white;
-          margin-top: 1rem;
-          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+          box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
         }
 
         .btn-primary:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
-        }
-
-        .btn-primary:active:not(:disabled) {
-          transform: translateY(0);
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
         }
 
         .btn-primary:disabled {
           opacity: 0.6;
           cursor: not-allowed;
+          transform: none;
         }
 
-        .btn-back {
-          flex: 0 0 auto;
-          width: 48px;
-          padding: 0;
-          background: #f1f5f9;
-          color: #475569;
+        .btn-secondary {
+          width: 52px;
+          background: #f3f4f6;
+          color: #6b7280;
         }
 
-        .btn-back:hover {
-          background: #e2e8f0;
+        .btn-secondary:hover {
+          background: #e5e7eb;
         }
 
         .btn-group {
           display: flex;
           gap: 0.75rem;
-          margin-top: 1rem;
-        }
-
-        /* Divider */
-        .divider {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          margin: 1.5rem 0;
-          color: #94a3b8;
-          font-size: 0.8125rem;
-          font-weight: 500;
-        }
-
-        .divider::before,
-        .divider::after {
-          content: '';
-          flex: 1;
-          height: 1px;
-          background: #e2e8f0;
-        }
-
-        .footer-text {
-          text-align: center;
           margin-top: 1.5rem;
-          font-size: 0.9375rem;
-          color: #64748b;
-        }
-
-        .footer-text a {
-          color: #2563eb;
-          font-weight: 600;
-          text-decoration: none;
-          transition: color 0.2s ease;
-        }
-
-        .footer-text a:hover {
-          color: #1d4ed8;
         }
 
         .link-btn {
@@ -669,18 +757,62 @@ export default function RegisterPage() {
           color: #2563eb;
           font-weight: 600;
           cursor: pointer;
-          text-decoration: underline;
-          transition: color 0.2s ease;
-        }
-
-        .link-btn:hover:not(:disabled) {
-          color: #1d4ed8;
-        }
-
-        .link-btn:disabled {
-          color: #94a3b8;
-          cursor: not-allowed;
           text-decoration: none;
+          transition: color 0.2s;
+        }
+
+        .link-btn:hover {
+          color: #1d4ed8;
+          text-decoration: underline;
+        }
+
+        .footer-text {
+          text-align: center;
+          margin-top: 2rem;
+          font-size: 0.9rem;
+          color: #6b7280;
+        }
+
+        /* Notification */
+        .notification-wrapper {
+          position: fixed;
+          top: 1.5rem;
+          right: 1.5rem;
+          z-index: 1000;
+        }
+
+        .notification {
+          min-width: 320px;
+          max-width: 400px;
+          padding: 1rem 1.25rem;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+          border-left: 4px solid;
+          display: flex;
+          gap: 0.75rem;
+        }
+
+        .notification.success { border-left-color: #10b981; }
+        .notification.error { border-left-color: #ef4444; }
+        .notification.info { border-left-color: #3b82f6; }
+
+        .notification-icon {
+          flex-shrink: 0;
+          margin-top: 0.125rem;
+        }
+
+        .notification-content h4 {
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #111827;
+          margin-bottom: 0.25rem;
+        }
+
+        .notification-content p {
+          font-size: 0.875rem;
+          color: #6b7280;
+          line-height: 1.5;
         }
 
         /* Loading Spinner */
@@ -697,16 +829,11 @@ export default function RegisterPage() {
           to { transform: rotate(360deg); }
         }
 
-        /* Mobile Hero (hidden on desktop) */
-        .mobile-hero {
-          display: none;
-        }
-
-        /* Responsive - SAME AS LOGIN */
+        /* Responsive */
         @media (max-width: 1024px) {
-          .card {
+          .register-card {
             grid-template-columns: 1fr;
-            max-width: 450px;
+            max-width: 480px;
           }
 
           .brand-side {
@@ -716,21 +843,10 @@ export default function RegisterPage() {
           .form-side {
             padding: 2.5rem 2rem;
           }
-
-          .mobile-hero {
-            display:block;
-            width: 100%;
-            height: 160px;
-            margin-bottom: 1rem;
-            border-radius: 16px;
-            overflow:hidden;
-            background: #eef2ff;
-          }
-          .mobile-hero img { width: 100%; height: 100%; object-fit: cover; display:block; }
         }
 
         @media (max-width: 640px) {
-          .card {
+          .register-card {
             width: 95%;
             margin: 1rem;
           }
@@ -743,232 +859,378 @@ export default function RegisterPage() {
             font-size: 1.75rem;
           }
 
+          .otp-input {
+            width: 45px !important;
+            height: 55px !important;
+            font-size: 1.25rem !important;
+          }
+
+          .password-checks {
+            grid-template-columns: 1fr;
+          }
+
           .back-btn {
+            padding: 0.625rem 1rem;
             top: 1rem;
             left: 1rem;
-            padding: 0.625rem 1rem;
           }
 
           .back-btn span {
             display: none;
           }
+
+          .notification-wrapper {
+            left: 1rem;
+            right: 1rem;
+          }
+
+          .notification {
+            min-width: auto;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .otp-container {
+            gap: 0.5rem;
+          }
+
+          .otp-input {
+            width: 40px !important;
+            height: 50px !important;
+            font-size: 1.125rem !important;
+          }
         }
       `}</style>
 
-      {/* Background */}
-      <div className="bg-animated" />
-      <div className="shape shape-1" />
-      <div className="shape shape-2" />
+      {/* Floating Shapes */}
+      <div className="floating-shape shape-1" />
+      <div className="floating-shape shape-2" />
+      <div className="floating-shape shape-3" />
 
       {/* Back Button */}
-      <motion.button
+      <motion.a
+        href="/"
         className="back-btn"
-        onClick={() => (window.location.href = "/")}
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
-        <ArrowLeft />
+        <ArrowLeft size={18} />
         <span>Kembali</span>
-      </motion.button>
+      </motion.a>
+
+      {/* Notification */}
+      <AnimatePresence>
+        {notification && (
+          <div className="notification-wrapper">
+            <motion.div
+              className={`notification ${notification.type}`}
+              initial={{ opacity: 0, y: -20, x: 20 }}
+              animate={{ opacity: 1, y: 0, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            >
+              <div className="notification-icon">
+                {notification.type === "success" && <CheckCircle2 size={22} color="#10b981" />}
+                {notification.type === "error" && <XCircle size={22} color="#ef4444" />}
+                {notification.type === "info" && <AlertCircle size={22} color="#3b82f6" />}
+              </div>
+              <div className="notification-content">
+                <h4>{notification.title}</h4>
+                <p>{notification.message}</p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Main Card */}
-      <AnimatePresence mode="wait">
-        {!leaving && (
-          <motion.div
-            className="card"
-            initial={{ opacity: 0, y: 10, scale: 0.92 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, x: 40, scale: 0.92, transition: { duration: 0.3 } }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-          >
-        {/* Left - Brand with animated slides */}
+      <motion.div
+        className="register-card"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        {/* Left Side - Brand */}
         <div
           className="brand-side"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
-          {!leaving && (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={slideIndex}
-                initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                transition={{ duration: 0.35 }}
-                className="flex flex-col items-center"
-              >
-                <div className="mb-3">{slides[slideIndex].icon}</div>
-                <h1 className="brand-title">{slides[slideIndex].title}</h1>
-                <p className="brand-text">{slides[slideIndex].text}</p>
-              </motion.div>
-            </AnimatePresence>
-          )}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={slideIndex}
+              className="brand-content"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="brand-icon">{slides[slideIndex].icon}</div>
+              <h1 className="brand-title">{slides[slideIndex].title}</h1>
+              <p className="brand-text">{slides[slideIndex].text}</p>
+            </motion.div>
+          </AnimatePresence>
 
-          <div className="decorative-dots">
+          <div className="slide-dots">
             {slides.map((_, i) => (
-              <div key={i} className={"dot" + (i === slideIndex ? " active" : "")} onClick={() => setSlideIndex(i)} />
+              <div
+                key={i}
+                className={`dot ${i === slideIndex ? "active" : ""}`}
+                onClick={() => setSlideIndex(i)}
+              />
             ))}
           </div>
         </div>
 
-        {/* Right - Register Form */}
+        {/* Right Side - Form */}
         <div className="form-side">
           <div className="form-header">
-            {/* Mobile only hero image/banner (hidden on exit) */}
-            {!leaving && (
-              <div className="mobile-hero">
-                <img src="/asset/register/register.webp" alt="Register hero" />
-              </div>
-            )}
-            <motion.div className="welcome-badge" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-              <Sparkles />
-              <span>{currentStep === 0 ? "Langkah 1 dari 3" : currentStep === 1 ? "Langkah 2 dari 3" : "Langkah 3 dari 3"}</span>
-            </motion.div>
-            <h2 className="form-title">{currentStep === 0 ? "Data Profil" : currentStep === 1 ? "Email & Verifikasi" : "Buat Password"}</h2>
-            <p className="form-subtitle">{currentStep === 0 ? "Isi nama lengkap dan nickname kamu." : currentStep === 1 ? "Masukkan email dan kode verifikasi 6 digit." : "Amankan akunmu dengan password yang kuat."}</p>
+            <div className="step-badge">
+              <Sparkles size={16} />
+              <span>Langkah {currentStep + 1} dari 3</span>
+            </div>
+            <h2 className="form-title">
+              {currentStep === 0 && "Buat Profil"}
+              {currentStep === 1 && "Verifikasi Email"}
+              {currentStep === 2 && "Atur Password"}
+            </h2>
+            <p className="form-subtitle">
+              {currentStep === 0 && "Masukkan nama lengkap dan nickname unik Anda"}
+              {currentStep === 1 && "Kami akan mengirim kode verifikasi ke email Anda"}
+              {currentStep === 2 && "Buat password yang kuat untuk mengamankan akun"}
+            </p>
           </div>
 
           <AnimatePresence mode="wait">
-            {/* Step 1: Name */}
+            {/* STEP 1: Profile */}
             {currentStep === 0 && (
-              <motion.form key="step-name" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }} onSubmit={nextFromName}>
+              <motion.form
+                key="step-0"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                onSubmit={handleStep1Submit}
+              >
                 <div className="input-group">
-                  <label htmlFor="name" className="input-label">Nama Lengkap</label>
+                  <label htmlFor="fullName" className="input-label">
+                    Nama Lengkap
+                  </label>
                   <div className="input-wrapper">
-                    <User className="input-icon" />
-                    <input id="name" type="text" className="input-field" placeholder="Nama lengkap kamu" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                    <div className="input-icon">
+                      <User size={20} />
+                    </div>
+                    <input
+                      id="fullName"
+                      type="text"
+                      className={`input-field ${errors.fullName ? "error" : ""}`}
+                      placeholder="Mamat Sudrajat"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      autoFocus
+                    />
                   </div>
-                  {errors.fullName && <div className="helper-text">{errors.fullName}</div>}
-                </div>
-                <div className="input-group">
-                  <label htmlFor="nick" className="input-label">Nickname</label>
-                  <div className="input-wrapper">
-                    <User className="input-icon" />
-                    <input id="nick" type="text" className="input-field" placeholder="Panggilan kamu" value={nickname} onChange={(e) => setNickname(e.target.value)} />
-                  </div>
-                  {errors.nickname && <div className="helper-text">{errors.nickname}</div>}
+                  {errors.fullName && (
+                    <motion.div
+                      className="error-text"
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <AlertCircle size={14} />
+                      {errors.fullName}
+                    </motion.div>
+                  )}
                 </div>
 
-                <button type="submit" className="btn btn-primary">
+                <div className="input-group">
+                  <label htmlFor="nickname" className="input-label">
+                    Nickname
+                  </label>
+                  <div className="input-wrapper">
+                    <div className="input-icon">
+                      <User size={20} />
+                    </div>
+                    <input
+                      id="nickname"
+                      type="text"
+                      className={`input-field ${errors.nickname ? "error" : ""}`}
+                      placeholder="mamat"
+                      value={nickname}
+                      onChange={(e) =>
+                        setNickname(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))
+                      }
+                    />
+                    <div className="input-feedback">
+                      {nicknameStatus === 'checking' && <Loader2 size={20} className="spinner" color="#6366f1" />}
+                      {nicknameStatus === 'available' && <CheckCircle2 size={20} color="#10b981" />}
+                      {nicknameStatus === 'taken' && <XCircle size={20} color="#ef4444" />}
+                    </div>
+                  </div>
+                  {errors.nickname && (
+                    <motion.div
+                      className="error-text"
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <AlertCircle size={14} />
+                      {errors.nickname}
+                    </motion.div>
+                  )}
+                  {nicknameStatus === 'available' && (
+                    <motion.div
+                      className="success-text"
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <CheckCircle2 size={14} />
+                      Nickname tersedia
+                    </motion.div>
+                  )}
+                </div>
+
+                <button type="submit" className="btn btn-primary" disabled={nicknameStatus === 'checking' || nicknameStatus === 'taken'}>
                   Lanjutkan <ArrowRight size={18} />
                 </button>
 
                 <p className="footer-text">
-                  Sudah punya akun? {" "}
-                  <button type="button" onClick={() => navigateWithExit("/login")} style={{ background: "none", border: "none", color: "#f97316", fontWeight: 700, cursor: "pointer" }}>Masuk</button>
+                  Sudah punya akun?{" "}
+                  <a href="/login" className="link-btn">
+                    Masuk di sini
+                  </a>
                 </p>
               </motion.form>
             )}
 
-            {/* Step 2: Email */}
+            {/* STEP 2: Email & OTP */}
             {currentStep === 1 && (
-              <motion.form key="step-email" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }} onSubmit={nextFromEmail}>
+              <motion.form
+                key="step-1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                onSubmit={(e) => e.preventDefault()}
+              >
                 <div className="input-group">
-                  <label htmlFor="email" className="input-label">Email</label>
+                  <label htmlFor="email" className="input-label">
+                    Email
+                  </label>
                   <div className="input-wrapper">
-                    <Mail className="input-icon" />
-                    <input id="email" type="email" className="input-field" placeholder="contoh@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-                  </div>
-                  {errors.email && <div className="helper-text">{errors.email}</div>}
-                </div>
-                {otpSent && (
-                  <div className="input-group">
-                    <label htmlFor="code" className="input-label">
-                      Kode Verifikasi
-                      {isVerifyingOtp && (
-                        <span style={{ marginLeft: '8px', fontSize: '0.8em', color: '#2563eb' }}>
-                          Memverifikasi...
-                        </span>
-                      )}
-                    </label>
-                    <div className="input-wrapper">
-                      <input 
-                        id="code" 
-                        type="text" 
-                        className={`input-field ${verificationCode.length === 6 ? 'input-complete' : ''} ${errors.code ? 'input-error' : ''}`}
-                        placeholder="••••••" 
-                        value={verificationCode} 
-                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))} 
-                        maxLength={6}
-                        disabled={isVerifyingOtp}
-                        autoComplete="one-time-code"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        autoFocus
-                        style={{ 
-                          textAlign: 'center', 
-                          fontSize: '1.2rem',
-                          letterSpacing: '0.5rem',
-                          fontWeight: '600'
-                        }}
-                      />
+                    <div className="input-icon">
+                      <Mail size={20} />
                     </div>
-                    {errors.code && (
-                      <motion.div 
-                        className="helper-text error" 
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        style={{ background: '#fef2f2', borderLeftColor: '#ef4444', color: '#dc2626' }}
-                      >
-                        {errors.code}
-                      </motion.div>
-                    )}
-                    {verificationCode.length === 6 && !errors.code && !isVerifyingOtp && (
-                      <motion.div 
-                        className="helper-text success"
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        style={{ background: '#f0fdf4', borderLeftColor: '#22c55e', color: '#16a34a' }}
-                      >
-                        ✅ Kode lengkap, memverifikasi...
-                      </motion.div>
-                    )}
-                    {otpSent && (
-                      <p className="text-sm text-gray-600 text-center mb-4" style={{ marginTop: '0.5rem' }}>
-                        Kode verifikasi telah dikirim ke {email}
-                      </p>
-                    )}
+                    <input
+                      id="email"
+                      type="email"
+                      className={`input-field ${errors.email ? "error" : ""}`}
+                      placeholder="anda@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={otpSent}
+                      autoFocus={!otpSent}
+                    />
                   </div>
+                  {errors.email && (
+                    <motion.div
+                      className="error-text"
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <AlertCircle size={14} />
+                      {errors.email}
+                    </motion.div>
+                  )}
+                </div>
+
+                {otpSent && (
+                  <motion.div
+                    className="input-group"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <label className="input-label">Kode Verifikasi (6 Digit)</label>
+                    <div className="otp-container" onPaste={handleOtpPaste}>
+                      {otp.map((digit, index) => (
+                        <input
+                          key={index}
+                          ref={(el) => (otpInputRefs.current[index] = el)}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          className={`input-field otp-input ${errors.otp ? "error" : ""}`}
+                          value={digit}
+                          onChange={(e) => handleOtpChange(index, e.target.value)}
+                          onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                          disabled={isVerifyingOtp}
+                        />
+                      ))}
+                    </div>
+                    {errors.otp && (
+                      <motion.div
+                        className="error-text"
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        <AlertCircle size={14} />
+                        {errors.otp}
+                      </motion.div>
+                    )}
+                    {isVerifyingOtp && (
+                      <motion.div
+                        className="success-text"
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        <Loader2 size={14} className="spinner" />
+                        Memverifikasi kode...
+                      </motion.div>
+                    )}
+                  </motion.div>
                 )}
 
                 <div className="btn-group">
-                  <button type="button" className="btn btn-back" onClick={goBack}>
+                  <button type="button" className="btn btn-secondary" onClick={goBack}>
                     <ArrowLeft size={18} />
                   </button>
                   {!otpSent ? (
-                    <button type="button" className="btn btn-primary" disabled={isSendingOtp} onClick={handleSendOtp} style={{ flex: 1 }}>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleSendOtp}
+                      disabled={isSendingOtp}
+                      style={{ flex: 1 }}
+                    >
                       {isSendingOtp ? <div className="spinner" /> : <>Kirim Kode <ArrowRight size={18} /></>}
                     </button>
                   ) : (
-                    <button type="button" className="btn btn-primary" disabled={isVerifyingOtp || verificationCode.length !== 6} onClick={handleVerifyOtp} style={{ flex: 1 }}>
-                      {isVerifyingOtp ? <div className="spinner" /> : <>Verifikasi <ArrowRight size={18} /></>}
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      disabled={true}
+                      style={{ flex: 1, opacity: 0.5 }}
+                    >
+                      {isVerifyingOtp ? <div className="spinner" /> : "Memverifikasi..."}
                     </button>
                   )}
                 </div>
+
                 {otpSent && (
-                  <p className="footer-text" style={{ marginTop: '0.75rem' }}>
-                    Tidak menerima kode? {" "}
+                  <p className="footer-text" style={{ marginTop: "1rem" }}>
+                    Tidak menerima kode?{" "}
                     {otpCooldown > 0 ? (
-                      <div className="text-center" style={{ display: 'inline-block', marginLeft: '0.25rem' }}>
-                        <div className="text-sm text-gray-500">
-                          <div className="flex items-center justify-center gap-2">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                            <span>Kirim ulang dalam {otpCooldown} detik</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-1 mt-2" style={{ width: '120px', margin: '0.5rem auto 0' }}>
-                            <div 
-                              className="bg-blue-500 h-1 rounded-full transition-all duration-1000"
-                              style={{ width: `${((60 - otpCooldown) / 60) * 100}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      </div>
+                      <span style={{ color: "#6b7280" }}>
+                        Kirim ulang dalam {otpCooldown}d
+                      </span>
                     ) : (
-                      <button type="button" className="link-btn" onClick={handleSendOtp} disabled={isSendingOtp}>
-                        {isSendingOtp ? 'Mengirim...' : 'Kirim ulang'}
+                      <button
+                        type="button"
+                        className="link-btn"
+                        onClick={handleSendOtp}
+                        disabled={isSendingOtp}
+                      >
+                        Kirim ulang
                       </button>
                     )}
                   </p>
@@ -976,45 +1238,129 @@ export default function RegisterPage() {
               </motion.form>
             )}
 
-            {/* Step 3: Password */}
+            {/* STEP 3: Password */}
             {currentStep === 2 && (
-              <motion.form key="step-pass" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }} onSubmit={submitPassword}>
+              <motion.form
+                key="step-2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                onSubmit={handlePasswordSubmit}
+              >
                 <div className="input-group">
-                  <label htmlFor="password" className="input-label">Password</label>
+                  <label htmlFor="password" className="input-label">
+                    Password
+                  </label>
                   <div className="input-wrapper">
-                    <Lock className="input-icon" />
-                    <input id="password" type={showPassword ? "text" : "password"} className="input-field" placeholder="Minimal 8 karakter" value={password} onChange={(e) => setPassword(e.target.value)} />
-                    <button type="button" className="toggle-password" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff /> : <Eye />}</button>
+                    <div className="input-icon">
+                      <Lock size={20} />
+                    </div>
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      className={`input-field ${errors.password ? "error" : ""}`}
+                      placeholder="Minimal 8 karakter"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoFocus
+                      style={{ paddingRight: "3rem" }}
+                    />
+                    <button
+                      type="button"
+                      className="input-feedback"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#9ca3af",
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
                   </div>
-                  {errors.password && <div className="helper-text">{errors.password}</div>}
+                  {password && <PasswordStrength password={password} />}
+                  {errors.password && (
+                    <motion.div
+                      className="error-text"
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <AlertCircle size={14} />
+                      {errors.password}
+                    </motion.div>
+                  )}
                 </div>
+
                 <div className="input-group">
-                  <label htmlFor="confirm" className="input-label">Konfirmasi Password</label>
+                  <label htmlFor="confirmPassword" className="input-label">
+                    Konfirmasi Password
+                  </label>
                   <div className="input-wrapper">
-                    <Lock className="input-icon" />
-                    <input id="confirm" type={showConfirmPassword ? "text" : "password"} className="input-field" placeholder="Ketik ulang password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-                    <button type="button" className="toggle-password" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>{showConfirmPassword ? <EyeOff /> : <Eye />}</button>
+                    <div className="input-icon">
+                      <Lock size={20} />
+                    </div>
+                    <input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      className={`input-field ${errors.confirm ? "error" : ""}`}
+                      placeholder="Ketik ulang password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      style={{ paddingRight: "3rem" }}
+                    />
+                    <button
+                      type="button"
+                      className="input-feedback"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#9ca3af",
+                      }}
+                    >
+                      {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
                   </div>
-                  {errors.confirm && <div className="helper-text">{errors.confirm}</div>}
+                  {errors.confirm && (
+                    <motion.div
+                      className="error-text"
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <AlertCircle size={14} />
+                      {errors.confirm}
+                    </motion.div>
+                  )}
                 </div>
 
                 <div className="btn-group">
-                  <button type="button" className="btn btn-back" onClick={goBack}>
+                  <button type="button" className="btn btn-secondary" onClick={goBack}>
                     <ArrowLeft size={18} />
                   </button>
-                  <button type="submit" className="btn btn-primary" disabled={isLoading} style={{ flex: 1 }}>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={isLoading}
+                    style={{ flex: 1 }}
+                  >
                     {isLoading ? <div className="spinner" /> : <>Buat Akun <UserPlus size={18} /></>}
                   </button>
                 </div>
 
-                <p className="footer-text">Sudah punya akun? <button type="button" onClick={() => navigateWithExit("/login")} style={{ background: "none", border: "none", color: "#f97316", fontWeight: 700, cursor: "pointer" }}>Masuk</button></p>
+                <p className="footer-text">
+                  Sudah punya akun?{" "}
+                  <a href="/login" className="link-btn">
+                    Masuk di sini
+                  </a>
+                </p>
               </motion.form>
             )}
           </AnimatePresence>
         </div>
       </motion.div>
-        )}
-    </AnimatePresence>
     </div>
   );
 }
