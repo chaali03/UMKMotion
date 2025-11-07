@@ -1,0 +1,8 @@
+---
+import LandingPageLayout from "../layouts/LandingPageLayout.astro";
+import AIPage from "../ai/AIPage.tsx";
+---
+
+<LandingPageLayout title="Saskia AI - Asisten UMKM Cerdas">
+  <AIPage client:only="react" />
+</LandingPageLayout>

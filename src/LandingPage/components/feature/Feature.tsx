@@ -32,10 +32,9 @@ const Feature1 = () => {
       transition: {
         delay: 2.8 + i * 0.1,
         duration: 0.8,
-        ease: "easeOut",
       },
     }),
-  };
+  } as const;
 
   const messageVariants = {
     hidden: { x: -20, opacity: 0 },
@@ -45,10 +44,9 @@ const Feature1 = () => {
       transition: {
         delay: 3.2 + i * 0.6,
         duration: 0.5,
-        ease: "easeOut",
       },
     }),
-  };
+  } as const;
 
   const colorClasses = {
     green: "before:bg-gradient-to-b before:from-emerald-400 before:to-emerald-600 shadow-emerald-500/20",
@@ -65,7 +63,7 @@ const Feature1 = () => {
         <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes blob {
           0%, 100% { transform: translate(0, 0) scale(1); }
           25% { transform: translate(20px, -50px) scale(1.1); }
@@ -608,6 +606,7 @@ const Feature1 = () => {
                   transition={{ delay: 4.6, duration: 0.4, type: "spring" }}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
+                  suppressHydrationWarning
                 >
                   <PencilLine className="h-3 w-3" />
                   Adjust tone
@@ -629,6 +628,7 @@ const Feature1 = () => {
                 initial={{ width: "60%" }}
                 animate={{ width: "100%" }}
                 transition={{ delay: 5.0, duration: 0.6 }}
+                suppressHydrationWarning
               />
               <motion.button
                 className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 shadow-lg hover:shadow-xl transition-all"
@@ -637,6 +637,7 @@ const Feature1 = () => {
                 transition={{ delay: 5.2, duration: 0.4, type: "spring" }}
                 whileHover={{ scale: 1.1, rotate: -10 }}
                 whileTap={{ scale: 0.9 }}
+                suppressHydrationWarning
               >
                 <ArrowRight className="h-5 w-5" />
               </motion.button>

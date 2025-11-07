@@ -222,27 +222,24 @@ const TestimonialCard = ({ testimonial }: { testimonial: Testimonial }) => {
         <div className="flex-shrink-0 h-px w-full bg-gradient-to-r from-transparent via-slate-300 to-transparent mb-3 sm:mb-4" />
 
         {/* Author Section */}
-        <div className="flex-shrink-0 flex items-center gap-3">
+        <div className="flex-shrink-0 flex items-center gap-4 sm:gap-5 pl-2 sm:pl-3">
           {/* Avatar - tidak terpotong */}
           <div
             className={`
               relative 
-              w-12 h-12
+              w-12 h-12 aspect-square
               sm:w-14 sm:h-14
-              rounded-xl
+              rounded-2xl
               overflow-hidden 
-              ring-2 
-              ${colorClasses.ring} 
               flex-shrink-0
-              shadow-md
-              group-hover:scale-105
+              border-0 ring-0 outline-none shadow-none bg-white
               transition-all duration-300
             `}
           >
             <img
               src={testimonial.image}
               alt={testimonial.name}
-              className="object-cover w-full h-full"
+              className="block object-cover object-center w-full h-full rounded-2xl transition-transform duration-300 group-hover:scale-105 border-0 ring-0 outline-none"
               loading="lazy"
             />
             

@@ -644,6 +644,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                     onKeyDown={handleKeyPress}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
+                    suppressHydrationWarning
                   />
                   {isFocused && (
                     <div className="search-count">
@@ -657,6 +658,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                 className="search-button" 
                 onClick={handleSearch}
                 disabled={!query.trim()}
+                suppressHydrationWarning
               >
                 <Search strokeWidth={2.5} />
                 <span>Cari Sekarang</span>

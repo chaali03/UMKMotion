@@ -2,6 +2,8 @@
 import '../styles/global.css';
 
 const { title = 'UMKMotion' } = Astro.props;
+const isAIPage = Astro.url.pathname.startsWith('/ai');
+import FloatingAIButton from "../components/FloatingAIButton.tsx";
 ---
 <html lang="en" class="intro-lock">
   <head>
@@ -16,6 +18,25 @@ const { title = 'UMKMotion' } = Astro.props;
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon_io/android-chrome-512x512.png?v=4" />
     <link rel="manifest" href="/favicon_io/site.webmanifest?v=4" />
     <link rel="shortcut icon" href="/favicon_io/favicon.ico?v=4" />
+    <script define:vars={{ 
+      GEMINI_API_KEY: import.meta.env.GEMINI_API_KEY,
+      FIREBASE_API_KEY: import.meta.env.FIREBASE_API_KEY,
+      FIREBASE_AUTH_DOMAIN: import.meta.env.FIREBASE_AUTH_DOMAIN,
+      FIREBASE_PROJECT_ID: import.meta.env.FIREBASE_PROJECT_ID,
+      FIREBASE_STORAGE_BUCKET: import.meta.env.FIREBASE_STORAGE_BUCKET,
+      FIREBASE_MESSAGING_SENDER_ID: import.meta.env.FIREBASE_MESSAGING_SENDER_ID,
+      FIREBASE_APP_ID: import.meta.env.FIREBASE_APP_ID
+    }}>
+      window.ENV = {
+        GEMINI_API_KEY,
+        FIREBASE_API_KEY,
+        FIREBASE_AUTH_DOMAIN,
+        FIREBASE_PROJECT_ID,
+        FIREBASE_STORAGE_BUCKET,
+        FIREBASE_MESSAGING_SENDER_ID,
+        FIREBASE_APP_ID
+      };
+    </script>
     <style>
       :root { 
         color-scheme: light dark;
@@ -903,6 +924,16 @@ const { title = 'UMKMotion' } = Astro.props;
         body { font-size: 12pt; }
       }
 
+      /* === Large desktop vertical spacing between sections === */
+      /* Prevent section collision on wide screens (index vs feature) */
+      @media (min-width: 1281px) {
+        main#content > section + section,
+        main#content > div + section,
+        main#content > section + div {
+          margin-top: clamp(48px, 4vw, 96px);
+        }
+      }
+
       /* High contrast mode support */
       @media (prefers-contrast: high) {
         .intro__logo {
@@ -952,6 +983,12 @@ const { title = 'UMKMotion' } = Astro.props;
       <main id="content">
         <slot />
       </main>
+      <!-- Floating AI Button -->
+      { !isAIPage && (
+        <div class="fixed bottom-6 right-6 z-50">
+          <FloatingAIButton client:load onClick={() => { window.location.href = '/ai'; }} />
+        </div>
+      ) }
     </div>
 
     <script type="module">
@@ -1179,6 +1216,7 @@ const { title = 'UMKMotion' } = Astro.props;
           document.cookie = 'introSeen=true; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/';
         });
       }
+
     </script>
   </body>
 </html>

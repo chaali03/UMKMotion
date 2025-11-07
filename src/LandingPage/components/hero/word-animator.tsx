@@ -30,9 +30,9 @@ const WordAnimator: React.FC<WordAnimatorProps> = ({
         position: "relative",
         verticalAlign: "bottom",
       }}
-      className={cn(" text-left overflow-hidden border rounded-md ", className)}
+      className={cn(" text-center overflow-visible border rounded-md leading-[1.35] pb-[4px] ", className)}
     >
-      <span className="absolute top-0 left-0 w-full h-full content-[''] z-10 pointer-events-none bg-[url('/noise.gif')] opacity-10"></span>
+      <span className="absolute top-0 left-0 w-full h-full content-[''] z-10 pointer-events-none bg-[radial-gradient(circle,rgba(0,0,0,0.2)_1px,transparent_1px)] [background-size:8px_8px] opacity-10"></span>
       <AnimatePresence mode="popLayout">
         <motion.span
           key={currentIndex}
@@ -49,12 +49,12 @@ const WordAnimator: React.FC<WordAnimatorProps> = ({
             left: 0,
             right: 0,
           }}
-          className="bg-gradient-to-t w-full from-[#ffa34d] to-[#ff5a00] bg-clip-text text-transparent"
+          className="bg-gradient-to-t w-full from-[#ffa34d] to-[#ff5a00] bg-clip-text text-transparent leading-[1.35] pb-[4px]"
         >
           {words[currentIndex]}
         </motion.span>
       </AnimatePresence>
-      <span style={{ visibility: "hidden" }}>{words[currentIndex]}</span>
+      <span style={{ visibility: "hidden" }} className="leading-[1.35] pb-[4px] block">{words[currentIndex]}</span>
     </span>
   );
 };

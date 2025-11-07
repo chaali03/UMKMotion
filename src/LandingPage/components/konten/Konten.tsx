@@ -3,7 +3,7 @@ import { TimelineContent } from "@/components/ui/timeline-animation";
 import VerticalCutReveal from "@/components/ui/vertical-cut-reveal";
 import { ArrowRight, MapPin, TrendingUp, Users, Zap, Compass, Star, Clock, Store } from "lucide-react";
 import { useRef, useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, cubicBezier } from "framer-motion";
 
 export default function Konten() {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -37,7 +37,7 @@ export default function Konten() {
       transition: {
         delay: i * 0.15,
         duration: 0.8,
-        ease: [0.25, 0.4, 0.25, 1],
+        ease: cubicBezier(0.25, 0.4, 0.25, 1),
       },
     }),
     hidden: {
@@ -55,7 +55,7 @@ export default function Konten() {
       transition: {
         delay: i * 0.15,
         duration: 1,
-        ease: [0.25, 0.4, 0.25, 1],
+        ease: cubicBezier(0.25, 0.4, 0.25, 1),
       },
     }),
     hidden: {
@@ -70,7 +70,7 @@ export default function Konten() {
     transition: {
       duration: 3,
       repeat: Infinity,
-      ease: "easeInOut"
+      ease: cubicBezier(0.42, 0, 0.58, 1)
     }
   };
 
@@ -267,7 +267,7 @@ export default function Konten() {
                 <div className="relative rounded-xl sm:rounded-2xl overflow-hidden">
                   {/* Map Image - Focused on Indonesia */}
                   <img
-                    src="/asset/Peta/Peta.png"
+                    src="/asset/optimized/Peta/Peta.webp"
                     alt="Peta Indonesia - UMKM Interaktif"
                     className="w-full h-full object-cover aspect-[4/3] brightness-95"
                   />
@@ -445,7 +445,7 @@ export default function Konten() {
                 <div className="relative space-y-3 sm:space-y-4 md:space-y-5">
                   <motion.div 
                     whileHover={{ y: isMobile ? 0 : -4, rotate: isMobile ? 0 : -3, scale: isMobile ? 1 : 1.06 }}
-                    transition={{ duration: 0.35, ease: [0.25, 0.4, 0.25, 1] }}
+                    transition={{ duration: 0.35, ease: cubicBezier(0.25, 0.4, 0.25, 1) }}
                     className={`w-12 sm:w-14 md:w-16 h-12 sm:h-14 md:h-16 bg-gradient-to-br ${service.gradient} rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl`}
                   >
                     <service.icon className="w-6 sm:w-7 md:w-8 h-6 sm:h-7 md:h-8 text-white" />

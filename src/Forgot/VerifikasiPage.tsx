@@ -4,10 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowLeft, CheckCircle, Mail } from "lucide-react";
 
 const carouselItems = [
-  { src: "/asset/umkm/umkm1.png", title: "Kuliner Nusantara" },
-  { src: "/asset/umkm/umkm2.jpg", title: "Fashion Lokal" },
-  { src: "/asset/umkm/umkm3.jpeg", title: "Kerajinan Tangan" },
-  { src: "/asset/umkm/umkm4.jpeg", title: "Produk Digital" },
+  { src: "/asset/optimized/umkm/umkm1.webp", title: "Kuliner Nusantara" },
+  { src: "/asset/optimized/umkm/umkm2.webp", title: "Fashion Lokal" },
+  { src: "/asset/optimized/umkm/umkm3.webp", title: "Kerajinan Tangan" },
+  { src: "/asset/optimized/umkm/umkm4.webp", title: "Produk Digital" },
 ];
 
 export default function VerificationPage() {

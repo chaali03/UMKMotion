@@ -40,10 +40,10 @@ function HeroKonsultanAbout() {
       y: 0,
       opacity: 1,
       filter: "blur(0px)",
-      transition: { delay: i * 0.15, duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }
+      transition: { delay: i * 0.15, duration: 0.8 }
     }),
     hidden: { filter: "blur(12px)", y: 40, opacity: 0 }
-  };
+  } as const;
 
   const features = [
     { icon: CheckCircle, text: "Pendampingan strategi pemasaran dan digitalisasi", color: "from-blue-600 to-indigo-600" },
@@ -52,7 +52,7 @@ function HeroKonsultanAbout() {
   ];
 
   return (
-    <section ref={heroRef} className="relative py-20 sm:py-28 px-4 bg-gradient-to-b from-white via-orange-50/30 to-white overflow-hidden">
+    <section ref={heroRef} className="relative py-20 sm:py-28 px-4 bg-gradient-to-b from-white via-orange-50/30 to-white overflow-visible">
       {/* Enhanced background elements */}
       <div className="pointer-events-none absolute inset-0">
         {!prefersReducedMotion && (
@@ -101,11 +101,11 @@ function HeroKonsultanAbout() {
         {/* Left Content */}
         <div className="space-y-8">
           {/* Heading with gradient */}
-          <div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 mb-6 !leading-[1.1]">
+          <div className="overflow-visible">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 mb-6 leading-[1.25] md:!leading-[1.1] overflow-visible">
               <VerticalCutReveal delay={0.3} duration={0.8}>
                 <span className="block mb-2">Tumbuhkan Bisnis</span>
-                <span className="block bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-clip-text text-transparent">
+                <span className="inline-block bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-clip-text text-transparent leading-[1.3] md:leading-[1.15] pb-[0.3em]">
                   dengan Konsultan
                 </span>
                 <span className="block">Ahli Terpercaya</span>
@@ -466,24 +466,27 @@ const KonsulPage: React.FC = () => {
               transition={{ duration: 0.8 }}
               className="space-y-6"
             >
-              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 text-orange-700 px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 text-orange-700 px-5 py-2.5 rounded-full text-base sm:text-lg font-bold shadow-lg">
                 <Sparkles className="w-4 h-4" />
                 <span className="uppercase tracking-wide">Program Konsultasi UMKM</span>
               </div>
 
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 leading-tight">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-black text-slate-900 leading-tight">
                 Konsultasi Profesional untuk{' '}
                 <span className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-                  Mengembangkan dan Memajukan
+                  Mengembangkan dan
+                </span>{' '}
+                <span className="text-blue-600">
+                  Memajukan
                 </span>{' '}
                 Usaha Anda
               </h2>
 
-              <div className="space-y-4 text-slate-600 leading-relaxed">
-                <p className="text-lg">
+              <div className="space-y-5 text-slate-600 leading-relaxed">
+                <p className="text-xl lg:text-[1.35rem] xl:text-2xl">
                   Konsultasi bisnis merupakan langkah penting bagi pelaku UMKM yang ingin meningkatkan kualitas usaha, memperluas jangkauan pasar, dan memperkuat strategi bisnisnya.
                 </p>
-                <p className="text-lg">
+                <p className="text-xl lg:text-[1.35rem] xl:text-2xl">
                   Dengan <span className="font-bold text-orange-600">wawasan dan pengalaman tim kami</span>, Anda akan mendapatkan bimbingan, strategi, serta dukungan nyata untuk mengoptimalkan potensi bisnis mulai dari manajemen, pemasaran, hingga transformasi digital.
                 </p>
               </div>
@@ -493,7 +496,7 @@ const KonsulPage: React.FC = () => {
                   href="#"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
-                  className="group bg-gradient-to-r from-orange-600 to-amber-600 text-white px-8 py-4 rounded-2xl font-bold text-lg inline-flex items-center justify-center gap-3 shadow-2xl shadow-orange-500/40"
+                  className="group bg-gradient-to-r from-orange-600 to-amber-600 text-white px-9 py-5 rounded-2xl font-bold text-lg xl:text-xl inline-flex items-center justify-center gap-3 shadow-2xl shadow-orange-500/40"
                 >
                   <Calendar className="w-5 h-5" />
                   Jadwalkan Konsultasi Anda
@@ -504,7 +507,7 @@ const KonsulPage: React.FC = () => {
                   href="#"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
-                  className="group text-orange-600 font-bold text-lg inline-flex items-center justify-center gap-2 hover:gap-3 transition-all"
+                  className="group text-orange-600 font-bold text-lg xl:text-xl inline-flex items-center justify-center gap-2 hover:gap-3 transition-all"
                 >
                   Pelajari Program
                   <ArrowRight className="w-5 h-5" />
