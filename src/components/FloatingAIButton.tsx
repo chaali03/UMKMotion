@@ -1,48 +1,81 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, MessageCircle, X, Sparkles } from 'lucide-react';
 
 interface FloatingAIButtonProps {
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      window.location.href = '/ai';
+    }
+  };
   const [isHovered, setIsHovered] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState({ top: 0, right: 0 });
+  const buttonRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if ((showTooltip || isHovered) && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setTooltipPos({
+        top: rect.top - 48,
+        right: window.innerWidth - rect.right
+      });
+    }
+  }, [showTooltip, isHovered]);
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <>
       {/* Tooltip */}
-      <AnimatePresence>
-        {(showTooltip || isHovered) && (
-          <motion.div
-            initial={{ opacity: 0, x: 20, scale: 0.8 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 20, scale: 0.8 }}
-            transition={{ duration: 0.2 }}
-            className="absolute bottom-full right-0 mb-3 bg-white shadow-xl rounded-2xl p-4 border border-orange-100 min-w-[280px]"
-          >
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Bot className="w-4 h-4 text-white" />
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {(showTooltip || isHovered) && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.18 }}
+              style={{
+                position: 'fixed',
+                top: tooltipPos.top,
+                right: tooltipPos.right,
+                transform: 'translateY(-100%)',
+                zIndex: 2000,
+                pointerEvents: 'none'
+              }}
+              className="bg-white shadow-xl rounded-2xl p-4 border border-orange-100 min-w-[280px] max-w-[calc(100vw-2rem)]"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 text-sm">Saskia AI</h4>
+                  <p className="text-xs text-slate-600 mt-1">
+                    Tanya saya tentang UMKM, strategi bisnis, atau fitur UMKMotion!
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-bold text-slate-900 text-sm">Saskia AI</h4>
-                <p className="text-xs text-slate-600 mt-1">
-                  Tanya saya tentang UMKM, strategi bisnis, atau fitur UMKMotion!
-                </p>
-              </div>
-            </div>
-            
-            {/* Arrow */}
-            <div className="absolute top-full right-6 w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-white"></div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              
+              {/* Arrow */}
+              <div className="absolute top-full right-6 w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-white"></div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      <div ref={buttonRef} className="fixed bottom-6 right-6 z-50">
 
       {/* Main Button */}
       <motion.button
-        onClick={onClick}
+        onClick={handleClick}
         onHoverStart={() => setIsHovered(true)}
         onHoverEnd={() => setIsHovered(false)}
         whileHover={{ scale: 1.1 }}
@@ -111,8 +144,10 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
           className="absolute inset-0 bg-white rounded-2xl"
         />
       </motion.button>
+      </div>
 
       {/* Floating particles */}
+      <div className="fixed bottom-6 right-6 z-50 pointer-events-none">
       <AnimatePresence>
         {isHovered && (
           <>
@@ -143,7 +178,8 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
           </>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 };
 

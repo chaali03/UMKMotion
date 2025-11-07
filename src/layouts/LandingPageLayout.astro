@@ -985,9 +985,7 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
       </main>
       <!-- Floating AI Button -->
       { !isAIPage && (
-        <div class="fixed bottom-6 right-6 z-50">
-          <FloatingAIButton client:load onClick={() => { window.location.href = '/ai'; }} />
-        </div>
+        <FloatingAIButton client:load />
       ) }
     </div>
 

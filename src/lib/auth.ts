@@ -1,4 +1,4 @@
-import { GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail, sendEmailVerification, signOut } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail, sendEmailVerification, signOut, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
@@ -34,8 +34,25 @@ export async function signInWithGoogle() {
   return signInWithPopup(auth, googleProvider);
 }
 
-export async function sendPasswordReset(email: string) {
-  return sendPasswordResetEmail(auth, email);
+export async function sendPasswordReset(email: string, redirectUrl?: string) {
+  // If redirectUrl === '' we intentionally skip custom continue URL
+  let url = redirectUrl === '' ? undefined : redirectUrl;
+  if (!url && typeof window !== 'undefined') {
+    url = `${window.location.origin}/login`;
+  }
+  if (url) {
+    try {
+      return await sendPasswordResetEmail(auth, email, { url });
+    } catch (err: any) {
+      const code = err?.code || '';
+      if (code === 'auth/invalid-continue-uri' || code === 'auth/unauthorized-continue-uri') {
+        // Retry without custom redirect URL
+        return await sendPasswordResetEmail(auth, email);
+      }
+      throw err;
+    }
+  }
+  return await sendPasswordResetEmail(auth, email);
 }
 
 export async function signOutUser() {
@@ -45,4 +62,9 @@ export async function signOutUser() {
 export async function sendVerificationEmail() {
   if (!auth.currentUser) throw new Error('No authenticated user to verify');
   return sendEmailVerification(auth.currentUser);
+}
+
+export async function isEmailRegistered(email: string): Promise<boolean> {
+  const methods = await fetchSignInMethodsForEmail(auth, email.toLowerCase());
+  return Array.isArray(methods) && methods.length > 0;
 }
