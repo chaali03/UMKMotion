@@ -1,6 +1,5 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-import netlify from '@astrojs/netlify/functions';
 
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
@@ -11,8 +10,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // https://astro.build/config
 export default defineConfig({
-  output: 'server',
-  adapter: netlify({}),
   integrations: [react()],
 
   // Performance optimizations
@@ -48,23 +45,7 @@ export default defineConfig({
       }
     },
     optimizeDeps: {
-      force: true,
-      include: [
-        'react',
-        'react-dom',
-        'framer-motion',
-        'motion/react',
-        'lucide-react',
-        '@radix-ui/react-slot',
-        'class-variance-authority',
-        'vaul',
-        'ogl',
-        // Firebase SDK modules
-        'firebase/app',
-        'firebase/auth',
-        'firebase/firestore',
-        'firebase/storage'
-      ],
+      include: ['react', 'react-dom'],
       exclude: ['@react-three/fiber', '@react-three/drei']
     }
   }

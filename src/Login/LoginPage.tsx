@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Sparkles, MapPin, BarChart3, Megaphone, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
 import { signInWithEmail, signInWithGoogle } from "../lib/auth";
+// removed auth state redirect to avoid auto-refresh loop
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -52,6 +53,8 @@ export default function LoginPage() {
     return () => clearTimeout(timer);
   }, [notification]);
 
+  // Redirect handled explicitly after successful login only
+
   const showNotification = (type: "success" | "error" | "info", title: string, message: string) => {
     setNotification({ type, title, message });
   };
@@ -87,7 +90,11 @@ export default function LoginPage() {
 
     try {
       await signInWithEmail(email, password);
-      showNotification("success", "Login Berhasil!", "Mengalihkan ke dashboard...");
+      showNotification("success", "Login Berhasil!", "Mengalihkan ke Homepage...");
+      // Set simple auth cookie for SSR guard (non-HTTP-only fallback)
+      try {
+        document.cookie = `auth=1; Path=/; Max-Age=${60 * 60 * 24 * 7}`; // 7 days
+      } catch {}
       setTimeout(() => {
         window.location.href = "/homepage";
       }, 1500);
@@ -119,7 +126,11 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithGoogle();
-      showNotification("success", "Login Berhasil!", "Mengalihkan ke dashboard...");
+      showNotification("success", "Login Berhasil!", "Mengalihkan ke Homepage...");
+      // Set simple auth cookie for SSR guard (non-HTTP-only fallback)
+      try {
+        document.cookie = `auth=1; Path=/; Max-Age=${60 * 60 * 24 * 7}`;
+      } catch {}
       setTimeout(() => {
         window.location.href = "/homepage";
       }, 1500);
@@ -165,7 +176,8 @@ export default function LoginPage() {
           background: 
             radial-gradient(circle at 20% 50%, rgba(251, 146, 60, 0.25) 0%, transparent 50%),
             radial-gradient(circle at 80% 80%, rgba(249, 115, 22, 0.25) 0%, transparent 50%);
-          animation: bgPulse 8s ease-in-out infinite;
+          /* disable background pulsing to avoid page movement */
+          animation: none;
         }
 
         @keyframes bgPulse {
@@ -181,9 +193,9 @@ export default function LoginPage() {
           backdrop-filter: blur(20px);
         }
 
-        .shape-1 { width: 300px; height: 300px; top: -150px; left: -150px; animation: float1 20s infinite; }
-        .shape-2 { width: 200px; height: 200px; bottom: -100px; right: -100px; animation: float2 15s infinite; }
-        .shape-3 { width: 150px; height: 150px; top: 50%; right: 10%; animation: float3 18s infinite; }
+        .shape-1 { width: 300px; height: 300px; top: -150px; left: -150px; animation: none !important; }
+        .shape-2 { width: 200px; height: 200px; bottom: -100px; right: -100px; animation: none !important; }
+        .shape-3 { width: 150px; height: 150px; top: 50%; right: 10%; animation: none !important; }
 
         @keyframes float1 {
           0%, 100% { transform: translate(0, 0) rotate(0deg); }
@@ -479,7 +491,8 @@ export default function LoginPage() {
         }
 
         .btn-primary:hover:not(:disabled) {
-          transform: translateY(-2px);
+          /* prevent hover shift */
+          transform: none;
           box-shadow: 0 6px 20px rgba(249, 115, 22, 0.45);
         }
 
@@ -775,7 +788,7 @@ export default function LoginPage() {
               <span>Selamat Datang Kembali</span>
             </div>
             <h2 className="form-title">Masuk ke Akun</h2>
-            <p className="form-subtitle">Masukkan email dan password untuk mengakses dashboard Anda</p>
+            <p className="form-subtitle">Masukkan email dan password untuk mengakses Homepage Anda</p>
           </div>
 
           <form onSubmit={handleSubmit}>

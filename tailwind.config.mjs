@@ -1,8 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  // Force light mode: do not respond to system dark mode
-  darkMode: 'class',
-  content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
+  content: [
+    './src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}',
+    './Home/**/*.{astro,html,js,jsx,ts,tsx}',
+  ],
   theme: {
     extend: {
       animation: {

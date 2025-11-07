@@ -68,23 +68,6 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true);
 
-    // Ensure the account is registered before sending reset link
-    try {
-      const resp = await fetch('/api/check-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-      const data = await resp.json().catch(() => ({}));
-      if (!resp.ok || !data?.emailExists) {
-        const msg = 'Email tidak terdaftar dalam sistem kami.';
-        setErrors({ email: msg });
-        showNotification('error', 'Email Tidak Terdaftar', msg);
-        setIsLoading(false);
-        return;
-      }
-    } catch {}
-
     try {
       await sendPasswordReset(email);
       setIsSuccess(true);
@@ -190,11 +173,11 @@ export default function ForgotPasswordPage() {
           left: 2rem;
           z-index: 100;
           padding: 0.75rem 1.5rem;
-          background: rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.9);
           backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          border: 1px solid rgba(0, 0, 0, 0.12);
           border-radius: 50px;
-          color: white;
+          color: #111827; /* make text & icon black */
           font-size: 0.9rem;
           font-weight: 600;
           cursor: pointer;
@@ -205,7 +188,7 @@ export default function ForgotPasswordPage() {
         }
 
         .back-btn:hover {
-          background: rgba(255, 255, 255, 0.25);
+          background: rgba(255, 255, 255, 1);
           transform: translateX(-4px);
         }
 

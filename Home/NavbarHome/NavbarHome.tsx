@@ -1,8 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { signOutUser } from "@/lib/auth";
 import { AlignJustify, X, Home, Store, Building2, Users, Lightbulb, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Drawer } from "vaul";
 
 interface HomeHeaderProps {
@@ -16,6 +18,12 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
   const [scrolled, setScrolled] = useState(false);
   const [pathname, setPathname] = useState("/homepage");
   const [isMobile, setIsMobile] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileRef = useRef<HTMLDivElement | null>(null);
+  const profileBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [menuTop, setMenuTop] = useState<number>(64);
+  const menuPortalRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -58,6 +66,37 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
     };
   }, [scrolled]);
 
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const clickedInsideTrigger = profileRef.current?.contains(target);
+      const clickedInsideMenu = menuPortalRef.current?.contains(target);
+      if (!clickedInsideTrigger && !clickedInsideMenu) setShowProfileMenu(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Recompute menu position on open/resize/scroll
+  useEffect(() => {
+    if (!showProfileMenu) return;
+    const update = () => {
+      const btn = profileBtnRef.current;
+      if (!btn) return;
+      const r = btn.getBoundingClientRect();
+      const top = Math.max(8, r.bottom + 8 + window.scrollY);
+      setMenuTop(top);
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, { passive: true });
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update);
+    };
+  }, [showProfileMenu]);
+
   const animateClass = mounted
     ? "opacity-100 translate-y-0 scale-100"
     : "opacity-0 -translate-y-3 scale-95";
@@ -86,12 +125,6 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
       label: "Konsultasi", 
       icon: Lightbulb,
       description: "Konsultasi bisnis UMKM"
-    },
-    { 
-      href: "/komunitas", 
-      label: "Komunitas", 
-      icon: Users,
-      description: "Bergabung dengan komunitas UMKM"
     }
   ];
 
@@ -152,10 +185,10 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
       `}</style>
 
       <header className={cn(
-        "w-full top-0 left-0 right-0 z-50 fixed transition-all duration-500",
+        "w-full top-0 left-0 right-0 z-50 fixed transition-all duration-500 overflow-visible",
       )}>
         <div className={cn(
-          "backdrop-blur-xl w-full transition-all duration-500",
+          "backdrop-blur-xl w-full transition-all duration-500 overflow-visible",
           scrolled 
             ? "supports-[backdrop-filter]:bg-white/98 dark:supports-[backdrop-filter]:bg-black/95 shadow-[0_8px_32px_rgba(0,0,0,0.08)]"
             : "supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-black/60"
@@ -165,7 +198,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
           zIndex: 50,
         }}>
           <div className={cn(
-            "flex w-full items-center relative justify-between h-20 px-6 py-4 transition-all duration-700 ease-[cubic-bezier(.22,.85,.3,1)] will-change-transform will-change-opacity",
+            "flex w-full items-center relative justify-between h-20 px-6 py-4 transition-all duration-700 ease-[cubic-bezier(.22,.85,.3,1)] will-change-transform will-change-opacity overflow-visible",
             scrolled 
               ? "border-b-2 border-gray-200/80 dark:border-neutral-800/80"
               : "border-b-2 border-gray-100/50 dark:border-neutral-900/50",
@@ -252,6 +285,12 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                           <User size={18} />
                           Profil Saya
                         </a>
+                        <button
+                          onClick={() => setShowConfirm(true)}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border-2 border-gray-200 hover:border-gray-300 bg-white text-gray-700 transition-all duration-300"
+                        >
+                          Keluar
+                        </button>
                       </div>
                     </div>
                   </Drawer.Content>
@@ -310,17 +349,43 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                   </ul>
                 </nav>
 
-                {/* Right Actions - Profile Button */}
+                {/* Right Actions - Profile Avatar with Dropdown */}
                 <div className="flex items-center gap-2.5 justify-end">
-                  <nav className="flex items-center gap-2.5">
-                    <a
-                      href="/profil"
-                      className="shimmer-effect group relative bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] hover:from-[#ff8534] hover:to-[#ff6914] text-white h-11 items-center flex justify-center px-5 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-300 font-semibold text-sm gap-2 hover:scale-[1.02]"
+                  <div className="relative" ref={profileRef}>
+                    <button
+                      ref={profileBtnRef}
+                      onClick={() => setShowProfileMenu((v) => !v)}
+                      className="w-11 h-11 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center ring-2 ring-white shadow hover:shadow-md transition-all"
+                      aria-haspopup="menu"
+                      aria-expanded={showProfileMenu}
                     >
-                      <User size={18} className="transition-transform duration-300 group-hover:scale-110" />
-                      <span>Profil</span>
-                    </a>
-                  </nav>
+                      <User size={20} />
+                    </button>
+                    {showProfileMenu && typeof document !== 'undefined' && createPortal(
+                      <div
+                        ref={menuPortalRef}
+                        className="fixed right-3 w-44 rounded-xl border border-gray-200 bg-white shadow-2xl p-1 z-[2000] pointer-events-auto"
+                        style={{ top: menuTop }}
+                        onKeyDown={(e) => { if (e.key === 'Escape') setShowProfileMenu(false); }}
+                        tabIndex={-1}
+                      >
+                        <a
+                          href="/profil"
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                          onClick={() => setShowProfileMenu(false)}
+                        >
+                          <User size={16} /> Profil
+                        </a>
+                        <button
+                          onClick={() => { setShowProfileMenu(false); setShowConfirm(true); }}
+                          className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50"
+                        >
+                          Keluar
+                        </button>
+                      </div>,
+                      document.body
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -339,6 +404,38 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
           </div>
         </div>
       </header>
+
+      {showConfirm && (
+        <div className="fixed inset-0 z-[60] grid place-items-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl w-[90vw] sm:w-[420px] p-5">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Konfirmasi Logout</h3>
+            <p className="text-sm text-gray-600 mb-4">Anda yakin ingin keluar dari akun ini?</p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="h-10 px-4 rounded-xl font-semibold text-sm border-2 border-gray-200 hover:border-gray-300 bg-white text-gray-700 transition-all"
+              >
+                Batal
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await signOutUser();
+                  } finally {
+                    try {
+                      document.cookie = 'auth=; Path=/; Max-Age=0';
+                    } catch {}
+                    window.location.href = "/";
+                  }
+                }}
+                className="h-10 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] text-white shadow-lg hover:shadow-xl transition-all"
+              >
+                Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
