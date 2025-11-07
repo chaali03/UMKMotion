@@ -924,6 +924,16 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
         body { font-size: 12pt; }
       }
 
+      /* === Large desktop vertical spacing between sections === */
+      /* Prevent section collision on wide screens (index vs feature) */
+      @media (min-width: 1281px) {
+        main#content > section + section,
+        main#content > div + section,
+        main#content > section + div {
+          margin-top: clamp(48px, 4vw, 96px);
+        }
+      }
+
       /* High contrast mode support */
       @media (prefers-contrast: high) {
         .intro__logo {
