@@ -15,6 +15,8 @@ const PasswordStrength = ({ password }: { password: string }) => {
     special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
   };
 
+  
+
   const strength = Object.values(checks).filter(Boolean).length;
   const strengthLabel = strength <= 1 ? "Lemah" : strength <= 3 ? "Sedang" : strength <= 4 ? "Kuat" : "Sangat Kuat";
   const strengthColor = strength <= 1 ? "#ef4444" : strength <= 3 ? "#f59e0b" : strength <= 4 ? "#10b981" : "#22c55e";
@@ -105,6 +107,18 @@ export default function RegisterPage() {
       text: "Hanya 3 langkah untuk membuat akun dan mulai bertumbuh.",
     },
   ];
+
+  const emailInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleChangeEmail = () => {
+    setOtpSent(false);
+    setOtp(Array(6).fill(""));
+    setOtpCooldown(0);
+    setIsVerifyingOtp(false);
+    setIsSendingOtp(false);
+    setErrors((prev) => ({ ...prev, email: "", otp: "" }));
+    setTimeout(() => emailInputRef.current?.focus(), 0);
+  };
 
   // Slideshow effect
   useEffect(() => {
@@ -1128,6 +1142,7 @@ export default function RegisterPage() {
                       placeholder="anda@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      ref={(el) => { emailInputRef.current = el; }}
                       disabled={otpSent}
                       autoFocus={!otpSent}
                     />
@@ -1155,7 +1170,7 @@ export default function RegisterPage() {
                       {otp.map((digit, index) => (
                         <input
                           key={index}
-                          ref={(el) => (otpInputRefs.current[index] = el)}
+                          ref={(el) => { otpInputRefs.current[index] = el; }}
                           type="text"
                           inputMode="numeric"
                           maxLength={1}
@@ -1233,6 +1248,15 @@ export default function RegisterPage() {
                         Kirim ulang
                       </button>
                     )}
+                  </p>
+                )}
+
+                {otpSent && (
+                  <p className="footer-text" style={{ marginTop: "0.5rem" }}>
+                    Salah email?{" "}
+                    <button type="button" className="link-btn" onClick={handleChangeEmail}>
+                      Ganti email
+                    </button>
                   </p>
                 )}
               </motion.form>

@@ -106,8 +106,21 @@ export const GET: APIRoute = async ({ request, url }) => {
     const code = generate6Digit();
     const expiresAt = Date.now() + ttlSeconds * 1000;
 
-    // Store OTP
+    // Store OTP (memory)
     g.__umkmotionOtpStore.set(`${email}:${code}`, { email, code, expiresAt, used: false });
+
+    // Optionally persist to Firestore when enabled
+    try {
+      const viteEnv = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {};
+      const persistence = ((typeof process !== 'undefined' && process.env && process.env.OTP_PERSISTENCE) || (viteEnv as any).OTP_PERSISTENCE || 'memory').toString().toLowerCase();
+      if (persistence !== 'memory') {
+        const { db } = await import('../../lib/firebase');
+        const { addDoc, collection } = await import('firebase/firestore');
+        await addDoc(collection(db, 'emailOtps'), { email, code, expiresAt, used: false, createdAt: Date.now() });
+      }
+    } catch (e) {
+      console.warn('[send-otp][GET] Firestore persist skipped:', (e as any)?.message || e);
+    }
 
     console.log('✅ OTP Generated:', { email, code });
 
@@ -261,6 +274,19 @@ export const POST: APIRoute = async ({ request, url }) => {
 
     // Store OTP in memory
     g.__umkmotionOtpStore.set(`${email}:${code}`, { email, code, expiresAt, used: false });
+
+    // Optionally persist to Firestore when enabled
+    try {
+      const viteEnv = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {};
+      const persistence = ((typeof process !== 'undefined' && process.env && process.env.OTP_PERSISTENCE) || (viteEnv as any).OTP_PERSISTENCE || 'memory').toString().toLowerCase();
+      if (persistence !== 'memory') {
+        const { db } = await import('../../lib/firebase');
+        const { addDoc, collection } = await import('firebase/firestore');
+        await addDoc(collection(db, 'emailOtps'), { email, code, expiresAt, used: false, createdAt: Date.now() });
+      }
+    } catch (e) {
+      console.warn('[send-otp][POST] Firestore persist skipped:', (e as any)?.message || e);
+    }
 
     // Check if we should skip email sending (dev mode with send=0 or mock=1)
     const skipSend = url.searchParams.get('send') === '0' || url.searchParams.get('mock') === '1';

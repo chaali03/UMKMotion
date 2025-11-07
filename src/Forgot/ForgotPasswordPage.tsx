@@ -68,6 +68,23 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true);
 
+    // Ensure the account is registered before sending reset link
+    try {
+      const resp = await fetch('/api/check-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok || !data?.emailExists) {
+        const msg = 'Email tidak terdaftar dalam sistem kami.';
+        setErrors({ email: msg });
+        showNotification('error', 'Email Tidak Terdaftar', msg);
+        setIsLoading(false);
+        return;
+      }
+    } catch {}
+
     try {
       await sendPasswordReset(email);
       setIsSuccess(true);

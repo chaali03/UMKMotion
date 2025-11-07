@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "../../../src/lib/utils";
+import { cn } from "@/lib/utils";
 import { AlignJustify, X, Home, Store, Building2, Users, Lightbulb, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Drawer } from "vaul";
