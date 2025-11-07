@@ -1,6 +1,5 @@
 // ==== Tambahan: dotenv support untuk Node.js / ts-node ====
-import 'dotenv/config'; // ini otomatis load .env ke process.env
-// ==========================================================
+import 'dotenv/config';
 import { getApps, initializeApp } from 'firebase/app';
 import { getFirestore, initializeFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
@@ -41,7 +40,6 @@ const firebaseConfig = {
             : undefined),
 };
 // Initialize Firebase (guard for HMR)
-console.log("🔥 FIREBASE CONFIG:", firebaseConfig);
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 // Initialize Firestore with long-polling in browser to avoid WebChannel 400s behind proxies/VPNs
 export const db = typeof window !== 'undefined'

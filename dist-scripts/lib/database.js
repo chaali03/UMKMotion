@@ -43,7 +43,7 @@ export const updateProduct = async (id, updatedData) => {
     await updateDoc(ref, updatedData);
     console.log(`✏️ Produk ${id} berhasil diupdate`);
 };
-// Bulk update
+// Bulk update (update pake mapping)
 export const bulkUpdateProducts = async (updates) => {
     for (const { id, data } of updates) {
         await updateProduct(id, data);
