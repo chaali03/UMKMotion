@@ -136,8 +136,7 @@ const Checkout: React.FC = () => {
 
   return (
     <>
-      {/* CSS INI DI DALAM JSX */}
-      <style jsx>{`
+      <style>{`
         * {
           margin: 0;
           padding: 0;
@@ -422,7 +421,7 @@ const Checkout: React.FC = () => {
                 <img src="https://via.placeholder.com/80/10b981/ffffff?text=Fig" alt="Figure" className="productImg" />
                 <div className="productInfo">
                   <div className="productShop">Kyou Hobby Shop - Toko Anime</div>
-                  <div className="productName">PVC Figure 1/7 Elaina</div>
+                  <div className="productName">PVC Figure Yonglek</div>
                   <div className="quantityControl">
                     <button className="qtyBtn" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
                     <input type="number" className="qtyInput" value={quantity} onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))} />

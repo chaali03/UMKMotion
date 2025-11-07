@@ -26,6 +26,7 @@
     "class-variance-authority": "^0.7.1",
     "cobe": "^0.6.5",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
     "firebase": "^12.5.0",
     "framer-motion": "^12.23.24",
     "gsap": "^3.13.0",
@@ -57,6 +58,8 @@
     "styled-jsx": "^5.1.7",
     "tailwindcss": "^4.1.16",
     "tailwindcss-animate": "^1.0.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
     "vite-bundle-analyzer": "^1.2.3"
   }
 }
