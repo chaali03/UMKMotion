@@ -1,4 +1,4 @@
-import { db } from "./firebase.ts";
+import { db } from "./firebase.js";
 import {
   collection,
   getDocs,
@@ -63,7 +63,7 @@ export const updateProduct = async (id: string, updatedData: Partial<Product>) =
   console.log(`✏️ Produk ${id} berhasil diupdate`);
 };
 
-// Bulk update
+// Bulk update (update pake mapping)
 export const bulkUpdateProducts = async (updates: { id: string; data: Partial<Product> }[]) => {
   for (const { id, data } of updates) {
     await updateProduct(id, data);
