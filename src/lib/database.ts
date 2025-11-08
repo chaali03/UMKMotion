@@ -131,6 +131,9 @@ export type Product = {
 
   // Informasi Toko
   toko: string;
+  telepon_toko?: number;
+  jam_operasional?: string;
+  kategori_toko?: string;
   rating_toko: number | null;
   status_toko: "Official Store" | "Toko Biasa";
   lokasi_toko: string;
