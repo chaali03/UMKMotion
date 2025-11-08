@@ -1,0 +1,625 @@
+---
+// No external dependencies
+---
+
+<!-- Scroll Text Animation Section - Self Contained -->
+<section class="scroll-text-section" data-animate="true" data-snap="true">
+  <header class="scroll-header">
+    <h1 class="fluid animate-on-scroll enhanced-title">
+      <span class="line title-line-1" data-text="Bersama Kita">Bersama Kita</span>
+      <br>
+      <span class="line title-line-2" data-text="UMKMotion.">UMKMotion.</span>
+    </h1>
+  </header>
+  <main class="scroll-main">
+    <section class="content fluid enhanced-content">
+      <h2 class="enhanced-subtitle"><span aria-hidden="true">Anda bisa&nbsp;</span>
+        <span class="sr-only">Anda bisa berbagai hal dengan UMKM.</span>
+      </h2>
+      <ul aria-hidden="true" style="--count: 20" data-animate="true" data-snap="true" class="enhanced-list">
+        <li style="--i: 0" class="list-item">kuliner.</li>
+        <li style="--i: 1" class="list-item">fashion.</li>
+        <li style="--i: 2" class="list-item">kerajinan.</li>
+        <li style="--i: 3" class="list-item">jasa.</li>
+        <li style="--i: 4" class="list-item">berkembang.</li>
+        <li style="--i: 5" class="list-item">berinovasi.</li>
+        <li style="--i: 6" class="list-item">berkolaborasi.</li>
+        <li style="--i: 7" class="list-item">berdagang.</li>
+        <li style="--i: 8" class="list-item">memasak.</li>
+        <li style="--i: 9" class="list-item">menjahit.</li>
+        <li style="--i: 10" class="list-item">membuat.</li>
+        <li style="--i: 11" class="list-item">melayani.</li>
+        <li style="--i: 12" class="list-item">menginspirasi.</li>
+        <li style="--i: 13" class="list-item">mengajar.</li>
+        <li style="--i: 14" class="list-item">memproduksi.</li>
+        <li style="--i: 15" class="list-item">memasarkan.</li>
+        <li style="--i: 16" class="list-item">bertumbuh.</li>
+        <li style="--i: 17" class="list-item">berjualan.</li>
+        <li style="--i: 18" class="list-item">sukses.</li>
+        <li style="--i: 19" class="list-item">maju bersama.</li>
+      </ul>
+    </section>
+  </main>
+</section>
+
+<!-- GSAP CDN Scripts -->
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+<style>
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 5px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #FD5701, #ff8533);
+    border-radius: 5px;
+    transition: all 0.3s ease;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #e04d00, #e0752a);
+  }
+  
+  /* For Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #FD5701 rgba(0, 0, 0, 0.05);
+  }
+
+  /* Self-contained section */
+  .scroll-text-section {
+    width: 100%;
+    max-width: 100%;
+    background: transparent;
+    position: relative;
+    overflow: visible;
+    isolation: isolate;
+  }
+  
+  .scroll-header {
+    min-height: 160vh;
+    display: flex;
+    place-items: center;
+    width: 100%;
+    padding-inline: clamp(1rem, 3vw, 2rem);
+    padding-block: clamp(3rem, 8vh, 8rem);
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+  }
+  
+  .scroll-header h1 {
+    text-wrap: pretty;
+    line-height: clamp(0.85, 0.9, 1);
+    margin: 0;
+    font-weight: 900;
+    background: linear-gradient(#1e293b 60%, #94a3b8);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: clamp(2rem, 10vw + 1rem, 10rem);
+    position: relative;
+    will-change: transform, filter, opacity;
+    /* Initial state without animation class */
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  @media (max-width: 768px) {
+    .scroll-header h1 {
+      font-size: clamp(1.5rem, 10vw, 4rem);
+      line-height: 0.95;
+    }
+  }
+  
+  /* Scroll-triggered text animation */
+  .scroll-header h1.animate-on-scroll {
+    opacity: 0;
+    transform: translateY(clamp(40px, 10vh, 120px)) scale(0.96);
+    filter: blur(12px) saturate(1.05);
+    transition: opacity 1.8s cubic-bezier(.22,.85,.3,1), 
+                transform 2.2s cubic-bezier(.22,.85,.3,1), 
+                filter 1.6s ease;
+  }
+  
+  /* In view state */
+  .scroll-header h1.animate-on-scroll.in-view {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  
+  /* Variant A (downward scroll) */
+  .scroll-header h1.animate-on-scroll.variant-a::after {
+    content: '';
+    position: absolute;
+    inset: -8% -12%;
+    background: linear-gradient(115deg, 
+      rgba(255,255,255,0) 0%, 
+      rgba(255,255,255,.5) 12%, 
+      rgba(255,255,255,0) 26%);
+    transform: translateX(-160%) rotate(-3deg);
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  .scroll-header h1.animate-on-scroll.in-view-a {
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+    filter: blur(0) !important;
+  }
+  
+  .scroll-header h1.animate-on-scroll.variant-a.in-view-a::after {
+    animation: titleSweep 2.1s cubic-bezier(.2,.7,.2,1) .25s forwards;
+  }
+
+  @keyframes titleSweep {
+    0% { 
+      transform: translateX(-160%) rotate(-3deg); 
+      opacity: 0; 
+    }
+    15% { 
+      opacity: .9; 
+    }
+    100% { 
+      transform: translateX(160%) rotate(3deg); 
+      opacity: 0; 
+    }
+  }
+
+  /* Variant B (upward scroll) */
+  .scroll-header h1.animate-on-scroll.variant-b {
+    transform: translateY(clamp(-40px, -10vh, -120px)) scale(0.96) skewY(-2deg);
+    letter-spacing: .5px;
+  }
+  
+  .scroll-header h1.animate-on-scroll.variant-b::before {
+    content: '';
+    position: absolute;
+    inset: -10% -14%;
+    background: linear-gradient(245deg, 
+      rgba(255,255,255,0) 0%, 
+      rgba(255,255,255,.55) 14%, 
+      rgba(255,255,255,0) 30%);
+    transform: translateX(160%) rotate(3deg);
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  .scroll-header h1.animate-on-scroll.in-view-b {
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) skewY(0deg) !important;
+    filter: blur(0) !important;
+  }
+  
+  .scroll-header h1.animate-on-scroll.variant-b.in-view-b::before {
+    animation: titleSweepB 2.1s cubic-bezier(.2,.7,.2,1) .25s forwards;
+  }
+  
+  @keyframes titleSweepB {
+    0% { 
+      transform: translateX(160%) rotate(3deg); 
+      opacity: 0; 
+    }
+    15% { 
+      opacity: .9; 
+    }
+    100% { 
+      transform: translateX(-160%) rotate(-3deg); 
+      opacity: 0; 
+    }
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-header h1.animate-on-scroll,
+    .scroll-header h1.animate-on-scroll.in-view-a,
+    .scroll-header h1.animate-on-scroll.in-view-b,
+    .scroll-header h1 { 
+      transition: none !important; 
+      animation: none !important; 
+      filter: none !important; 
+      transform: none !important; 
+      opacity: 1 !important; 
+    }
+    .scroll-header h1::after, 
+    .scroll-header h1::before { 
+      display: none !important; 
+    }
+  }
+  
+  .scroll-main {
+    width: 100%;
+    margin-top: clamp(3rem, 12vh, 18vh);
+    position: relative;
+  }
+  
+  .content {
+    display: flex;
+    line-height: 1.1;
+    width: 100%;
+    padding-inline: clamp(0.75rem, 2.5vw, 1.5rem);
+    min-height: 180vh;
+    gap: clamp(0.3rem, 1.5vw, 1.5rem);
+    max-width: 1100px;
+    margin: 0 auto;
+    justify-content: center;
+    align-items: flex-start;
+    position: relative;
+  }
+  
+  @media (max-width: 768px) {
+    .scroll-header { 
+      min-height: 110vh; 
+      padding-block: clamp(2rem, 6vh, 4rem); 
+    }
+    .scroll-main { 
+      margin-top: clamp(1.5rem, 6vh, 8vh); 
+    }
+    .content {
+      flex-direction: column;
+      gap: clamp(0.25rem, 1vw, 1rem);
+      padding-left: clamp(0.5rem, 2vw, 2rem);
+    }
+  }
+  
+  .content h2 {
+    position: sticky;
+    top: calc(50% - 0.5lh);
+    font-size: clamp(1.4rem, 4.5vw + 0.5rem, 5rem);
+    margin: 0;
+    display: inline-block;
+    height: fit-content;
+    background: linear-gradient(#1e293b 50%, #cbd5e1);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    flex-shrink: 0;
+    text-align: right;
+    min-width: clamp(140px, 18vw, 360px);
+    padding-right: clamp(6px, 0.8vw, 14px);
+    z-index: 1;
+  }
+  
+  @media (max-width: 768px) {
+    .content h2 {
+      font-size: clamp(1rem, 4.5vw, 2.5rem);
+      position: relative;
+      top: auto;
+      min-width: 120px;
+    }
+  }
+  
+  .content ul {
+    --step: calc((var(--end, 280) - var(--start, 0)) / (var(--count) - 1));
+    font-weight: 700;
+    padding-inline: 0;
+    margin: 0;
+    list-style-type: none;
+    font-size: clamp(1.25rem, 4.5vw + 0.5rem, 5rem);
+    scroll-snap-type: y proximity;
+    flex: 1;
+    white-space: nowrap;
+    word-break: keep-all;
+    overflow: visible;
+    padding-left: clamp(12px, 3vw, 56px);
+    position: relative;
+  }
+  
+  .content li {
+    color: oklch(65% 0.25 calc(var(--start, 0) + (var(--step) * var(--i))));
+    scroll-snap-align: center;
+    opacity: 0.2;
+    transform: scale(0.9);
+    transition: opacity 0.4s ease, 
+                transform 0.4s ease,
+                filter 0.3s ease;
+    will-change: opacity, transform, filter;
+    padding: 0.15em 0;
+    font-size: 0.9em;
+  }
+  
+  .content li:first-of-type {
+    opacity: 1;
+    transform: scale(1);
+  }
+  
+  .content li:last-of-type {
+    background: linear-gradient(#1e293b 50%, #cbd5e1);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .content li.active {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+    filter: brightness(1.2);
+  }
+  
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  
+  /* View Timeline Animation */
+  @supports (animation-timeline: view()) {
+    [data-animate="true"] li {
+      animation-name: brighten;
+      animation-fill-mode: both;
+      animation-timing-function: linear;
+      animation-timeline: view();
+      animation-range: cover calc(50% - 3rem) calc(50% + 3rem);
+    }
+    
+    @keyframes brighten {
+      0% {
+        opacity: 0.2;
+        transform: scale(0.98);
+        filter: brightness(1);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1);
+        filter: brightness(1.2);
+      }
+      100% {
+        opacity: 0.2;
+        transform: scale(0.98);
+        filter: brightness(1);
+      }
+    }
+  }
+
+  /* Fallback */
+  @supports not (animation-timeline: view()) {
+    [data-animate="true"] li {
+      animation: none;
+    }
+  }
+  
+  :root {
+    --start: 0;
+    --end: 280;
+  }
+
+  /* ScrollFloat for title lines */
+  .t-line.scroll-float {
+    display: inline-block;
+    transform: translateY(var(--sf-y, 0)) scale(var(--sf-s, 1));
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+</style>
+
+<script is:inline>
+  // Main initialization
+  (function() {
+    // Wait for GSAP to load
+    function init() {
+      if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
+        setTimeout(init, 100);
+        return;
+      }
+      
+      // Register ScrollTrigger plugin
+      gsap.registerPlugin(ScrollTrigger);
+      
+      // Set default settings
+      gsap.config({
+        nullTargetWarn: false
+      });
+
+      // Track scroll direction
+      let lastY = window.scrollY;
+      let scrollDir = 'down';
+      
+      const dirHandler = () => {
+        const y = window.scrollY;
+        scrollDir = y > lastY ? 'down' : 'up';
+        lastY = y;
+      };
+      
+      window.addEventListener('scroll', dirHandler, { passive: true });
+
+      // Title animation with Intersection Observer
+      const observerOptions = {
+        threshold: 0.2,
+        rootMargin: '0px 0px -10% 0px'
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const el = entry.target;
+          
+          if (el.matches('.scroll-header h1')) {
+            if (entry.isIntersecting) {
+              // Add animate class first
+              if (!el.classList.contains('animate-on-scroll')) {
+                el.classList.add('animate-on-scroll');
+              }
+              
+              requestAnimationFrame(() => {
+                const variant = scrollDir === 'down' ? 'a' : 'b';
+                el.classList.remove('variant-a', 'variant-b', 'in-view-a', 'in-view-b');
+                el.classList.add(`variant-${variant}`);
+                
+                requestAnimationFrame(() => {
+                  el.classList.add(`in-view-${variant}`);
+                });
+              });
+            } else {
+              el.classList.remove('in-view-a', 'in-view-b');
+            }
+          }
+        });
+      }, observerOptions);
+
+      // Observe title
+      const title = document.querySelector('.scroll-header h1');
+      if (title) {
+        observer.observe(title);
+
+        // ScrollFloat effect for title lines
+        const l1 = title.querySelector('.title-line-1');
+        const l2 = title.querySelector('.title-line-2');
+        
+        if (l1 && l2) {
+          l1.classList.add('t-line', 'scroll-float', 't-1');
+          l2.classList.add('t-line', 'scroll-float', 't-2');
+          
+          const lines = [l1, l2];
+          
+          const updateFloat = () => {
+            const rect = title.getBoundingClientRect();
+            const vh = window.innerHeight;
+            const center = vh / 2;
+            const tCenter = rect.top + rect.height / 2;
+            const delta = (tCenter - center) / vh;
+            
+            lines.forEach((el, idx) => {
+              const intensity = 20 + idx * 8;
+              const ty = Math.max(-40, Math.min(40, -delta * intensity));
+              const s = 1 + Math.max(-0.04, Math.min(0.04, -delta * 0.06));
+              if (el instanceof HTMLElement) {
+                el.style.setProperty('--sf-y', `${ty}px`);
+                el.style.setProperty('--sf-s', `${s}`);
+              }
+            });
+          };
+          
+          updateFloat();
+          window.addEventListener('scroll', updateFloat, { passive: true });
+          window.addEventListener('resize', updateFloat);
+        }
+      }
+
+      // List items animation with GSAP
+      const listItems = document.querySelectorAll('.content li');
+      const supportsViewTimeline = CSS.supports && 
+                                  CSS.supports('animation-timeline', 'view()');
+
+      if (listItems.length > 0 && !supportsViewTimeline) {
+        console.log('Using GSAP ScrollTrigger for list animation');
+
+        // Create ScrollTrigger for each item
+        listItems.forEach((item, index) => {
+          ScrollTrigger.create({
+            trigger: item,
+            start: 'top 60%',
+            end: 'bottom 40%',
+            onEnter: () => {
+              gsap.to(item, {
+                opacity: 1,
+                scale: 1,
+                filter: 'brightness(1.2)',
+                duration: 0.5,
+                ease: 'power2.out'
+              });
+            },
+            onLeave: () => {
+              gsap.to(item, {
+                opacity: 0.2,
+                scale: 0.98,
+                filter: 'brightness(1)',
+                duration: 0.5,
+                ease: 'power2.in'
+              });
+            },
+            onEnterBack: () => {
+              gsap.to(item, {
+                opacity: 1,
+                scale: 1,
+                filter: 'brightness(1.2)',
+                duration: 0.5,
+                ease: 'power2.out'
+              });
+            },
+            onLeaveBack: () => {
+              gsap.to(item, {
+                opacity: 0.2,
+                scale: 0.98,
+                filter: 'brightness(1)',
+                duration: 0.5,
+                ease: 'power2.in'
+              });
+            },
+          });
+        });
+
+        // Color progression animation
+        ScrollTrigger.create({
+          trigger: '.content',
+          start: 'top center',
+          end: 'bottom center',
+          scrub: 1,
+          onUpdate: (self) => {
+            const progress = self.progress;
+            document.documentElement.style.setProperty('--scroll-progress', progress);
+          }
+        });
+
+        // Refresh on resize
+        var resizeTimer;
+        window.addEventListener('resize', function() {
+          if (resizeTimer) clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(function() {
+            if (typeof ScrollTrigger !== 'undefined') {
+              ScrollTrigger.refresh();
+            }
+          }, 250);
+        });
+      } else if (supportsViewTimeline) {
+        console.log('Using native View Timeline API');
+      }
+
+      // Smooth reveal for content section
+      gsap.from('.content h2', {
+        scrollTrigger: {
+          trigger: '.content',
+          start: 'top 80%',
+          once: true
+        },
+        x: -50,
+        opacity: 0,
+        duration: 1,
+        ease: 'power3.out'
+      });
+
+      gsap.from('.content ul', {
+        scrollTrigger: {
+          trigger: '.content',
+          start: 'top 75%',
+          once: true
+        },
+        x: 50,
+        opacity: 0,
+        duration: 1,
+        delay: 0.2,
+        ease: 'power3.out'
+      });
+    }
+    
+    // Start initialization
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
