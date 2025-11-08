@@ -104,24 +104,24 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
   const navItems = [
     { 
       href: "/homepage", 
-      label: "Beranda", 
+      label: "Homepage", 
       icon: Home,
       description: "Halaman utama UMKMotion"
     },
     { 
-      href: "/etalase", 
+      href: "", 
       label: "Etalase", 
       icon: Store,
       description: "Lihat produk UMKM"
     },
     { 
-      href: "/rumah-umkm", 
+      href: "", 
       label: "Rumah UMKM", 
       icon: Building2,
       description: "Informasi tentang UMKM"
     },
     { 
-      href: "/konsultasi", 
+      href: "", 
       label: "Konsultasi", 
       icon: Lightbulb,
       description: "Konsultasi bisnis UMKM"

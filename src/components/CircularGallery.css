@@ -2,12 +2,17 @@
   position: relative;
   width: 100%;
   max-width: 100%;
-  height: 100%;
+  height: auto;                 /* don't stretch to parent height */
+  min-height: clamp(320px, 60vh, 720px); /* ensure enough space for canvas */
+  margin-top: clamp(16px, 4vh, 40px);    /* add breathing space from previous section */
+  padding-top: clamp(12px, 3vh, 32px);   /* space so cards don't touch the top edge */
   overflow: hidden;
   overflow-x: clip;
   cursor: grab;
   touch-action: pan-y; /* disable horizontal pan */
   -webkit-tap-highlight-color: transparent;
+  isolation: isolate;           /* prevent unexpected z-index stacking over previous sections */
+  z-index: 0;                   /* keep below any sticky/header elements */
 }
 
 .circular-gallery:active {
@@ -35,6 +40,8 @@
   max-width: 100% !important;
   height: auto !important;
   margin: 0 auto;
+  position: relative;           /* avoid accidental stacking above siblings */
+  z-index: 0;
 }
 
 /* Sub-desktop safety to avoid tiny horizontal overflow due to 100vw quirks */

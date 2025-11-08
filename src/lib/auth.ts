@@ -34,6 +34,15 @@ export async function signInWithGoogle() {
   return signInWithPopup(auth, googleProvider);
 }
 
+export async function checkEmailExists(email: string): Promise<boolean> {
+  try {
+    const methods = await fetchSignInMethodsForEmail(auth, email);
+    return methods && methods.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 export async function sendPasswordReset(email: string, redirectUrl?: string) {
   // If redirectUrl === '' we intentionally skip custom continue URL
   let url = redirectUrl === '' ? undefined : redirectUrl;

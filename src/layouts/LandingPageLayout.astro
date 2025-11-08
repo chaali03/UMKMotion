@@ -5,12 +5,13 @@ const { title = 'UMKMotion' } = Astro.props;
 const isAIPage = Astro.url.pathname.startsWith('/ai');
 import FloatingAIButton from "../components/FloatingAIButton.tsx";
 ---
-<html lang="en" class="intro-lock">
+<html lang="en" class="intro-lock light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    <meta name="color-scheme" content="light" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png?v=4" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png?v=4" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png?v=4" />
@@ -39,7 +40,7 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
     </script>
     <style>
       :root { 
-        color-scheme: light dark;
+        color-scheme: light !important;
         --container-padding: 16px;
         --container-max-width: 100%;
       }
@@ -941,20 +942,21 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
         }
       }
 
-      /* Dark mode support (optional - add if needed) */
+      /* Disable automatic dark overrides for this layout */
       @media (prefers-color-scheme: dark) {
-        .intro {
-          background: #0a0a0a;
-        }
-        
-        .intro__text {
-          color: #ffffff;
-          text-shadow: 0 2px 16px rgba(255,255,255,.2);
-        }
+        :root { color-scheme: light !important; }
       }
     </style>
   </head>
-  <body class="intro-lock">
+  <body class="intro-lock" style="background:#ffffff; color-scheme: light;">
+    <script is:inline>
+      try {
+        const root = document.documentElement;
+        root.classList.remove('dark');
+        root.dataset.theme = 'light';
+        root.style.colorScheme = 'light';
+      } catch {}
+    </script>
     <div id="intro" class="intro" aria-hidden="true">
       <div class="intro__stage">
         
