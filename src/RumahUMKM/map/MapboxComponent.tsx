@@ -1057,7 +1057,7 @@ export default function MapboxComponent({
         /* Toolbar */
         .gmap-toolbar {
           position: absolute;
-          top: 300px;
+          top: 100px;
           right: 12px;
           display: flex;
           align-items: center;
@@ -1073,8 +1073,8 @@ export default function MapboxComponent({
 
         .gmap-toolbar.top-right { left: auto; bottom: auto; }
 
-        @media (max-width: 640px) { .gmap-toolbar { top: 140px; } }
-        @media (min-width: 641px) and (max-width: 1024px) { .gmap-toolbar { top: 160px; } }
+        @media (max-width: 640px) { .gmap-toolbar { top: 100px; } }
+        @media (min-width: 641px) and (max-width: 1024px) { .gmap-toolbar { top: 120px; } }
 
         /* Collapsible states */
         .gmap-toolbar.open { 

@@ -55,7 +55,7 @@ const Feature1 = () => {
   };
 
   return (
-    <section className="max-w-7xl mx-auto p-4 relative" ref={featuresRef}>
+    <section className="max-w-7xl mx-auto p-4 relative bg-white text-gray-900 dark:bg-white dark:text-gray-900 [color-scheme:light]" ref={featuresRef}>
       {/* Background Decoration */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>

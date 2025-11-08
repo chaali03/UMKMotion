@@ -196,12 +196,12 @@ function HeroKonsultanAbout() {
             timelineRef={heroRef}
             customVariants={revealVariants}
           >
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <motion.button
-                whileHover={prefersReducedMotion ? {} : { y: -4, scale: 1.025, backgroundPosition: '100% 0' }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={prefersReducedMotion ? {} : { y: -3, scale: 1.02, backgroundPosition: '100% 0' }}
+                whileTap={{ scale: 0.985 }}
                 aria-label="Jadwalkan Konsultasi"
-                className="group relative text-white px-8 py-4 rounded-2xl font-bold text-lg inline-flex items-center justify-center gap-3 shadow-2xl shadow-blue-500/20 overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-400/40"
+                className="group relative text-white px-6 py-3 rounded-xl font-semibold text-base inline-flex items-center justify-center gap-2.5 shadow-xl shadow-blue-500/20 overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-400/40"
                 style={{
                   backgroundImage: 'linear-gradient(135deg, #12307a 0%, #2f5fe7 50%, #7c3aed 100%)',
                   backgroundSize: '200% 100%',
@@ -215,23 +215,23 @@ function HeroKonsultanAbout() {
                 <span className="pointer-events-none absolute inset-0" style={{
                   background: 'radial-gradient(90% 140% at 50% 50%, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.08) 36%, rgba(255,255,255,0.02) 60%, rgba(255,255,255,0) 75%)'
                 }} />
-                <Calendar className="w-5 h-5" />
+                <Calendar className="w-4 h-4" />
                 <span className="relative">Jadwalkan Konsultasi</span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform relative" />
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform relative" />
               </motion.button>
 
               <motion.button
-                whileHover={prefersReducedMotion ? {} : { y: -2, scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={prefersReducedMotion ? {} : { y: -2, scale: 1.02 }}
+                whileTap={{ scale: 0.985 }}
                 aria-label="Pelajari Layanan"
-                className="group relative bg-white border-2 border-slate-200 text-slate-900 px-8 py-4 rounded-2xl font-bold text-lg inline-flex items-center justify-center gap-3 hover:border-orange-300 transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/40 overflow-hidden"
+                className="group relative bg-white border-2 border-slate-200 text-slate-900 px-6 py-3 rounded-xl font-semibold text-base inline-flex items-center justify-center gap-2.5 hover:border-orange-300 transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/40 overflow-hidden"
                 style={{
                   backgroundImage: prefersReducedMotion ? undefined : 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(15,23,42,0.03) 100%)'
                 }}
               >
-                <MessageCircle className="w-5 h-5" />
+                <MessageCircle className="w-4 h-4" />
                 <span>Pelajari Layanan</span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                 {!prefersReducedMotion && (
                   <span className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{
                     background: 'radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 60%)'
@@ -483,34 +483,34 @@ const KonsulPage: React.FC = () => {
               </h2>
 
               <div className="space-y-5 text-slate-600 leading-relaxed">
-                <p className="text-xl lg:text-[1.35rem] xl:text-2xl">
+                <p className="text-base md:text-lg lg:text-xl">
                   Konsultasi bisnis merupakan langkah penting bagi pelaku UMKM yang ingin meningkatkan kualitas usaha, memperluas jangkauan pasar, dan memperkuat strategi bisnisnya.
                 </p>
-                <p className="text-xl lg:text-[1.35rem] xl:text-2xl">
+                <p className="text-base md:text-lg lg:text-xl">
                   Dengan <span className="font-bold text-orange-600">wawasan dan pengalaman tim kami</span>, Anda akan mendapatkan bimbingan, strategi, serta dukungan nyata untuk mengoptimalkan potensi bisnis mulai dari manajemen, pemasaran, hingga transformasi digital.
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <motion.a 
                   href="#"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
-                  className="group bg-gradient-to-r from-orange-600 to-amber-600 text-white px-9 py-5 rounded-2xl font-bold text-lg xl:text-xl inline-flex items-center justify-center gap-3 shadow-2xl shadow-orange-500/40"
+                  className="group bg-gradient-to-r from-orange-600 to-amber-600 text-white px-6 py-3 rounded-xl font-semibold text-base inline-flex items-center justify-center gap-2.5 shadow-xl shadow-orange-500/30"
                 >
-                  <Calendar className="w-5 h-5" />
+                  <Calendar className="w-4 h-4" />
                   Jadwalkan Konsultasi Anda
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                 </motion.a>
                 
                 <motion.a 
                   href="#"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
-                  className="group text-orange-600 font-bold text-lg xl:text-xl inline-flex items-center justify-center gap-2 hover:gap-3 transition-all"
+                  className="group text-orange-600 font-semibold text-base inline-flex items-center justify-center gap-2 hover:gap-2.5 transition-all"
                 >
                   Pelajari Program
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4" />
                 </motion.a>
               </div>
             </motion.div>

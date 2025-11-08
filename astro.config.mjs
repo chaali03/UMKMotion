@@ -1,6 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-
+import netlify from '@astrojs/netlify/functions';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
@@ -10,6 +10,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // https://astro.build/config
 export default defineConfig({
+  // Netlify Adapter Configuration
+  output: 'server',
+  adapter: netlify({
+  // Configuration options go here
+}),
+
+  // Existing configurations
   integrations: [react()],
 
   // Performance optimizations
@@ -23,6 +30,7 @@ export default defineConfig({
     defaultStrategy: 'viewport'
   },
 
+  // Vite config
   vite: {
     plugins: [tailwindcss()],
     resolve: {
