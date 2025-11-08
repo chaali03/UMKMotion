@@ -1,8 +1,6 @@
 // ======================================================
 // ✅ UMKMotion Universal Firebase Config (Astro + Node)
 // ======================================================
-// Tambahan: dotenv support untuk Node.js / ts-node
-import 'dotenv/config';
 import * as dotenv from "dotenv";
 dotenv.config();
 // Firebase SDK imports

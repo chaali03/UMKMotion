@@ -137,6 +137,7 @@ export type Product = {
   rating_toko: number | null;
   status_toko: "Official Store" | "Toko Biasa";
   lokasi_toko: string;
+  maps_link: string;
   jumlah_produk_di_toko?: number;
 
   // Ulasan & Rating
