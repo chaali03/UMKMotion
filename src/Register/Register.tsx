@@ -868,6 +868,11 @@ export default function RegisterPage() {
           to { transform: rotate(360deg); }
         }
 
+        /* Mobile Hero */
+        .mobile-hero {
+          display: none;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
           .register-card {
@@ -881,6 +886,25 @@ export default function RegisterPage() {
 
           .form-side {
             padding: 2.5rem 2rem;
+          }
+
+          .mobile-hero {
+            display: block;
+            width: 100%;
+            height: 180px;
+            margin-bottom: 1.5rem;
+            border-radius: 16px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .mobile-hero img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
           }
         }
 
@@ -925,6 +949,10 @@ export default function RegisterPage() {
 
           .notification {
             min-width: auto;
+          }
+
+          .mobile-hero {
+            height: 160px;
           }
         }
 
@@ -1025,6 +1053,10 @@ export default function RegisterPage() {
 
         {/* Right Side - Form */}
         <div className="form-side">
+          {/* Mobile Hero */}
+          <div className="mobile-hero">
+            <img src="/asset/register/register.webp" alt="Register illustration" />
+          </div>
           <div className="form-header">
             <div className="step-badge">
               <Sparkles size={16} />
