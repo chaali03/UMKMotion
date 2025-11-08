@@ -84,9 +84,18 @@ const createGooglePopup = (umkm: UMKMLocation) => {
     <!-- Hero Carousel with Overlay Info -->
     <div class="gmap-hero">
       <div class="gmap-hero-track">
-        ${[umkm.image, ...(galleryImages || [])].filter(Boolean).slice(0, 5).map(img => 
-          `<img src="${img}" alt="${umkm.name}" class="gmap-hero-img" onerror="this.src='https://via.placeholder.com/600x300?text=UMKM'"/>`
-        ).join('')}
+        ${[umkm.image, ...(galleryImages || [])]
+          .filter(Boolean)
+          .slice(0, 3)
+          .map(img => 
+            `<img src="${img}"
+                  alt="${umkm.name}"
+                  class="gmap-hero-img"
+                  loading="lazy" decoding="async" fetchpriority="low"
+                  sizes="(max-width: 480px) 90vw, (max-width: 1024px) 60vw, 380px"
+                  width="600" height="300"
+                  onerror="this.src='https://via.placeholder.com/600x300?text=UMKM'"/>`
+          ).join('')}
       </div>
       <button class="gmap-hero-nav prev" onclick="const t=this.closest('.gmap-hero').querySelector('.gmap-hero-track'); t && t.scrollBy({left:-Math.max(280, t.clientWidth*0.9), behavior:'smooth'});" aria-label="Prev">
         ‹
@@ -295,10 +304,14 @@ const createGooglePopup = (umkm: UMKMLocation) => {
           Galeri Foto
         </h4>
         <div class="gmap-gallery">
-          ${galleryImages.slice(0, 4).map((img: string, idx: number) => `
-            <div class="gmap-gallery-item ${idx === 3 ? 'has-more' : ''}">
-              <img src="${img}" alt="Gallery ${idx + 1}" onerror="this.src='https://via.placeholder.com/300x200?text=Photo'"/>
-              ${idx === 3 ? `<div class="gallery-more">+${(umkm.photos?.length || 0) - 3}</div>` : ''}
+          ${galleryImages.slice(0, 3).map((img: string, idx: number) => `
+            <div class="gmap-gallery-item">
+              <img src="${img}"
+                   alt="Gallery ${idx + 1}"
+                   loading="lazy" decoding="async" fetchpriority="low"
+                   sizes="(max-width: 480px) 44vw, (max-width: 1024px) 30vw, 180px"
+                   width="300" height="200"
+                   onerror="this.src='https://via.placeholder.com/300x200?text=Photo'"/>
             </div>
           `).join('')}
         </div>
