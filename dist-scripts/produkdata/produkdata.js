@@ -5,12 +5,9 @@ export async function seedProduk() {
     await deleteAllProducts();
     // Upload data produk baru
     const products = [
-        // ========================================
-        // 1. KULINER – TOKO: "Nusantara Rasa"
-        // Lokasi: Surabaya, Jawa Timur
-        // ========================================
+        // Kuliner
         {
-            ASIN: "IDKUL001",
+            ASIN: "KULI-ID-001",
             nama_produk: "Sambal Cumi Asap Mak Rini",
             merek_produk: "Mak Rini",
             model_produk: "Sambal Rumahan 200g",
@@ -43,10 +40,12 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Darmo Permai III No.17, Pradahkalindungan, Kec. Dukuhpakis, Kota Surabaya, Jawa Timur 60226",
             maps_link: "https://maps.app.goo.gl/8vN9vL3kP9bZfG8J7",
             rating_bintang: 4.9,
-            jumlah_ulasan: 320
+            jumlah_ulasan: 320,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 22:00"
         },
         {
-            ASIN: "IDKUL002",
+            ASIN: "KULI-ID-002",
             nama_produk: "Keripik Pisang Cokelat Lampung",
             merek_produk: "BananaJoy",
             model_produk: "Snack 250g",
@@ -79,10 +78,12 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Darmo Permai III No.17, Pradahkalindungan, Kec. Dukuhpakis, Kota Surabaya, Jawa Timur 60226",
             maps_link: "https://maps.app.goo.gl/8vN9vL3kP9bZfG8J7",
             rating_bintang: 4.8,
-            jumlah_ulasan: 250
+            jumlah_ulasan: 250,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 22:00"
         },
         {
-            ASIN: "IDKUL003",
+            ASIN: "KULI-ID-003",
             nama_produk: "Rendang Padang Asli Daging Sapi 250g",
             merek_produk: "MinangRasa",
             model_produk: "Rendang Frozen 250g",
@@ -115,10 +116,12 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Darmo Permai III No.17, Pradahkalindungan, Kec. Dukuhpakis, Kota Surabaya, Jawa Timur 60226",
             maps_link: "https://maps.app.goo.gl/8vN9vL3kP9bZfG8J7",
             rating_bintang: 4.9,
-            jumlah_ulasan: 410
+            jumlah_ulasan: 410,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 22:00"
         },
         {
-            ASIN: "IDKUL004",
+            ASIN: "KULI-ID-004",
             nama_produk: "Kopi Arabika Gayo 200g",
             merek_produk: "GayoMount",
             model_produk: "Roasted Beans Medium",
@@ -151,10 +154,12 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Darmo Permai III No.17, Pradahkalindungan, Kec. Dukuhpakis, Kota Surabaya, Jawa Timur 60226",
             maps_link: "https://maps.app.goo.gl/8vN9vL3kP9bZfG8J7",
             rating_bintang: 4.8,
-            jumlah_ulasan: 260
+            jumlah_ulasan: 260,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 22:00"
         },
         {
-            ASIN: "IDKUL005",
+            ASIN: "KULI-ID-005",
             nama_produk: "Dodol Garut Premium Rasa Susu",
             merek_produk: "DodolKita",
             model_produk: "Paket 500g",
@@ -187,12 +192,11 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Darmo Permai III No.17, Pradahkalindungan, Kec. Dukuhpakis, Kota Surabaya, Jawa Timur 60226",
             maps_link: "https://maps.app.goo.gl/8vN9vL3kP9bZfG8J7",
             rating_bintang: 4.8,
-            jumlah_ulasan: 188
+            jumlah_ulasan: 188,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 22:00"
         },
-        // ========================================
-        // 2. FASHION – TOKO: "Kain Nusantara"
-        // Lokasi: Pekalongan, Jawa Tengah
-        // ========================================
+        // Fashion
         {
             ASIN: "FASH-001",
             nama_produk: "Batik Tulis Pekalongan Pria Lengan Panjang",
@@ -229,7 +233,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Kauman No.25, Kauman, Kec. Pekalongan Timur, Kota Pekalongan, Jawa Tengah 51122",
             maps_link: "https://maps.app.goo.gl/3kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.8,
-            jumlah_ulasan: 324
+            jumlah_ulasan: 324,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "08:00 - 17:00"
         },
         {
             ASIN: "FASH-002",
@@ -267,7 +273,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Kauman No.25, Kauman, Kec. Pekalongan Timur, Kota Pekalongan, Jawa Tengah 51122",
             maps_link: "https://maps.app.goo.gl/3kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.6,
-            jumlah_ulasan: 215
+            jumlah_ulasan: 215,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "08:00 - 17:00"
         },
         {
             ASIN: "FASH-003",
@@ -305,7 +313,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Kauman No.25, Kauman, Kec. Pekalongan Timur, Kota Pekalongan, Jawa Tengah 51122",
             maps_link: "https://maps.app.goo.gl/3kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.7,
-            jumlah_ulasan: 432
+            jumlah_ulasan: 432,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "08:00 - 17:00"
         },
         {
             ASIN: "FASH-004",
@@ -343,7 +353,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Kauman No.25, Kauman, Kec. Pekalongan Timur, Kota Pekalongan, Jawa Tengah 51122",
             maps_link: "https://maps.app.goo.gl/3kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.8,
-            jumlah_ulasan: 368
+            jumlah_ulasan: 368,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "08:00 - 17:00"
         },
         {
             ASIN: "FASH-005",
@@ -381,12 +393,11 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Kauman No.25, Kauman, Kec. Pekalongan Timur, Kota Pekalongan, Jawa Tengah 51122",
             maps_link: "https://maps.app.goo.gl/3kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.6,
-            jumlah_ulasan: 196
+            jumlah_ulasan: 196,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "08:00 - 17:00"
         },
-        // ========================================
-        // 3. KERAJINAN – TOKO: "Karya Nusantara"
-        // Lokasi: Yogyakarta
-        // ========================================
+        // Kerajinan
         {
             ASIN: "KERAJI-ID-001",
             nama_produk: "Lampu Hias Bambu Minimalis",
@@ -422,7 +433,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Imogiri Timur No.123, Giwangan, Kec. Umbulharjo, Kota Yogyakarta, Daerah Istimewa Yogyakarta 55163",
             maps_link: "https://maps.app.goo.gl/9vX8kL3mP7vZfG8J7",
             rating_bintang: 4.8,
-            jumlah_ulasan: 480
+            jumlah_ulasan: 480,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "09:00 - 21:00"
         },
         {
             ASIN: "KERAJI-ID-002",
@@ -459,7 +472,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Imogiri Timur No.123, Giwangan, Kec. Umbulharjo, Kota Yogyakarta, Daerah Istimewa Yogyakarta 55163",
             maps_link: "https://maps.app.goo.gl/9vX8kL3mP7vZfG8J7",
             rating_bintang: 4.7,
-            jumlah_ulasan: 560
+            jumlah_ulasan: 560,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "09:00 - 21:00"
         },
         {
             ASIN: "KERAJI-ID-003",
@@ -496,7 +511,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Imogiri Timur No.123, Giwangan, Kec. Umbulharjo, Kota Yogyakarta, Daerah Istimewa Yogyakarta 55163",
             maps_link: "https://maps.app.goo.gl/9vX8kL3mP7vZfG8J7",
             rating_bintang: 4.8,
-            jumlah_ulasan: 340
+            jumlah_ulasan: 340,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "09:00 - 21:00"
         },
         {
             ASIN: "KERAJI-ID-004",
@@ -533,7 +550,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Imogiri Timur No.123, Giwangan, Kec. Umbulharjo, Kota Yogyakarta, Daerah Istimewa Yogyakarta 55163",
             maps_link: "https://maps.app.goo.gl/9vX8kL3mP7vZfG8J7",
             rating_bintang: 4.7,
-            jumlah_ulasan: 410
+            jumlah_ulasan: 410,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "09:00 - 21:00"
         },
         {
             ASIN: "KERAJI-ID-005",
@@ -570,12 +589,11 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Imogiri Timur No.123, Giwangan, Kec. Umbulharjo, Kota Yogyakarta, Daerah Istimewa Yogyakarta 55163",
             maps_link: "https://maps.app.goo.gl/9vX8kL3mP7vZfG8J7",
             rating_bintang: 4.6,
-            jumlah_ulasan: 620
+            jumlah_ulasan: 620,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "09:00 - 21:00"
         },
-        // ========================================
-        // 4. KESEHATAN – TOKO: "Apotek Sehat Nusantara"
-        // Lokasi: Bekasi, Jawa Barat
-        // ========================================
+        // Kesehatan
         {
             ASIN: "KESEH-ID-001",
             nama_produk: "Salep Kulit Antiseptik Betadine Ointment 20g",
@@ -609,7 +627,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Pondok Gede No.27, Jatimakmur, Kec. Pondok Gede, Kota Bekasi, Jawa Barat 17413",
             maps_link: "https://maps.app.goo.gl/2mK9vL3kP7bZfG8J7",
             rating_bintang: 4.9,
-            jumlah_ulasan: 940
+            jumlah_ulasan: 940,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 23:00"
         },
         {
             ASIN: "KESEH-ID-002",
@@ -644,7 +664,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Pondok Gede No.27, Jatimakmur, Kec. Pondok Gede, Kota Bekasi, Jawa Barat 17413",
             maps_link: "https://maps.app.goo.gl/2mK9vL3kP7bZfG8J7",
             rating_bintang: 4.9,
-            jumlah_ulasan: 230
+            jumlah_ulasan: 230,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 23:00"
         },
         {
             ASIN: "KESEH-ID-003",
@@ -666,12 +688,12 @@ export async function seedProduk() {
             bahan: "Non-woven, meltblown filter",
             deskripsi_produk: "Masker medis 3 lapis dengan filter meltblown, nyaman digunakan, bersertifikat Kemenkes.",
             keyword: "masker medis, masker 3 ply, alat pelindung diri",
-            gambar_produk: "https://down-id.img.susercontent.com/file/sg-11134201-7rbyz-lt2y8n0w3v5t2c",
-            thumbnail_produk: "https://down-id.img.susercontent.com/file/sg-11134201-7rbyz-lt2y8n0w3v5t2c",
+            gambar_produk: "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
+            thumbnail_produk: "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
             galeri_gambar: [
-                "https://down-id.img.susercontent.com/file/sg-11134201-7rbyz-lt2y8n0w3v5t2c",
-                "https://down-id.img.susercontent.com/file/sg-11134201-7rbyz-lt2y8n0w3v5t2c",
-                "https://down-id.img.susercontent.com/file/sg-11134201-7rbyz-lt2y8n0w3v5t2c"
+                "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg"
             ],
             toko: "Apotek Sehat Nusantara",
             rating_toko: 4.9,
@@ -679,7 +701,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Pondok Gede No.27, Jatimakmur, Kec. Pondok Gede, Kota Bekasi, Jawa Barat 17413",
             maps_link: "https://maps.app.goo.gl/2mK9vL3kP7bZfG8J7",
             rating_bintang: 4.8,
-            jumlah_ulasan: 1200
+            jumlah_ulasan: 1200,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 23:00"
         },
         {
             ASIN: "KESEH-ID-004",
@@ -701,12 +725,12 @@ export async function seedProduk() {
             bahan: "Plastik ABS, sensor inframerah",
             deskripsi_produk: "Termometer digital tanpa sentuh, akurat, cepat, dan higienis. Cocok untuk keluarga dan klinik.",
             keyword: "termometer digital, omron, alat ukur suhu",
-            gambar_produk: "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9y",
-            thumbnail_produk: "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9y",
+            gambar_produk: "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
+            thumbnail_produk: "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
             galeri_gambar: [
-                "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9y",
-                "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9y",
-                "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9y"
+                "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg"
             ],
             toko: "Apotek Sehat Nusantara",
             rating_toko: 4.9,
@@ -714,7 +738,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Pondok Gede No.27, Jatimakmur, Kec. Pondok Gede, Kota Bekasi, Jawa Barat 17413",
             maps_link: "https://maps.app.goo.gl/2mK9vL3kP7bZfG8J7",
             rating_bintang: 4.9,
-            jumlah_ulasan: 380
+            jumlah_ulasan: 380,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 23:00"
         },
         {
             ASIN: "KESEH-ID-005",
@@ -736,12 +762,12 @@ export async function seedProduk() {
             bahan: "Etanol 70%, gliserin, aloe vera",
             deskripsi_produk: "Hand sanitizer dengan alkohol 70% membunuh 99.9% kuman. Wangi segar, tidak lengket.",
             keyword: "hand sanitizer, antis, pembersih tangan",
-            gambar_produk: "https://down-id.img.susercontent.com/file/sg-11134201-7rbyz-lt2y8n0w3v5t2d",
-            thumbnail_produk: "https://down-id.img.susercontent.com/file/sg-11134201-7rbyz-lt2y8n0w3v5t2d",
+            gambar_produk: "https://cdn.ralali.id/assets/img/Libraries/JCL-Hand-Sanitizer-Gel-500ml-(70-Persen-Alkohol-Extra-Moisturizer)_Apboss6JdTo80KMU_1627646426.png",
+            thumbnail_produk: "https://cdn.ralali.id/assets/img/Libraries/JCL-Hand-Sanitizer-Gel-500ml-(70-Persen-Alkohol-Extra-Moisturizer)_Apboss6JdTo80KMU_1627646426.png",
             galeri_gambar: [
-                "https://down-id.img.susercontent.com/file/sg-11134201-7rbyz-lt2y8n0w3v5t2d",
-                "https://down-id.img.susercontent.com/file/sg-11134201-7rbyz-lt2y8n0w3v5t2d",
-                "https://down-id.img.susercontent.com/file/sg-11134201-7rbyz-lt2y8n0w3v5t2d"
+                "https://cdn.ralali.id/assets/img/Libraries/JCL-Hand-Sanitizer-Gel-500ml-(70-Persen-Alkohol-Extra-Moisturizer)_Apboss6JdTo80KMU_1627646426.png",
+                "https://cdn.ralali.id/assets/img/Libraries/JCL-Hand-Sanitizer-Gel-500ml-(70-Persen-Alkohol-Extra-Moisturizer)_Apboss6JdTo80KMU_1627646426.png",
+                "https://cdn.ralali.id/assets/img/Libraries/JCL-Hand-Sanitizer-Gel-500ml-(70-Persen-Alkohol-Extra-Moisturizer)_Apboss6JdTo80KMU_1627646426.png"
             ],
             toko: "Apotek Sehat Nusantara",
             rating_toko: 4.9,
@@ -749,12 +775,11 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Pondok Gede No.27, Jatimakmur, Kec. Pondok Gede, Kota Bekasi, Jawa Barat 17413",
             maps_link: "https://maps.app.goo.gl/2mK9vL3kP7bZfG8J7",
             rating_bintang: 4.8,
-            jumlah_ulasan: 720
+            jumlah_ulasan: 720,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 23:00"
         },
-        // ========================================
-        // 5. PERTANIAN – TOKO: "Tani Makmur Indonesia"
-        // Lokasi: Malang, Jawa Timur
-        // ========================================
+        // Pertanian
         {
             ASIN: "PERTA-ID-001",
             nama_produk: "Benih Padi Ciherang 1kg",
@@ -789,7 +814,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Tlogomas No.56, Lowokwaru, Kec. Lowokwaru, Kota Malang, Jawa Timur 65144",
             maps_link: "https://maps.app.goo.gl/5vN9vL3kP9bZfG8J7",
             rating_bintang: 4.8,
-            jumlah_ulasan: 890
+            jumlah_ulasan: 890,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "07:00 - 18:00"
         },
         {
             ASIN: "PERTA-ID-002",
@@ -812,12 +839,12 @@ export async function seedProduk() {
             negara_asal: "Indonesia",
             deskripsi_produk: "Pupuk NPK seimbang untuk semua tanaman, meningkatkan pertumbuhan dan hasil panen.",
             keyword: "pupuk npk, pupuk tanaman, pupuk merdeka",
-            gambar_produk: "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9z",
-            thumbnail_produk: "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9z",
+            gambar_produk: "https://down-id.img.susercontent.com/file/id-11134207-7qul3-lkeypah4qam8ca",
+            thumbnail_produk: "https://down-id.img.susercontent.com/file/id-11134207-7qul3-lkeypah4qam8ca",
             galeri_gambar: [
-                "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9z",
-                "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9z",
-                "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9z"
+                "https://down-id.img.susercontent.com/file/id-11134207-7qul3-lkeypah4qam8ca",
+                "https://down-id.img.susercontent.com/file/id-11134207-7qul3-lkeypah4qam8ca",
+                "https://down-id.img.susercontent.com/file/id-11134207-7qul3-lkeypah4qam8ca"
             ],
             toko: "Tani Makmur Indonesia",
             rating_toko: 4.9,
@@ -825,7 +852,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Tlogomas No.56, Lowokwaru, Kec. Lowokwaru, Kota Malang, Jawa Timur 65144",
             maps_link: "https://maps.app.goo.gl/5vN9vL3kP9bZfG8J7",
             rating_bintang: 4.9,
-            jumlah_ulasan: 1100
+            jumlah_ulasan: 1100,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "07:00 - 18:00"
         },
         {
             ASIN: "PERTA-ID-003",
@@ -848,12 +877,12 @@ export async function seedProduk() {
             negara_asal: "Indonesia",
             deskripsi_produk: "Bibit cabai rawit merah tahan virus, produktivitas tinggi, cocok untuk dataran rendah hingga tinggi.",
             keyword: "bibit cabai, benih cabai rawit, panah merah",
-            gambar_produk: "https://cf.shopee.co.id/file/id-11134207-7qul3-lk5n2q5v8w2x9a",
-            thumbnail_produk: "https://cf.shopee.co.id/file/id-11134207-7qul3-lk5n2q5v8w2x9a",
+            gambar_produk: "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/97/MTA-181736251/brd-119704_bibit-cabe-rawit-merah-peak-cha-benih-bibit-cabe-rawit-benih-cabe-rawit-bibit-cabai-rawit-benih-cabai-rawit-benih-cabe-rawit-merah_full01-98c08398.jpg",
+            thumbnail_produk: "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/97/MTA-181736251/brd-119704_bibit-cabe-rawit-merah-peak-cha-benih-bibit-cabe-rawit-benih-cabe-rawit-bibit-cabai-rawit-benih-cabai-rawit-benih-cabe-rawit-merah_full01-98c08398.jpg",
             galeri_gambar: [
-                "https://cf.shopee.co.id/file/id-11134207-7qul3-lk5n2q5v8w2x9a",
-                "https://cf.shopee.co.id/file/id-11134207-7qul3-lk5n2q5v8w2x9a",
-                "https://cf.shopee.co.id/file/id-11134207-7qul3-lk5n2q5v8w2x9a"
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/97/MTA-181736251/brd-119704_bibit-cabe-rawit-merah-peak-cha-benih-bibit-cabe-rawit-benih-cabe-rawit-bibit-cabai-rawit-benih-cabai-rawit-benih-cabe-rawit-merah_full01-98c08398.jpg",
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/97/MTA-181736251/brd-119704_bibit-cabe-rawit-merah-peak-cha-benih-bibit-cabe-rawit-benih-cabe-rawit-bibit-cabai-rawit-benih-cabai-rawit-benih-cabe-rawit-merah_full01-98c08398.jpg",
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/97/MTA-181736251/brd-119704_bibit-cabe-rawit-merah-peak-cha-benih-bibit-cabe-rawit-benih-cabe-rawit-bibit-cabai-rawit-benih-cabai-rawit-benih-cabe-rawit-merah_full01-98c08398.jpg"
             ],
             toko: "Tani Makmur Indonesia",
             rating_toko: 4.9,
@@ -861,7 +890,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Tlogomas No.56, Lowokwaru, Kec. Lowokwaru, Kota Malang, Jawa Timur 65144",
             maps_link: "https://maps.app.goo.gl/5vN9vL3kP9bZfG8J7",
             rating_bintang: 4.8,
-            jumlah_ulasan: 980
+            jumlah_ulasan: 980,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "07:00 - 18:00"
         },
         {
             ASIN: "PERTA-ID-004",
@@ -884,12 +915,12 @@ export async function seedProduk() {
             negara_asal: "Indonesia",
             deskripsi_produk: "Pestisida alami dari ekstrak neem, aman untuk tanaman pangan, efektif lawan ulat dan kutu.",
             keyword: "pestisida organik, neem oil, bio pestisida",
-            gambar_produk: "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9b",
-            thumbnail_produk: "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9b",
+            gambar_produk: "https://down-id.img.susercontent.com/file/id-11134207-7ra0q-mdrv8f30o3ij0c",
+            thumbnail_produk: "https://down-id.img.susercontent.com/file/id-11134207-7ra0q-mdrv8f30o3ij0c",
             galeri_gambar: [
-                "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w596",
-                "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9b",
-                "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9b"
+                "https://down-id.img.susercontent.com/file/id-11134207-7ra0q-mdrv8f30o3ij0c",
+                "https://down-id.img.susercontent.com/file/id-11134207-7ra0q-mdrv8f30o3ij0c",
+                "https://down-id.img.susercontent.com/file/id-11134207-7ra0q-mdrv8f30o3ij0c"
             ],
             toko: "Tani Makmur Indonesia",
             rating_toko: 4.9,
@@ -897,7 +928,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Tlogomas No.56, Lowokwaru, Kec. Lowokwaru, Kota Malang, Jawa Timur 65144",
             maps_link: "https://maps.app.goo.gl/5vN9vL3kP9bZfG8J7",
             rating_bintang: 4.7,
-            jumlah_ulasan: 450
+            jumlah_ulasan: 450,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "07:00 - 18:00"
         },
         {
             ASIN: "PERTA-ID-005",
@@ -920,12 +953,12 @@ export async function seedProduk() {
             negara_asal: "Indonesia",
             deskripsi_produk: "Sekop taman kecil anti karat, ringan, cocok untuk berkebun di pot atau polybag.",
             keyword: "sekop taman, alat berkebun, sekop mini",
-            gambar_produk: "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9c",
-            thumbnail_produk: "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9c",
+            gambar_produk: "https://img.lazcdn.com/g/ff/kf/S8ad24b275e6b46408de27ccb69b420e5l.jpg_720x720q80.jpg",
+            thumbnail_produk: "https://img.lazcdn.com/g/ff/kf/S8ad24b275e6b46408de27ccb69b420e5l.jpg_720x720q80.jpg",
             galeri_gambar: [
-                "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9c",
-                "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9c",
-                "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lk5n2q5v8w2x9c"
+                "https://img.lazcdn.com/g/ff/kf/S8ad24b275e6b46408de27ccb69b420e5l.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/ff/kf/S8ad24b275e6b46408de27ccb69b420e5l.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/ff/kf/S8ad24b275e6b46408de27ccb69b420e5l.jpg_720x720q80.jpg"
             ],
             toko: "Tani Makmur Indonesia",
             rating_toko: 4.9,
@@ -933,12 +966,11 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Tlogomas No.56, Lowokwaru, Kec. Lowokwaru, Kota Malang, Jawa Timur 65144",
             maps_link: "https://maps.app.goo.gl/5vN9vL3kP9bZfG8J7",
             rating_bintang: 4.8,
-            jumlah_ulasan: 680
+            jumlah_ulasan: 680,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "07:00 - 18:00"
         },
-        // ========================================
-        // 6. ELEKTRONIK – TOKO: "Gadget Nusantara"
-        // Lokasi: Jakarta Utara (SAMA DENGAN SEBELUMNYA)
-        // ========================================
+        //Elektronik
         {
             ASIN: "ELEC-001",
             nama_produk: "Smart TV LED 43 Inch Full HD",
@@ -975,7 +1007,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Pluit Karang Ayu No.B1, Pluit, Kec. Penjaringan, Kota Jakarta Utara, Daerah Khusus Ibukota Jakarta 14450",
             maps_link: "https://maps.app.goo.gl/7kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.8,
-            jumlah_ulasan: 1250
+            jumlah_ulasan: 1250,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 22:00"
         },
         {
             ASIN: "ELEC-002",
@@ -1012,7 +1046,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Pluit Karang Ayu No.B1, Pluit, Kec. Penjaringan, Kota Jakarta Utara, Daerah Khusus Ibukota Jakarta 14450",
             maps_link: "https://maps.app.goo.gl/7kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.7,
-            jumlah_ulasan: 970
+            jumlah_ulasan: 970,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 22:00"
         },
         {
             ASIN: "ELEC-003",
@@ -1049,7 +1085,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Pluit Karang Ayu No.B1, Pluit, Kec. Penjaringan, Kota Jakarta Utara, Daerah Khusus Ibukota Jakarta 14450",
             maps_link: "https://maps.app.goo.gl/7kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.9,
-            jumlah_ulasan: 840
+            jumlah_ulasan: 840,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 22:00"
         },
         {
             ASIN: "ELEC-004",
@@ -1086,7 +1124,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Pluit Karang Ayu No.B1, Pluit, Kec. Penjaringan, Kota Jakarta Utara, Daerah Khusus Ibukota Jakarta 14450",
             maps_link: "https://maps.app.goo.gl/7kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.9,
-            jumlah_ulasan: 5200
+            jumlah_ulasan: 5200,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 22:00"
         },
         {
             ASIN: "ELEC-005",
@@ -1123,12 +1163,11 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Pluit Karang Ayu No.B1, Pluit, Kec. Penjaringan, Kota Jakarta Utara, Daerah Khusus Ibukota Jakarta 14450",
             maps_link: "https://maps.app.goo.gl/7kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.9,
-            jumlah_ulasan: 2110
+            jumlah_ulasan: 2110,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 22:00"
         },
-        // ========================================
-        // 7. FURNITUR – TOKO: "Mebel Nusantara"
-        // Lokasi: Jepara, Jawa Tengah (SAMA DENGAN SEBELUMNYA)
-        // ========================================
+        // Furnitur
         {
             ASIN: "FURN-ID-001",
             nama_produk: "Meja Kayu Jati Solid",
@@ -1152,12 +1191,12 @@ export async function seedProduk() {
             negara_asal: "Indonesia",
             deskripsi_produk: "Meja kayu jati solid dengan desain minimalis modern buatan pengrajin Jepara. Tahan lama, anti rayap, dan cocok untuk ruang makan atau ruang kerja.",
             keyword: "meja jati, mebel jepara",
-            gambar_produk: "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg?lk3s=0ccea506&x-expires=1762584871&x-signature=8WF0g6tel432dE2EbCDwHbsLkSY%3D&x-signature-webp=9yXxML6JwJQCUBdkwnvkqCYFrJI%3D",
-            thumbnail_produk: "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg?lk3s=0ccea506&x-expires=1762584871&x-signature=8WF0g6tel432dE2EbCDwHbsLkSY%3D&x-signature-webp=9yXxML6JwJQCUBdkwnvkqCYFrJI%3D",
+            gambar_produk: "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+            thumbnail_produk: "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
             galeri_gambar: [
-                "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg?lk3s=0ccea506&x-expires=1762584871&x-signature=8WF0g6tel432dE2EbCDwHbsLkSY%3D&x-signature-webp=9yXxML6JwJQCUBdkwnvkqCYFrJI%3D",
-                "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg?lk3s=0ccea506&x-expires=1762584871&x-signature=8WF0g6tel432dE2EbCDwHbsLkSY%3D&x-signature-webp=9yXxML6JwJQCUBdkwnvkqCYFrJI%3D",
-                "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg?lk3s=0ccea506&x-expires=1762584871&x-signature=8WF0g6tel432dE2EbCDwHbsLkSY%3D&x-signature-webp=9yXxML6JwJQCUBdkwnvkqCYFrJI%3D"
+                "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+                "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+                "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg"
             ],
             toko: "Mebel Nusantara",
             rating_toko: 4.9,
@@ -1165,7 +1204,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Tahunan Jepara No.88, Tahunan, Kec. Tahunan, Kabupaten Jepara, Jawa Tengah 59425",
             maps_link: "https://maps.app.goo.gl/4kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.8,
-            jumlah_ulasan: 540
+            jumlah_ulasan: 540,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "07:00 - 19:00"
         },
         {
             ASIN: "FURN-ID-002",
@@ -1202,7 +1243,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Tahunan Jepara No.88, Tahunan, Kec. Tahunan, Kabupaten Jepara, Jawa Tengah 59425",
             maps_link: "https://maps.app.goo.gl/4kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.6,
-            jumlah_ulasan: 310
+            jumlah_ulasan: 310,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "07:00 - 19:00"
         },
         {
             ASIN: "FURN-ID-003",
@@ -1240,7 +1283,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Tahunan Jepara No.88, Tahunan, Kec. Tahunan, Kabupaten Jepara, Jawa Tengah 59425",
             maps_link: "https://maps.app.goo.gl/4k5mP7vX2fZ9k8J6",
             rating_bintang: 4.7,
-            jumlah_ulasan: 270
+            jumlah_ulasan: 270,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "07:00 - 19:00"
         },
         {
             ASIN: "FURN-ID-004",
@@ -1278,7 +1323,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Tahunan Jepara No.88, Tahunan, Kec. Tahunan, Kabupaten Jepara, Jawa Tengah 59425",
             maps_link: "https://maps.app.goo.gl/4kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.6,
-            jumlah_ulasan: 190
+            jumlah_ulasan: 190,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "07:00 - 19:00"
         },
         {
             ASIN: "FURN-ID-005",
@@ -1307,7 +1354,7 @@ export async function seedProduk() {
             galeri_gambar: [
                 "https://ivaro.co.id/cdn/shop/files/cabriole.jpg?v=1752555149&width=1445",
                 "https://ivaro.co.id/cdn/shop/files/cabriole.jpg?v=1752555149&width=1445",
-                "https://ivaro.co.id/cdn/shop/files/cabriole.jpg?v=1752555149&width=1445 of"
+                "https://ivaro.co.id/cdn/shop/files/cabriole.jpg?v=1752555149&width=1445"
             ],
             toko: "Mebel Nusantara",
             rating_toko: 4.9,
@@ -1315,12 +1362,11 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Raya Tahunan Jepara No.88, Tahunan, Kec. Tahunan, Kabupaten Jepara, Jawa Tengah 59425",
             maps_link: "https://maps.app.goo.gl/4kL9mP7vX2fZ9k8J6",
             rating_bintang: 4.8,
-            jumlah_ulasan: 310
+            jumlah_ulasan: 310,
+            hari_operasional: "Senin - Sabtu",
+            jam_operasional: "07:00 - 19:00"
         },
-        // ========================================
-        // 8. EDUKASI – TOKO: "Cendekia Press"
-        // Lokasi: Yogyakarta (SAMA DENGAN SEBELUMNYA)
-        // ========================================
+        // Edukasi
         {
             ASIN: "EDU-ID-001",
             nama_produk: "Buku Anak Cerdas: Petualangan di Nusantara",
@@ -1356,7 +1402,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Kaliurang KM 5,2 No.27, Condongcatur, Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281",
             maps_link: "https://maps.app.goo.gl/6vX8kL3mP7vZfG8J7",
             rating_bintang: 4.8,
-            jumlah_ulasan: 980
+            jumlah_ulasan: 980,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 21:00"
         },
         {
             ASIN: "EDU-ID-002",
@@ -1375,7 +1423,7 @@ export async function seedProduk() {
             minimum_pemesanan: 1,
             kondisi_produk: "Baru",
             berat_satuan: 0.3,
-            deskripsi_produk: "“Filosofi Teras” adalah buku pengantar filsafat Stoisisme modern yang ditulis oleh Henry Manampiring. Buku ini mengajarkan cara menghadapi emosi negatif, tekanan sosial, dan ketidakpastian hidup dengan sudut pandang logis dan tenang. Dengan gaya bahasa ringan dan kisah nyata yang relevan, 'Filosofi Teras' membantu pembaca memahami bahwa kebahagiaan sejati bukan berasal dari hal eksternal, melainkan dari cara kita merespons dunia. Cocok untuk siapa pun yang ingin memperkuat mental dan menemukan ketenangan dalam kehidupan sehari-hari.",
+            deskripsi_produk: "“Filosofi Teras” adalah buku pengantar filsafat Stoisisme modern yang ditulis oleh Henry Manampiring. Buku ini mengajarkan cara menghadapi emosi negatif, tekanan sosial, dan ketidakpastian hidup dengan sudut pandang logis dan tenang...",
             keyword: "filosofi teras, stoik, psikologi",
             gambar_produk: "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full//catalog-image/101/MTA-152358158/brd-44261_buku-filosofi-teras_full01-7172ae55.jpg",
             thumbnail_produk: "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full//catalog-image/101/MTA-152358158/brd-44261_buku-filosofi-teras_full01-7172ae55.jpg",
@@ -1390,7 +1438,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Kaliurang KM 5,2 No.27, Condongcatur, Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281",
             maps_link: "https://maps.app.goo.gl/6vX8kL3mP7vZfG8J7",
             rating_bintang: 4.7,
-            jumlah_ulasan: 680
+            jumlah_ulasan: 680,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 21:00"
         },
         {
             ASIN: "EDU-ID-003",
@@ -1427,7 +1477,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Kaliurang KM 5,2 No.27, Condongcatur, Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281",
             maps_link: "https://maps.app.goo.gl/6vX8kL3mP7vZfG8J7",
             rating_bintang: 4.8,
-            jumlah_ulasan: 860
+            jumlah_ulasan: 860,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 21:00"
         },
         {
             ASIN: "EDU-ID-004",
@@ -1464,7 +1516,9 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Kaliurang KM 5,2 No.27, Condongcatur, Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281",
             maps_link: "https://maps.app.goo.gl/6vX8kL3mP7vZfG8J7",
             rating_bintang: 4.7,
-            jumlah_ulasan: 410
+            jumlah_ulasan: 410,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 21:00"
         },
         {
             ASIN: "EDU-ID-005",
@@ -1501,8 +1555,10 @@ export async function seedProduk() {
             lokasi_toko: "Jl. Kaliurang KM 5,2 No.27, Condongcatur, Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281",
             maps_link: "https://maps.app.goo.gl/6vX8kL3mP7vZfG8J7",
             rating_bintang: 4.7,
-            jumlah_ulasan: 420
-        }
+            jumlah_ulasan: 420,
+            hari_operasional: "Senin - Minggu",
+            jam_operasional: "07:00 - 21:00"
+        },
     ];
     await uploadProducts(products);
     // Cek semua produk setelah upload
