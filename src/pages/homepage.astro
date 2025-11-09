@@ -1,5 +1,6 @@
 ---
-import HomePage from "../../Home/homepage.astro";
+import Layout from '../layouts/HomepageLayout.astro';
+import NavbarHome from '../../Home/NavbarHome/NavbarHome';
 export const prerender = false;
 
 import "../styles/global.css";
@@ -13,4 +14,12 @@ if (!authCookie) {
 }
 ---
 
-<HomePage />
+<Layout title="UMKMotion - Home" description="Beranda UMKMotion">
+  <NavbarHome slot="header" client:load />
+
+  <div style="min-height: 60vh; display: grid; place-items: center; padding: 24px; margin-top: 80px;">
+    <div style="opacity:.6; font-weight:700; text-align:center;">
+      Halaman Home dikosongkan untuk pengujian NavbarHome.
+    </div>
+  </div>
+</Layout>

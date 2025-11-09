@@ -2,9 +2,6 @@
 // ✅ UMKMotion Universal Firebase Config (Astro + Node)
 // ======================================================
 
-import * as dotenv from "dotenv";
-dotenv.config();
-
 // Firebase SDK imports
 import { getApps, initializeApp } from 'firebase/app';
 import { getFirestore, initializeFirestore } from 'firebase/firestore';

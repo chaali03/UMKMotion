@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { generateResponse } from '../lib/gemini';
+
 import { 
   Mic, 
   MicOff, 
@@ -20,8 +21,12 @@ import {
   Clock,
   ChevronLeft,
   Zap,
-  Search
+  Search,
+  LogIn
 } from 'lucide-react';
+import { auth, db } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface Message {
   id: string;
@@ -44,41 +49,8 @@ const STORAGE_KEY = 'saskia_chat_sessions';
 
 const AIPage: React.FC = () => {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>(() => {
-    if (typeof window === 'undefined') {
-      return [
-        {
-          id: '1',
-          title: 'Percakapan Baru',
-          messages: [],
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ];
-    }
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return parsed.map((session: any) => ({
-          ...session,
-          createdAt: new Date(session.createdAt),
-          updatedAt: new Date(session.updatedAt),
-          messages: session.messages.map((msg: any) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp)
-          }))
-        }));
-      }
-    } catch {}
-    return [
-      {
-        id: '1',
-        title: 'Percakapan Baru',
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
+    // Default: start with a fresh chat (no anonymous persistence)
+    return [{ id: '1', title: 'Percakapan Baru', messages: [], createdAt: new Date(), updatedAt: new Date() }];
   });
 
   const [currentSessionId, setCurrentSessionId] = useState('1');
@@ -92,14 +64,16 @@ const AIPage: React.FC = () => {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const [currentUser, setCurrentUser] = useState<{ uid: string; email?: string | null; photoURL?: string | null } | null>(null);
+  const [displayName, setDisplayName] = useState<string>('');
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
   const autoStopTimerRef = useRef<number | null>(null);
-  const [interimText, setInterimText] = useState('');
-  const [voiceSupported, setVoiceSupported] = useState(false);
-  const [voiceError, setVoiceError] = useState('');
+  const [interimText, setInterimText] = useState<string>('');
+  const [voiceSupported, setVoiceSupported] = useState<boolean>(false);
+  const [voiceError, setVoiceError] = useState<string>('');
 
   const placeholders = [
     "Tanya Dina tentang produk UMKM...",
@@ -109,10 +83,6 @@ const AIPage: React.FC = () => {
     "Produk handmade unik..."
   ];
 
-  
-
-  
-
   const currentSession = chatSessions.find(s => s.id === currentSessionId);
   const messages = currentSession?.messages || [];
 
@@ -120,16 +90,45 @@ const AIPage: React.FC = () => {
     session.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Helper to always scroll to the bottom of messages
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   useEffect(() => {
     const SR = (typeof window !== 'undefined') && (((window as any).SpeechRecognition) || ((window as any).webkitSpeechRecognition));
     setVoiceSupported(!!SR);
   }, []);
 
+  // Persist only for logged-in users with a per-user key
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(chatSessions));
-    }
-  }, [chatSessions]);
+    if (!currentUser) return;
+    try {
+      const key = `${STORAGE_KEY}:${currentUser.uid}`;
+      window.localStorage.setItem(key, JSON.stringify(chatSessions));
+    } catch {}
+  }, [chatSessions, currentUser]);
+
+  // Hydrate from storage after auth resolves
+  useEffect(() => {
+    if (!currentUser) return;
+    try {
+      const key = `${STORAGE_KEY}:${currentUser.uid}`;
+      const saved = window.localStorage.getItem(key);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const restored: ChatSession[] = parsed.map((session: any) => ({
+          ...session,
+          createdAt: new Date(session.createdAt),
+          updatedAt: new Date(session.updatedAt),
+          messages: (session.messages || []).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }))
+        }));
+        setChatSessions(restored.length ? restored : [{ id: '1', title: 'Percakapan Baru', messages: [], createdAt: new Date(), updatedAt: new Date() }]);
+        // Ensure current session id points to first
+        if (restored.length) setCurrentSessionId(restored[0].id);
+      }
+    } catch {}
+  }, [currentUser]);
 
   useEffect(() => {
     scrollToBottom();
@@ -142,25 +141,27 @@ const AIPage: React.FC = () => {
     }
   }, []);
 
-  // Auto-create a new chat when the page loads
   useEffect(() => {
-    createNewChat();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user ? { uid: user.uid, email: user.email, photoURL: user.photoURL } : null);
+      if (user) {
+        try {
+          const snap = await getDoc(doc(db, 'users', user.uid));
+          const data = snap.exists() ? snap.data() as any : null;
+          const nick = data?.nickname || data?.fullName || user.displayName || (user.email ? user.email.split('@')[0] : 'Pengguna');
+          setDisplayName(nick);
+        } catch {
+          const nick = user.displayName || (user.email ? user.email.split('@')[0] : 'Pengguna');
+          setDisplayName(nick);
+        }
+      } else {
+        setDisplayName('');
+      }
+    });
+    return () => unsub();
   }, []);
 
-  useEffect(() => {
-    if (currentSession && currentSession.messages.length > 1 && currentSession.title === 'Percakapan Baru') {
-      const firstUserMessage = currentSession.messages.find(m => m.sender === 'user');
-      if (firstUserMessage) {
-        const newTitle = firstUserMessage.content.slice(0, 40) + (firstUserMessage.content.length > 40 ? '...' : '');
-        updateSessionTitle(currentSessionId, newTitle);
-      }
-    }
-  }, [currentSession?.messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const isAuthed = !!currentUser;
 
   const createNewChat = () => {
     const newSession: ChatSession = {
@@ -212,6 +213,10 @@ const AIPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthed) {
+      window.location.href = '/login';
+      return;
+    }
     if (!inputValue.trim() && !selectedImage) return;
 
     const userMessage: Message = {
@@ -668,16 +673,46 @@ const AIPage: React.FC = () => {
               </div>
             </div>
 
-            <motion.a
-              whileHover={{ scale: 1.02, x: -2 }}
-              whileTap={{ scale: 0.98 }}
-              href="/"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors"
-              aria-label="Kembali ke beranda"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span className="text-sm">Kembali</span>
-            </motion.a>
+            <div className="flex items-center gap-2">
+              <motion.a
+                whileHover={{ scale: 1.02, x: -2 }}
+                whileTap={{ scale: 0.98 }}
+                href={isAuthed ? '/homepage' : '/'}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors"
+                aria-label="Kembali ke beranda"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span className="text-sm">Kembali</span>
+              </motion.a>
+
+              {!isAuthed ? (
+                <motion.a
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                  href="/login"
+                  className="shimmer-effect group relative bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] hover:from-[#ff8534] hover:to-[#ff6914] text-white h-11 items-center flex justify-center px-5 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-300 font-semibold text-sm gap-2 hover:scale-[1.02]"
+                >
+                  <LogIn size={18} className="transition-transform duration-300 group-hover:scale-110" />
+                  <span>Masuk</span>
+                </motion.a>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-end leading-none">
+                    <span className="text-sm font-semibold text-slate-900 truncate max-w-[160px]">{displayName}</span>
+                    <span className="text-[11px] text-slate-500">Masuk</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-white shadow">
+                    {currentUser?.photoURL ? (
+                      <img src={currentUser.photoURL} alt="Profil" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-600">
+                        <User className="w-5 h-5" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </motion.header>
 
@@ -727,73 +762,85 @@ const AIPage: React.FC = () => {
                     dan merekomendasikan UMKM terdekat. Saya siap menjadi pengertian untuk Anda.
                   </motion.p>
 
-                  
-
                   {/* Main Input */}
-                  <motion.form
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.7 }}
-                    onSubmit={handleSubmit}
-                    className="mx-auto w-[92%] sm:w-[80%] max-w-sm md:max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
-                  >
-                    <div className="p-1">
-                      <input
-                        type="text"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        placeholder="Tanya Dina tentang produk UMKM..."
-                        className="w-full px-6 py-4 bg-transparent outline-none placeholder:text-slate-400 text-lg"
-                      />
-                    </div>
-                    <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <motion.button
-                          type="button"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => fileInputRef.current?.click()}
-                          className="p-3 text-slate-600 hover:bg-white rounded-xl transition-colors border border-slate-200"
-                          title="Upload gambar"
-                        >
-                          <ImageIcon className="w-5 h-5" />
-                        </motion.button>
-                        
-                        {voiceSupported && (
+                  {isAuthed ? (
+                    <motion.form
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.7 }}
+                      onSubmit={handleSubmit}
+                      className="mx-auto w-[92%] sm:w-[80%] max-w-sm md:max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
+                    >
+                      <div className="p-1">
+                        <input
+                          type="text"
+                          value={inputValue}
+                          onChange={(e) => setInputValue(e.target.value)}
+                          placeholder="Tanya Dina tentang produk UMKM..."
+                          className="w-full px-6 py-4 bg-transparent outline-none placeholder:text-slate-400 text-lg"
+                        />
+                      </div>
+                      <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
                           <motion.button
                             type="button"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onMouseDown={startRecording}
-                            onMouseUp={stopRecording}
-                            onTouchStart={startRecording}
-                            onTouchEnd={stopRecording}
-                            className={`p-3 rounded-xl transition-colors border ${
-                              isRecording 
-                                ? 'bg-red-500 text-white border-red-500' 
-                                : 'text-slate-600 hover:bg-white border-slate-200'
-                            }`}
-                            title="Tekan untuk merekam"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="p-3 text-slate-600 hover:bg-white rounded-xl transition-colors border border-slate-200"
+                            title="Upload gambar"
                           >
-                            {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                            <ImageIcon className="w-5 h-5" />
                           </motion.button>
-                        )}
+                          
+                          {voiceSupported && (
+                            <motion.button
+                              type="button"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onMouseDown={startRecording}
+                              onMouseUp={stopRecording}
+                              onTouchStart={startRecording}
+                              onTouchEnd={stopRecording}
+                              className={`p-3 rounded-xl transition-colors border ${
+                                isRecording 
+                                  ? 'bg-red-500 text-white border-red-500' 
+                                  : 'text-slate-600 hover:bg-white border-slate-200'
+                              }`}
+                              title="Tekan untuk merekam"
+                            >
+                              {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                            </motion.button>
+                          )}
+                        </div>
+                        
+                        <motion.button
+                          type="submit"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          disabled={!inputValue.trim()}
+                          className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                        >
+                          <Send className="w-4 h-4" />
+                          Kirim
+                        </motion.button>
                       </div>
-                      
-                      <motion.button
-                        type="submit"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        disabled={!inputValue.trim()}
-                        className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                    </motion.form>
+                  ) : (
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.6 }}
+                      className="mx-auto w-[92%] sm:w-[80%] max-w-sm md:max-w-md"
+                    >
+                      <a
+                        href="/login"
+                        className="inline-flex items-center justify-center w-full px-6 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-semibold shadow-lg"
                       >
-                        <Send className="w-4 h-4" />
-                        Kirim
-                      </motion.button>
-                    </div>
-                  </motion.form>
-
-                  
+                        Masuk untuk mulai chat
+                      </a>
+                    </motion.div>
+                  )}
                 </div>
               )}
 

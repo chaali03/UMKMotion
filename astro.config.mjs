@@ -43,7 +43,8 @@ export default defineConfig({
     resolve: {
       alias: {
         'src': path.resolve(__dirname, './src'),
-        '@': path.resolve(__dirname, './src')
+        '@': path.resolve(__dirname, './src'),
+        '@homepagelayout': path.resolve(__dirname, './src/layouts/HomepageLayout.astro')
       }
     },
     build: {
@@ -60,10 +61,10 @@ export default defineConfig({
       }
     },
     optimizeDeps: {
-      include: ['react', 'react-dom'],
-      exclude: ['@react-three/fiber', '@react-three/drei'],
-      // Disable pre-bundling on dev to avoid rename inside node_modules/.vite on OneDrive
-      disabled: process.env.NODE_ENV === 'development'
+      // In dev on OneDrive, avoid optimizer touching node_modules/.vite
+      noDiscovery: process.env.NODE_ENV === 'development',
+      include: process.env.NODE_ENV === 'development' ? [] : ['react', 'react-dom'],
+      exclude: ['@react-three/fiber', '@react-three/drei']
     }
   }
 });
