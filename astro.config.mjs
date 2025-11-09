@@ -36,6 +36,10 @@ export default defineConfig({
     plugins: [tailwindcss()],
     // Store Vite cache in system temp to avoid OneDrive/AV file locks on Windows
     cacheDir: path.resolve(os.tmpdir(), 'umkmotion-vite-cache'),
+    server: {
+      // OneDrive can lock files; polling reduces EPERM rename races
+      watch: { usePolling: true, interval: 500 },
+    },
     resolve: {
       alias: {
         'src': path.resolve(__dirname, './src'),
@@ -58,8 +62,8 @@ export default defineConfig({
     optimizeDeps: {
       include: ['react', 'react-dom'],
       exclude: ['@react-three/fiber', '@react-three/drei'],
-      // Force re-optimize to refresh outdated deps when dev server starts
-      force: true
+      // Disable pre-bundling on dev to avoid rename inside node_modules/.vite on OneDrive
+      disabled: process.env.NODE_ENV === 'development'
     }
   }
 });
