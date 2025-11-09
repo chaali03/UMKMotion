@@ -1,6 +1,6 @@
 // src/components/Etalase/EtalaseWrapper.jsx
 import React, { useState } from 'react';
-import Kategori from './Kategori.jsx';
+import Kategori from './Kategoritjsx/index.js';
 import FetchData from './FetchData.jsx';
 
 export default function EtalaseWrapper() {

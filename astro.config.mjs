@@ -14,7 +14,7 @@ export default defineConfig({
   output: 'server',
   adapter: netlify({
   // Configuration options go here
-}),
+  }),
 
   // Existing configurations
   integrations: [react()],
@@ -39,6 +39,13 @@ export default defineConfig({
         '@': path.resolve(__dirname, './src')
       }
     },
+
+    // TAMBAHIN INI AJA BRO! (cuma 1 baris)
+    define: {
+      'process.env': 'import.meta.env',
+    },
+    // END OF TAMBAHAN
+
     build: {
       rollupOptions: {
         output: {
