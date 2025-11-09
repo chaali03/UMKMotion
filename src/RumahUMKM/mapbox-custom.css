@@ -12,6 +12,7 @@
   width: 100% !important;
   height: 100% !important;
   display: block !important;
+  background-color: #f8fafc !important; /* ensure no black flashes */
 }
 
 .mapboxgl-canvas-container {
@@ -48,6 +49,38 @@
 
 .marker:hover {
   transform: scale(1.1);
+}
+
+/* --- Lighten popup hero overlays and controls --- */
+.gmap-hero-overlay {
+  pointer-events: none;
+}
+.gmap-hero-nav button,
+.gmap-hero-nav .prev,
+.gmap-hero-nav .next {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #111 !important;
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+.gmap-photo-badge,
+.gmap-verified-badge {
+  background: rgba(255,255,255,0.9) !important;
+  color: #111 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+/* Remove any dark gradient overlays */
+.gmap-hero::before,
+.gmap-hero::after,
+.gmap-hero-overlay {
+  background: transparent !important;
+}
+
+/* Soften pin shadow ellipse if rendered */
+.gmap-shadow {
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.12), rgba(0,0,0,0.0)) !important;
+  opacity: 0.7 !important;
 }
 
 .user-marker {

@@ -554,7 +554,7 @@ export default function RumahUMKM() {
 
                       {/* Photo count badge */}
                       {total > 1 && (
-                        <div className="absolute bottom-2 md:bottom-3 right-2 md:right-3 bg-black/70 backdrop-blur-sm text-white px-2 md:px-3 py-1 md:py-1.5 rounded-full text-xs md:text-sm flex items-center gap-1">
+                        <div className="absolute bottom-2 md:bottom-3 right-2 md:right-3 bg-white/85 backdrop-blur-sm text-gray-800 px-2 md:px-3 py-1 md:py-1.5 rounded-full text-xs md:text-sm flex items-center gap-1 shadow-sm">
                           <ImageIcon className="w-3 h-3 md:w-4 md:h-4" />
                           {total} Foto
                         </div>
@@ -567,7 +567,7 @@ export default function RumahUMKM() {
                           <div className="gmap-carousel-nav z-20">
                           <button
                             aria-label="Prev"
-                            className={`absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-9 md:h-9 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/55 z-20 ${atStart ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            className={`absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/85 text-gray-800 flex items-center justify-center hover:bg-white z-20 shadow-sm ${atStart ? 'opacity-40 cursor-not-allowed' : ''}`}
                             onClick={(e) => {
                               e.preventDefault();
                               if (atStart) return; const el = galleryTrackRef.current; if (!el) return;
@@ -581,7 +581,7 @@ export default function RumahUMKM() {
                           </button>
                           <button
                             aria-label="Next"
-                            className={`absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-9 md:h-9 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/55 z-20 ${atEnd ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            className={`absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/85 text-gray-800 flex items-center justify-center hover:bg-white z-20 shadow-sm ${atEnd ? 'opacity-40 cursor-not-allowed' : ''}`}
                             onClick={(e) => {
                               e.preventDefault();
                               if (atEnd) return; const el = galleryTrackRef.current; if (!el) return;

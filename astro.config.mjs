@@ -4,6 +4,7 @@ import netlify from '@astrojs/netlify/functions';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -33,6 +34,8 @@ export default defineConfig({
   // Vite config
   vite: {
     plugins: [tailwindcss()],
+    // Store Vite cache in system temp to avoid OneDrive/AV file locks on Windows
+    cacheDir: path.resolve(os.tmpdir(), 'umkmotion-vite-cache'),
     resolve: {
       alias: {
         'src': path.resolve(__dirname, './src'),
@@ -54,7 +57,9 @@ export default defineConfig({
     },
     optimizeDeps: {
       include: ['react', 'react-dom'],
-      exclude: ['@react-three/fiber', '@react-three/drei']
+      exclude: ['@react-three/fiber', '@react-three/drei'],
+      // Force re-optimize to refresh outdated deps when dev server starts
+      force: true
     }
   }
 });
