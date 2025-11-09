@@ -36,7 +36,7 @@ function FetchData() {
 
   const PRODUCTS_PER_PAGE = 15;
 
-  // === LISTENER KATEGORI & SEARCH ===
+  // Listener Kategori + Search
   useEffect(() => {
     const handleCategoryChange = (e: CustomEvent<string>) => {
       setCategory(e.detail);
@@ -60,19 +60,19 @@ function FetchData() {
     };
   }, []);
 
-  // === FORMAT IDR ===
+  // Format idr
   const formatToIDR = (harga: number) => {
     return "Rp " + harga.toLocaleString("id-ID");
   };
 
-  // === RENDER BINTANG ===
+  // Render bintang
   const renderStars = (rating: number | null | undefined) => {
     if (!rating || rating === 0) return "☆☆☆☆☆";
     const full = Math.min(5, Math.max(0, Math.round(rating)));
     return "★★★★★".substring(0, full) + "☆☆☆☆☆".substring(0, 5 - full);
   };
 
-  // === DISKON ===
+  // Diskon
   const getDiscount = (product: Product) => {
     if (product.persentase_diskon != null && product.persentase_diskon > 0) {
       return `${product.persentase_diskon}%`;
@@ -84,19 +84,19 @@ function FetchData() {
     return "0%";
   };
 
-  // === BONUS RANDOM ===
+  // Random bonus
   const generateBonusText = () => {
     const bonuses = ["Gratis Ongkir", "+Hadiah Gratis", "Cashback 10%", "Diskon Ekstra"];
     return bonuses[Math.floor(Math.random() * bonuses.length)];
   };
 
-  // === KLIK PRODUK ===
+  // Klik produk
   const handleProductClick = (product: Product) => {
     localStorage.setItem("selectedProduct", JSON.stringify(product));
     window.location.href = "/buyingpage";
   };
 
-  // === FETCH DARI FIREBASE + MOCK BACKUP ===
+  // Fetch
   useEffect(() => {
     const fetchProducts = async () => {
       console.log("FETCH MULAI → Kategori:", category, "Search:", searchQuery);
@@ -221,7 +221,7 @@ function FetchData() {
     fetchProducts();
   }, [category, searchQuery]);
 
-  // === LOAD MORE ===
+  // Load more
   const loadMore = () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
@@ -237,45 +237,12 @@ function FetchData() {
   return (
     <>
       <style>{`
-        /* === STYLE SAMA SEPERTI SEBELUMNYA === */
         .product-container {
           font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
           background: #f9f9f9;
           padding: 12px;
           max-width: 1400px;
           margin: 0 auto;
-        }
-        .debug-toggle {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: #1f2937;
-          color: white;
-          padding: 10px 16px;
-          border-radius: 8px;
-          font-size: 0.9rem;
-          font-weight: 600;
-          cursor: pointer;
-          z-index: 9999;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-          transition: all 0.2s;
-        }
-        .debug-toggle:hover {
-          background: #111827;
-          transform: translateY(-2px);
-        }
-        .raw-data {
-          background: #1a1a1a;
-          color: #10b981;
-          padding: 16px;
-          border-radius: 12px;
-          margin: 20px 0;
-          font-family: 'Courier New', monospace;
-          font-size: 0.85rem;
-          max-height: 500px;
-          overflow-y: auto;
-          border: 1px solid #333;
-          white-space: pre-wrap;
         }
         .product-list {
           display: grid;
@@ -515,18 +482,6 @@ function FetchData() {
         }
       `}</style>
 
-      {/* TOMBOL DEBUG */}
-      <div className="debug-toggle" onClick={() => setShowRawData(prev => !prev)}>
-        {showRawData ? "Hide Raw Data" : "Show Raw Data"} ({allProducts.length} items)
-      </div>
-
-      {/* TAMPILKAN DATA MENTAH */}
-      {showRawData && (
-        <div className="raw-data">
-          {JSON.stringify(allProducts, null, 2)}
-        </div>
-      )}
-
       <div className="product-container">
         {loading ? (
           <p style={{ textAlign: "center", color: "#666", margin: "28px 0", fontSize: "0.9rem" }}>
@@ -576,7 +531,7 @@ function FetchData() {
   );
 }
 
-// === PRODUCT CARD ===
+// Produk Card 
 interface ProductCardProps {
   image: string;
   shortTitle: string;
