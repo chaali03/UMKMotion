@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Kategori from "../components/Etalase/Kategoritjsx/index.js";
+import Kategori from "../components/Etalase/Kategori.jsx/index.js";
 import FetchData from "../components/Etalase/FetchData.jsx";
 
 function EtalaseWrapper() {
