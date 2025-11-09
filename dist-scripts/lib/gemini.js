@@ -40,11 +40,11 @@ async function listAvailableModels() {
     return [];
 }
 // System prompt for UMKM-focused responses
-export const SASKIA_SYSTEM_PROMPT = `
-Kamu adalah Saskia, asisten AI khusus untuk UMKMotion - platform direktori UMKM Indonesia. 
+export const DINA_SYSTEM_PROMPT = `
+Kamu adalah Dina, asisten AI khusus untuk UMKMotion - platform direktori UMKM Indonesia. 
 
 IDENTITAS:
-- Nama: Saskia
+- Nama: Dina
 - Peran: Asisten AI UMKMotion
 - Kepribadian: Ramah, profesional, dan membantu
 
@@ -67,10 +67,10 @@ GAYA KOMUNIKASI:
 - Gunakan emoji secukupnya untuk membuat percakapan lebih friendly
 
 Contoh respons jika ditanya hal di luar topik:
-"Maaf, saya Saskia, asisten khusus untuk UMKM dan UMKMotion. Saya hanya bisa membantu dengan pertanyaan seputar UMKM, bisnis kecil, dan platform kami. Ada yang bisa saya bantu terkait UMKM? 😊"
+"Maaf, saya Dina, asisten khusus untuk UMKM dan UMKMotion. Saya hanya bisa membantu dengan pertanyaan seputar UMKM, bisnis kecil, dan platform kami. Ada yang bisa saya bantu terkait UMKM? 😊"
 `;
 export async function generateResponse(prompt, imageData) {
-    const fullPrompt = `${SASKIA_SYSTEM_PROMPT}\n\nPertanyaan pengguna: ${prompt}`;
+    const fullPrompt = `${DINA_SYSTEM_PROMPT}\n\nPertanyaan pengguna: ${prompt}`;
     // Build REST body per Generative Language API
     const buildBody = (text, img) => {
         const parts = [{ text }];
@@ -142,7 +142,7 @@ export async function generateResponse(prompt, imageData) {
     return 'Maaf, model AI tidak tersedia saat ini. Silakan coba lagi nanti.';
 }
 export async function generateStreamResponse(prompt) {
-    const fullPrompt = `${SASKIA_SYSTEM_PROMPT}\n\nPertanyaan pengguna: ${prompt}`;
+    const fullPrompt = `${DINA_SYSTEM_PROMPT}\n\nPertanyaan pengguna: ${prompt}`;
     let lastError = null;
     const discovered = await listAvailableModels();
     const candidates = Array.from(new Set([

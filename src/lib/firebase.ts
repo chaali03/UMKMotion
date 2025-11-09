@@ -2,7 +2,6 @@
 // ✅ UMKMotion Universal Firebase Config (Astro + Node)
 // ======================================================
 
-// Uncommand codenya kalo mau bikin data baru di db. 
 // import * as dotenv from "dotenv";
 // dotenv.config();
 
