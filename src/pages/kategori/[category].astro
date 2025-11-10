@@ -1,0 +1,36 @@
+---
+import Layout from '../../layouts/LandingPageLayout.astro';
+import CategoryPage from '../../../Home/CategoryPage/CategoryPage.tsx';
+
+export const prerender = false;
+
+const { category } = Astro.params;
+---
+
+<Layout title={`Kategori ${category} - UMKMotion`} description={`Temukan UMKM dan produk terbaik kategori ${category}`}>
+  <script define:vars={{
+    FIREBASE_API_KEY: import.meta.env.PUBLIC_FIREBASE_API_KEY || import.meta.env.FIREBASE_API_KEY,
+    FIREBASE_AUTH_DOMAIN: import.meta.env.PUBLIC_FIREBASE_AUTH_DOMAIN || import.meta.env.FIREBASE_AUTH_DOMAIN,
+    FIREBASE_PROJECT_ID: import.meta.env.PUBLIC_FIREBASE_PROJECT_ID || import.meta.env.FIREBASE_PROJECT_ID,
+    FIREBASE_STORAGE_BUCKET: import.meta.env.PUBLIC_FIREBASE_STORAGE_BUCKET || import.meta.env.FIREBASE_STORAGE_BUCKET,
+    FIREBASE_MESSAGING_SENDER_ID: import.meta.env.PUBLIC_FIREBASE_MESSAGING_SENDER_ID || import.meta.env.FIREBASE_MESSAGING_SENDER_ID,
+    FIREBASE_APP_ID: import.meta.env.PUBLIC_FIREBASE_APP_ID || import.meta.env.FIREBASE_APP_ID,
+    FIREBASE_MEASUREMENT_ID: import.meta.env.PUBLIC_FIREBASE_MEASUREMENT_ID || import.meta.env.FIREBASE_MEASUREMENT_ID,
+    category: category
+  }}>
+    window.ENV = {
+      FIREBASE_API_KEY,
+      FIREBASE_AUTH_DOMAIN,
+      FIREBASE_PROJECT_ID,
+      FIREBASE_STORAGE_BUCKET,
+      FIREBASE_MESSAGING_SENDER_ID,
+      FIREBASE_APP_ID,
+      FIREBASE_MEASUREMENT_ID
+    };
+    window.CATEGORY = category;
+  </script>
+
+  <main class="min-h-screen bg-slate-50">
+    <CategoryPage client:load />
+  </main>
+</Layout>

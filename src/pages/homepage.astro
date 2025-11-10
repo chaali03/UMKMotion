@@ -1,25 +1,22 @@
 ---
 import Layout from '../layouts/HomepageLayout.astro';
-import NavbarHome from '../../Home/NavbarHome/NavbarHome';
+import NavbarHome from '../../Home/NavbarHome/NavbarHome.tsx';
+import HomepageDashboard from '../../Home/homepage.tsx';
+import { getAdminAuth } from '../lib/firebaseAdmin';
+
 export const prerender = false;
 
 import "../styles/global.css";
 
-const authCookie = Astro.cookies.get('auth')?.value
-  || Astro.cookies.get('session')?.value
-  || Astro.cookies.get('token')?.value;
-
-if (!authCookie) {
-  return Astro.redirect('/login');
-}
+// Temporarily disable SSR auth guard - rely on client-side auth
+// const sessionCookie = Astro.cookies.get('session')?.value;
+// Will be handled by client-side Firebase auth in the component
 ---
 
 <Layout title="UMKMotion - Home" description="Beranda UMKMotion">
   <NavbarHome slot="header" client:load />
-
-  <div style="min-height: 60vh; display: grid; place-items: center; padding: 24px; margin-top: 80px;">
-    <div style="opacity:.6; font-weight:700; text-align:center;">
-      Halaman Home dikosongkan untuk pengujian NavbarHome.
-    </div>
-  </div>
+  
+  <main style="margin-top: 80px;">
+    <HomepageDashboard client:load />
+  </main>
 </Layout>
