@@ -11,7 +11,6 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
   const categories = [
     { id: "all", label: "Semua", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><circle cx="15" cy="9" r="2"/><circle cx="12" cy="15" r="2"/></svg> },
     { id: "food", label: "Kuliner", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
-    { id: "services", label: "Jasa", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> },
     { id: "fashion", label: "Fashion", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2m0 0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7"/></svg> },
     { id: "craft", label: "Kerajinan", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2.9l3 5.4a2 2 0 0 1-3.6 2l-5.4-3a2 2 0 0 1 3.6-2zM12 9.1l3 5.4a2 2 0 0 1-3.6 2l-5.4-3a2 2 0 0 1 3.6-2zM12 15.3l3 5.4a2 2 0 0 1-3.6 2l-5.4-3a2 2 0 0 1 3.6-2z"/></svg> },
     { id: "beauty", label: "Kesehatan", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg> },
@@ -19,7 +18,6 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
     { id: "electronics", label: "Elektronik", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M17 7v1M7 7v1M12 7v1M7 21v-1M17 21v-1"/></svg> },
     { id: "furniture", label: "Furniture", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg> },
     { id: "education", label: "Edukasi", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7z"/><line x1="2" y1="17" x2="22" y2="17"/><polyline points="2,12 9,9 15,12 22,9"/></svg> },
-    { id: "others", label: "Lainnya", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> },
   ];
 
   const handleSelect = (category) => {

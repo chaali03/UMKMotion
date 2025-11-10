@@ -1,6 +1,20 @@
 // src/components/Checkoutpage/Checkout.tsx
 import React, { useState, useEffect, useRef } from 'react';
 
+interface CheckoutItem {
+  asin: string;
+  product_title: string;
+  product_photo: string;
+  selectedImage: string;
+  product_price: string;
+  product_price_num: number;
+  product_original_price?: string;
+  product_original_price_num?: number;
+  quantity: number;
+  seller_name?: string;
+  category?: string;
+}
+
 interface PaymentMethod {
   id: string;
   name: string;
@@ -76,6 +90,7 @@ const shippingOptions: ShippingOption[] = [
 ];
 
 const Checkout: React.FC = () => {
+  const [checkoutItem, setCheckoutItem] = useState<CheckoutItem | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedShipping, setSelectedShipping] = useState(0);
   const [isInsurance, setIsInsurance] = useState(true);
@@ -85,13 +100,47 @@ const Checkout: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [isShippingOpen, setIsShippingOpen] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const baseProductPrice = 3150000;
+  useEffect(() => {
+    const stored = localStorage.getItem('checkoutItem');
+    if (stored) {
+      try {
+        const item: CheckoutItem = JSON.parse(stored);
+        setCheckoutItem(item);
+        setQuantity(item.quantity);
+      } catch (err) {
+        console.error('Gagal parse checkoutItem:', err);
+        alert('Data produk tidak valid. Kembali ke halaman produk.');
+      }
+    } else {
+      alert('Tidak ada produk yang dipilih. Kembali ke halaman produk.');
+      window.location.href = '/';
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsShippingOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  if (!checkoutItem) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px', fontFamily: 'Inter, sans-serif' }}>
+        <p>Memuat data checkout...</p>
+      </div>
+    );
+  }
+
   const cashbackAmount = 50000;
   const insuranceCost = 19100;
-
-  const productTotal = baseProductPrice * quantity;
+  const productTotal = checkoutItem.product_price_num * quantity;
   const shippingCost = shippingOptions[selectedShipping].price;
   const total = productTotal + shippingCost + (isInsurance ? insuranceCost : 0) - currentCashback;
 
@@ -108,15 +157,25 @@ const Checkout: React.FC = () => {
     setIsShippingOpen(false);
   };
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsShippingOpen(false);
-      }
+  const handlePayNow = () => {
+    const orderData = {
+      ...checkoutItem,
+      quantity,
+      total,
+      paymentMethod: selectedMethod.name,
+      shipping: shippingOptions[selectedShipping].name,
+      insurance: isInsurance,
+      cashback: currentCashback,
+      timestamp: new Date().toISOString(),
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    localStorage.setItem('lastOrder', JSON.stringify(orderData));
+    setShowSuccessModal(true);
+  };
+
+  const goToEtalase = () => {
+    setShowSuccessModal(false);
+    window.location.href = '../etalase';
+  };
 
   const filteredPayments = paymentGroups
     .map(group => ({
@@ -130,59 +189,30 @@ const Checkout: React.FC = () => {
           (activeTab === 'retail' && group.title === 'Retail Outlet') ||
           ['QRIS', 'Lainnya'].includes(group.title);
         return matchesSearch && matchesTab;
-      })
+      }),
     }))
     .filter(group => group.items.length > 0);
 
   return (
     <>
       <style>{`
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        .fontInter {
-          font-family: 'Inter', sans-serif;
-          background: #f8fafc;
-          color: #1f2937;
-          min-height: 100vh;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        .fontInter { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1f2937; min-height: 100vh; }
 
         @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInRight { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         @keyframes tabLine { to { transform: scaleX(1); } }
+        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modalSlideUp { from { transform: translateY(100px); } to { transform: translateY(0); } }
 
-        .pageHeader {
-          text-align: center;
-          padding: 2rem 1rem 1rem;
-          max-width: 1200px;
-          margin: 0 auto;
-          opacity: 0;
-          animation: fadeDown 0.6s ease forwards;
-        }
+        .pageHeader { text-align: center; padding: 2rem 1rem 1rem; max-width: 1200px; margin: 0 auto; opacity: 0; animation: fadeDown 0.6s ease forwards; }
         .pageHeader h1 { font-size: 1.875rem; font-weight: 800; color: #1f2937; }
 
-        .mainWrapper {
-          max-width: 1200px;
-          margin: 0 auto 3rem;
-          padding: 0 1rem;
-          display: grid;
-          grid-template-columns: 1fr 420px;
-          gap: 2rem;
-        }
+        .mainWrapper { max-width: 1200px; margin: 0 auto 3rem; padding: 0 1rem; display: grid; grid-template-columns: 1fr 420px; gap: 2rem; }
 
-        .card {
-          background: #ffffff;
-          border-radius: 20px;
-          padding: 1.75rem;
-          border: 1px solid #e5e7eb;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          opacity: 0;
-        }
+        .card { background: #ffffff; border-radius: 20px; padding: 1.75rem; border: 1px solid #e5e7eb; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; }
         .card:nth-child(1) { animation: fadeUp 0.6s 0.1s ease forwards; }
         .card:nth-child(2) { animation: fadeUp 0.6s 0.2s ease forwards; }
         .card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(0,0,0,0.12); }
@@ -190,11 +220,7 @@ const Checkout: React.FC = () => {
         .addressHeader { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: #10b981; margin-bottom: 0.75rem; font-size: 1rem; }
         .addressHeader svg { width: 20px; height: 20px; fill: #10b981; animation: pulse 2s infinite; }
         .addressText { font-size: 0.95rem; color: #6b7280; margin-bottom: 1rem; line-height: 1.7; }
-        .changeBtn {
-          background: #d1fae5; color: #10b981; border: none; padding: 0.5rem 1rem;
-          border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
-          transition: all 0.3s;
-        }
+        .changeBtn { background: #d1fae5; color: #10b981; border: none; padding: 0.5rem 1rem; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s; }
         .changeBtn:hover { background: #a7f3d0; transform: scale(1.05); }
 
         .productItem { display: flex; gap: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px dashed #e5e7eb; margin-bottom: 1.25rem; }
@@ -204,30 +230,16 @@ const Checkout: React.FC = () => {
         .productShop { font-size: 0.875rem; color: #6b7280; }
         .productName { font-weight: 600; font-size: 1.1rem; margin: 0.5rem 0; line-height: 1.5; }
         .quantityControl { display: flex; align-items: center; gap: 1rem; }
-        .qtyBtn {
-          width: 40px; height: 40px; border: 2px solid #e5e7eb; background: white;
-          border-radius: 12px; font-weight: bold; cursor: pointer;
-          display: flex; align-items: center; justify-content: center; transition: all 0.3s;
-        }
+        .qtyBtn { width: 40px; height: 40px; border: 2px solid #e5e7eb; background: white; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
         .qtyBtn:hover { border-color: #10b981; background: #ecfdf5; color: #10b981; transform: scale(1.1); }
-        .qtyInput {
-          width: 60px; height: 40px; text-align: center; border: 2px solid #e5e7eb;
-          border-radius: 12px; padding: 0; font-weight: 700; font-size: 1rem; background: white;
-        }
+        .qtyInput { width: 60px; height: 40px; text-align: center; border: 2px solid #e5e7eb; border-radius: 12px; padding: 0; font-weight: 700; font-size: 1rem; background: white; }
         .qtyInput:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
         .price { font-weight: 800; font-size: 1.5rem; white-space: nowrap; color: #1f2937; text-align: right; }
 
         .shippingWrapper { position: relative; margin: 1.25rem 0; }
-        .shippingSelect {
-          width: 100%; padding: 1rem; border: 1.5px solid #e5e7eb; border-radius: 16px;
-          background: white; cursor: pointer; display: flex; justify-content: space-between;
-          align-items: center; transition: all 0.3s;
-        }
+        .shippingSelect { width: 100%; padding: 1rem; border: 1.5px solid #e5e7eb; border-radius: 16px; background: white; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s; }
         .shippingSelect:hover { border-color: #94a3b8; background: #f9fafb; }
-        .shippingSelect.active {
-          border-color: #10b981; border-bottom-color: transparent;
-          border-bottom-left-radius: 0; border-bottom-right-radius: 0; background: #ecfdf5;
-        }
+        .shippingSelect.active { border-color: #10b981; border-bottom-color: transparent; border-bottom-left-radius: 0; border-bottom-right-radius: 0; background: #ecfdf5; }
         .shippingDisplay { display: flex; flex-direction: column; gap: 0.25rem; }
         .shippingName { font-weight: 600; font-size: 0.95rem; }
         .shippingDetail { font-size: 0.8rem; color: #6b7280; }
@@ -235,111 +247,51 @@ const Checkout: React.FC = () => {
         .shippingSelect:hover .arrowIcon { fill: #10b981; }
         .shippingSelect.active .arrowIcon { transform: rotate(180deg); fill: #10b981; }
         .rotate180 { transform: rotate(180deg); }
-        .shippingDropdown {
-          position: absolute; top: 100%; left: 0; right: 0; background: white;
-          border: 1.5px solid #10b981; border-top: none; border-radius: 0 0 16px 16px;
-          max-height: 0; overflow: hidden; z-index: 10; box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-          opacity: 0; visibility: hidden; transition: all 0.3s;
-        }
+        .shippingDropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1.5px solid #10b981; border-top: none; border-radius: 0 0 16px 16px; max-height: 0; overflow: hidden; z-index: 10; box-shadow: 0 12px 30px rgba(0,0,0,0.15); opacity: 0; visibility: hidden; transition: all 0.3s; }
         .shippingDropdown.open { max-height: 500px; opacity: 1; visibility: visible; }
-        .shippingOption {
-          padding: 0.875rem 1rem; border-bottom: 1px solid #f3f4f6; cursor: pointer;
-          display: flex; justify-content: space-between; align-items: center; transition: all 0.3s;
-        }
+        .shippingOption { padding: 0.875rem 1rem; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s; }
         .shippingOption:hover { background: #f9fafb; padding-left: 1.25rem; }
         .shippingOption.selected { background: #ecfdf5; border-left: 4px solid #10b981; padding-left: calc(1rem - 4px); }
         .optionLeft { display: flex; flex-direction: column; gap: 0.25rem; }
         .optionName { font-weight: 600; font-size: 0.95rem; }
         .optionPrice { font-weight: 700; color: #1f2937; }
         .optionDetail { font-size: 0.8rem; color: #6b7280; }
-        .checkmarkIcon {
-          width: 18px; height: 18px; fill: none; stroke: #10b981; stroke-width: 3;
-          stroke-linecap: round; stroke-linejoin: round; opacity: 0; transform: scale(0.8);
-          transition: all 0.25s;
-        }
+        .checkmarkIcon { width: 18px; height: 18px; fill: none; stroke: #10b981; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: 0; transform: scale(0.8); transition: all 0.25s; }
         .shippingOption.selected .checkmarkIcon { opacity: 1; transform: scale(1); }
 
-        .shippingFrom {
-          display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #6b7280;
-          margin: 0.75rem 0; padding: 0.5rem; background: #f9fafb; border-radius: 8px;
-          transition: all 0.3s;
-        }
+        .shippingFrom { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #6b7280; margin: 0.75rem 0; padding: 0.5rem; background: #f9fafb; border-radius: 8px; transition: all 0.3s; }
         .shippingFrom:hover { background: #f1f5f9; }
 
-        .refundNote {
-          display: flex; align-items: center; gap: 0.75rem; padding: 1rem;
-          background: linear-gradient(135deg, #ffe5e5, #fff1f1); border: 1px solid #f8b4b4;
-          border-radius: 10px; font-size: 0.9rem; color: #b91c1c; transition: all 0.25s;
-          box-shadow: 0 2px 6px rgba(249, 113, 113, 0.15);
-        }
+        .refundNote { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: linear-gradient(135deg, #ffe5e5, #fff1f1); border: 1px solid #f8b4b4; border-radius: 10px; font-size: 0.9rem; color: #b91c1c; transition: all 0.25s; box-shadow: 0 2px 6px rgba(249, 113, 113, 0.15); }
         .refundNote:hover { background: linear-gradient(135deg, #ffdede, #ffeaea); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(249, 113, 113, 0.25); }
         .refundNote input { width: 21px; height: 21px; cursor: pointer; accent-color: #ef4444; }
 
-        .rightPanel {
-          display: flex; flex-direction: column; background: #ffffff; border-radius: 20px;
-          border: 1px solid #e5e7eb; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;
-          transition: all 0.3s;
-        }
+        .rightPanel { display: flex; flex-direction: column; background: #ffffff; border-radius: 20px; border: 1px solid #e5e7eb; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; transition: all 0.3s; }
         .rightPanel:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.12); }
         .summaryHeader { padding: 1.75rem 1.75rem 0; font-weight: 700; font-size: 1.1rem; color: #1f2937; }
-        .paymentTrigger {
-          margin: 1.25rem 1.75rem 0; padding: 1.25rem; border: 1.5px solid #e5e7eb;
-          border-radius: 16px; background: white; display: flex; justify-content: space-between;
-          align-items: center; cursor: pointer; transition: all 0.3s;
-        }
+        .paymentTrigger { margin: 1.25rem 1.75rem 0; padding: 1.25rem; border: 1.5px solid #e5e7eb; border-radius: 16px; background: white; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.3s; }
         .paymentTrigger:hover { border-color: #10b981; background: #ecfdf5; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16,185,129,0.2); }
         .paymentTrigger:hover .rightArrowIcon { fill: #10b981; transform: translateX(4px); }
         .selectedMethod { display: flex; align-items: center; gap: 0.75rem; font-weight: 600; }
-        .paymentIcon {
-          width: 36px; height: 36px; background: #10b981; border-radius: 10px;
-          color: white; font-weight: bold; font-size: 0.8rem; display: flex;
-          align-items: center; justify-content: center; transition: all 0.3s;
-        }
+        .paymentIcon { width: 36px; height: 36px; background: #10b981; border-radius: 10px; color: white; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
         .rightArrowIcon { width: 20px; height: 20px; fill: #9ca3af; transition: all 0.2s; }
-        .promoBanner {
-          margin: 1.5rem 1.75rem; padding: 1rem; background: #fef3c7; border-radius: 16px;
-          text-align: center; font-size: 0.9rem; color: #92400e; font-weight: 600; transition: all 0.3s;
-        }
+        .promoBanner { margin: 1.5rem 1.75rem; padding: 1rem; background: #fef3c7; border-radius: 16px; text-align: center; font-size: 0.9rem; color: #92400e; font-weight: 600; transition: all 0.3s; }
         .promoBanner:hover { background: #fde68a; transform: scale(1.02); }
-        .summaryFooter {
-          margin-top: auto; padding: 1.75rem; background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-          border-top: 1px dashed #e5e7eb;
-        }
-        .summaryItem {
-          display: flex; justify-content: space-between; margin-bottom: 0.75rem;
-          font-size: 0.95rem; color: #6b7280; opacity: 0; transform: translateX(-20px);
-          animation: fadeInRight 0.5s forwards;
-        }
+        .summaryFooter { margin-top: auto; padding: 1.75rem; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-top: 1px dashed #e5e7eb; }
+        .summaryItem { display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem; color: #6b7280; opacity: 0; transform: translateX(-20px); animation: fadeInRight 0.5s forwards; }
         .summaryItem:nth-child(1) { animation-delay: 0.1s; }
         .summaryItem:nth-child(2) { animation-delay: 0.2s; }
         .summaryItem:nth-child(3) { animation-delay: 0.3s; }
         .cashbackRow { color: #f59e0b; font-weight: 700; }
-        .totalRow {
-          display: flex; justify-content: space-between; padding-top: 1rem; margin-top: 1rem;
-          border-top: 2px dashed #e5e7eb; font-weight: 800; font-size: 1.5rem;
-          opacity: 0; transform: translateY(10px); animation: fadeUp 0.5s 0.4s forwards;
-        }
-        .payBtn {
-          width: 100%; margin-top: 1.5rem; padding: 1.1rem; background: #10b981;
-          color: white; font-weight: 700; font-size: 1.1rem; border: none;
-          border-radius: 16px; cursor: pointer; transition: all 0.3s;
-          box-shadow: 0 6px 16px rgba(16,185,129,0.3);
-        }
+        .totalRow { display: flex; justify-content: space-between; padding-top: 1rem; margin-top: 1rem; border-top: 2px dashed #e5e7eb; font-weight: 800; font-size: 1.5rem; opacity: 0; transform: translateY(10px); animation: fadeUp 0.5s 0.4s forwards; }
+        .payBtn { width: 100%; margin-top: 1.5rem; padding: 1.1rem; background: #10b981; color: white; font-weight: 700; font-size: 1.1rem; border: none; border-radius: 16px; cursor: pointer; transition: all 0.3s; box-shadow: 0 6px 16px rgba(16,185,129,0.3); }
         .payBtn:hover { background: #059669; transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 30px rgba(16,185,129,0.4); }
 
         .summaryCard { background: #ffffff; border-radius: 20px; border: 1px solid #e5e7eb; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-top: 1.5rem; overflow: hidden; }
 
-        .paymentOverlay {
-          position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
-          display: none; align-items: center; justify-content: center; z-index: 9999;
-          backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.4s ease;
-        }
+        .paymentOverlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.4s ease; }
         .paymentOverlay.open { display: flex; opacity: 1; }
-        .paymentSidebar {
-          background: white; width: 90%; max-width: 480px; height: 90vh; border-radius: 20px;
-          display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-          overflow: hidden; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .paymentSidebar { background: white; width: 90%; max-width: 480px; height: 90vh; border-radius: 20px; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.15); overflow: hidden; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .paymentOverlay.open .paymentSidebar { transform: translateX(0); }
         .sidebarHeader { padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .sidebarHeader h3 { font-weight: 700; font-size: 1.1rem; }
@@ -367,15 +319,64 @@ const Checkout: React.FC = () => {
         .cashbackBadge { position: absolute; top: -8px; right: -8px; background: #f59e0b; color: white; font-size: 0.65rem; font-weight: 700; padding: 0.25rem 0.5rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(245,158,11,0.3); }
         .cashbackBadgeInline { background: #f59e0b; color: white; padding: 2px 6px; border-radius: 6px; font-size: 0.7rem; margin-left: 8px; }
 
-        .mobileFixedBar {
-          position: fixed; bottom: 0; left: 0; right: 0; background: white;
-          padding: 1rem; border-top: 1px solid #e5e7eb; box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-          z-index: 999; display: none;
-        }
+        .mobileFixedBar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 1rem; border-top: 1px solid #e5e7eb; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); z-index: 999; display: none; }
         .totalBar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0 0.5rem; }
         .totalLabel { font-size: 0.95rem; color: #6b7280; font-weight: 600; }
         .totalAmount { font-size: 1.4rem; font-weight: 800; color: #1f2937; }
         .mobilePayBtn { width: 100%; padding: 1rem; background: #10b981; color: white; font-weight: 700; font-size: 1.1rem; border: none; border-radius: 16px; cursor: pointer; }
+
+        /* ==== MODAL SUKSES – CEKLIS TIDAK KEPOTONG ==== */
+        .successOverlay {
+          position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;
+          z-index: 10000; backdrop-filter: blur(10px); opacity: 0; visibility: hidden;
+          transition: all 0.4s ease;
+        }
+        .successOverlay.open { opacity: 1; visibility: visible; }
+
+        .successModal {
+          background: white; width: 90%; max-width: 380px; border-radius: 20px;
+          overflow: visible;   /* penting supaya badge keluar */
+          box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+          transform: translateY(100px); transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
+          position: relative;
+        }
+        .successOverlay.open .successModal { transform: translateY(0); }
+
+        .successCheckBadge {
+          position: absolute; top: -32px; left: 50%; transform: translateX(-50%);
+          width: 60px; height: 60px; background: #10b981; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 8px 20px rgba(16,185,129,0.4); z-index: 20;
+        }
+        .successCheckBadge svg {
+          width: 36px; height: 36px; fill: white;
+        }
+
+        .successHeader {
+          background: white; padding: 3rem 1.5rem 1.5rem; text-align: center;
+          position: relative; border-bottom: 1px solid #f3f4f6;
+        }
+        .successTitle { font-size: 1.25rem; font-weight: 800; color: #1f2937; margin-bottom: 0.25rem; }
+        .successSubtitle { font-size: 0.875rem; color: #6b7280; }
+
+        .successBody { padding: 1.5rem; }
+        .successProduct { display: flex; gap: 1rem; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px dashed #e5e7eb; }
+        .successImg { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; border: 1px solid #e5e7eb; }
+        .successInfo { flex: 1; }
+        .successName { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; line-height: 1.4; }
+        .successQty { font-size: 0.8rem; color: #6b7280; }
+
+        .successSummary { display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 0.9rem; color: #4b5563; }
+        .successSummary.total { font-weight: 800; font-size: 1.1rem; color: #10b981; padding-top: 0.75rem; border-top: 2px dashed #e5e7eb; margin-top: 0.5rem; }
+
+        .successFooter { padding: 1.25rem; background: #f9fafb; text-align: center; }
+        .successBtn {
+          width: 100%; padding: 0.9rem; background: #10b981; color: white; font-weight: 700;
+          font-size: 1rem; border: none; border-radius: 12px; cursor: pointer;
+          transition: all 0.3s; box-shadow: 0 6px 16px rgba(16,185,129,0.3);
+        }
+        .successBtn:hover { background: #059669; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(16,185,129,0.4); }
 
         @media (max-width: 992px) {
           .mainWrapper { grid-template-columns: 1fr; gap: 1.5rem; }
@@ -398,7 +399,6 @@ const Checkout: React.FC = () => {
         }
       `}</style>
 
-      {/* JSX */}
       <div className="fontInter">
         <header className="pageHeader"><h1>Checkout</h1></header>
 
@@ -418,10 +418,10 @@ const Checkout: React.FC = () => {
 
             <div className="card">
               <div className="productItem">
-                <img src="https://via.placeholder.com/80/10b981/ffffff?text=Fig" alt="Figure" className="productImg" />
+                <img src={checkoutItem.selectedImage} alt={checkoutItem.product_title} className="productImg" />
                 <div className="productInfo">
-                  <div className="productShop">Kyou Hobby Shop - Toko Anime</div>
-                  <div className="productName">PVC Figure Yonglek</div>
+                  <div className="productShop">{checkoutItem.seller_name || 'Toko Tidak Diketahui'}</div>
+                  <div className="productName">{checkoutItem.product_title}</div>
                   <div className="quantityControl">
                     <button className="qtyBtn" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
                     <input type="number" className="qtyInput" value={quantity} onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))} />
@@ -506,7 +506,7 @@ const Checkout: React.FC = () => {
               {isInsurance && <div className="summaryItem"><span>Asuransi</span><span>{formatPrice(insuranceCost)}</span></div>}
               {currentCashback > 0 && <div className={`summaryItem cashbackRow`}><span>Cashback</span><span>-{formatPrice(currentCashback)}</span></div>}
               <div className="totalRow"><span>Total Bayar</span><span>{formatPrice(total)}</span></div>
-              <button className="payBtn">Bayar Sekarang</button>
+              <button className="payBtn" onClick={handlePayNow}>Bayar Sekarang</button>
             </div>
           </div>
         </div>
@@ -516,9 +516,45 @@ const Checkout: React.FC = () => {
             <div className="totalLabel">Total Bayar</div>
             <div className="totalAmount">{formatPrice(total)}</div>
           </div>
-          <button className="mobilePayBtn">Bayar Sekarang</button>
+          <button className="mobilePayBtn" onClick={handlePayNow}>Bayar Sekarang</button>
         </div>
 
+        {/* ==== POPUP SUKSES – CEKLIS TIDAK KEPOTONG ==== */}
+        <div className={`successOverlay ${showSuccessModal ? 'open' : ''}`} onClick={() => setShowSuccessModal(false)}>
+          <div className="successModal" onClick={e => e.stopPropagation()}>
+            <div className="successCheckBadge">
+              <svg viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="successHeader">
+              <div className="successTitle">Pembayaran Berhasil!</div>
+              <div className="successSubtitle">Pesananmu sedang diproses</div>
+            </div>
+            <div className="successBody">
+              <div className="successProduct">
+                <img src={checkoutItem.selectedImage} alt={checkoutItem.product_title} className="successImg" />
+                <div className="successInfo">
+                  <div className="successName">{checkoutItem.product_title}</div>
+                  <div className="successQty">Jumlah: {quantity} barang</div>
+                </div>
+              </div>
+              <div className="successSummary"><span>Produk</span><span>{formatPrice(productTotal)}</span></div>
+              <div className="successSummary"><span>Ongkir ({shippingOptions[selectedShipping].name})</span><span>{formatPrice(shippingCost)}</span></div>
+              {isInsurance && <div className="successSummary"><span>Asuransi</span><span>{formatPrice(insuranceCost)}</span></div>}
+              {currentCashback > 0 && <div className="successSummary" style={{ color: '#f59e0b', fontWeight: 700 }}><span>Cashback</span><span>-{formatPrice(currentCashback)}</span></div>}
+              <div className="successSummary total"><span>Total Bayar</span><span>{formatPrice(total)}</span></div>
+              <div style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#6b7280', textAlign: 'center' }}>
+                Metode: <strong>{selectedMethod.name}</strong>
+              </div>
+            </div>
+            <div className="successFooter">
+              <button className="successBtn" onClick={goToEtalase}>Lanjut ke Etalase</button>
+            </div>
+          </div>
+        </div>
+
+        {/* SIDEBAR PEMBAYARAN */}
         <div className={`paymentOverlay ${isSidebarOpen ? 'open' : ''}`} onClick={() => setIsSidebarOpen(false)}>
           <div className="paymentSidebar" onClick={e => e.stopPropagation()}>
             <div className="sidebarHeader">
@@ -546,7 +582,12 @@ const Checkout: React.FC = () => {
                   <div className="paymentSection" dangerouslySetInnerHTML={{ __html: `${group.icon} ${group.title}` }} />
                   <div className="paymentGrid">
                     {group.items.map((method, i) => (
-                      <div key={method.id} className="paymentOption visible" onClick={() => selectPayment(method)} style={{ animationDelay: `${groupIndex * 100 + i * 30}ms` }}>
+                      <div
+                        key={method.id}
+                        className="paymentOption visible"
+                        onClick={() => selectPayment(method)}
+                        style={{ animationDelay: `${groupIndex * 100 + i * 30}ms` }}
+                      >
                         <div className="icon" style={{ background: method.color, color: method.text || 'white', fontSize: method.size || '0.85rem' }}>
                           {method.icon}
                         </div>
