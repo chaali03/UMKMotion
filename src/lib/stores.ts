@@ -4,22 +4,22 @@ import { collection, addDoc, doc, getDoc, getDocs, query, where, setDoc, updateD
 export const STORES_COLLECTION = 'stores';
 
 export type Store = {
-  name: string;
+  nama_toko: string;
   image?: string;
   banner?: string;
-  category?: string;
-  description?: string;
-  address?: string;
-  phone?: string;
+  kategori?: string;
+  deskripsi_toko?: string;
+  lokasi_toko?: string;
+  no_telp?: string;
   email?: string;
   profileImage?: string;
-  openHours?: string;
-  openDays?: string;
-  rating?: number;
-  reviewCount?: number;
-  mapsLink?: string;
-  facilities?: string[];
-  paymentMethods?: string[];
+  jam_operasional: string;
+  hari_operasional: string;
+  rating_toko?: number;
+  jumlah_review?: number;
+  maps_link?: string;
+  fasilitas?: string[];
+  metode_pembayaran?: string[];
   social?: { instagram?: string; facebook?: string; whatsapp?: string };
   createdAt?: number;
   updatedAt?: number;

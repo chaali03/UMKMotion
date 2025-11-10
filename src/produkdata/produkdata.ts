@@ -1565,6 +1565,7 @@ export async function seedProduk() {
     let all = await getAllProducts();
     console.log("📦 Produk setelah upload:");
     console.table(all);
+    
     // Update satu produk
     // if (all.length > 0) {
     //   await updateProduct(all[0].id, {
