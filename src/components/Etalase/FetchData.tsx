@@ -124,7 +124,6 @@ function FetchData() {
             electronics: "Elektronik",
             furniture: "Furnitur",
             education: "Edukasi",
-            others: "Lainnya"
           };
           const mapped = categoryMap[category as keyof typeof categoryMap];
           if (mapped) {
