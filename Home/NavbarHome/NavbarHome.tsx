@@ -2,10 +2,14 @@
 
 import { cn } from "@/lib/utils";
 import { signOutUser } from "@/lib/auth";
-import { AlignJustify, X, Home, Store, Building2, Users, Lightbulb, User } from "lucide-react";
+import { AlignJustify, X, Home, Store, Building2, Users, Lightbulb } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Drawer } from "vaul";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 interface HomeHeaderProps {
   localTheme?: "light" | "dark";
@@ -17,6 +21,42 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [pathname, setPathname] = useState("/homepage");
+  const [user, setUser] = useState<{ displayName?: string | null; email?: string | null; nickname?: string; } | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Get user data from Firebase Auth and Firestore
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        try {
+          // Get additional user data from Firestore
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          const userData = userDoc.exists() ? userDoc.data() : {};
+          
+          setUser({
+            displayName: currentUser.displayName,
+            email: currentUser.email,
+            nickname: userData.nickname || userData.fullName || currentUser.displayName || currentUser.email?.split('@')[0] || 'User'
+          });
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          // Fallback to basic auth data if Firestore fails
+          setUser({
+            displayName: currentUser.displayName,
+            email: currentUser.email,
+            nickname: currentUser.displayName || currentUser.email?.split('@')[0] || 'User'
+          });
+        }
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const userInitial = user?.nickname?.charAt(0).toUpperCase() || user?.displayName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U';
   const [isMobile, setIsMobile] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -282,7 +322,9 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                           href="/profile"
                           className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
                         >
-                          <User size={18} />
+                          <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-semibold">
+                            {loading ? '...' : userInitial}
+                          </span>
                           Profil Saya
                         </a>
                         <button
@@ -355,32 +397,45 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                     <button
                       ref={profileBtnRef}
                       onClick={() => setShowProfileMenu((v) => !v)}
-                      className="w-11 h-11 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center ring-2 ring-white shadow hover:shadow-md transition-all"
+                      className="w-11 h-11 rounded-full bg-gradient-to-br from-[#ff7a1a] to-[#ff4d00] text-white font-semibold flex items-center justify-center ring-2 ring-white shadow hover:shadow-md transition-all hover:scale-105"
                       aria-haspopup="menu"
                       aria-expanded={showProfileMenu}
                     >
-                      <User size={20} />
+                      {userInitial}
                     </button>
                     {showProfileMenu && typeof document !== 'undefined' && createPortal(
                       <div
                         ref={menuPortalRef}
-                        className="fixed right-3 w-44 rounded-xl border border-gray-200 bg-white shadow-2xl p-1 z-[2000] pointer-events-auto"
-                        style={{ top: menuTop }}
+                        className="fixed right-3 w-48 rounded-xl border border-gray-200 bg-white shadow-2xl p-1.5 z-[9999] pointer-events-auto overflow-visible"
+                        style={{
+                          top: `${menuTop}px`,
+                          transform: 'translateY(8px)',
+                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)'
+                        }}
                         onKeyDown={(e) => { if (e.key === 'Escape') setShowProfileMenu(false); }}
                         tabIndex={-1}
                       >
                         <a
                           href="/profile"
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors duration-200"
                           onClick={() => setShowProfileMenu(false)}
                         >
-                          <User size={16} /> Profil
+                          <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#ff7a1a] to-[#ff4d00] text-white flex items-center justify-center text-xs font-semibold">
+                            {loading ? '...' : userInitial}
+                          </span>
+                          <span>Profil Saya</span>
                         </a>
+                        <div className="border-t border-gray-100 my-1"></div>
                         <button
                           onClick={() => { setShowProfileMenu(false); setShowConfirm(true); }}
-                          className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50"
+                          className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors duration-200"
                         >
-                          Keluar
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                          </svg>
+                          <span>Keluar</span>
                         </button>
                       </div>,
                       document.body
@@ -395,9 +450,9 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
               <nav className="flex items-center gap-2">
                 <a
                   href="/profile"
-                  className="bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] text-white h-11 items-center flex justify-center px-4 rounded-xl shadow-lg font-semibold text-sm"
+                  className="w-11 h-11 rounded-full bg-gradient-to-br from-[#ff7a1a] to-[#ff4d00] text-white font-semibold flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105"
                 >
-                  Profil
+                  {userInitial}
                 </a>
               </nav>
             )}
