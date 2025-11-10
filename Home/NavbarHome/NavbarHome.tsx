@@ -279,7 +279,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                       {/* Drawer Footer - Profile Button */}
                       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-neutral-800 space-y-2">
                         <a
-                          href="/profil"
+                          href="/profile"
                           className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
                         >
                           <User size={18} />
@@ -370,7 +370,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                         tabIndex={-1}
                       >
                         <a
-                          href="/profil"
+                          href="/profile"
                           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100"
                           onClick={() => setShowProfileMenu(false)}
                         >
@@ -394,7 +394,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
             {isMobile && (
               <nav className="flex items-center gap-2">
                 <a
-                  href="/profil"
+                  href="/profile"
                   className="bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] text-white h-11 items-center flex justify-center px-4 rounded-xl shadow-lg font-semibold text-sm"
                 >
                   Profil

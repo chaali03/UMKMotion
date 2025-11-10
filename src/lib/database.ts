@@ -6,6 +6,8 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  query,
+  where,
 } from "firebase/firestore";
 
 const COLLECTION_NAME = "products";
@@ -53,6 +55,13 @@ export const uploadProducts = async (products: Product[]) => {
 // Ambil semua produk
 export const getAllProducts = async () => {
   const snapshot = await getDocs(collection(db, COLLECTION_NAME));
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+};
+
+// Ambil produk berdasarkan storeId
+export const getProductsByStoreId = async (storeId: string) => {
+  const q = query(collection(db, COLLECTION_NAME), where("storeId", "==", storeId));
+  const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
 
@@ -106,9 +115,9 @@ export type Product = {
   // Stok & Penjualan
   jumlah_unit: number;
   unit_terjual: number;
-  status_produk: "Tersedia" | "Habis" | "Pre-order";
+  status_produk: string;
   minimum_pemesanan: number;
-  kondisi_produk: "Baru" | "Bekas" | "Refurbished";
+  kondisi_produk: string;
 
   // Spesifikasi Produk
   berat_satuan: number;
@@ -131,15 +140,20 @@ export type Product = {
 
   // Informasi Toko
   toko: string;
-  telepon_toko?: number;
+  telepon_toko?: string | number;
   jam_operasional: string;
   hari_operasional: string;
   kategori_toko?: string;
   rating_toko: number | null;
-  status_toko: "Official Store" | "Toko Biasa";
+  status_toko: string;
   lokasi_toko: string;
   maps_link: string;
   jumlah_produk_di_toko?: number;
+  // Link ke koleksi stores
+  storeId?: string;
+  // Gambar/logo toko
+  image_toko?: string;
+  store_image?: string;
 
   // Ulasan & Rating
   rating_bintang: number | null;

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Sparkles, MapPin, BarChart3, Megaphone, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
 import { signInWithEmail, signInWithGoogle, checkEmailExists } from "../lib/auth";
+import { auth } from "../lib/firebase";
 // removed auth state redirect to avoid auto-refresh loop
 
 export default function LoginPage() {
@@ -90,14 +91,9 @@ export default function LoginPage() {
 
     try {
       await signInWithEmail(email, password);
+      // Skip session cookie creation for now - using client-side auth only
       showNotification("success", "Login Berhasil!", "Mengalihkan ke Homepage...");
-      // Set simple auth cookie for SSR guard (non-HTTP-only fallback)
-      try {
-        document.cookie = `auth=1; Path=/; Max-Age=${60 * 60 * 24 * 7}`; // 7 days
-      } catch {}
-      setTimeout(() => {
-        window.location.href = "/homepage";
-      }, 1500);
+      setTimeout(() => { window.location.href = "/homepage"; }, 800);
     } catch (err: any) {
       let errorMessage = "Login gagal. Periksa email/password dan coba lagi.";
       const fieldErrors: Record<string, string> = {};
@@ -138,14 +134,9 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithGoogle();
+      // Skip session cookie creation for now - using client-side auth only
       showNotification("success", "Login Berhasil!", "Mengalihkan ke Homepage...");
-      // Set simple auth cookie for SSR guard (non-HTTP-only fallback)
-      try {
-        document.cookie = `auth=1; Path=/; Max-Age=${60 * 60 * 24 * 7}`;
-      } catch {}
-      setTimeout(() => {
-        window.location.href = "/homepage";
-      }, 1500);
+      setTimeout(() => { window.location.href = "/homepage"; }, 800);
     } catch (err: any) {
       let errorMessage = "Login Google gagal. Silakan coba lagi.";
       if (err.code === 'auth/popup-closed-by-user') {

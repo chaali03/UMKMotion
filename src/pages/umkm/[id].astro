@@ -1,0 +1,36 @@
+---
+import Layout from '../../layouts/LandingPageLayout.astro';
+import UMKMDetailPage from '../../../Home/UMKMDetailPage/UMKMDetailPage.tsx';
+
+export const prerender = false;
+
+const { id } = Astro.params;
+---
+
+<Layout title={`Detail UMKM - UMKMotion`} description="Detail informasi UMKM dan produk">
+  <script define:vars={{
+    FIREBASE_API_KEY: import.meta.env.PUBLIC_FIREBASE_API_KEY || import.meta.env.FIREBASE_API_KEY,
+    FIREBASE_AUTH_DOMAIN: import.meta.env.PUBLIC_FIREBASE_AUTH_DOMAIN || import.meta.env.FIREBASE_AUTH_DOMAIN,
+    FIREBASE_PROJECT_ID: import.meta.env.PUBLIC_FIREBASE_PROJECT_ID || import.meta.env.FIREBASE_PROJECT_ID,
+    FIREBASE_STORAGE_BUCKET: import.meta.env.PUBLIC_FIREBASE_STORAGE_BUCKET || import.meta.env.FIREBASE_STORAGE_BUCKET,
+    FIREBASE_MESSAGING_SENDER_ID: import.meta.env.PUBLIC_FIREBASE_MESSAGING_SENDER_ID || import.meta.env.FIREBASE_MESSAGING_SENDER_ID,
+    FIREBASE_APP_ID: import.meta.env.PUBLIC_FIREBASE_APP_ID || import.meta.env.FIREBASE_APP_ID,
+    FIREBASE_MEASUREMENT_ID: import.meta.env.PUBLIC_FIREBASE_MEASUREMENT_ID || import.meta.env.FIREBASE_MEASUREMENT_ID,
+    umkmId: id
+  }}>
+    window.ENV = {
+      FIREBASE_API_KEY,
+      FIREBASE_AUTH_DOMAIN,
+      FIREBASE_PROJECT_ID,
+      FIREBASE_STORAGE_BUCKET,
+      FIREBASE_MESSAGING_SENDER_ID,
+      FIREBASE_APP_ID,
+      FIREBASE_MEASUREMENT_ID
+    };
+    window.UMKM_ID = umkmId;
+  </script>
+
+  <main class="min-h-screen bg-slate-50">
+    <UMKMDetailPage client:load />
+  </main>
+</Layout>

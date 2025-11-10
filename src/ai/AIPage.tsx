@@ -65,6 +65,7 @@ const AIPage: React.FC = () => {
   const [editingTitle, setEditingTitle] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentUser, setCurrentUser] = useState<{ uid: string; email?: string | null; photoURL?: string | null } | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [displayName, setDisplayName] = useState<string>('');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -157,6 +158,7 @@ const AIPage: React.FC = () => {
       } else {
         setDisplayName('');
       }
+      setAuthReady(true);
     });
     return () => unsub();
   }, []);
@@ -685,32 +687,34 @@ const AIPage: React.FC = () => {
                 <span className="text-sm">Kembali</span>
               </motion.a>
 
-              {!isAuthed ? (
-                <motion.a
-                  whileHover={{ scale: 1.02, y: -1 }}
-                  whileTap={{ scale: 0.98 }}
-                  href="/login"
-                  className="shimmer-effect group relative bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] hover:from-[#ff8534] hover:to-[#ff6914] text-white h-11 items-center flex justify-center px-5 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-300 font-semibold text-sm gap-2 hover:scale-[1.02]"
-                >
-                  <LogIn size={18} className="transition-transform duration-300 group-hover:scale-110" />
-                  <span>Masuk</span>
-                </motion.a>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <div className="flex flex-col items-end leading-none">
-                    <span className="text-sm font-semibold text-slate-900 truncate max-w-[160px]">{displayName}</span>
-                    <span className="text-[11px] text-slate-500">Masuk</span>
+              {authReady && (
+                !isAuthed ? (
+                  <motion.a
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                    href="/login"
+                    className="shimmer-effect group relative bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] hover:from-[#ff8534] hover:to-[#ff6914] text-white h-11 items-center flex justify-center px-5 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-300 font-semibold text-sm gap-2 hover:scale-[1.02]"
+                  >
+                    <LogIn size={18} className="transition-transform duration-300 group-hover:scale-110" />
+                    <span>Masuk</span>
+                  </motion.a>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-end leading-none">
+                      <span className="text-sm font-semibold text-slate-900 truncate max-w-[160px]">{displayName}</span>
+                      <span className="text-[11px] text-slate-500">Masuk</span>
+                    </div>
+                    <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-white shadow">
+                      {currentUser?.photoURL ? (
+                        <img src={currentUser.photoURL} alt="Profil" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-600">
+                          <User className="w-5 h-5" />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-white shadow">
-                    {currentUser?.photoURL ? (
-                      <img src={currentUser.photoURL} alt="Profil" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-600">
-                        <User className="w-5 h-5" />
-                      </div>
-                    )}
-                  </div>
-                </div>
+                )
               )}
             </div>
           </div>
