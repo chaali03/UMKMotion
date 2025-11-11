@@ -1,3 +1,27 @@
+// src/TokoData/stores.ts
+import 'dotenv/config';
+import { db } from '../lib/firebase.js';
+import {
+  collection,
+  addDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  updateDoc,
+  serverTimestamp,
+  Timestamp,
+  FieldValue,
+} from 'firebase/firestore';
+
+// Debug log
+console.log('[STORES] Firebase db initialized:', !!db);
+console.log('[STORES] Project ID:', process.env.FIREBASE_PROJECT_ID);
+
+export const STORES_COLLECTION = 'stores';
+
+// Tipe Store
 export type Store = {
   nama_toko: string;
   image?: string;
@@ -20,8 +44,38 @@ export type Store = {
   updatedAt?: number;
 };
 
-// Daftar toko dengan struktur sesuai tipe Store
-export const stores: Store[] = [
+function isTimestamp(obj: any): obj is Timestamp {
+  return obj && typeof obj.toDate === 'function' && typeof obj.toMillis === 'function';
+}
+
+// Helper: Convert ke epoch ms (ms)
+function toEpochMs(timestamp: Timestamp | FieldValue | undefined): number | undefined {
+  if (!timestamp) return undefined;
+  if (isTimestamp(timestamp)) {
+    return timestamp.toMillis();
+  }
+  return undefined;
+}
+
+// Format WIB
+export function formatWIB(timestamp?: number): string {
+  if (!timestamp) return 'Belum dibuat';
+
+  const date = new Date(timestamp);
+  return date.toLocaleString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+
+// Data toko
+export const stores: Omit<Store, 'createdAt' | 'updatedAt'>[] = [
   {
     nama_toko: "Nusantara Rasa",
     image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&auto=format&fit=crop&q=60",
@@ -39,12 +93,7 @@ export const stores: Store[] = [
     maps_link: "https://maps.app.goo.gl/8vN9vL3kP9bZfG8J7",
     fasilitas: ["Parkir", "Toilet", "WiFi", "Ruang Tunggu", "Mushola"],
     metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank"],
-    social: {
-      instagram: "nusantararasa.id",
-      whatsapp: "+623156789012"
-    },
-    createdAt: 1730000000000,
-    updatedAt: 1731292800000
+    social: { instagram: "nusantararasa.id", whatsapp: "+623156789012" },
   },
   {
     nama_toko: "Kain Nusantara",
@@ -63,16 +112,11 @@ export const stores: Store[] = [
     maps_link: "https://maps.app.goo.gl/3kL9mP7vX2fZ9k8J6",
     fasilitas: ["Parkir", "Ruang Fitting", "Konsultasi Motif", "Workshop Batik"],
     metode_pembayaran: ["Cash", "Transfer Bank", "E-Wallet", "QRIS", "Credit Card"],
-    social: {
-      instagram: "kainnusantara",
-      facebook: "KainNusantaraPekalongan"
-    },
-    createdAt: 1730000000000,
-    updatedAt: 1731292800000
+    social: { instagram: "kainnusantara", facebook: "KainNusantaraPekalongan" },
   },
   {
     nama_toko: "Karya Nusantara",
-    image: "https://images.unsplash.com/photo- timeliness-1582639590011-f5a8416d1101?w=1200&auto=format&fit=crop&q=60",
+    image: "https://images.unsplash.com/photo-1582639590011-f5a8416d1101?w=1200&auto=format&fit=crop&q=60",
     banner: "https://images.unsplash.com/photo-1582639590011-f5a8416d1101?w=1920&auto=format&fit=crop&q=60",
     kategori: "Kerajinan Tangan",
     deskripsi_toko: "Galeri dan toko kerajinan tangan Indonesia. Karya Nusantara menghadirkan berbagai produk kerajinan berkualitas seperti anyaman, ukiran kayu, keramik, dan suvenir khas Nusantara yang dibuat oleh pengrajin lokal terpilih.",
@@ -87,12 +131,7 @@ export const stores: Store[] = [
     maps_link: "https://maps.app.goo.gl/9vX8kL3mP7vZfG8J7",
     fasilitas: ["Parkir", "Galeri Pameran", "Workshop", "Café"],
     metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank"],
-    social: {
-      instagram: "karyanusantara",
-      whatsapp: "+622748901234"
-    },
-    createdAt: 1730000000000,
-    updatedAt: 1731292800000
+    social: { instagram: "karyanusantara", whatsapp: "+622748901234" },
   },
   {
     nama_toko: "Apotek Sehat Nusantara",
@@ -111,11 +150,7 @@ export const stores: Store[] = [
     maps_link: "https://maps.app.goo.gl/2mK9vL3kP7bZfG8J7",
     fasilitas: ["Parkir", "Konsultasi Dokter", "Drive Thru", "Apotek 24 Jam"],
     metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank", "BPJS"],
-    social: {
-      whatsapp: "+622184567890"
-    },
-    createdAt: 1730000000000,
-    updatedAt: 1731292800000
+    social: { whatsapp: "+622184567890" },
   },
   {
     nama_toko: "Tani Makmur Indonesia",
@@ -134,12 +169,7 @@ export const stores: Store[] = [
     maps_link: "https://maps.app.goo.gl/5vN9vL3kP9bZfG8J7",
     fasilitas: ["Parkir Luas", "Konsultasi Gratis", "Demo Alat", "Gudang Pupuk"],
     metode_pembayaran: ["Cash", "Transfer Bank", "E-Wallet", "QRIS", "Kredit Pertanian"],
-    social: {
-      instagram: "tanimakmur",
-      facebook: "TaniMakmurIndonesia"
-    },
-    createdAt: 1730000000000,
-    updatedAt: 1731292800000
+    social: { instagram: "tanimakmur", facebook: "TaniMakmurIndonesia" },
   },
   {
     nama_toko: "Gadget Nusantara",
@@ -158,13 +188,7 @@ export const stores: Store[] = [
     maps_link: "https://maps.app.goo.gl/7kL9mP7vX2fZ9k8J6",
     fasilitas: ["Service Center", "Demo Produk", "Trade-in", "Cicilan 0%"],
     metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank", "Cicilan 0%"],
-    social: {
-      instagram: "gadgetnusantara",
-      facebook: "GadgetNusantaraOfficial",
-      whatsapp: "+622167890123"
-    },
-    createdAt: 1730000000000,
-    updatedAt: 1731292800000
+    social: { instagram: "gadgetnusantara", facebook: "GadgetNusantaraOfficial", whatsapp: "+622167890123" },
   },
   {
     nama_toko: "Mebel Nusantara",
@@ -183,12 +207,7 @@ export const stores: Store[] = [
     maps_link: "https://maps.app.goo.gl/4kL9mP7vX2fZ9k8J6",
     fasilitas: ["Showroom", "Custom Order", "Pengiriman", "Garansi Kayu"],
     metode_pembayaran: ["Cash", "Transfer Bank", "Credit Card", "Cicilan", "DP System"],
-    social: {
-      instagram: "mebelnusantara",
-      whatsapp: "+622913456789"
-    },
-    createdAt: 1730000000000,
-    updatedAt: 1731292800000
+    social: { instagram: "mebelnusantara", whatsapp: "+622913456789" },
   },
   {
     nama_toko: "Cendekia Press",
@@ -207,16 +226,140 @@ export const stores: Store[] = [
     maps_link: "https://maps.app.goo.gl/6vX8kL3mP7vZfG8J7",
     fasilitas: ["Toko Buku", "Percetakan", "Fotokopi", "Café Baca"],
     metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank"],
-    social: {
-      instagram: "cendekiapress",
-      facebook: "CendekiaPress"
-    },
-    createdAt: 1730000000000,
-    updatedAt: 1731292800000
-  }
+    social: { instagram: "cendekiapress", facebook: "CendekiaPress" },
+  },
 ];
 
-// Index by nama_toko
-export const storesByName: Record<string, Store> = Object.fromEntries(
-  stores.map((s) => [s.nama_toko, s])
-);
+// Upsert by nama_toko
+export async function upsertStoreByName(
+  name: string,
+  data: Partial<Store> = {}
+): Promise<{ id: string; data: Store }> {
+  const q = query(collection(db, STORES_COLLECTION), where('nama_toko', '==', name));
+  const snap = await getDocs(q);
+
+  if (!snap.empty) {
+    const d = snap.docs[0];
+    const ref = doc(db, STORES_COLLECTION, d.id);
+
+    await updateDoc(ref, {
+      ...data,
+      nama_toko: name,
+      updatedAt: serverTimestamp(),
+    });
+
+    const newDoc = await getDoc(ref);
+    const raw = newDoc.data();
+
+    if (!raw || !raw.nama_toko || !raw.jam_operasional || !raw.hari_operasional) {
+      throw new Error('Data dari Firestore tidak lengkap!');
+    }
+
+    return {
+      id: d.id,
+      data: {
+        ...raw,
+        createdAt: toEpochMs(raw.createdAt),
+        updatedAt: toEpochMs(raw.updatedAt),
+      } as Store,
+    };
+  }
+
+  // Insert baru
+  const ref = await addDoc(collection(db, STORES_COLLECTION), {
+    nama_toko: name,
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  const newDoc = await getDoc(ref);
+  const raw = newDoc.data();
+
+  if (!raw || !raw.nama_toko || !raw.jam_operasional || !raw.hari_operasional) {
+    throw new Error('Data insert gagal dibaca!');
+  }
+
+  return {
+    id: ref.id,
+    data: {
+      ...raw,
+      createdAt: toEpochMs(raw.createdAt),
+      updatedAt: toEpochMs(raw.updatedAt),
+    } as Store,
+  };
+}
+
+// Upsert banyak
+export async function upsertStoresByName(
+  items: Array<Partial<Store> & { nama_toko: string }>
+): Promise<Array<{ id: string; data: Store }>> {
+  const results: Array<{ id: string; data: Store }> = [];
+  for (const s of items) {
+    const r = await upsertStoreByName(s.nama_toko, s);
+    results.push(r);
+  }
+  return results;
+}
+
+// List + WIB
+export async function listStoresWithWIB() {
+  const snap = await getDocs(collection(db, STORES_COLLECTION));
+  return snap.docs.map((d) => {
+    const raw = d.data();
+    if (!raw || !raw.nama_toko) return null;
+
+    const store: Store = {
+      ...raw,
+      createdAt: toEpochMs(raw.createdAt),
+      updatedAt: toEpochMs(raw.updatedAt),
+    } as Store;
+
+    console.log(`- ${store.nama_toko}`);
+    console.log(`  Dibuat: ${formatWIB(store.createdAt)}`);
+    console.log(`  Update: ${formatWIB(store.updatedAt)}`);
+    console.log('---');
+
+    return { id: d.id, data: store };
+  }).filter(Boolean);
+}
+
+// Seeding
+const isDirectRun =
+  import.meta.url === `file://${process.argv[1]}` ||
+  process.argv[1]?.endsWith('stores.js') ||
+  process.argv[1]?.includes('TokoData');
+
+if (isDirectRun) {
+  console.log('[SEED] Script seeding dijalankan langsung!');
+  (async () => {
+    try {
+      console.log(`Seeding ${stores.length} toko ke Firestore...`);
+
+      if (!db) {
+        console.error('ERROR: db is undefined!');
+        process.exit(1);
+      }
+
+      const items = stores.map((s) => ({ ...s } as Partial<Store> & { nama_toko: string }));
+      const results = await upsertStoresByName(items);
+
+      console.log(`\nSUCCESS: ${results.length} toko berhasil di-seed!`);
+      console.log('\n=== WAKTU REAL-TIME (WIB) ===');
+      for (const r of results) {
+        console.log(`- ${r.data.nama_toko}`);
+        console.log(`  Dibuat: ${formatWIB(r.data.createdAt)}`);
+        console.log(`  Update: ${formatWIB(r.data.updatedAt)}`);
+        console.log('---');
+      }
+
+      console.log('\n=== SEMUA TOKO DI DATABASE ===');
+      await listStoresWithWIB();
+    } catch (error: any) {
+      console.error('GAGAL SEED:', error.message || error);
+      process.exit(1);
+    } finally {
+      process.exit(0);
+    }
+  })();
+}

@@ -8,6 +8,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "seed": "npx tsc -p tsconfig.scripts.json && node ./dist-scripts/produkdata/produkdata.js",
+    "seed:stores": "npx tsc -p tsconfig.scripts.json && node dist-scripts/TokoData/stores.js",
     "mission-cli": "node scripts/mission-cli.mjs",
     "voucher-cli": "node scripts/voucher-cli.cjs",
     "badge-cli": "node scripts/badge-cli.cjs"

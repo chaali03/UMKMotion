@@ -1,5 +1,5 @@
 import { db } from './firebase.js';
-import { collection, addDoc, doc, getDoc, getDocs, query, where, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, getDocs, query, where, setDoc, updateDoc, Timestamp, serverTimestamp } from 'firebase/firestore';
 
 export const STORES_COLLECTION = 'stores';
 
@@ -21,26 +21,60 @@ export type Store = {
   fasilitas?: string[];
   metode_pembayaran?: string[];
   social?: { instagram?: string; facebook?: string; whatsapp?: string };
-  createdAt?: number;
-  updatedAt?: number;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 };
 
-export async function upsertStoreByName(name: string, data: Partial<Store> = {}): Promise<{ id: string; data: Store }>{
-  const q = query(collection(db, STORES_COLLECTION), where('name', '==', name));
+export async function upsertStoreByName(
+  name: string,
+  data: Partial<Store> = {}
+): Promise<{ id: string; data: Store }> {
+  const q = query(collection(db, STORES_COLLECTION), where('nama_toko', '==', name));
   const snap = await getDocs(q);
-  const now = Date.now();
+
   if (!snap.empty) {
     const d = snap.docs[0];
     const ref = doc(db, STORES_COLLECTION, d.id);
-    await updateDoc(ref, { ...data, name, updatedAt: now });
+
+    // updateeeee
+    await updateDoc(ref, {
+      ...data,
+      nama_toko: name,
+      updatedAt: serverTimestamp(),
+    });
+
     const newDoc = await getDoc(ref);
     return { id: d.id, data: newDoc.data() as Store };
   }
 
-  const ref = await addDoc(collection(db, STORES_COLLECTION), { name, ...data, createdAt: now, updatedAt: now });
+  // Insert baru
+  const ref = await addDoc(collection(db, STORES_COLLECTION), {
+    nama_toko: name,
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
   const newDoc = await getDoc(ref);
   return { id: ref.id, data: newDoc.data() as Store };
 }
+
+export function formatWIB(timestamp?: Timestamp): string {
+  if (!timestamp) return 'Belum dibuat';
+  const date = timestamp.toDate();
+  return date.toLocaleString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+
+
 
 // Helper: upsert multiple stores using their name as natural key
 export async function upsertStoresByName(items: Array<Partial<Store> & { name: string }>): Promise<Array<{ id: string; data: Store }>>{

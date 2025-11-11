@@ -14,6 +14,7 @@
   },
   "include": [
     "src/produkdata/**/*.ts",
+    "src/TokoData/stores.ts",
     "src/lib/firebase.ts",
     "src/lib/database.ts"
   ]
