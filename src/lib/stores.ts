@@ -1,10 +1,24 @@
+// lib/stores.ts
 import { db } from './firebase.js';
-import { collection, addDoc, doc, getDoc, getDocs, query, where, setDoc, updateDoc, Timestamp, serverTimestamp } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  setDoc,
+  serverTimestamp,
+  Timestamp,
+  writeBatch,
+} from 'firebase/firestore';
 
 export const STORES_COLLECTION = 'stores';
 
 export type Store = {
   nama_toko: string;
+  nama_toko_normalized?: string;
   image?: string;
   banner?: string;
   kategori?: string;
@@ -25,44 +39,101 @@ export type Store = {
   updatedAt?: Timestamp;
 };
 
+export type StoreClient = Omit<Store, 'createdAt' | 'updatedAt' | 'nama_toko_normalized'> & {
+  createdAt?: number;
+  updatedAt?: number;
+};
+
+// Normalisais
+const normalizeName = (name: string): string => name.trim().toLowerCase();
+
+// === UPSERT AMAN (UPDATE PARSIAL + CASE-INSENSITIVE) ===
 export async function upsertStoreByName(
-  name: string,
+  originalName: string,
   data: Partial<Store> = {}
 ): Promise<{ id: string; data: Store }> {
-  const q = query(collection(db, STORES_COLLECTION), where('nama_toko', '==', name));
+  const normalized = normalizeName(originalName);
+  const q = query(collection(db, STORES_COLLECTION), where('nama_toko_normalized', '==', normalized));
   const snap = await getDocs(q);
+  const now = serverTimestamp();
 
   if (!snap.empty) {
     const d = snap.docs[0];
     const ref = doc(db, STORES_COLLECTION, d.id);
+    const existing = d.data() as Store;
 
-    // updateeeee
-    await updateDoc(ref, {
-      ...data,
-      nama_toko: name,
-      updatedAt: serverTimestamp(),
-    });
+    const nameChanged = existing.nama_toko !== originalName;
+    const updateData: any = { ...data, updatedAt: now };
+    if (nameChanged) {
+      updateData.nama_toko = originalName;
+      updateData.nama_toko_normalized = normalized;
+    }
 
+    await setDoc(ref, updateData, { merge: true });
     const newDoc = await getDoc(ref);
-    return { id: d.id, data: newDoc.data() as Store };
+    const raw = newDoc.data();
+    if (!raw) throw new Error('Gagal baca data');
+    return { id: d.id, data: raw as Store };
   }
 
-  // Insert baru
   const ref = await addDoc(collection(db, STORES_COLLECTION), {
-    nama_toko: name,
+    nama_toko: originalName,
+    nama_toko_normalized: normalized,
     ...data,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    createdAt: now,
+    updatedAt: now,
   });
 
   const newDoc = await getDoc(ref);
-  return { id: ref.id, data: newDoc.data() as Store };
+  const raw = newDoc.data();
+  if (!raw) throw new Error('Gagal baca data');
+  return { id: ref.id, data: raw as Store };
 }
 
+// upset nama
+export async function upsertStoresByName(
+  items: Array<Partial<Store> & { nama_toko: string }>
+): Promise<Array<{ id: string; data: Store }>> {
+  const results: Array<{ id: string; data: Store }> = [];
+  for (const s of items) {
+    results.push(await upsertStoreByName(s.nama_toko, s));
+  }
+  return results;
+}
+
+// hapus toko berdasarkan nama
+export async function deleteStoreByName(name: string): Promise<void> {
+  const normalized = normalizeName(name);
+  const q = query(collection(db, STORES_COLLECTION), where('nama_toko_normalized', '==', normalized));
+  const snap = await getDocs(q);
+  if (snap.empty) return;
+
+  const batch = writeBatch(db);
+  snap.docs.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+  console.log(`[DELETE] Toko "${name}" berhasil dihapus`);
+}
+
+// Hapus semua
+export async function deleteAllStores(): Promise<void> {
+  const snap = await getDocs(collection(db, STORES_COLLECTION));
+  if (snap.empty) return console.log('[DELETE] Collection kosong');
+  const batch = writeBatch(db);
+  snap.docs.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+  console.log(`[DELETE] Berhasil hapus ${snap.size} toko`);
+}
+
+// List all
+export async function listStores(): Promise<Array<{ id: string; data: Store }>> {
+  const snap = await getDocs(collection(db, STORES_COLLECTION));
+  return snap.docs.map(d => ({ id: d.id, data: d.data() as Store }));
+}
+
+// Format WiB
 export function formatWIB(timestamp?: Timestamp): string {
   if (!timestamp) return 'Belum dibuat';
-  const date = timestamp.toDate();
-  return date.toLocaleString('id-ID', {
+  return timestamp.toDate().toLocaleString('id-ID', {
     timeZone: 'Asia/Jakarta',
     weekday: 'long',
     year: 'numeric',
@@ -74,25 +145,23 @@ export function formatWIB(timestamp?: Timestamp): string {
   });
 }
 
-
-
-// Helper: upsert multiple stores using their name as natural key
-export async function upsertStoresByName(items: Array<Partial<Store> & { name: string }>): Promise<Array<{ id: string; data: Store }>>{
-  const results: Array<{ id: string; data: Store }> = [];
-  for (const s of items) {
-    const r = await upsertStoreByName(s.name, s);
-    results.push(r);
-  }
-  return results;
+export function toClientStore(store: Store): StoreClient {
+  const { nama_toko_normalized, ...rest } = store;
+  return {
+    ...rest,
+    createdAt: store.createdAt?.toMillis(),
+    updatedAt: store.updatedAt?.toMillis(),
+  };
 }
 
-export async function getStoreById(id: string){
-  const ref = doc(db, STORES_COLLECTION, id);
-  const snap = await getDoc(ref);
-  return snap.exists() ? { id, ...(snap.data() as Store) } : null;
-}
-
-export async function listStores(){
-  const snap = await getDocs(collection(db, STORES_COLLECTION));
-  return snap.docs.map(d => ({ id: d.id, ...(d.data() as Store) }));
+export async function listStoresWithWIB() {
+  const stores = await listStores();
+  return stores.map(({ data }) => {
+    const client = toClientStore(data);
+    console.log(`- ${client.nama_toko}`);
+    console.log(`  Dibuat: ${formatWIB(data.createdAt)}`);
+    console.log(`  Update: ${formatWIB(data.updatedAt)}`);
+    console.log('---');
+    return client;
+  });
 }

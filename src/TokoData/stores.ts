@@ -1,83 +1,21 @@
-// src/TokoData/stores.ts
 import 'dotenv/config';
-import { db } from '../lib/firebase.js';
 import {
-  collection,
-  addDoc,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  updateDoc,
-  serverTimestamp,
-  Timestamp,
-  FieldValue,
-} from 'firebase/firestore';
+  upsertStoresByName,
+  deleteAllStores,
+  listStoresWithWIB,
+  listStores,
+  deleteStoreByName,
+} from '../lib/stores.js';
+import type { Store } from '../lib/stores.js';
 
-// Debug log
-console.log('[STORES] Firebase db initialized:', !!db);
-console.log('[STORES] Project ID:', process.env.FIREBASE_PROJECT_ID);
+// debug info
+console.log('[SEED] Script seeding dijalankan!');
+console.log('[SEED] Waktu sekarang (WIB):', new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }));
 
-export const STORES_COLLECTION = 'stores';
-
-// Tipe Store
-export type Store = {
-  nama_toko: string;
-  image?: string;
-  banner?: string;
-  kategori?: string;
-  deskripsi_toko?: string;
-  lokasi_toko?: string;
-  no_telp?: string;
-  email?: string;
-  profileImage?: string;
-  jam_operasional: string;
-  hari_operasional: string;
-  rating_toko?: number;
-  jumlah_review?: number;
-  maps_link?: string;
-  fasilitas?: string[];
-  metode_pembayaran?: string[];
-  social?: { instagram?: string; facebook?: string; whatsapp?: string };
-  createdAt?: number;
-  updatedAt?: number;
-};
-
-function isTimestamp(obj: any): obj is Timestamp {
-  return obj && typeof obj.toDate === 'function' && typeof obj.toMillis === 'function';
-}
-
-// Helper: Convert ke epoch ms (ms)
-function toEpochMs(timestamp: Timestamp | FieldValue | undefined): number | undefined {
-  if (!timestamp) return undefined;
-  if (isTimestamp(timestamp)) {
-    return timestamp.toMillis();
-  }
-  return undefined;
-}
-
-// Format WIB
-export function formatWIB(timestamp?: number): string {
-  if (!timestamp) return 'Belum dibuat';
-
-  const date = new Date(timestamp);
-  return date.toLocaleString('id-ID', {
-    timeZone: 'Asia/Jakarta',
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-}
-
-// Data toko
+// === DATA TOKO (8 TOKO LENGKAP) ===
 export const stores: Omit<Store, 'createdAt' | 'updatedAt'>[] = [
   {
-    nama_toko: "Nusantara Rasa",
+    nama_toko: "Nusantara Rasa",  // ← BISA GANTI HURUF BESAR/KECIL
     image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&auto=format&fit=crop&q=60",
     banner: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1920&auto=format&fit=crop&q=60",
     kategori: "Makanan & Minuman",
@@ -88,8 +26,8 @@ export const stores: Omit<Store, 'createdAt' | 'updatedAt'>[] = [
     profileImage: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&auto=format&fit=crop&q=60",
     jam_operasional: "07:00 - 22:00",
     hari_operasional: "Senin - Minggu",
-    rating_toko: 4.9,
-    jumlah_review: 128,
+    rating_toko: 5.0,
+    jumlah_review: 200,
     maps_link: "https://maps.app.goo.gl/8vN9vL3kP9bZfG8J7",
     fasilitas: ["Parkir", "Toilet", "WiFi", "Ruang Tunggu", "Mushola"],
     metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank"],
@@ -230,133 +168,57 @@ export const stores: Omit<Store, 'createdAt' | 'updatedAt'>[] = [
   },
 ];
 
-// Upsert by nama_toko
-export async function upsertStoreByName(
-  name: string,
-  data: Partial<Store> = {}
-): Promise<{ id: string; data: Store }> {
-  const q = query(collection(db, STORES_COLLECTION), where('nama_toko', '==', name));
-  const snap = await getDocs(q);
+// normalisasi nama
+const normalize = (s: string) => s.trim().toLowerCase();
 
-  if (!snap.empty) {
-    const d = snap.docs[0];
-    const ref = doc(db, STORES_COLLECTION, d.id);
+//hapus update insert
+async function syncAndSeed() {
+  console.log('[SYNC] Mulai sync penuh...');
 
-    await updateDoc(ref, {
-      ...data,
-      nama_toko: name,
-      updatedAt: serverTimestamp(),
-    });
+  // Ambil semua dari Firestore
+  const dbStores = await listStores();
+  const dbNames = new Set(dbStores.map(s => normalize(s.data.nama_toko)));
+  const seedNames = new Set(stores.map(s => normalize(s.nama_toko)));
 
-    const newDoc = await getDoc(ref);
-    const raw = newDoc.data();
-
-    if (!raw || !raw.nama_toko || !raw.jam_operasional || !raw.hari_operasional) {
-      throw new Error('Data dari Firestore tidak lengkap!');
+  // Hapus toko yang tidak ada di seed
+  for (const store of dbStores) {
+    if (!seedNames.has(normalize(store.data.nama_toko))) {
+      console.log(`[DELETE] Hapus: ${store.data.nama_toko}`);
+      await deleteStoreByName(store.data.nama_toko);
     }
-
-    return {
-      id: d.id,
-      data: {
-        ...raw,
-        createdAt: toEpochMs(raw.createdAt),
-        updatedAt: toEpochMs(raw.updatedAt),
-      } as Store,
-    };
   }
 
-  // Insert baru
-  const ref = await addDoc(collection(db, STORES_COLLECTION), {
-    nama_toko: name,
-    ...data,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-
-  const newDoc = await getDoc(ref);
-  const raw = newDoc.data();
-
-  if (!raw || !raw.nama_toko || !raw.jam_operasional || !raw.hari_operasional) {
-    throw new Error('Data insert gagal dibaca!');
-  }
-
-  return {
-    id: ref.id,
-    data: {
-      ...raw,
-      createdAt: toEpochMs(raw.createdAt),
-      updatedAt: toEpochMs(raw.updatedAt),
-    } as Store,
-  };
+  // Upsert toko dari seed
+  console.log('[UPSERT] Update/insert toko...');
+  const items = stores.map(s => ({ ...s } as Partial<Store> & { nama_toko: string }));
+  return await upsertStoresByName(items);
 }
 
-// Upsert banyak
-export async function upsertStoresByName(
-  items: Array<Partial<Store> & { nama_toko: string }>
-): Promise<Array<{ id: string; data: Store }>> {
-  const results: Array<{ id: string; data: Store }> = [];
-  for (const s of items) {
-    const r = await upsertStoreByName(s.nama_toko, s);
-    results.push(r);
-  }
-  return results;
-}
-
-// List + WIB
-export async function listStoresWithWIB() {
-  const snap = await getDocs(collection(db, STORES_COLLECTION));
-  return snap.docs.map((d) => {
-    const raw = d.data();
-    if (!raw || !raw.nama_toko) return null;
-
-    const store: Store = {
-      ...raw,
-      createdAt: toEpochMs(raw.createdAt),
-      updatedAt: toEpochMs(raw.updatedAt),
-    } as Store;
-
-    console.log(`- ${store.nama_toko}`);
-    console.log(`  Dibuat: ${formatWIB(store.createdAt)}`);
-    console.log(`  Update: ${formatWIB(store.updatedAt)}`);
-    console.log('---');
-
-    return { id: d.id, data: store };
-  }).filter(Boolean);
-}
-
-// Seeding
-const isDirectRun =
-  import.meta.url === `file://${process.argv[1]}` ||
-  process.argv[1]?.endsWith('stores.js') ||
-  process.argv[1]?.includes('TokoData');
+// seeding script
+const isDirectRun = import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.includes('stores');
 
 if (isDirectRun) {
-  console.log('[SEED] Script seeding dijalankan langsung!');
+  const mode = process.argv[2];
+
   (async () => {
     try {
-      console.log(`Seeding ${stores.length} toko ke Firestore...`);
+      let results;
 
-      if (!db) {
-        console.error('ERROR: db is undefined!');
-        process.exit(1);
+      if (mode === '--clean') {
+        console.log('[MODE] CLEAN + RESEED');
+        await deleteAllStores();
+        results = await upsertStoresByName(stores.map(s => ({ ...s } as any)));
+      } else {
+        console.log('[MODE] FULL SYNC (hapus + update + insert)');
+        results = await syncAndSeed();
       }
 
-      const items = stores.map((s) => ({ ...s } as Partial<Store> & { nama_toko: string }));
-      const results = await upsertStoresByName(items);
-
-      console.log(`\nSUCCESS: ${results.length} toko berhasil di-seed!`);
-      console.log('\n=== WAKTU REAL-TIME (WIB) ===');
-      for (const r of results) {
-        console.log(`- ${r.data.nama_toko}`);
-        console.log(`  Dibuat: ${formatWIB(r.data.createdAt)}`);
-        console.log(`  Update: ${formatWIB(r.data.updatedAt)}`);
-        console.log('---');
-      }
-
-      console.log('\n=== SEMUA TOKO DI DATABASE ===');
+      console.log(`\nSUCCESS: ${results.length} toko diproses!`);
+      console.log('\n=== DATABASE SAAT INI (WIB) ===');
       await listStoresWithWIB();
+
     } catch (error: any) {
-      console.error('GAGAL SEED:', error.message || error);
+      console.error('GAGAL:', error.message);
       process.exit(1);
     } finally {
       process.exit(0);
