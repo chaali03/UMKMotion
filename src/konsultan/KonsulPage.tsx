@@ -208,6 +208,7 @@ function HeroKonsultanAbout() {
                   backgroundPosition: '0% 0',
                   boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.18)'
                 }}
+                suppressHydrationWarning={true}
               >
                 {!prefersReducedMotion && (
                   <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
@@ -226,8 +227,9 @@ function HeroKonsultanAbout() {
                 aria-label="Pelajari Layanan"
                 className="group relative bg-white border-2 border-slate-200 text-slate-900 px-6 py-3 rounded-xl font-semibold text-base inline-flex items-center justify-center gap-2.5 hover:border-orange-300 transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/40 overflow-hidden"
                 style={{
-                  backgroundImage: prefersReducedMotion ? undefined : 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(15,23,42,0.03) 100%)'
+                  backgroundImage: prefersReducedMotion ? 'none' : 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(15,23,42,0.03) 100%)'
                 }}
+                suppressHydrationWarning={true}
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>Pelajari Layanan</span>

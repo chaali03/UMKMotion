@@ -400,7 +400,7 @@ const AIPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex min-h-screen bg-slate-50 overflow-hidden" style={{ minHeight: '100svh' }}>
       {/* Sidebar Overlay for Mobile */}
       <AnimatePresence>
         {mounted && isSidebarOpen && (
@@ -889,7 +889,7 @@ const AIPage: React.FC = () => {
                             <img 
                               src={message.imageData} 
                               alt="Uploaded" 
-                              className="max-w-sm rounded-2xl shadow-md border border-slate-200"
+                              className="w-full max-w-xs sm:max-w-sm rounded-2xl shadow-md border border-slate-200"
                             />
                           </motion.div>
                         )}
@@ -976,6 +976,7 @@ const AIPage: React.FC = () => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="border-t border-slate-200 bg-white px-6 py-6 shadow-lg"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}
           >
             <div className="max-w-4xl mx-auto">
               {selectedImage && (
@@ -990,7 +991,7 @@ const AIPage: React.FC = () => {
                     className="w-32 h-32 object-cover rounded-2xl shadow-lg border-2 border-slate-200" 
                   />
                   <motion.button
-                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setSelectedImage(null)}
                     className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors"
@@ -1000,7 +1001,7 @@ const AIPage: React.FC = () => {
                 </motion.div>
               )}
 
-              <form onSubmit={handleSubmit} className="flex items-end gap-3 w-[92%] sm:w-[80%] max-w-sm md:max-w-md mx-auto">
+              <form onSubmit={handleSubmit} className="flex items-end gap-3 w-[92%] sm:w-[88%] max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto">
                 <div className="flex-1">
                   <div className="relative">
                     <input

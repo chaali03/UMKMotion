@@ -5,6 +5,16 @@ import { AlignJustify, X, Home, Store, Building2, Users, Lightbulb, User, Shoppi
 import { useEffect, useState } from "react";
 import { Drawer } from "vaul";
 
+// Visually hidden component for accessibility
+const VisuallyHidden = ({ children, ...props }: { children: React.ReactNode } & React.HTMLAttributes<HTMLSpanElement>) => (
+  <span 
+    className="sr-only" 
+    {...props}
+  >
+    {children}
+  </span>
+);
+
 interface HomeHeaderProps {
   localTheme: "light" | "dark";
   setLocalTheme: (theme: "light" | "dark") => void;
@@ -185,6 +195,9 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                     style={{ "--initial-transform": "calc(100% + 12px)" } as React.CSSProperties}
                     id="mobile-drawer"
                   >
+                    <VisuallyHidden>
+                      <Drawer.Title>Menu Navigasi</Drawer.Title>
+                    </VisuallyHidden>
                     <div className="dark:bg-gradient-to-br dark:from-neutral-950 dark:to-neutral-900 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 dark:border-neutral-800 p-5 h-full w-full grow flex flex-col rounded-2xl shadow-2xl">
                       {/* Drawer Header */}
                       <div className="w-full flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-neutral-800">
