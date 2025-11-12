@@ -9,7 +9,7 @@ export default function RegisterPage() {
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Sparkles, MapPin, BarChart3, Megaphone, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
-import { signInWithEmail, signInWithGoogle } from "../lib/auth";
+import { signInWithEmail, signInWithGoogle, checkEmailExists } from "../lib/auth";
 // removed auth state redirect to avoid auto-refresh loop
 
 export default function LoginPage() {
@@ -111,23 +111,35 @@ export default function LoginPage() {
       }, 1500);
     } catch (err: any) {
       let errorMessage = "Login gagal. Periksa email/password dan coba lagi.";
-      
+      const fieldErrors: Record<string, string> = {};
+
       if (err.code === 'auth/user-not-found') {
         errorMessage = "Email tidak terdaftar. Silakan daftar terlebih dahulu.";
-        setErrors({ email: errorMessage });
+        fieldErrors.email = errorMessage;
       } else if (err.code === 'auth/wrong-password') {
         errorMessage = "Password salah. Silakan coba lagi.";
-        setErrors({ password: errorMessage });
+        fieldErrors.password = errorMessage;
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = "Format email tidak valid.";
-        setErrors({ email: errorMessage });
+        fieldErrors.email = errorMessage;
       } else if (err.code === 'auth/too-many-requests') {
         errorMessage = "Terlalu banyak percobaan login. Coba lagi nanti.";
       } else if (err.code === 'auth/invalid-credential') {
-        errorMessage = "Email atau password salah.";
+        // Tentukan lebih spesifik apakah email tidak terdaftar atau password salah
+        const exists = await checkEmailExists(email);
+        if (!exists) {
+          errorMessage = "Email tidak terdaftar. Silakan daftar terlebih dahulu.";
+          fieldErrors.email = errorMessage;
+        } else {
+          errorMessage = "Password salah. Silakan coba lagi.";
+          fieldErrors.password = errorMessage;
+        }
       }
-      
-      showNotification("error", "Login Gagal", errorMessage);
+
+      if (!fieldErrors.email && !fieldErrors.password) {
+        fieldErrors.form = errorMessage;
+      }
+      setErrors(fieldErrors);
     } finally {
       setIsLoading(false);
     }
@@ -158,7 +170,7 @@ export default function LoginPage() {
       if (err.code === 'auth/popup-closed-by-user') {
         errorMessage = "Login dibatalkan. Silakan coba lagi.";
       }
-      showNotification("error", "Login Google Gagal", errorMessage);
+      setErrors({ form: errorMessage });
     } finally {
       setIsLoading(false);
     }
@@ -1087,7 +1099,7 @@ export default function LoginPage() {
 =======
       {/* Notification */}
       <AnimatePresence>
-        {notification && (
+        {notification && notification.type === "success" && (
           <div className="notification-wrapper">
             <motion.div
               className={`notification ${notification.type}`}
@@ -1098,8 +1110,6 @@ export default function LoginPage() {
             >
               <div className="notification-icon">
                 {notification.type === "success" && <CheckCircle2 size={22} color="#10b981" />}
-                {notification.type === "error" && <XCircle size={22} color="#ef4444" />}
-                {notification.type === "info" && <AlertCircle size={22} color="#3b82f6" />}
               </div>
               <div className="notification-content">
                 <h4>{notification.title}</h4>
@@ -1340,6 +1350,18 @@ export default function LoginPage() {
                 </motion.div>
               )}
             </div>
+
+            {errors.form && (
+              <motion.div
+                className="error-text"
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{ marginTop: "0.5rem" }}
+              >
+                <AlertCircle size={14} />
+                {errors.form}
+              </motion.div>
+            )}
 
             {/* Submit Button */}
             <button

@@ -21,7 +21,7 @@ const title = "UMKMotion";
     /* Desktop spacing between index and feature sections */
     @media (min-width: 1024px) {
       .feature-section-mobile-spacing {
-        margin-top: 20rem !important;
+        margin-top: 40rem !important;
         margin-bottom: 4rem !important;
       }
     }
@@ -38,28 +38,40 @@ const title = "UMKMotion";
     @media (max-width: 767px) {
       .feature-section-mobile-spacing {
         /* Adaptif terhadap tinggi viewport agar tidak ketabrak */
-        margin-top: clamp(14rem, 28vh, 36rem) !important;
+        margin-top: clamp(26rem, 28vh, 36rem) !important;
         margin-bottom: 0 !important;
       }
       .hero-mobile-gap {
         /* Tambah jarak di bawah Hero agar aman di layar pendek */
-        margin-bottom: clamp(6rem, 18vh, 24rem) !important;
+        margin-bottom: clamp(26rem, 18vh, 24rem) !important;
       }
     }
     /* Spesifik untuk lebar layar <= 390px */
     @media (max-width: 390px) {
       .feature-section-mobile-spacing { margin-top: clamp(18rem, 34vh, 44rem) !important; }
-      .hero-mobile-gap { margin-bottom: clamp(8rem, 22vh, 28rem) !important; }
+      .hero-mobile-gap { margin-bottom: clamp(26rem, 22vh, 28rem) !important; }
     }
     /* Spesifik untuk lebar layar <= 360px */
     @media (max-width: 360px) {
       .feature-section-mobile-spacing { margin-top: clamp(20rem, 38vh, 50rem) !important; }
-      .hero-mobile-gap { margin-bottom: clamp(10rem, 26vh, 32rem) !important; }
+      .hero-mobile-gap { margin-bottom: clamp(26rem, 26vh, 32rem) !important; }
     }
     /* Fallback tambahan untuk layar sangat pendek */
     @media (max-width: 812px) and (max-height: 420px) {
       .feature-section-mobile-spacing {
-        margin-top: clamp(18rem, 34vh, 44rem) !important;
+        margin-top: clamp(28rem, 34vh, 44rem) !important;
+      }
+    }
+
+    /* 15.6" laptop targeting: common widths/heights (e.g., 1366x768, 1600x900) */
+    @media (min-width: 1280px) and (max-width: 1700px) and (min-height: 700px) and (max-height: 950px) {
+      /* Ensure enough gap between Hero and Feature without excessive whitespace */
+      .feature-section-mobile-spacing {
+        margin-top: clamp(40em, 16vh, 14rem) !important;
+        margin-bottom: 4rem !important;
+      }
+      .hero-mobile-gap {
+        margin-bottom: clamp(4rem, 10vh, 8rem) !important;
       }
     }
   </style>

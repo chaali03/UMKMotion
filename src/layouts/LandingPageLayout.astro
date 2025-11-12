@@ -4,13 +4,17 @@ import '../styles/global.css';
 const { title = 'UMKMotion' } = Astro.props;
 const isAIPage = Astro.url.pathname.startsWith('/ai');
 import FloatingAIButton from "../components/FloatingAIButton.tsx";
+// Only show intro on first visit (cookie-based)
+const introSeenCookie = Astro.cookies.get('introSeen')?.value === 'true';
+const showIntro = !introSeenCookie;
 ---
-<html lang="en" class="intro-lock">
+<html lang="en" class="intro-lock light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    <meta name="color-scheme" content="light" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png?v=4" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png?v=4" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png?v=4" />
@@ -39,7 +43,7 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
     </script>
     <style>
       :root { 
-        color-scheme: light dark;
+        color-scheme: light !important;
         --container-padding: 16px;
         --container-max-width: 100%;
       }
@@ -196,11 +200,13 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
         width: clamp(180px, 46vw, 580px); 
         height: auto; 
         object-fit: contain; 
-        filter: drop-shadow(0 25px 50px rgba(0,0,0,.12)) drop-shadow(0 0 60px rgba(0,17,81,.18)) drop-shadow(0 0 40px rgba(253,87,1,.12)); 
+        filter: none;
         border-radius: 20px;
         will-change: transform, opacity;
+        transform: translateZ(0);
         display: block;
         max-width: 100%;
+        opacity: 0; /* prevent flash before GSAP sets initial state */
       }
 
       .intro__text {
@@ -212,10 +218,12 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
         font-size: clamp(18px, 3.8vw, 42px);
         letter-spacing: 0.4px;
         color: #0b1a34;
-        text-shadow: 0 2px 16px rgba(0,0,0,.08);
+        text-shadow: none;
         opacity: 0;
         pointer-events: none;
         white-space: nowrap;
+        will-change: transform, opacity; 
+        transform: translateZ(0);
       }
       
       .intro__sweep { 
@@ -230,7 +238,9 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
         transform: translateX(-200%) rotate(-5deg); 
         pointer-events: none;
         border-radius: 20px;
-        filter: blur(20px);
+        filter: blur(12px);
+        will-change: transform, opacity;
+        transform: translateZ(0);
       }
       
       .intro__ring {
@@ -240,6 +250,8 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
         border-radius: 24px;
         opacity: 0;
         pointer-events: none;
+        will-change: transform, opacity;
+        transform: translateZ(0);
       }
       
       .intro__floaters {
@@ -253,7 +265,9 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
         background: linear-gradient(135deg, rgba(0,17,81,.7), rgba(253,87,1,.7));
         border-radius: 4px;
         opacity: 0;
-        box-shadow: 0 4px 12px rgba(0,17,81,.28);
+        box-shadow: none;
+        will-change: transform, opacity;
+        transform: translateZ(0);
       }
       
       .intro__grid {
@@ -270,6 +284,8 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
           rgba(0,17,81,.18) 50%, 
           transparent);
         height: 1px;
+        will-change: opacity;
+        transform: translateZ(0);
       }
       
       .grid-line--v {
@@ -936,26 +952,26 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
 
       /* High contrast mode support */
       @media (prefers-contrast: high) {
-        .intro__logo {
-          filter: contrast(1.2) drop-shadow(0 4px 8px rgba(0,0,0,.3));
-        }
+        .intro__logo { filter: contrast(1.2); }
       }
 
-      /* Dark mode support (optional - add if needed) */
+      /* Disable automatic dark overrides for this layout */
       @media (prefers-color-scheme: dark) {
-        .intro {
-          background: #0a0a0a;
-        }
-        
-        .intro__text {
-          color: #ffffff;
-          text-shadow: 0 2px 16px rgba(255,255,255,.2);
-        }
+        :root { color-scheme: light !important; }
       }
     </style>
   </head>
-  <body class="intro-lock">
-    <div id="intro" class="intro" aria-hidden="true">
+  <body class={showIntro ? 'intro-lock' : ''} style="background:#ffffff; color-scheme: light;">
+    <script is:inline>
+      try {
+        const root = document.documentElement;
+        root.classList.remove('dark');
+        root.dataset.theme = 'light';
+        root.style.colorScheme = 'light';
+      } catch {}
+    </script>
+    {showIntro && (
+    <div id="intro" class="intro" aria-hidden="true" style="opacity:0">
       <div class="intro__stage">
         
         <!-- Grid lines -->
@@ -979,20 +995,22 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
         </div>
       </div>
     </div>
+    )}
     <div class="app">
-      <main id="content">
+      <main id="content" style={!showIntro ? 'opacity:1' : undefined}>
         <slot />
       </main>
       <!-- Floating AI Button -->
       { !isAIPage && (
-        <div class="fixed bottom-6 right-6 z-50">
-          <FloatingAIButton client:load onClick={() => { window.location.href = '/ai'; }} />
-        </div>
+        <FloatingAIButton client:load />
       ) }
     </div>
 
-    <script type="module">
-      import gsap from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/index.js';
+    {showIntro && (
+    <>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script>
+      const gsap = (window as any).gsap;
 
       // Check if intro has been seen before
       const introSeen = document.cookie.split('; ').find(row => row.startsWith('introSeen='));
@@ -1020,6 +1038,8 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
         
         const intro = document.getElementById('intro');
         const logo = document.getElementById('introLogo');
+        const introEl = intro as HTMLElement | null;
+        const logoEl = logo as HTMLElement | null;
         const content = document.getElementById('content');
         const circles = document.querySelectorAll('.circle');
         const sweep = document.querySelector('.intro__sweep');
@@ -1027,6 +1047,9 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
         const grid = document.getElementById('grid');
         const floatersContainer = document.getElementById('floaters');
         const logoWrap = document.querySelector('.intro__logoWrap');
+
+        // Make intro visible right when we're ready (prevents pre-animation flash)
+        if (introEl) { introEl.style.opacity = '1'; }
 
         // Preload optional second logo
         async function loadSecondLogo() {
@@ -1044,11 +1067,11 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
                 img.style.inset = '0';
                 img.style.margin = 'auto';
                 img.style.opacity = '0';
-                logoWrap.appendChild(img);
+                (logoWrap as HTMLElement).appendChild(img);
                 await new Promise((res)=>{ img.onload = res; img.onerror = res; });
                 
-                const cs = getComputedStyle(logo);
-                const rect = logo.getBoundingClientRect();
+                const cs = getComputedStyle(logo as HTMLElement);
+                const rect = (logo as HTMLElement).getBoundingClientRect();
                 img.style.width = rect.width ? `${rect.width}px` : cs.width;
                 img.style.height = rect.height ? `${rect.height}px` : cs.height;
                 img.style.objectFit = 'contain';
@@ -1075,13 +1098,13 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
           f.style.left = `${Math.random() * 100}%`;
           f.style.top = `${Math.random() * 100}%`;
           f.style.transform = `rotate(${Math.random() * 360}deg)`;
-          floatersContainer.appendChild(f);
+          (floatersContainer as HTMLElement).appendChild(f);
           floaters.push(f);
         }
 
         // Initial states
         gsap.set(content, { opacity: 0 });
-        gsap.set(logo, { opacity: 0, scale: 0.6, rotationY: -25 });
+        if (logoEl) gsap.set(logoEl, { opacity: 0, scale: 0.6, rotationY: -25 });
         if (logo2) gsap.set(logo2, { opacity: 0, scale: 1.02 });
         if (circles.length) gsap.set(circles, { opacity: 0, scale: 0.5 });
         gsap.set(ring, { opacity: 0, scale: 0.8 });
@@ -1143,24 +1166,24 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
         .call(() => {
           if (logo2) {
             // Match size to current rendered logo size
-            const rectNow = logo.getBoundingClientRect();
+            const rectNow = (logo as HTMLElement).getBoundingClientRect();
             logo2.style.width = `${rectNow.width}px`;
             logo2.style.height = `${rectNow.height}px`;
 
             // Copy current transform/origin to ensure same 3D state
-            const csLogo = getComputedStyle(logo);
+            const csLogo = getComputedStyle(logo as HTMLElement);
             logo2.style.transform = csLogo.transform !== 'none' ? csLogo.transform : '';
             logo2.style.transformOrigin = csLogo.transformOrigin || '50% 50%';
-            logo.style.transformOrigin = csLogo.transformOrigin || '50% 50%';
+            if (logoEl) logoEl.style.transformOrigin = csLogo.transformOrigin || '50% 50%';
 
             // Compute exact horizontal delta to perfectly overlap centers
-            const r1 = logo.getBoundingClientRect();
+            const r1 = (logo as HTMLElement).getBoundingClientRect();
             const r2 = logo2.getBoundingClientRect();
             const deltaX = (r1.left + r1.width / 2) - (r2.left + r2.width / 2);
             gsap.set(logo2, { x: deltaX });
 
             // Crossfade
-            gsap.to(logo, { opacity: 0, duration: 0.35, ease: 'power2.out' });
+            if (logoEl) gsap.to(logoEl, { opacity: 0, duration: 0.35, ease: 'power2.out' });
             gsap.to(logo2, { opacity: 1, duration: 0.45, ease: 'power2.out' });
           }
         }, null, '<0.7')
@@ -1184,7 +1207,7 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
 
         tl.to(floaters, {
           y: '+=60',
-          x: (i) => (Math.random() - 0.5) * 40,
+          x: (i: number) => (Math.random() - 0.5) * 40,
           rotation: '+=180',
           opacity: 0,
           duration: 1.2,
@@ -1198,8 +1221,8 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
           ease: 'power3.out'
         }, '-=0.6')
         
-        .to([intro, grid], { opacity: 0, duration: 1, ease: 'power2.inOut' }, '-=0.3')
-        .set(intro, { display: 'none' })
+        .to((introEl ? [introEl, grid] : [grid]) as any, { opacity: 0, duration: 1, ease: 'power2.inOut' }, '-=0.3')
+        .add(() => { if (introEl) gsap.set(introEl, { display: 'none' }); })
         .add(() => {
           // restore scroll
           const y = parseInt(document.body.dataset.lockScrollY || '0', 10) || 0;
@@ -1218,5 +1241,7 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
       }
 
     </script>
+    </>
+    )}
   </body>
 </html>

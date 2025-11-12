@@ -114,6 +114,30 @@ export default function RegisterPage() {
     },
   ];
 
+  // Profanity Filter Helpers
+  const bannedWords = [
+    // Indonesian
+    "anjing","bangsat","kontol","memek","bajingan","tolol","goblok","kampret",
+    // English common
+    "fuck","shit","bitch","asshole","bastard","cunt","dick","pussy",
+    // Racist/slurs (short representative list)
+    "nigger","nigga","chink","spic","kike","retard"
+  ];
+  const normalize = (s: string) => s
+    .toLowerCase()
+    .replace(/[@$]+/g, 'a')
+    .replace(/[0o]+/g, 'o')
+    .replace(/[1l!]+/g, 'i')
+    .replace(/3/g, 'e')
+    .replace(/5/g, 's')
+    .replace(/7/g, 't')
+    .replace(/[^a-z0-9]+/g, '');
+  const isCleanNickname = (n: string) => {
+    const nrm = normalize(n);
+    if (nrm.length < 3) return true;
+    return !bannedWords.some(w => nrm.includes(normalize(w)));
+  };
+
   // Slideshow effect
   useEffect(() => {
     if (paused) return;
@@ -171,6 +195,12 @@ export default function RegisterPage() {
     setNicknameStatus('checking');
     
     nicknameCheckTimeout.current = setTimeout(async () => {
+      // Profanity validation first
+      if (!isCleanNickname(nickname)) {
+        setNicknameStatus('taken');
+        setErrors((prev) => ({ ...prev, nickname: "Nickname mengandung kata tidak pantas." }));
+        return;
+      }
       const { nicknameExists } = await checkUserExists(undefined, nickname);
       setNicknameStatus(nicknameExists ? 'taken' : 'available');
       if (nicknameExists) {
@@ -200,6 +230,11 @@ export default function RegisterPage() {
     }
     if (nickname.length < 3) {
       setErrors({ nickname: "Nickname minimal 3 karakter" });
+      return;
+    }
+    if (!isCleanNickname(nickname)) {
+      setErrors({ nickname: "Nickname mengandung kata tidak pantas." });
+      setNicknameStatus('taken');
       return;
     }
     if (nicknameStatus === 'taken') {
@@ -321,6 +356,10 @@ export default function RegisterPage() {
     }
     if (password !== confirmPassword) {
       setErrors({ confirm: "Password tidak cocok" });
+      return;
+    }
+    if (!isCleanNickname(nickname)) {
+      setErrors({ nickname: "Nickname mengandung kata tidak pantas." });
       return;
     }
 
@@ -1208,6 +1247,11 @@ export default function RegisterPage() {
           to { transform: rotate(360deg); }
         }
 
+        /* Mobile Hero */
+        .mobile-hero {
+          display: none;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
           .register-card {
@@ -1222,6 +1266,25 @@ export default function RegisterPage() {
           .form-side {
             padding: 2.5rem 2rem;
             order: 1;
+          }
+
+          .mobile-hero {
+            display: block;
+            width: 100%;
+            height: 180px;
+            margin-bottom: 1.5rem;
+            border-radius: 16px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .mobile-hero img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
           }
         }
 
@@ -1266,6 +1329,10 @@ export default function RegisterPage() {
 
           .notification {
             min-width: auto;
+          }
+
+          .mobile-hero {
+            height: 160px;
           }
         }
 
@@ -1560,6 +1627,10 @@ export default function RegisterPage() {
 
         {/* Right Side - Form */}
         <div className="form-side">
+          {/* Mobile Hero */}
+          <div className="mobile-hero">
+            <img src="/asset/register/register.webp" alt="Register illustration" />
+          </div>
           <div className="form-header">
             <div className="step-badge">
               <Sparkles size={16} />

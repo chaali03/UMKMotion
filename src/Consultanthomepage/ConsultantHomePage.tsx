@@ -29,6 +29,7 @@ type Message = {
   text: string;
   sender: "user" | "consultant";
   timestamp: Date;
+
 };
 
 const CONSULTANTS: Consultant[] = [
@@ -122,6 +123,7 @@ const ConsultantHomePage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMsg, setInputMsg] = useState("");
   const heroRef = useRef<HTMLElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   // parallax: mouse position
   const mvX = useMotionValue(0);
@@ -152,6 +154,10 @@ const ConsultantHomePage: React.FC = () => {
       },
     ]);
   }, [selectedConsultant]);
+
+    useEffect(() => {
+    messagesEndRef.current?.scrollTo({ top: messagesEndRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages]);
 
   const openChat = (c: Consultant) => {
     setSelectedConsultant(c);
@@ -456,88 +462,6 @@ const ConsultantHomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* CONTACT */}
-      <section id="contact" className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 py-12">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-extrabold">Hubungi Kami</h2>
-          <p className="text-slate-600 mt-2 max-w-2xl mx-auto">Jadwalkan konsultasi atau kirim pertanyaan — tim kami siap bantu.</p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <form id="contact-form" onSubmit={handleContactSubmit} className="bg-white rounded-2xl p-6 shadow-md">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <label className="block">
-                <span className="text-sm font-semibold">Nama Lengkap</span>
-                <input required name="name" className="mt-2 block w-full rounded-lg border border-orange-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200" />
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-semibold">Email</span>
-                <input required name="email" type="email" className="mt-2 block w-full rounded-lg border border-orange-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200" />
-              </label>
-            </div>
-
-            <label className="block mt-4">
-              <span className="text-sm font-semibold">Nomor Telepon</span>
-              <input name="phone" placeholder="+62 812 3456 7890" className="mt-2 block w-full rounded-lg border border-orange-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200" />
-            </label>
-
-            <label className="block mt-4">
-              <span className="text-sm font-semibold">Pesan</span>
-              <textarea name="message" placeholder="Ceritakan usaha lu..." className="mt-2 block w-full rounded-lg border border-orange-100 px-3 py-2 min-h-[140px] focus:outline-none focus:ring-2 focus:ring-orange-200" />
-            </label>
-
-            <div className="mt-4 flex gap-3">
-              <button type="submit" className="inline-flex items-center gap-3 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-5 py-3 rounded-2xl font-semibold shadow">
-                Kirim Pesan
-              </button>
-              <button type="reset" className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl border border-orange-100 text-orange-600 font-semibold">Reset</button>
-            </div>
-          </form>
-
-          <aside className="space-y-4">
-            <div className="bg-white rounded-2xl p-6 shadow-md">
-              <h4 className="font-bold">Kontak Cepat</h4>
-              <p className="text-slate-600 mt-2">Email: info@umkmotion.id</p>
-              <p className="text-slate-600">WA: +62 812 3456 789</p>
-              <p className="text-slate-600">Alamat: Jakarta</p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-md">
-              <h4 className="font-bold">Kenapa Pilih Kami?</h4>
-              <ul className="list-disc list-inside mt-2 text-slate-600 space-y-1">
-                <li>Praktis & langsung ke aksi</li>
-                <li>Tim berpengalaman lapangan</li>
-                <li>Harga terjangkau & fleksibel</li>
-              </ul>
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="bg-gradient-to-r from-orange-700 via-orange-800 to-orange-900 text-white py-8">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
-              <Store className="text-white" size={20} />
-            </div>
-            <div>
-              <div className="font-extrabold text-lg">UMKM<span className="text-amber-300">otion</span></div>
-              <div className="text-sm text-orange-100">Konsultasi praktis untuk UMKM</div>
-            </div>
-          </div>
-
-          <div className="text-sm text-orange-100">© {new Date().getFullYear()} UMKMotion. All rights reserved.</div>
-
-          <div className="flex gap-2">
-            <div className="px-3 py-1 rounded-full bg-white/10">IG</div>
-            <div className="px-3 py-1 rounded-full bg-white/10">FB</div>
-            <div className="px-3 py-1 rounded-full bg-white/10">YT</div>
-          </div>
-        </div>
-      </footer>
-
       {/* CHAT OVERLAY */}
       {showChat && selectedConsultant && (
         <div
@@ -548,39 +472,57 @@ const ConsultantHomePage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 40, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 40, scale: 0.98 }}
+            exit={{ opacity: 0, y: 40, scale: 0.88 }}
             transition={{ type: "spring", stiffness: 120, damping: 14 }}
-            className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+            className="w-full max-w-xs bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
           >
+            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="flex items-center gap-3">
-                <img src={selectedConsultant.image} alt={selectedConsultant.name} className="w-12 h-12 rounded-lg object-cover" />
+                <img
+                  src={selectedConsultant.image}
+                  alt={selectedConsultant.name}
+                  className="w-12  h-12 rounded-lg object-cover"
+                />
                 <div>
                   <div className="font-bold">{selectedConsultant.name}</div>
                   <div className="text-sm text-slate-500">{selectedConsultant.specialty}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button onClick={closeChat} className="p-2 rounded-lg hover:bg-slate-100">
-                  <X size={18} />
-                </button>
-              </div>
+              <button
+                onClick={closeChat}
+                className="p-2 rounded-lg hover:bg-slate-100"
+              >
+                <X size={18} />
+              </button>
             </div>
 
-            <div className="p-4 max-h-[420px] overflow-y-auto space-y-3 bg-gradient-to-b from-white to-orange-50">
+            {/* Messages */}
+            <div
+              ref={messagesEndRef}
+              className="p-4 flex-1 overflow-y-auto space-y-3 bg-gradient-to-b from-white to-orange-50"
+            >
               {messages.map((m) => (
                 <div
                   key={m.id}
-                  className={`max-w-[86%] px-3 py-2 rounded-lg ${m.sender === "user" ? "ml-auto bg-gradient-to-r from-orange-600 to-amber-500 text-white" : "bg-white border border-slate-100 text-slate-900"}`}
+                  className={`max-w-[75%] px-3 py-2 rounded-lg ${
+                    m.sender === "user"
+                      ? "ml-auto bg-gradient-to-r from-orange-600 to-amber-500 text-white"
+                      : "bg-white border border-slate-100 text-slate-900"
+                  }`}
                 >
                   <div className="text-sm">{m.text}</div>
                   <div className="text-xs mt-1 text-slate-400 text-right">
-                    {m.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    {m.timestamp.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </div>
                 </div>
               ))}
             </div>
 
+            {/* Input */}
             <div className="px-4 py-3 border-t flex items-center gap-3">
               <input
                 value={inputMsg}
@@ -589,7 +531,10 @@ const ConsultantHomePage: React.FC = () => {
                 placeholder="Ketik pesan..."
                 className="flex-1 rounded-2xl border border-slate-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200"
               />
-              <button onClick={sendMessage} className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-4 py-2 rounded-2xl">
+              <button
+                onClick={sendMessage}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-4 py-2 rounded-2xl"
+              >
                 <Send size={16} />
               </button>
             </div>

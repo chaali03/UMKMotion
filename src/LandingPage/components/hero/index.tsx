@@ -292,7 +292,7 @@ const Index = () => {
           </div>
 
           {/* Enhanced Circular Gallery */}
-          <div data-hero-reveal data-delay=".24s" className="hero-reveal relative z-[2] w-full -mt-8 sm:-mt-10 lg:-mt-48 2xl:-mt-44">
+          <div data-hero-reveal data-delay=".24s" className="hero-reveal relative z-[2] w-full -mt-62 sm:-mt-96 lg:-mt-96 2xl:-mt-92">
             {/* Decorative glow */}
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-64 bg-gradient-to-r from-orange-500/8 via-purple-500/8 to-blue-500/8 blur-2xl -z-10" />
             

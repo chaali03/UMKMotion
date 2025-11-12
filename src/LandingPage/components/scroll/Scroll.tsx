@@ -149,9 +149,9 @@ export default function Scroll() {
   }, []);
 
   return (
-    <section className="scroll-text-section">
+    <section className="scroll-text-section bg-white text-gray-900 dark:bg-white dark:text-gray-900 [color-scheme:light]">
       <style>{`
-      .scroll-text-section{width:100%;background:transparent}
+      .scroll-text-section{width:100%;background:#fff;color-scheme: light}
       .scroll-text-section,.scroll-main,.content{max-width:100%;box-sizing:border-box;overflow-x:clip;contain:layout inline-size}
       
       /* Hide on mobile and tablet */

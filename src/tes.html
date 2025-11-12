@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Fetch Produk — Cek Firestore</title>
+  <title>Firestore Product Viewer — Lengkap + Galeri</title>
   <style>
     :root {
       --bg: #0f1724;
@@ -21,16 +21,8 @@
       color: var(--white);
       padding: 28px;
     }
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-    header {
-      display:flex;
-      gap:12px;
-      align-items:center;
-      margin-bottom:18px;
-    }
+    .container { max-width: 1300px; margin: 0 auto; }
+    header { display:flex; gap:12px; align-items:center; margin-bottom:18px; }
     h1 { margin:0; font-size:20px; letter-spacing: -0.2px; }
     p.lead { margin:0; color:var(--muted); font-size:13px; }
     .card {
@@ -60,36 +52,58 @@
       width:100%;
       border-collapse: collapse;
       margin-top:12px;
+      font-size:13px;
     }
     thead th {
       text-align:left;
-      padding:10px 12px;
-      font-size:13px;
+      padding:8px 10px;
       color:var(--muted);
       border-bottom:1px solid rgba(255,255,255,0.04);
     }
     tbody td {
-      padding:10px 12px;
-      font-size:14px;
-      border-bottom:1px dashed rgba(255,255,255,0.02);
+      padding:8px 10px;
+      vertical-align: top;
+      border-bottom:1px dashed rgba(255,255,255,0.03);
     }
     img.thumb {
-      width:64px;
-      height:64px;
+      width:60px; height:60px;
       object-fit:cover;
-      border-radius:8px;
-      box-shadow: 0 4px 12px rgba(2,6,23,0.6);
+      border-radius:6px;
+      box-shadow:0 4px 12px rgba(2,6,23,0.6);
     }
     .small { font-size:12px; color:var(--muted); }
     .center { text-align:center; }
-    .empty {
-      padding:28px;
-      text-align:center;
-      color:var(--muted);
+    .empty { padding:28px; text-align:center; color:var(--muted); }
+    .galeri img {
+      width:40px; height:40px; object-fit:cover;
+      border-radius:4px; margin-right:4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      cursor: pointer;
     }
-    @media (max-width:900px){
-      img.thumb{width:48px;height:48px;}
-      thead th:nth-child(5), tbody td:nth-child(5) { display:none; } /* hide foto on small */
+    /* Modal */
+    .modal {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    .modal-content {
+      background: var(--card);
+      border-radius:12px;
+      padding:20px;
+      width:90%; max-width:700px;
+      max-height:90%;
+      overflow-y:auto;
+      box-shadow:0 8px 24px rgba(0,0,0,0.6);
+    }
+    .modal-content img {
+      width:100%;
+      border-radius:8px;
+      margin-bottom:12px;
+    }
+    .close {
+      float:right; cursor:pointer; font-size:20px; color:var(--muted);
     }
   </style>
 </head>
@@ -97,8 +111,8 @@
   <div class="container">
     <header>
       <div>
-        <h1>Fetch Produk — Cek Firestore</h1>
-        <p class="lead">Fetch & tampilkan isi koleksi <strong>products</strong> dari Firestore (native JS).</p>
+        <h1>Firestore Product Viewer — Lengkap + Galeri</h1>
+        <p class="lead">Menampilkan seluruh data produk dan info toko dari koleksi <strong>products</strong>.</p>
       </div>
     </header>
 
@@ -109,55 +123,59 @@
           <button id="btnClear" class="secondary">Clear Table</button>
           <span id="status">Ready</span>
         </div>
-        <div class="small">Hint: ganti <code>firebaseConfig</code> di bawah sebelum dipakai.</div>
       </div>
 
-      <div id="tableWrap" style="margin-top:12px;">
-        <table id="productsTable" aria-label="Products table">
+      <div id="tableWrap" style="margin-top:12px;overflow-x:auto;">
+        <table id="productsTable">
           <thead>
             <tr>
-              <th class="center">ID</th>
-              <th>Judul</th>
-              <th>ASIN</th>
+              <th>ID</th>
+              <th>Produk</th>
+              <th>Kategori</th>
               <th>Harga</th>
-              <th>Foto</th>
-              <th class="center">Stok</th>
-              <th class="center">Terlaris</th>
+              <th>Rating</th>
+              <th>Toko</th>
+              <th>Galeri</th>
+              <th>Detail</th>
             </tr>
           </thead>
           <tbody id="productsBody">
-            <tr><td colspan="7" class="empty">Klik "Load Products" untuk memuat data dari Firestore.</td></tr>
+            <tr><td colspan="8" class="empty">Klik "Load Products" untuk memuat data dari Firestore.</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- Firebase v9 modular -->
-  <script type="module">
-    // === PASANG FIREBASE CONFIG DI SINI ===
-    // Ganti dengan config web app milikmu (apiKey, authDomain, projectId, dsb).
-const firebaseConfig = {
-  apiKey: "AIzaSyAb8ETVtNgh1hHhO_6D8Oj5ElNIMMixCuc",
-  authDomain: "umkmotion-a39b9.firebaseapp.com",
-  projectId: "umkmotion-a39b9",
-  storageBucket: "umkmotion-a39b9.firebasestorage.app",
-  messagingSenderId: "437792595769",
-  appId: "1:437792595769:web:ce18f9d1cc7bba5e7d12e8",
-  measurementId: "G-WVB076CR9M"
-};
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span id="closeModal" class="close">&times;</span>
+      <div id="modalBody"></div>
+    </div>
+  </div>
 
-    // Imports modular SDK dari CDN
+  <!-- Firebase -->
+  <script type="module">
+    const firebaseConfig = {
+      apiKey: "AIzaSyAb8ETVtNgh1hHhO_6D8Oj5ElNIMMixCuc",
+      authDomain: "umkmotion-a39b9.firebaseapp.com",
+      projectId: "umkmotion-a39b9",
+      storageBucket: "umkmotion-a39b9.firebasestorage.app",
+      messagingSenderId: "437792595769",
+      appId: "1:437792595769:web:ce18f9d1cc7bba5e7d12e8",
+      measurementId: "G-WVB076CR9M"
+    };
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // Init firebase + firestore
     let app, db;
     try {
       app = initializeApp(firebaseConfig);
       db = getFirestore(app);
     } catch (err) {
-      console.error("Gagal init Firebase:", err);
+      console.error("Firebase init error:", err);
       document.getElementById("status").textContent = "Firebase init error (cek config)";
     }
 
@@ -165,79 +183,96 @@ const firebaseConfig = {
     const btnClear = document.getElementById("btnClear");
     const statusEl = document.getElementById("status");
     const body = document.getElementById("productsBody");
+    const modal = document.getElementById("modal");
+    const modalBody = document.getElementById("modalBody");
+    const closeModal = document.getElementById("closeModal");
 
     function setStatus(t) { statusEl.textContent = t; }
 
-    // Ambil produk dari koleksi 'products'
     async function fetchProducts() {
-      if (!db) {
-        setStatus("Firestore belum terhubung — masukkan config.");
-        return;
-      }
+      if (!db) { setStatus("Firestore belum terhubung."); return; }
       setStatus("Loading...");
-      body.innerHTML = `<tr><td colspan="7" class="empty">Memuat...</td></tr>`;
+      body.innerHTML = `<tr><td colspan="8" class="empty">Memuat...</td></tr>`;
 
       try {
         const col = collection(db, "products");
         const snapshot = await getDocs(col);
-
         if (snapshot.empty) {
-          body.innerHTML = `<tr><td colspan="7" class="empty">Koleksi kosong.</td></tr>`;
+          body.innerHTML = `<tr><td colspan="8" class="empty">Tidak ada data produk.</td></tr>`;
           setStatus("Selesai (0)");
           return;
         }
 
-        // Map ke array yang mudah dipakai
-        const items = snapshot.docs.map(d => {
-          const data = d.data();
-          return {
-            id: d.id,
-            asin: data.asin ?? "",
-            judul_produk: data.judul_produk ?? data.nama ?? "(no title)",
-            harga_produk: data.harga_produk ?? data.harga ?? "-",
-            jumlah_unit: data.jumlah_unit ?? data.stok ?? null,
-            foto_produk: data.foto_produk ?? data.product_photo ?? "",
-            produk_terlaris: data.produk_terlaris ?? false,
-          };
-        });
+        const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-        // render tabel
-        body.innerHTML = items.map(it => `
+        body.innerHTML = items.map((it, i) => `
           <tr>
-            <td class="center">${escapeHtml(it.id)}</td>
+            <td>${escapeHtml(it.id)}</td>
             <td>
-              <div style="font-weight:600">${escapeHtml(it.judul_produk)}</div>
-              <div class="small">Harga: ${escapeHtml(it.harga_produk)}</div>
+              <div style="font-weight:600">${escapeHtml(it.nama_produk ?? "(tanpa nama)")}</div>
+              <div class="small">${escapeHtml(it.merek_produk ?? "-")}</div>
             </td>
-            <td>${escapeHtml(it.asin)}</td>
-            <td>${escapeHtml(it.harga_produk)}</td>
-            <td><img class="thumb" src="${escapeAttr(it.foto_produk)}" alt="foto ${escapeHtml(it.judul_produk)}" onerror="this.style.opacity=0.5;this.style.filter='grayscale(1)';this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22><rect width=%2264%22 height=%2264%22 fill=%22%238a98a6%22/></svg>'"></td>
-            <td class="center">${it.jumlah_unit ?? "-"}</td>
-            <td class="center">${it.produk_terlaris ? "✅" : ""}</td>
+            <td>${escapeHtml(it.kategori ?? "-")} / ${escapeHtml(it.sub_kategori ?? "-")}</td>
+            <td>${escapeHtml(it.harga_produk ?? "-")} ${escapeHtml(it.mata_uang ?? "")}</td>
+            <td>${escapeHtml(it.rating_bintang ?? "-")}⭐ (${escapeHtml(it.jumlah_ulasan ?? 0)} ulasan)</td>
+            <td>
+              <div>${escapeHtml(it.toko ?? "-")}</div>
+              <div class="small">${escapeHtml(it.lokasi_toko ?? "-")}</div>
+              <div class="small">Rating: ${escapeHtml(it.rating_toko ?? "-")}⭐</div>
+            </td>
+            <td>
+              <div class="galeri">
+                ${(it.galeri_gambar ?? []).map(g => `<img src="${escapeAttr(g)}" title="klik untuk lihat" onclick="showModal(${i})">`).join("")}
+              </div>
+            </td>
+            <td><button onclick="showModal(${i})">Lihat Detail</button></td>
           </tr>
         `).join("");
 
+        // simpan items di global untuk modal
+        window._produkItems = items;
         setStatus(`Selesai (${items.length})`);
       } catch (err) {
         console.error(err);
-        body.innerHTML = `<tr><td colspan="7" class="empty">Error saat memuat data — cek console.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="8" class="empty">Error saat memuat data — cek console.</td></tr>`;
         setStatus("Error");
       }
     }
 
     btnLoad.addEventListener("click", fetchProducts);
     btnClear.addEventListener("click", () => {
-      body.innerHTML = `<tr><td colspan="7" class="empty">Tabel dibersihkan.</td></tr>`;
+      body.innerHTML = `<tr><td colspan="8" class="empty">Tabel dibersihkan.</td></tr>`;
       setStatus("Ready");
     });
+    closeModal.addEventListener("click", () => modal.style.display = "none");
+    window.onclick = e => { if (e.target === modal) modal.style.display = "none"; };
 
-    // small helpers to avoid XSS when injecting strings
+    window.showModal = function(index) {
+      const p = window._produkItems[index];
+      if (!p) return;
+
+      modalBody.innerHTML = `
+        <h2>${escapeHtml(p.nama_produk ?? "(tanpa nama)")}</h2>
+        <img src="${escapeAttr(p.gambar_produk ?? "")}" alt="${escapeHtml(p.nama_produk)}">
+        <p><strong>Harga:</strong> ${escapeHtml(p.harga_produk)} ${escapeHtml(p.mata_uang ?? "")}</p>
+        <p><strong>Merek:</strong> ${escapeHtml(p.merek_produk ?? "-")} | <strong>Model:</strong> ${escapeHtml(p.model_produk ?? "-")}</p>
+        <p><strong>Kategori:</strong> ${escapeHtml(p.kategori ?? "-")} / ${escapeHtml(p.sub_kategori ?? "-")}</p>
+        <p><strong>Deskripsi:</strong><br>${escapeHtml(p.deskripsi_produk ?? "-")}</p>
+        <p><strong>Bahan:</strong> ${escapeHtml(p.bahan ?? "-")}</p>
+        <p><strong>Kondisi:</strong> ${escapeHtml(p.kondisi_produk ?? "-")}, <strong>Status:</strong> ${escapeHtml(p.status_produk ?? "-")}</p>
+        <p><strong>Unit Tersedia:</strong> ${escapeHtml(p.jumlah_unit ?? "-")} | <strong>Terjual:</strong> ${escapeHtml(p.unit_terjual ?? "-")}</p>
+        <p><strong>Toko:</strong> ${escapeHtml(p.toko ?? "-")} (${escapeHtml(p.status_toko ?? "-")})<br>
+        <small>Rating: ${escapeHtml(p.rating_toko ?? "-")}⭐ — ${escapeHtml(p.lokasi_toko ?? "-")}</small></p>
+        <hr>
+        <h3>Galeri Produk</h3>
+        ${(p.galeri_gambar ?? []).map(g => `<img src="${escapeAttr(g)}" alt="galeri">`).join("")}
+      `;
+      modal.style.display = "flex";
+    }
+
     function escapeHtml(s) {
       if (!s && s !== 0) return "";
-      return String(s)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
     function escapeAttr(s) {
       if (!s && s !== 0) return "";
@@ -247,9 +282,6 @@ const firebaseConfig = {
         .replace(/</g, "%3C")
         .replace(/>/g, "%3E");
     }
-
-    // optional: auto-load on open (comment/uncomment)
-    // fetchProducts();
   </script>
 </body>
 </html>

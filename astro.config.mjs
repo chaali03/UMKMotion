@@ -1,15 +1,23 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-
+import netlify from '@astrojs/netlify/functions';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // https://astro.build/config
 export default defineConfig({
+  // Netlify Adapter Configuration
+  output: 'server',
+  adapter: netlify({
+  // Configuration options go here
+  }),
+
+  // Existing configurations
   integrations: [react()],
 
   // Performance optimizations
@@ -23,14 +31,29 @@ export default defineConfig({
     defaultStrategy: 'viewport'
   },
 
+  // Vite config
   vite: {
     plugins: [tailwindcss()],
+    // Store Vite cache in system temp to avoid OneDrive/AV file locks on Windows
+    cacheDir: path.resolve(os.tmpdir(), 'umkmotion-vite-cache'),
+    server: {
+      // OneDrive can lock files; polling reduces EPERM rename races
+      watch: { usePolling: true, interval: 500 },
+    },
     resolve: {
       alias: {
         'src': path.resolve(__dirname, './src'),
-        '@': path.resolve(__dirname, './src')
+        '@': path.resolve(__dirname, './src'),
+        '@homepagelayout': path.resolve(__dirname, './src/layouts/HomepageLayout.astro')
       }
     },
+
+    // TAMBAHIN INI AJA BRO! (cuma 1 baris)
+    define: {
+      'process.env': 'import.meta.env',
+    },
+    // END OF TAMBAHAN
+
     build: {
       rollupOptions: {
         output: {
@@ -45,7 +68,9 @@ export default defineConfig({
       }
     },
     optimizeDeps: {
-      include: ['react', 'react-dom'],
+      // In dev on OneDrive, avoid optimizer touching node_modules/.vite
+      noDiscovery: process.env.NODE_ENV === 'development',
+      include: process.env.NODE_ENV === 'development' ? [] : ['react', 'react-dom'],
       exclude: ['@react-three/fiber', '@react-three/drei']
     }
   }

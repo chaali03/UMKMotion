@@ -2,7 +2,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, ArrowRight, ArrowLeft, CheckCircle, KeyRound, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
-import { sendPasswordReset } from "../lib/auth";
+import { sendPasswordReset, isEmailRegistered } from "../lib/auth";
+import { db } from "../lib/firebase";
+import { collection, query, where, getDocs, limit } from "firebase/firestore";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -61,7 +63,9 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    if (!validateEmail(email)) {
+    const emailNorm = email.trim().toLowerCase();
+
+    if (!validateEmail(emailNorm)) {
       setErrors({ email: "Format email tidak valid" });
       return;
     }
@@ -69,26 +73,42 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      await sendPasswordReset(email);
+      // Optional check in Firestore (may be absent for Google sign-in users)
+      const q = query(collection(db, 'users'), where('email', '==', emailNorm), limit(1));
+      const snap = await getDocs(q);
+
+      // Authoritative check with Firebase Auth sign-in methods
+      const existsAuth = await isEmailRegistered(emailNorm);
+      const existsAny = !snap.empty || existsAuth;
+      if (!existsAny) {
+        setErrors({ email: "Email tidak terdaftar." });
+        showNotification("error", "Email Tidak Terdaftar", "Email belum terdaftar pada sistem kami.");
+        return;
+      }
+
+      await sendPasswordReset(emailNorm, '');
       setIsSuccess(true);
       showNotification(
         "success",
         "Email Terkirim!",
-        `Link reset password telah dikirim ke ${email}`
+        `Link reset password telah dikirim ke ${emailNorm}`
       );
     } catch (err: any) {
       let errorMessage = "Gagal mengirim email reset. Silakan coba lagi.";
-      
-      if (err.code === 'auth/user-not-found') {
+      const code = err?.code || '';
+      const msg = err?.message || '';
+
+      if (code === 'auth/user-not-found') {
         errorMessage = "Email tidak terdaftar dalam sistem kami.";
-      } else if (err.code === 'auth/invalid-email') {
+      } else if (code === 'auth/invalid-email') {
         errorMessage = "Format email tidak valid.";
-      } else if (err.code === 'auth/too-many-requests') {
+      } else if (code === 'auth/too-many-requests') {
         errorMessage = "Terlalu banyak permintaan. Coba lagi nanti.";
+      } else if (code === 'auth/unauthorized-continue-uri' || code === 'auth/invalid-continue-uri') {
+        errorMessage = "Redirect URL belum diotorisasi di Firebase. Kirim ulang setelah domain ditambahkan.";
       }
 
-      setErrors({ email: errorMessage });
-      showNotification("error", "Gagal Mengirim", errorMessage);
+      showNotification("error", `Gagal Mengirim (${code || 'unknown'})`, `${errorMessage}${msg ? ` — ${msg}` : ''}`);
     } finally {
       setIsLoading(false);
     }
