@@ -86,23 +86,47 @@ const title = "UMKMotion";
     <Scroll />
   </div>
 
-  <!-- GSAP CDN for ProductGallery (expects window.gsap / window.ScrollTrigger) -->
-  <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-  <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-
   <div class="reveal" data-reveal data-delay=".22s">
-    <SearchBar client:load />
+    <SearchBar client:visible />
   </div>
   <div class="reveal" data-reveal data-delay=".26s">
-    <ProductGallery client:load />
+    <ProductGallery client:visible />
   </div>
+  
+  <!-- Defer GSAP loading until ProductGallery is visible -->
+  <script>
+    // Lazy load GSAP when ProductGallery enters viewport
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && entry.target.querySelector('[data-product-gallery]')) {
+          if (!(window as any).gsap) {
+            const gsapScript = document.createElement('script');
+            gsapScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js';
+            gsapScript.onload = () => {
+              const scrollTriggerScript = document.createElement('script');
+              scrollTriggerScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js';
+              document.head.appendChild(scrollTriggerScript);
+            };
+            document.head.appendChild(gsapScript);
+          }
+          observer.unobserve(entry.target);
+        }
+      });
+    });
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      const productGallery = document.querySelector('[data-product-gallery]') || 
+                           document.querySelector('.reveal[data-delay=".26s"]');
+      if (productGallery) observer.observe(productGallery);
+    });
+  </script>
 
   <div class="reveal" data-reveal data-delay=".30s">
-    <Konten client:load />
+    <Konten client:visible />
   </div>
 
   <div class="reveal" data-reveal data-delay=".34s">
-    <Footer client:load />
+    <Footer client:visible />
   </div>
 
   <script>

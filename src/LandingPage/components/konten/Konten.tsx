@@ -264,9 +264,12 @@ export default function Konten() {
                 <div className="relative rounded-xl sm:rounded-2xl overflow-hidden">
                   {/* Map Image - Focused on Indonesia */}
                   <img
-                    src="/asset/optimized/Peta/Peta.webp"
+                    src="/asset/optimized/Peta-tiny.webp"
                     alt="Peta Indonesia - UMKM Interaktif"
                     className="w-full h-full object-cover aspect-[4/3] brightness-95"
+                    width="400"
+                    height="300"
+                    loading="lazy"
                   />
                   
                   {/* Animated Location Pins */}
