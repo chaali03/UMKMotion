@@ -54,7 +54,7 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
               <div className="pointer-events-auto bg-white/80 backdrop-blur-md border border-blue-100 shadow-lg shadow-blue-500/10 rounded-2xl p-3">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden ring-2 ring-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
-                    <img src="/asset/Dina/LogoDina.webp" alt="Dina Logo" className="w-8 h-8 object-contain" />
+                    <img src="/asset/optimized/LogoDina-tiny.webp" alt="Dina Logo" className="w-8 h-8 object-contain" width="32" height="32" loading="lazy" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-slate-900 text-[13px] leading-none">Sipaling Mengerti Anda</h4>
@@ -94,7 +94,7 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           className="relative z-10"
         >
-          <img src="/asset/Dina/LogoDina.webp" alt="Dina AI" className="w-full h-full rounded-[14px] object-contain" />
+          <img src="/asset/optimized/LogoDina-tiny.webp" alt="Dina AI" className="w-full h-full rounded-[14px] object-contain" width="96" height="96" loading="lazy" />
         </motion.div>
         
         {/* Ripple removed for clean image-only look */}

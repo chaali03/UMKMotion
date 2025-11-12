@@ -11,17 +11,45 @@ const showIntro = !introSeenCookie;
 <html lang="en" class="intro-lock light">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
-    <meta name="color-scheme" content="light" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png?v=4" />
+    
+    <!-- Critical CSS inlined for fastest render -->
+    <style>
+      /* Critical CSS - Above the fold styles only */
+      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+      html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.5;font-display:swap}
+      body{background:#fff;color:#1e293b;overflow-x:hidden}
+      .intro{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:#1e293b}
+      .intro__logoWrap{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+      .intro__logo{width:200px;height:200px;object-fit:contain}
+      .header{position:fixed;top:0;width:100%;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px)}
+      .navbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;max-width:1200px;margin:0 auto}
+      .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+      .hero h1{font-size:clamp(2rem,5vw,4rem);font-weight:900;line-height:1.1;margin-bottom:1rem}
+      .loading{opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease}
+      .loading.loaded{opacity:1;transform:translateY(0)}
+      @media (max-width:768px){.navbar{padding:0.75rem 1rem}.hero{padding:1rem}.intro__logo{width:150px;height:150px}}
+    </style>
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Load fonts with font-display: swap -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/logo.webp" as="image" type="image/webp" fetchpriority="high" />
+    <link rel="preload" href="/LogoNavbar.webp" as="image" type="image/webp" />
+    
+    <!-- Minimal favicons - only essential ones -->
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png?v=4" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png?v=4" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/favicon_io/android-chrome-192x192.png?v=4" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/favicon_io/android-chrome-512x512.png?v=4" />
-    <link rel="manifest" href="/favicon_io/site.webmanifest?v=4" />
+    <link rel="icon" type="image/webp" sizes="32x32" href="/favicon_io/favicon-32x32.webp?v=4" />
     <link rel="shortcut icon" href="/favicon_io/favicon.ico?v=4" />
+
     <script define:vars={{ 
       GEMINI_API_KEY: import.meta.env.GEMINI_API_KEY,
       FIREBASE_API_KEY: import.meta.env.FIREBASE_API_KEY,
@@ -40,6 +68,32 @@ const showIntro = !introSeenCookie;
         FIREBASE_MESSAGING_SENDER_ID,
         FIREBASE_APP_ID
       };
+      
+      // Initialize performance optimizations
+      (function() {
+        // Prevent forced reflows
+        let ticking = false;
+        const optimizedScroll = (callback) => {
+          if (!ticking) {
+            requestAnimationFrame(() => {
+              callback();
+              ticking = false;
+            });
+            ticking = true;
+          }
+        };
+        
+        // Add passive event listeners
+        ['scroll', 'touchstart', 'touchmove', 'wheel'].forEach(event => {
+          document.addEventListener(event, () => {}, { passive: true });
+        });
+        
+        // Debounce chrome extension detection
+        const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+        Element.prototype.getBoundingClientRect = function() {
+          return originalGetBoundingClientRect.call(this);
+        };
+      })();
     </script>
     <style>
       :root { 
@@ -989,7 +1043,7 @@ const showIntro = !introSeenCookie;
         
         <div class="intro__logoWrap">
           <div class="intro__ring"></div>
-          <img id="introLogo" class="intro__logo" src="/logo.png" alt="UMKMotion logo" />
+          <img id="introLogo" class="intro__logo" src="/logo.webp" alt="UMKMotion logo" fetchpriority="high" decoding="async" width="200" height="200" />
           <div class="intro__sweep"></div>
           <div id="introText" class="intro__text">{title}</div>
         </div>

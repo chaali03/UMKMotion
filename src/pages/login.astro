@@ -1,12 +1,9 @@
 ---
 import LoginPage from "../Login/LoginPage";
-const authCookie = Astro.cookies.get('auth')?.value
-  || Astro.cookies.get('session')?.value
-  || Astro.cookies.get('token')?.value;
+import { getAdminAuth } from "../lib/firebaseAdmin";
 
-if (authCookie) {
-  return Astro.redirect('/homepage');
-}
+// Temporarily disable SSR session check
+// Will be handled by client-side Firebase auth
 ---
 
 <!DOCTYPE html>

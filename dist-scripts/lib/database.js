@@ -1,5 +1,5 @@
 import { db } from "./firebase.js";
-import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, } from "firebase/firestore";
 const COLLECTION_NAME = "products";
 // Ambil ID berikutnya (autoincrement dari 000)
 const getNextProductId = async () => {
@@ -35,6 +35,12 @@ export const uploadProducts = async (products) => {
 // Ambil semua produk
 export const getAllProducts = async () => {
     const snapshot = await getDocs(collection(db, COLLECTION_NAME));
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+};
+// Ambil produk berdasarkan storeId
+export const getProductsByStoreId = async (storeId) => {
+    const q = query(collection(db, COLLECTION_NAME), where("storeId", "==", storeId));
+    const snapshot = await getDocs(q);
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
 // Update produk

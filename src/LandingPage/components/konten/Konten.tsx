@@ -112,9 +112,6 @@ export default function Konten() {
           transition={{ type: "spring", stiffness: 50, damping: 30 }}
         />
         
-        {/* Decorative Grid - Hidden on small mobile */}
-        <div className="hidden sm:block absolute inset-0 bg-[linear-gradient(to_right,#f97316_1px,transparent_1px),linear-gradient(to_bottom,#f97316_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-[0.03]" />
-        
         {/* Floating Icons - Hidden on mobile */}
         <motion.div animate={floatingAnimation} className="hidden lg:block absolute top-32 right-[15%] opacity-20">
           <MapPin className="w-12 h-12 text-blue-600" />
@@ -267,13 +264,13 @@ export default function Konten() {
                 <div className="relative rounded-xl sm:rounded-2xl overflow-hidden">
                   {/* Map Image - Focused on Indonesia */}
                   <img
-                    src="/asset/optimized/Peta/Peta.webp"
+                    src="/asset/optimized/Peta-tiny.webp"
                     alt="Peta Indonesia - UMKM Interaktif"
                     className="w-full h-full object-cover aspect-[4/3] brightness-95"
+                    width="400"
+                    height="300"
+                    loading="lazy"
                   />
-                  
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-orange-500/10 via-transparent to-orange-500/20" />
                   
                   {/* Animated Location Pins */}
                   <AnimatePresence>

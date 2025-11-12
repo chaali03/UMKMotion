@@ -116,7 +116,7 @@ export default function Footer() {
               className="inline-flex items-center transition-transform duration-300 -ml-4 sm:ml-0"
             >
               <img 
-                src="/LogoNavbar.png" 
+                src="/LogoNavbar.webp" 
                 alt="UMKMotion logo" 
                 className="h-8 sm:h-10 md:h-12 w-auto" 
                 loading="lazy" 
