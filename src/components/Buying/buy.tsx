@@ -822,6 +822,7 @@ export default function BuyingPage() {
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
             e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.25)';
+            window.location.href = "/toko";
           }}
         >
           Kunjungi Toko
