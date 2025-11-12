@@ -1,8 +1,8 @@
 "use client";
+import React, { useRef } from "react";
 import { TimelineContent } from "../../../components/ui/timeline-animation";
 import { ArrowRight, PencilLine, Sparkles, TrendingUp, Users, Zap } from "lucide-react";
 import { motion } from "motion/react";
-import { useRef } from "react";
 import HoverTranslateTwo from "../../../components/ui/interactive-card-stack";
 
 const Feature1 = () => {
@@ -140,9 +140,9 @@ const Feature1 = () => {
               <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg">
                 <Zap className="w-5 h-5 text-white" />
               </div>
-              <h3 className="text-gray-900 text-3xl font-bold">
+              <h2 className="text-gray-900 text-3xl font-bold">
                 Kategori UMKM
-              </h3>
+              </h2>
             </div>
             <p className="text-gray-600 text-base leading-relaxed">
               Jelajahi berbagai kategori UMKM mulai dari kuliner, fashion, kerajinan, hingga teknologi dengan mudah.
@@ -346,9 +346,9 @@ const Feature1 = () => {
               <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl shadow-lg">
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-gray-900 text-3xl font-bold">
+              <h2 className="text-gray-900 text-3xl font-bold">
                 Statistik Pertumbuhan
-              </h3>
+              </h2>
             </div>
             <p className="mt-2 font-normal text-gray-600 text-base leading-relaxed ml-14">
               Pantau pertumbuhan UMKM di berbagai kategori dengan visualisasi data yang interaktif dan mudah dipahami.
@@ -649,9 +649,9 @@ const Feature1 = () => {
               <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-gray-900 text-3xl font-bold">
+              <h2 className="text-gray-900 text-3xl font-bold">
                 Hubungi UMKM
-              </h3>
+              </h2>
             </div>
             <p className="mt-2 font-normal text-gray-600 text-base leading-relaxed ml-14">
               Terhubung langsung dengan pemilik UMKM melalui chat real-time untuk konsultasi atau pemesanan produk.

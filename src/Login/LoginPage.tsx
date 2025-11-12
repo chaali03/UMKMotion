@@ -1,12 +1,5 @@
 "use client";
-<<<<<<< HEAD
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, User, ArrowRight, ArrowLeft } from "lucide-react";
-
-export default function RegisterPage() {
-=======
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Sparkles, MapPin, BarChart3, Megaphone, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
 import { signInWithEmail, signInWithGoogle, checkEmailExists } from "../lib/auth";
@@ -14,13 +7,10 @@ import { auth } from "../lib/firebase";
 // removed auth state redirect to avoid auto-refresh loop
 
 export default function LoginPage() {
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-<<<<<<< HEAD
-=======
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [slideIndex, setSlideIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -74,7 +64,6 @@ export default function LoginPage() {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
   };
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,14 +130,6 @@ export default function LoginPage() {
     }
   };
 
-<<<<<<< HEAD
-  const handleGoogleSignup = () => {
-    console.log("Google signup");
-  };
-
-  const handleBackToHome = () => {
-    window.location.href = "/";
-=======
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
@@ -165,113 +146,25 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
   };
 
   return (
-    <div className="register-page">
+    <div className="login-container">
       <style>{`
-<<<<<<< HEAD
-=======
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
         * {
           margin: 0;
           padding: 0;
           box-sizing: border-box;
         }
 
-<<<<<<< HEAD
-        .register-page {
-=======
         .login-container {
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
           min-height: 100vh;
           width: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
-<<<<<<< HEAD
-          background: linear-gradient(135deg, #e8e4dc 0%, #ff7a1a 50%);
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-        }
-
-        .register-container {
-          width: 90%;
-          max-width: 1100px;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          background: white;
-          border-radius: 24px;
-          overflow: hidden;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-        }
-          
-        /* Back to Home Button */
-        .back-to-home {
-          position: fixed;
-          top: 2rem;
-          left: 2rem;
-          z-index: 50;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1.25rem;
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(10px);
-          border: 1.5px solid rgba(255, 255, 255, 0.3);
-          border-radius: 12px;
-          color: #334155;
-          font-size: 0.9375rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 
-            0 4px 6px -1px rgba(0, 0, 0, 0.1),
-            0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        .back-to-home:hover {
-          transform: translateX(-4px);
-          background: rgba(255, 255, 255, 1);
-          border-color: #ff7a1a;
-          color: #ff7a1a;
-          box-shadow: 
-            0 10px 15px -3px rgba(0, 0, 0, 0.1),
-            0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-
-        .back-to-home svg {
-          width: 18px;
-          height: 18px;
-          stroke-width: 2.5;
-          transition: transform 0.3s ease;
-        }
-
-        .back-to-home:hover svg {
-          transform: translateX(-2px);
-        }
-
-        .back-text {
-          display: inline;
-        }
-
-        /* Left Side - Form */
-        .form-side {
-          padding: 4rem 3.5rem;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          background: linear-gradient(135deg, #f5f3f0 100%);
-        }
-
-        .logo {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          margin-bottom: 3rem;
-=======
           position: relative;
           background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 25%, #fed7aa 50%, #fdba74 75%, #fb923c 100%);
           font-family: 'Inter', -apple-system, sans-serif;
@@ -385,7 +278,6 @@ export default function LoginPage() {
           background: radial-gradient(circle, rgba(249, 115, 22, 0.18) 0%, transparent 70%);
           top: -200px;
           right: -200px;
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
         }
 
         .brand-content {
@@ -462,36 +354,6 @@ export default function LoginPage() {
           margin-bottom: 1.5rem;
         }
 
-<<<<<<< HEAD
-        .logo-text {
-          font-size: 1.25rem;
-          font-weight: 700;
-          color: #1a1a1a;
-        }
-
-        .form-header {
-          margin-bottom: 2rem;
-        }
-
-        .form-title {
-          font-size: 2.25rem;
-          font-weight: 400;
-          color: #1a1a1a;
-          margin-bottom: 1rem;
-          line-height: 1.2;
-        }
-
-        .form-subtitle {
-          font-size: 0.9375rem;
-          color: #6b6b6b;
-          line-height: 1.6;
-          max-width: 380px;
-        }
-
-        .input-group {
-          margin-bottom: 1.25rem;
-          position: relative;
-=======
         .form-title {
           font-size: 2rem;
           font-weight: 800;
@@ -535,72 +397,35 @@ export default function LoginPage() {
         .forgot-link:hover {
           color: #c2410c;
           text-decoration: underline;
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
         }
 
         .input-wrapper {
           position: relative;
-<<<<<<< HEAD
-          display: flex;
-          align-items: center;
-=======
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
         }
 
         .input-icon {
           position: absolute;
           left: 1rem;
-<<<<<<< HEAD
-          color: #9b9b9b;
-          pointer-events: none;
-        }
-
-        .input-icon svg {
-          width: 20px;
-          height: 20px;
-=======
           top: 50%;
           transform: translateY(-50%);
           color: #9ca3af;
           pointer-events: none;
           transition: color 0.2s;
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
         }
 
         .input-field {
           width: 100%;
           height: 52px;
           padding: 0 1rem 0 3rem;
-<<<<<<< HEAD
-          background: white;
-          border: 1.5px solid #e0e0e0;
-          border-radius: 12px;
-          font-size: 0.9375rem;
-          color: #1a1a1a;
-=======
           background: #f9fafb;
           border: 2px solid #e5e7eb;
           border-radius: 12px;
           font-size: 0.95rem;
           color: #111827;
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
           transition: all 0.2s ease;
           outline: none;
         }
 
-<<<<<<< HEAD
-        .input-field::placeholder {
-          color: #9b9b9b;
-        }
-
-        .input-field:focus {
-          border-color: #1a1a1a;
-          background: white;
-        }
-
-        .input-field.has-toggle {
-          padding-right: 3rem;
-=======
         .input-field:focus {
           background: white;
           border-color: #f97316;
@@ -614,58 +439,11 @@ export default function LoginPage() {
         .input-field.error {
           border-color: #ef4444;
           background: #fef2f2;
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
         }
 
         .toggle-password {
           position: absolute;
           right: 1rem;
-<<<<<<< HEAD
-          background: none;
-          border: none;
-          color: #9b9b9b;
-          cursor: pointer;
-          padding: 0.5rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: color 0.2s ease;
-        }
-
-        .toggle-password:hover {
-          color: #1a1a1a;
-        }
-
-        .toggle-password svg {
-          width: 20px;
-          height: 20px;
-        }
-
-        .btn-signup {
-          width: 100%;
-          height: 52px;
-          background: #1a1a1a;
-          color: white;
-          border: none;
-          border-radius: 12px;
-          font-size: 1rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          margin-top: 0.5rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .btn-signup:hover {
-          background: #2d2d2d;
-          transform: translateY(-1px);
-        }
-
-        .btn-signup:active {
-          transform: translateY(0);
-=======
           top: 50%;
           transform: translateY(-50%);
           background: none;
@@ -719,10 +497,9 @@ export default function LoginPage() {
           /* prevent hover shift */
           transform: none;
           box-shadow: 0 6px 20px rgba(249, 115, 22, 0.45);
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
         }
 
-        .btn-signup:disabled {
+        .btn-primary:disabled {
           opacity: 0.6;
           cursor: not-allowed;
           transform: none;
@@ -731,15 +508,11 @@ export default function LoginPage() {
         .divider {
           display: flex;
           align-items: center;
-<<<<<<< HEAD
-          margin: 1.75rem 0;
-=======
           gap: 1rem;
           margin: 1.5rem 0;
           color: #9ca3af;
           font-size: 0.875rem;
           font-weight: 500;
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
         }
 
         .divider::before,
@@ -747,85 +520,11 @@ export default function LoginPage() {
           content: '';
           flex: 1;
           height: 1px;
-<<<<<<< HEAD
-          background: #e0e0e0;
-=======
           background: #e5e7eb;
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
         }
 
         .btn-google {
           width: 100%;
-<<<<<<< HEAD
-          height: 52px;
-          background: white;
-          border: 1.5px solid #e0e0e0;
-          border-radius: 12px;
-          font-size: 0.9375rem;
-          font-weight: 500;
-          color: #1a1a1a;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.75rem;
-          transition: all 0.2s ease;
-        }
-
-        .btn-google:hover {
-          border-color: #c0c0c0;
-          background: #fafafa;
-        }
-
-        .login-text {
-          text-align: center;
-          margin-top: 1.75rem;
-          font-size: 0.9375rem;
-          color: #6b6b6b;
-        }
-
-        .login-link {
-          color: #1a1a1a;
-          font-weight: 600;
-          text-decoration: none;
-          transition: opacity 0.2s ease;
-        }
-
-        .login-link:hover {
-          opacity: 0.7;
-        }
-
-        /* Right Side - Image */
-        .image-side {
-          position: relative;
-          background: linear-gradient(135deg, #d4d0c8 0%, #e8e4dc 100%);
-          overflow: hidden;
-        }
-
-        .statue-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center;
-        }
-
-        .image-overlay {
-          position: absolute;
-          bottom: 2rem;
-          left: 2rem;
-          right: 2rem;
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .marquee-text {
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 0.875rem;
-          font-weight: 500;
-          white-space: nowrap;
-          animation: marquee 15s linear infinite;
-=======
           background: white;
           color: #374151;
           border: 2px solid #e5e7eb;
@@ -921,28 +620,14 @@ export default function LoginPage() {
         /* Mobile Hero */
         .mobile-hero {
           display: none;
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
         }
 
-        @keyframes marquee {
-          0% {
-            transform: translateX(0);
+        /* Responsive */
+        @media (max-width: 1024px) {
+          .login-card {
+            grid-template-columns: 1fr;
+            max-width: 480px;
           }
-<<<<<<< HEAD
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-
-        .spinner {
-          width: 20px;
-          height: 20px;
-          border: 2.5px solid rgba(255, 255, 255, 0.3);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: spin 0.7s linear infinite;
-        }
-=======
 
           .brand-side {
             display: none;
@@ -1000,56 +685,17 @@ export default function LoginPage() {
             left: 1rem;
             right: 1rem;
           }
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
 
           .notification {
             min-width: auto;
           }
 
-<<<<<<< HEAD
-        /* Responsive */
-        @media (max-width: 1024px) {
-          .register-container {
-            grid-template-columns: 1fr;
-            max-width: 480px;
-          }
-
-          .image-side {
-            display: none;
-          }
-
-          .form-side {
-            padding: 3rem 2rem;
-          }
-        }
-
-        @media (max-width: 640px) {
-          .form-side {
-            padding: 2rem 1.5rem;
-          }
-
-          .form-title {
-            font-size: 2rem;
-          }
-
-          .input-field,
-          .btn-signup,
-          .btn-google {
-            height: 48px;
-=======
           .mobile-hero {
             height: 160px;
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
           }
         }
       `}</style>
 
-<<<<<<< HEAD
-        {/* Back to Home Button */}
-      <motion.button
-        className="back-to-home"
-        onClick={handleBackToHome}
-=======
       {/* Floating Shapes */}
       <div className="floating-shape shape-1" />
       <div className="floating-shape shape-2" />
@@ -1059,7 +705,6 @@ export default function LoginPage() {
       <motion.a
         href="/"
         className="back-btn"
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         whileHover={{ scale: 1.05 }}
@@ -1069,25 +714,6 @@ export default function LoginPage() {
         <span>Kembali</span>
       </motion.a>
 
-<<<<<<< HEAD
-      <motion.div
-        className="register-container"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        {/* Left Side - Form */}
-        <div className="form-side">
-            <div className="logo-badge">
-              <img src="/logo.png" alt="Logo" />
-            </div>
-
-          <div className="form-header">
-            <h1 className="form-title">Selamat Datang di UMKMotion</h1>
-            <p className="form-subtitle">
-              Masuk untuk melanjutkan perjalanan bisnis Anda
-            </p>
-=======
       {/* Notification */}
       <AnimatePresence>
         {notification && notification.type === "success" && (
@@ -1164,106 +790,11 @@ export default function LoginPage() {
             </div>
             <h2 className="form-title">Masuk ke Akun</h2>
             <p className="form-subtitle">Masukkan email dan password untuk mengakses Homepage Anda</p>
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
           </div>
 
           <form onSubmit={handleSubmit}>
             {/* Email Input */}
             <div className="input-group">
-<<<<<<< HEAD
-              <div className="input-wrapper">
-                <div className="input-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="5" width="18" height="14" rx="2" />
-                    <path d="M3 7l9 6 9-6" />
-                  </svg>
-                </div>
-                <input
-                  type="email"
-                  className="input-field"
-                  placeholder="hi@polarastudio.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Password Input */}
-            <div className="input-group">
-              <div className="input-wrapper">
-                <div className="input-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" />
-                    <path d="M7 11V7a5 5 0 0110 0v4" />
-                  </svg>
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  className="input-field has-toggle"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  className="toggle-password"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff /> : <Eye />}
-                </button>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button 
-              type="submit" 
-              className="btn-signup"
-              disabled={isLoading}
-            >
-              {isLoading ? <div className="spinner" /> : 'Sign Up'}
-            </button>
-          </form>
-
-          <div className="divider"></div>
-
-          {/* Google Signup */}
-          <button 
-            type="button" 
-            className="btn-google"
-            onClick={handleGoogleSignup}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
-            Sign in with Google
-          </button>
-
-          {/* Login Link */}
-          <p className="login-text">
-            Belum punya akun?{' '}
-            <a href="/register" className="login-link">Register Sekarang!</a>
-          </p>
-        </div>
-
-        {/* Right Side - Image */}
-        <div className="image-side">
-          <img 
-            src="/asset/umkm/umkm1.png"
-            alt="Justice Statue" 
-            className="statue-image"
-          />
-          <div className="image-overlay">
-            <div className="marquee-text">
-              Shining beacon the planet's light • Shining beacon the planet's light • Shining beacon the planet's light •
-            </div>
-          </div>
-=======
               <label htmlFor="email" className="input-label">
                 Email
               </label>
@@ -1409,7 +940,6 @@ export default function LoginPage() {
             Belum punya akun?{" "}
             <a href="/register">Daftar di sini</a>
           </p>
->>>>>>> 992d3c57d600f1596b0e07b353da10b398b12602
         </div>
       </motion.div>
     </div>

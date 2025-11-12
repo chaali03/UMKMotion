@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+"use client";
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, Sparkles } from 'lucide-react';
 
 interface SearchBarProps {

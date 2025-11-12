@@ -169,7 +169,12 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
             {/* Mobile: Hamburger Menu */}
             {isMobile && (
               <Drawer.Root direction="left" open={isOpen} onOpenChange={setIsOpen}>
-                <Drawer.Trigger className="group relative px-3.5 text-white h-11 grid place-content-center bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] hover:from-[#ff8534] hover:to-[#ff6914] rounded-xl transition-all duration-300 shadow-[0_4px_16px_rgba(255,122,26,0.3)] hover:shadow-[0_6px_24px_rgba(255,122,26,0.4)] hover:scale-[1.02]">
+                <Drawer.Trigger
+                  className="group relative px-3.5 text-white h-11 grid place-content-center bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] hover:from-[#ff8534] hover:to-[#ff6914] rounded-xl transition-all duration-300 shadow-[0_4px_16px_rgba(255,122,26,0.3)] hover:shadow-[0_6px_24px_rgba(255,122,26,0.4)] hover:scale-[1.02]"
+                  aria-label="Buka menu"
+                  aria-expanded={isOpen}
+                  aria-controls="mobile-drawer"
+                >
                   <AlignJustify className="transition-transform duration-300 group-hover:scale-110" />
                   <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </Drawer.Trigger>
@@ -178,6 +183,7 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                   <Drawer.Content
                     className="left-3 top-3 bottom-3 fixed z-50 outline-none w-80 flex"
                     style={{ "--initial-transform": "calc(100% + 12px)" } as React.CSSProperties}
+                    id="mobile-drawer"
                   >
                     <div className="dark:bg-gradient-to-br dark:from-neutral-950 dark:to-neutral-900 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 dark:border-neutral-800 p-5 h-full w-full grow flex flex-col rounded-2xl shadow-2xl">
                       {/* Drawer Header */}
@@ -196,6 +202,7 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                         <button
                           className="rounded-xl bg-gradient-to-r from-neutral-900 to-neutral-800 dark:from-neutral-800 dark:to-neutral-700 px-3.5 py-2.5 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                           onClick={() => setIsOpen(false)}
+                          aria-label="Tutup menu"
                         >
                           <X size={20} />
                         </button>

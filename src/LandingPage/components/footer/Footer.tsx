@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { 
   ArrowUpRight, 
@@ -341,6 +341,9 @@ export default function Footer() {
           src="/asset/optimized/Footer/FooterImg.webp" 
           alt="UMKMotion Footer Banner"
           className="w-full h-auto"
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
         />
       </div>
 

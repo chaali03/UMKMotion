@@ -1,8 +1,8 @@
 "use client";
+import React, { useRef, useEffect, useState } from "react";
 import { TimelineContent } from "@/components/ui/timeline-animation";
 import VerticalCutReveal from "@/components/ui/vertical-cut-reveal";
 import { ArrowRight, MapPin, TrendingUp, Users, Zap, Compass, Star, Clock, Store } from "lucide-react";
-import { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence, cubicBezier } from "framer-motion";
 
 export default function Konten() {
