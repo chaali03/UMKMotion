@@ -54,8 +54,8 @@ export const stores: Omit<Store, 'createdAt' | 'updatedAt'>[] = [
   },
   {
     nama_toko: "Karya Nusantara",
-    image: "https://images.unsplash.com/photo-1582639590011-f5a8416d1101?w=1200&auto=format&fit=crop&q=60",
-    banner: "https://images.unsplash.com/photo-1582639590011-f5a8416d1101?w=1920&auto=format&fit=crop&q=60",
+    image: "https://klik-online.com/wp-content/uploads/2023/12/DUTA.jpg",
+    banner: "https://klik-online.com/wp-content/uploads/2023/12/DUTA.jpg",
     kategori: "Kerajinan Tangan",
     deskripsi_toko: "Galeri dan toko kerajinan tangan Indonesia. Karya Nusantara menghadirkan berbagai produk kerajinan berkualitas seperti anyaman, ukiran kayu, keramik, dan suvenir khas Nusantara yang dibuat oleh pengrajin lokal terpilih.",
     lokasi_toko: "Jl. Imogiri Timur No.123, Giwangan, Kec. Umbulharjo, Kota Yogyakarta, Daerah Istimewa Yogyakarta 55163",
