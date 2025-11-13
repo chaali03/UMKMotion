@@ -25,7 +25,9 @@ export type Product = {
   unit_terjual?: number | null;
   persentase_diskon?: number | null;
   harga_asli?: number | null;
-  bonusText?: string;
+  tags?: string[];
+  likes?: number;
+  interactions?: number;
   discount?: string;
   product_price?: string;
 };
@@ -92,10 +94,31 @@ function FetchData() {
     return "0%";
   };
 
-  const generateBonusText = () => {
-    const bonuses = ["Gratis Ongkir", "+Hadiah Gratis", "Cashback 10%", "Diskon Ekstra"];
-    return bonuses[Math.floor(Math.random() * bonuses.length)];
+  // Normalize various Firestore field names to our Product shape
+  const normalizeTags = (data: any): string[] | undefined => {
+    const cands = [data?.tags, data?.tag, data?.promoTags, data?.labels, data?.label, data?.promo_labels];
+    const arr = cands.find((v) => Array.isArray(v)) as string[] | undefined;
+    if (arr && arr.length) return arr.filter(Boolean).map((t) => String(t));
+    const single = [data?.promo, data?.badge, data?.labelText].find((v) => typeof v === 'string');
+    return single ? [String(single)] : undefined;
   };
+
+  const coalesceNumber = (...vals: any[]): number | null => {
+    for (const v of vals) {
+      if (typeof v === 'number' && !isNaN(v)) return v;
+      if (typeof v === 'string' && v.trim()) {
+        // Extract leading number from strings like '10%', '10 persen', '10.5'
+        const m = v.match(/-?\d+(?:[\.,]\d+)?/);
+        if (m) {
+          const n = Number(m[0].replace(',', '.'));
+          if (!isNaN(n)) return n;
+        }
+      }
+    }
+    return null;
+  };
+
+  // Kita tidak lagi men-generate bonusText; tag akan langsung dipakai dari Firestore
 
   const handleProductClick = (product: Product) => {
     localStorage.setItem("selectedProduct", JSON.stringify(product));
@@ -157,7 +180,10 @@ function FetchData() {
               deskripsi_produk: "Kopi asli dari petani lokal.",
               rating_bintang: 4.5,
               unit_terjual: 1200,
-              persentase_diskon: 10
+              persentase_diskon: 10,
+              tags: ["Gratis Ongkir", "Produk Lokal"],
+              likes: 245,
+              interactions: 89
             },
             {
               ASIN: "mock002",
@@ -170,13 +196,15 @@ function FetchData() {
               toko: "Toko Baju Jaya",
               deskripsi_produk: "Kaos nyaman untuk daily wear.",
               rating_bintang: 4.8,
-              unit_terjual: 850
+              unit_terjual: 850,
+              tags: ["Cashback 5%", "Kualitas Premium"],
+              likes: 156,
+              interactions: 42
             }
           ];
 
           const transformed = mockData.map(p => ({
             ...p,
-            bonusText: generateBonusText(),
             discount: getDiscount(p),
             product_price: formatToIDR(p.harga_produk),
           }));
@@ -189,8 +217,20 @@ function FetchData() {
         }
 
         const products: Product[] = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return { ...data, ASIN: doc.id } as Product;
+          const data = doc.data() as any;
+          const tags = normalizeTags(data);
+          const persentase_diskon = coalesceNumber(
+            data?.persentase_diskon,
+            data?.persentaseDiskon,
+            data?.discountPercent,
+            data?.diskon_persen,
+            data?.diskon,
+            data?.discount
+          );
+          const harga_asli = coalesceNumber(data?.harga_asli, data?.hargaAsli, data?.original_price, data?.hargaCoret);
+          const likes = coalesceNumber(data?.likes, data?.favorites, data?.hearts) ?? undefined;
+          const interactions = coalesceNumber(data?.interactions, data?.views, data?.engagements) ?? undefined;
+          return { ...data, ASIN: doc.id, tags, persentase_diskon, harga_asli, likes, interactions } as Product;
         });
 
         const filtered = searchQuery
@@ -202,7 +242,6 @@ function FetchData() {
 
         const transformed = filtered.map(p => ({
           ...p,
-          bonusText: generateBonusText(),
           discount: getDiscount(p),
           product_price: formatToIDR(p.harga_produk),
         }));
@@ -241,7 +280,7 @@ function FetchData() {
         .product-container {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           background: linear-gradient(180deg, rgba(0,17,81,0.02) 0%, rgba(253,87,1,0.02) 100%);
-          padding: 40px 24px;
+          padding: 32px 20px;
           max-width: 1600px;
           margin: 0 auto;
           min-height: 100vh;
@@ -249,320 +288,301 @@ function FetchData() {
 
         .product-list {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-          gap: 28px;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 24px;
           justify-content: center;
         }
 
         .product-card {
           background: white;
-          border-radius: 24px;
+          border-radius: 20px;
           overflow: hidden;
-          transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+          transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
           cursor: pointer;
           position: relative;
-          border: 2px solid transparent;
+          border: 1.5px solid #f1f5f9;
           display: flex;
           flex-direction: column;
           height: 100%;
-          min-height: 480px;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
-        }
-
-        .product-card::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 24px;
-          padding: 2px;
-          background: linear-gradient(135deg, var(--brand-orange), var(--brand-blue));
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
-          opacity: 0;
-          transition: opacity 0.4s ease;
+          min-height: 420px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.03);
         }
 
         .product-card:hover {
-          transform: translateY(-8px) scale(1.02);
-          box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.08);
-        }
-
-        .product-card:hover::before {
-          opacity: 1;
+          transform: translateY(-4px);
+          box-shadow: 0 12px 28px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+          border-color: var(--brand-orange);
         }
 
         .discount-badge {
           position: absolute;
-          top: 16px;
-          left: 16px;
+          top: 12px;
+          left: 12px;
           background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
           color: white;
-          font-weight: 900;
-          font-size: 0.85rem;
-          padding: 8px 16px;
-          border-radius: 12px;
+          font-weight: 800;
+          font-size: 0.75rem;
+          padding: 6px 12px;
+          border-radius: 8px;
           z-index: 10;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
-
-        .cart-icon-badge {
-          background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-blue-ink) 100%);
-          color: white;
-          width: 52px;
-          height: 52px;
-          border-radius: 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-          flex-shrink: 0;
-          box-shadow: 0 4px 12px rgba(0,17,81,0.2);
-        }
-
-        .cart-icon-badge:hover {
-          transform: scale(1.1) rotate(5deg);
-          box-shadow: 0 8px 20px rgba(0,17,81,0.3);
-        }
-
-        .cart-icon-badge svg {
-          width: 24px;
-          height: 24px;
-          stroke: white;
-          stroke-width: 2.5;
+          box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
         }
 
         .product-image {
           width: 100%;
-          height: 280px;
-          background: linear-gradient(135deg, rgba(0,17,81,0.04) 0%, rgba(253,87,1,0.04) 100%);
+          height: 200px;
+          background: linear-gradient(135deg, rgba(0,17,81,0.03) 0%, rgba(253,87,1,0.03) 100%);
           overflow: hidden;
           position: relative;
         }
-
-        .product-image::before {
-          content: '';
+        .discount-chip {
+          display: inline-flex;
+          align-items: center;
+          padding: 6px 10px;
+          border-radius: 9999px;
+          font-size: 0.75rem;
+          font-weight: 800;
+          color: #ef4444;
+          background: #fee2e2;
+          border: 1px solid #fecaca;
+          box-shadow: 0 2px 6px rgba(239,68,68,0.2);
+        }
+        .discount-chip-overlay {
           position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            135deg,
-            rgba(0,17,81,0.03) 0%,
-            transparent 30%,
-            transparent 70%,
-            rgba(253,87,1,0.03) 100%
-          );
-          z-index: 1;
-          pointer-events: none;
+          top: 10px;
+          left: 10px;
+          z-index: 5;
         }
 
         .product-image img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-          filter: brightness(1.03) contrast(1.08) saturate(1.12);
+          transition: all 0.4s ease;
         }
 
         .product-card:hover .product-image img {
-          transform: scale(1.12);
-          filter: brightness(1.06) contrast(1.1) saturate(1.2);
+          transform: scale(1.08);
         }
 
         .product-info {
-          padding: 24px;
+          padding: 16px;
           display: flex;
           flex-direction: column;
-          gap: 14px;
+          gap: 12px;
           flex-grow: 1;
         }
 
         .product-title {
-          font-size: 1.15rem;
-          font-weight: 700;
+          font-size: 0.95rem;
+          font-weight: 600;
           color: var(--brand-blue-ink);
-          line-height: 1.5;
+          line-height: 1.4;
           margin: 0;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
           text-overflow: ellipsis;
-          min-height: 3rem;
-          letter-spacing: -0.02em;
+          min-height: 2.7rem;
         }
 
         .rating-sold {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 10px;
+          gap: 8px;
         }
 
         .rating {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
           color: #fbbf24;
-          font-weight: 700;
-          font-size: 0.95rem;
+          font-weight: 600;
+          font-size: 0.8rem;
         }
 
         .sold {
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           color: #64748b;
-          background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-          padding: 6px 12px;
-          border-radius: 100px;
-          font-weight: 700;
-          border: 1px solid #e2e8f0;
+          background: #f8fafc;
+          padding: 4px 8px;
+          border-radius: 6px;
+          font-weight: 600;
         }
 
         .price-large {
-          font-size: 1.5rem;
-          font-weight: 900;
+          font-size: 1.2rem;
+          font-weight: 800;
           color: var(--brand-blue-ink);
-          margin: 6px 0;
-          letter-spacing: -0.02em;
+          margin: 4px 0;
         }
 
         .bonus-promo {
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           color: var(--brand-orange);
-          font-weight: 800;
-          background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-          padding: 8px 14px;
-          border-radius: 10px;
-          border: 2px solid var(--brand-orange);
+          font-weight: 700;
+          background: #fff7ed;
+          padding: 6px 10px;
+          border-radius: 6px;
+          border: 1px solid #fed7aa;
           display: inline-block;
           width: fit-content;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          box-shadow: 0 2px 8px rgba(253, 87, 1, 0.15);
         }
 
         .store-name {
-          font-size: 0.85rem;
+          font-size: 0.8rem;
           color: var(--brand-orange);
-          font-weight: 700;
-          margin: 8px 0 0;
+          font-weight: 600;
+          margin: 4px 0 0;
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding-top: 12px;
-          border-top: 2px dashed #e2e8f0;
+          gap: 6px;
+          padding-top: 10px;
+          border-top: 1px dashed #e2e8f0;
         }
 
         .store-name::before {
           content: '✓';
-          background: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-500) 100%);
+          background: var(--brand-orange);
           color: white;
-          width: 20px;
-          height: 20px;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 0.7rem;
+          font-size: 0.6rem;
           font-weight: 900;
-          box-shadow: 0 2px 6px rgba(253, 87, 1, 0.3);
         }
 
         .action-buttons {
           margin-top: auto;
-          padding-top: 14px;
+          padding-top: 12px;
           display: flex;
-          gap: 10px;
+          gap: 8px;
           align-items: center;
         }
 
         .btn-buy {
           flex: 1;
-          padding: 16px;
-          border-radius: 16px;
-          font-size: 0.95rem;
-          font-weight: 800;
+          padding: 12px 16px;
+          border-radius: 12px;
+          font-size: 0.85rem;
+          font-weight: 700;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
+          gap: 6px;
           cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+          transition: all 0.2s ease;
           border: none;
           background: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-500) 100%);
           color: white;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          box-shadow: 0 4px 12px rgba(253, 87, 1, 0.3);
         }
 
         .btn-buy:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 8px 20px rgba(253, 87, 1, 0.4);
-        }
-
-        .btn-buy:active {
           transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(253, 87, 1, 0.3);
         }
 
         .btn-icon {
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
+        }
+
+        .cart-icon-badge {
+          width: 48px;
+          height: 48px;
+          background: linear-gradient(135deg, var(--brand-orange) 0%, #f97316 100%);
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+          border: 2px solid transparent;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .cart-icon-badge:hover {
+          transform: scale(1.05);
+        }
+
+        .cart-icon-badge svg {
+          width: 20px;
+          height: 20px;
+          stroke: white;
+          stroke-width: 2.5;
+        }
+
+        .favorite-icon-badge {
+          width: 48px;
+          height: 48px;
+          background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+          border: 2px solid transparent;
+          position: relative;
+          overflow: hidden;
+          color: #64748b;
+        }
+
+        .favorite-icon-badge.favorited {
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          color: white;
+        }
+
+        .favorite-icon-badge:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
+          border-color: #ef4444;
+        }
+
+        .favorite-icon-badge svg {
+          width: 20px;
+          height: 20px;
+        }
+
+        .engagement {
+          font-size: 0.75rem;
+          color: #64748b;
+        }
+
+        .engagement svg {
+          color: #94a3b8;
+        }
+
+        .likes, .interactions {
+          font-weight: 500;
         }
 
         .load-more-wrapper {
           text-align: center;
-          margin: 60px 0 40px;
+          margin: 40px 0 20px;
         }
 
         .load-more-btn {
           background: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-500) 100%);
           color: white;
           border: none;
-          padding: 18px 56px;
-          border-radius: 100px;
-          font-weight: 800;
-          font-size: 1.05rem;
+          padding: 14px 40px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 0.9rem;
           cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 8px 24px rgba(253, 87, 1, 0.3);
-        }
-
-        .load-more-btn::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, var(--brand-blue) 0%, rgba(0,17,81,0.9) 100%);
-          opacity: 0;
-          transition: opacity 0.3s ease;
+          transition: all 0.2s ease;
         }
 
         .load-more-btn:hover:not(:disabled) {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 32px rgba(253, 87, 1, 0.4);
-        }
-
-        .load-more-btn:hover:not(:disabled)::before {
-          opacity: 1;
-        }
-
-        .load-more-btn span {
-          position: relative;
-          z-index: 1;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(253, 87, 1, 0.3);
         }
 
         .load-more-btn:disabled {
@@ -579,30 +599,32 @@ function FetchData() {
         }
 
         /* ========================================
-           RESPONSIVE - SINGLE CARD ON MOBILE
+           RESPONSIVE DESIGN OPTIMIZATION - DIUBAH UNTUK 3 CARD DI DESKTOP
            ======================================== */
 
-        /* 🖥️ Ultra Wide Desktop (1920px+) - 6 columns */
+        /* 🖥️ Ultra Wide Desktop (1920px+) - 4 columns (tetap 4 untuk layar sangat lebar) */
         @media (min-width: 1920px) {
           .product-list { 
-            grid-template-columns: repeat(6, 1fr); 
-            gap: 32px;
-          }
-        }
-
-        /* 🖥️ Large Desktop (1440px - 1919px) - 5 columns */
-        @media (min-width: 1440px) and (max-width: 1919px) {
-          .product-list { 
-            grid-template-columns: repeat(5, 1fr); 
+            grid-template-columns: repeat(4, 1fr); 
             gap: 28px;
           }
+          .product-card { min-height: 440px; }
+          .product-image { height: 220px; }
         }
 
-        /* 🖥️ Desktop (1200px - 1439px) - 4 columns */
+        /* 🖥️ Large Desktop (1440px - 1919px) - 3 columns */
+        @media (min-width: 1440px) and (max-width: 1919px) {
+          .product-list { 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 24px;
+          }
+        }
+
+        /* 🖥️ Desktop (1200px - 1439px) - 3 columns */
         @media (min-width: 1200px) and (max-width: 1439px) {
           .product-list { 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 24px;
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 22px;
           }
         }
 
@@ -610,191 +632,250 @@ function FetchData() {
         @media (min-width: 1024px) and (max-width: 1199px) {
           .product-list { 
             grid-template-columns: repeat(3, 1fr); 
-            gap: 24px;
-          }
-          .product-container { padding: 36px 20px; }
-        }
-
-        /* 📱 Tablet (768px - 1023px) - 3 columns */
-        @media (min-width: 768px) and (max-width: 1023px) {
-          .product-container { padding: 32px 18px; }
-          .product-list { 
-            grid-template-columns: repeat(3, 1fr); 
             gap: 20px;
           }
-          .product-card { 
-            min-height: 450px; 
-            border-radius: 20px;
-          }
-          .product-image { height: 240px; }
-          .product-info { padding: 20px; gap: 12px; }
-          .product-title { font-size: 1.05rem; min-height: 2.8rem; }
-          .price-large { font-size: 1.3rem; }
+          .product-container { padding: 28px 16px; }
         }
 
-        /* 📱 Small Tablet (640px - 767px) - 2 columns */
-        @media (min-width: 640px) and (max-width: 767px) {
-          .product-container { padding: 28px 16px; }
+        /* 📱 Tablet Landscape (900px - 1023px) - 2 columns */
+        @media (min-width: 900px) and (max-width: 1023px) {
+          .product-container { padding: 24px 16px; }
           .product-list { 
             grid-template-columns: repeat(2, 1fr); 
             gap: 18px;
           }
-          .product-card { 
-            min-height: 440px;
-            border-radius: 20px;
-          }
-          .product-image { height: 220px; }
-          .product-info { padding: 18px; gap: 11px; }
-          .product-title { font-size: 1rem; }
-          .price-large { font-size: 1.25rem; }
+          .product-card { min-height: 400px; }
+          .product-image { height: 180px; }
+          .product-info { padding: 14px; gap: 10px; }
+          .product-title { font-size: 0.9rem; min-height: 2.5rem; }
+          .price-large { font-size: 1.1rem; }
         }
 
-        /* 📱 MOBILE - SINGLE CARD (up to 639px) - 1 column */
-        @media (max-width: 639px) {
-          .product-container { 
-            padding: 24px 16px; 
-          }
-          
+        /* 📱 Tablet Portrait (768px - 899px) - 2 columns */
+        @media (min-width: 768px) and (max-width: 899px) {
+          .product-container { padding: 20px 16px; }
           .product-list { 
-            /* KEY CHANGE: Single column on mobile */
-            grid-template-columns: 1fr; 
-            gap: 24px;
-            max-width: 500px;
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 16px;
+          }
+          .product-card { 
+            min-height: 380px;
+            border-radius: 16px;
+          }
+          .product-image { height: 170px; }
+          .product-info { padding: 12px; gap: 8px; }
+          .product-title { font-size: 0.85rem; min-height: 2.3rem; }
+          .price-large { font-size: 1rem; }
+          .btn-buy { padding: 10px 12px; font-size: 0.8rem; }
+          .cart-icon-badge { width: 40px; height: 40px; }
+        }
+
+        /* 📱 MOBILE - 2 CARD (640px - 767px) */
+        @media (min-width: 640px) and (max-width: 767px) {
+          .product-container { 
+            padding: 20px 16px; 
+          }
+          .product-list { 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 16px;
+            max-width: 600px;
             margin: 0 auto;
           }
-          
           .product-card { 
-            min-height: 500px;
-            border-radius: 24px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            min-height: 360px;
+            border-radius: 16px;
           }
-          
           .product-image { 
-            height: 300px; 
+            height: 160px; 
           }
-          
           .product-info { 
-            padding: 24px; 
-            gap: 14px; 
+            padding: 12px; 
+            gap: 8px; 
           }
-          
           .product-title { 
-            font-size: 1.15rem; 
-            min-height: 3rem;
-            line-height: 1.5;
-            font-weight: 700;
-          }
-          
-          .price-large { 
-            font-size: 1.5rem; 
-            margin: 8px 0;
-            font-weight: 900;
-          }
-          
-          .rating {
-            font-size: 0.95rem;
-            gap: 8px;
-          }
-          
-          .sold {
-            font-size: 0.8rem;
-            padding: 6px 12px;
-          }
-          
-          .bonus-promo {
-            font-size: 0.8rem;
-            padding: 8px 14px;
-          }
-          
-          .store-name {
-            font-size: 0.9rem;
-            padding-top: 12px;
-          }
-          
-          .action-buttons {
-            gap: 10px;
-            padding-top: 14px;
-          }
-          
-          .btn-buy { 
-            padding: 16px 12px;
-            font-size: 0.95rem;
-            border-radius: 16px;
-          }
-          
-          .cart-icon-badge { 
-            width: 52px; 
-            height: 52px;
-            border-radius: 16px;
-          }
-          
-          .cart-icon-badge svg { 
-            width: 24px; 
-            height: 24px; 
-          }
-          
-          .discount-badge { 
             font-size: 0.85rem; 
-            padding: 8px 16px; 
-            top: 16px;
-            left: 16px;
+            min-height: 2.3rem;
+            line-height: 1.3;
           }
-          
-          .btn-icon {
-            width: 18px;
-            height: 18px;
+          .price-large { 
+            font-size: 1rem; 
+            margin: 2px 0;
           }
-
-          .load-more-btn {
-            padding: 16px 48px;
-            font-size: 1rem;
+          .rating {
+            font-size: 0.75rem;
+            gap: 4px;
+          }
+          .sold {
+            font-size: 0.7rem;
+            padding: 3px 6px;
+          }
+          .bonus-promo {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+          }
+          .store-name {
+            font-size: 0.75rem;
+            padding-top: 8px;
+          }
+          .action-buttons {
+            gap: 8px;
+            padding-top: 10px;
+          }
+          .btn-buy { 
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            border-radius: 10px;
+          }
+          .cart-icon-badge { 
+            width: 40px; 
+            height: 40px;
+            border-radius: 10px;
+          }
+          .favorite-icon-badge { 
+            width: 40px; 
+            height: 40px;
+            border-radius: 10px;
+          }
+          .cart-icon-badge svg { 
+            width: 18px; 
+            height: 18px; 
+          }
+          .discount-badge { 
+            font-size: 0.7rem; 
+            padding: 4px 8px; 
+            top: 8px;
+            left: 8px;
           }
         }
 
-        /* 📱 Very Small Mobile (up to 380px) */
-        @media (max-width: 380px) {
+        /* 📱 Small Mobile (480px - 639px) - 2 columns lebih kecil */
+        @media (min-width: 480px) and (max-width: 639px) {
           .product-container { 
-            padding: 20px 12px; 
+            padding: 16px 12px; 
           }
-          
-          .product-list {
-            gap: 20px;
+          .product-list { 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 12px;
           }
-          
           .product-card { 
-            min-height: 480px;
+            min-height: 340px;
+            border-radius: 14px;
           }
-          
           .product-image { 
-            height: 280px; 
+            height: 150px; 
           }
-          
           .product-info { 
-            padding: 20px; 
-            gap: 12px; 
+            padding: 10px; 
+            gap: 6px; 
           }
-          
           .product-title { 
-            font-size: 1.05rem; 
+            font-size: 0.8rem; 
+            min-height: 2.1rem;
           }
-          
           .price-large { 
-            font-size: 1.35rem; 
+            font-size: 0.95rem; 
           }
-          
           .btn-buy { 
-            padding: 14px 10px;
-            font-size: 0.9rem;
+            padding: 8px 10px;
+            font-size: 0.75rem;
           }
-          
           .cart-icon-badge { 
-            width: 48px; 
-            height: 48px; 
+            width: 36px; 
+            height: 36px; 
           }
+          .favorite-icon-badge { 
+            width: 36px; 
+            height: 36px; 
+          }
+        }
 
+        /* 📱 Very Small Mobile (up to 479px) - 2 columns compact */
+        @media (max-width: 479px) {
+          .product-container { 
+            padding: 12px 8px; 
+          }
+          .product-list { 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 10px;
+          }
+          .product-card { 
+            min-height: 320px;
+            border-radius: 12px;
+          }
+          .product-image { 
+            height: 140px; 
+          }
+          .product-info { 
+            padding: 8px; 
+            gap: 6px; 
+          }
+          .product-title { 
+            font-size: 0.75rem; 
+            min-height: 2rem;
+            line-height: 1.2;
+          }
+          .price-large { 
+            font-size: 0.9rem; 
+          }
+          .rating, .sold {
+            font-size: 0.65rem;
+          }
+          .bonus-promo {
+            font-size: 0.65rem;
+            padding: 3px 6px;
+          }
+          .store-name {
+            font-size: 0.7rem;
+          }
+          .btn-buy { 
+            padding: 8px;
+            font-size: 0.7rem;
+            border-radius: 8px;
+          }
+          .cart-icon-badge { 
+            width: 32px; 
+            height: 32px;
+            border-radius: 8px;
+          }
+          .cart-icon-badge svg { 
+            width: 16px; 
+            height: 16px; 
+          }
+          .discount-badge { 
+            font-size: 0.65rem; 
+            padding: 3px 6px; 
+            top: 6px;
+            left: 6px;
+          }
           .load-more-btn {
-            padding: 14px 40px;
-            font-size: 0.95rem;
+            padding: 12px 32px;
+            font-size: 0.85rem;
+          }
+        }
+
+        /* 📱 Extra Small Mobile (up to 360px) - Tetap 2 columns tapi lebih compact */
+        @media (max-width: 360px) {
+          .product-container { 
+            padding: 10px 6px; 
+          }
+          .product-list { 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 8px;
+          }
+          .product-card { 
+            min-height: 300px;
+          }
+          .product-image { 
+            height: 130px; 
+          }
+          .product-info { 
+            padding: 6px; 
+          }
+          .product-title { 
+            font-size: 0.7rem; 
+          }
+          .price-large { 
+            font-size: 0.85rem; 
           }
         }
       `}</style>
@@ -821,14 +902,14 @@ function FetchData() {
             ) : null}
           </div>
         ) : displayedProducts.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#666", fontSize: "1.1rem", padding: "40px 0" }}>
+          <p style={{ textAlign: "center", color: "#666", fontSize: "1rem", padding: "40px 0" }}>
             Tidak ada produk ditemukan.
           </p>
         ) : (
           <>
             <div className="product-list">
               {displayedProducts.map((item) => {
-                const shortTitle = item.nama_produk.length > 60 ? item.nama_produk.slice(0, 57) + "..." : item.nama_produk;
+                const shortTitle = item.nama_produk.length > 50 ? item.nama_produk.slice(0, 47) + "..." : item.nama_produk;
                 const rating = renderStars(item.rating_bintang);
                 const sold = item.unit_terjual != null 
                   ? `${item.unit_terjual} terjual` 
@@ -844,7 +925,6 @@ function FetchData() {
                     sold={sold}
                     seller={item.toko}
                     discount={item.discount || getDiscount(item)}
-                    bonusText={item.bonusText || generateBonusText()}
                     product={item}
                     onProductClick={handleProductClick}
                   />
@@ -874,12 +954,12 @@ interface ProductCardProps {
   sold: string;
   seller: string;
   discount: string;
-  bonusText: string;
   product: Product;
   onProductClick: (p: Product) => void;
 }
 
-function ProductCard({ image, shortTitle, price, rating, sold, seller, discount, bonusText, product, onProductClick }: ProductCardProps) {
+function ProductCard({ image, shortTitle, price, rating, sold, seller, discount, product, onProductClick }: ProductCardProps) {
+  const toIDR = (n: number) => "Rp " + n.toLocaleString("id-ID");
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     let cart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -893,36 +973,113 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
     alert("Berhasil ditambahkan ke keranjang!");
   };
 
+  const handleAddToFavorites = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+    const existing = favorites.find((p: Product) => p.ASIN === product.ASIN);
+    if (existing) {
+      // Remove from favorites
+      favorites = favorites.filter((p: Product) => p.ASIN !== product.ASIN);
+      alert("Dihapus dari favorit!");
+    } else {
+      // Add to favorites
+      favorites.push(product);
+      alert("Ditambahkan ke favorit!");
+    }
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+  };
+
+  const isFavorited = () => {
+    const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+    return favorites.some((p: Product) => p.ASIN === product.ASIN);
+  };
+
+  // Only show discount badge if there's actual discount
+  const hasDiscount = discount && discount !== "0%";
+
   return (
     <div className="product-card" onClick={() => onProductClick(product)}>
-      <div className="discount-badge">{discount}</div>
       <div className="product-image">
         <img src={image} alt={shortTitle} loading="lazy" />
+        {hasDiscount && (
+          <div className="discount-chip-overlay" aria-label={`Diskon ${discount}`}>
+            <span className="discount-chip">Diskon {discount}</span>
+          </div>
+        )}
       </div>
       <div className="product-info">
         <div>
           <h3 className="product-title">{shortTitle}</h3>
-          <div className="rating-sold">
-            <div className="rating"><span>{rating}</span></div>
-            <div className="sold">{sold}</div>
+          <div className="rating-sold" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="rating"><span>{rating}</span></div>
+              <div className="sold">{sold}</div>
+            </div>
+            <div className="engagement" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div className="likes" title="Suka" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                <span>{typeof product.likes === 'number' ? product.likes : 0}</span>
+              </div>
+              <div className="interactions" title="Interaksi" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
+                </svg>
+                <span>{typeof product.interactions === 'number' ? product.interactions : 0}</span>
+              </div>
+            </div>
           </div>
-          <div className="price-large">{price}</div>
-          <p className="bonus-promo">{bonusText}</p>
+          <div className="price-large" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>{price}</span>
+            {hasDiscount && product.harga_asli && product.harga_asli > product.harga_produk && (
+              <span className="old-price" style={{
+                textDecoration: 'line-through', color: '#94a3b8', fontWeight: 600, fontSize: '0.9rem'
+              }}>
+                {toIDR(product.harga_asli as number)}
+              </span>
+            )}
+          </div>
+          {Array.isArray(product.tags) && product.tags.length > 0 && (
+            <div className="tag-list" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+              {product.tags
+                .filter(tag => !/\bdiskon\b/i.test(tag))
+                .slice(0, 4)
+                .map((tag, idx) => (
+                <span key={idx} className="tag-chip" style={{
+                  display: 'inline-flex', alignItems: 'center', padding: '4px 8px',
+                  borderRadius: 9999, fontSize: 12, fontWeight: 600, color: '#0f172a',
+                  background: '#f1f5f9', border: '1px solid #e2e8f0'
+                }}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
           <p className="store-name" title={seller}>{seller}</p>
         </div>
         <div className="action-buttons">
-          <button className="btn-buy" onClick={(e) => { e.stopPropagation(); onProductClick(product); }}>
+          <button className="btn-buy" onClick={(e) => { e.stopPropagation(); onProductClick(product); }} aria-label="Beli produk">
             <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 12l2 2 4-4" />
               <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
             </svg>
             Beli
           </button>
-          <div className="cart-icon-badge" onClick={handleAddToCart}>
+          <div className="cart-icon-badge" onClick={handleAddToCart} aria-label="Tambah ke keranjang">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="9" cy="21" r="1" />
               <circle cx="20" cy="21" r="1" />
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+          </div>
+          <div 
+            className={`favorite-icon-badge ${isFavorited() ? 'favorited' : ''}`} 
+            onClick={handleAddToFavorites}
+            aria-label="Tambah ke favorit"
+          >
+            <svg viewBox="0 0 24 24" fill={isFavorited() ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
           </div>
         </div>

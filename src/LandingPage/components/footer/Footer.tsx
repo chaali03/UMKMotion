@@ -1,6 +1,6 @@
 "use client";
 import React, { useRef, useState, useEffect } from "react";
-import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { 
   ArrowUpRight, 
   ArrowUp, 
@@ -9,7 +9,6 @@ import {
   Twitter, 
   Youtube, 
   Mail, 
-  Shield, 
   BookOpenText, 
   MapPin,
   Store,
@@ -47,7 +46,6 @@ export default function Footer() {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const inView = useInView(ref, { once: true, margin: "-10% 0px -10% 0px" });
-
 
   useEffect(() => {
     const checkMobile = () => {
@@ -98,7 +96,6 @@ export default function Footer() {
 
   return (
     <footer ref={containerRef} className="relative bg-white overflow-visible">
-
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 lg:py-24">
         <motion.div 
           ref={ref}
@@ -244,7 +241,6 @@ export default function Footer() {
                       </motion.div>
                     </motion.a>
 
-                    {/* Simplified hover background */}
                     <motion.div 
                       className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 opacity-0 -z-10"
                       whileHover={{ opacity: 1 }}
@@ -287,26 +283,6 @@ export default function Footer() {
               </motion.span>
               {" "}in Indonesia
             </p>
-            <div className="flex items-center gap-3 sm:gap-4">
-              <motion.a 
-                href="/security"
-                whileHover={!isMobile ? { scale: 1.1, y: -2 } : {}}
-                whileTap={{ scale: 0.95 }}
-                className="group inline-flex items-center gap-1.5 text-slate-600 transition-colors hover:text-orange-600"
-              >
-                <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:scale-110" />
-                <span>Security</span>
-              </motion.a>
-              <motion.a 
-                href="/docs"
-                whileHover={!isMobile ? { scale: 1.1, y: -2 } : {}}
-                whileTap={{ scale: 0.95 }}
-                className="group inline-flex items-center gap-1.5 text-slate-600 transition-colors hover:text-blue-600"
-              >
-                <BookOpenText className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:scale-110" />
-                <span>Docs</span>
-              </motion.a>
-            </div>
           </div>
 
           {/* Scroll to top button */}
@@ -341,6 +317,9 @@ export default function Footer() {
           src="/asset/optimized/Footer/FooterImg.webp" 
           alt="UMKMotion Footer Banner"
           className="w-full h-auto"
+          width={1200}
+          height={225}
+          sizes="(min-width: 1024px) 924px, 100vw"
           loading="lazy"
           decoding="async"
           fetchPriority="low"

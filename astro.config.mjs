@@ -36,7 +36,7 @@ export default defineConfig({
   // Prefetch optimization
   prefetch: {
     prefetchAll: false,
-    defaultStrategy: 'viewport'
+    defaultStrategy: 'tap'
   },
 
   // Vite config
@@ -58,7 +58,15 @@ export default defineConfig({
     build: {
       // Optimize bundle splitting
       // Let Rollup decide chunking to avoid circular chunk deps causing TDZ
-      rollupOptions: {},
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-icons': ['lucide-react'],
+            'vendor-motion': ['framer-motion'],
+            'vendor-ui': ['vaul']
+          }
+        }
+      },
       // Increase chunk size warning limit
       chunkSizeWarningLimit: 1000,
       // Enable minification

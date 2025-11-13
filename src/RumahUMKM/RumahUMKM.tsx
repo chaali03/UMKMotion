@@ -15,16 +15,15 @@ import HomeHeader from '@/LandingPage/components/header/header';
 
 // Icons
 import { 
-  MapPin, Star, Navigation, Phone, Clock, 
-  ShoppingBag, X, ChevronRight, Filter, Search,
-  TrendingUp, Heart, Share2, MessageCircle, Loader,
-  Menu, ChevronLeft, ChevronDown, ChevronUp,
-  Compass, MapPinned, Route, Car, Footprints as Walk, Bike,
-  Info, Image as ImageIcon, ExternalLink, Copy,
-  Zap, Award, Users, Eye, ArrowLeft, Home,
-  CheckCircle, Check, AlertCircle, Circle, Store,
-  Maximize2, Minimize2, Layers, Grid3x3,
-  Building2, MapIcon, LayoutGrid, List
+  Star, Navigation, Phone, 
+  ShoppingBag, X, ChevronRight, Search,
+  Heart, Share2, Loader,
+  ChevronLeft,
+  Compass, Car, Footprints as Walk, Bike,
+  Image as ImageIcon, ExternalLink,
+  Zap, Award, Users, ArrowLeft,
+  Circle, Store,
+  MapPin, Clock, Copy
 } from 'lucide-react';
 
 // Types
@@ -58,7 +57,7 @@ const umkmData: UMKMLocation[] = [
     address: "Jl. Merdeka No. 123, Jakarta Pusat",
     phone: "+62 812-3456-7890",
     openHours: "08:00 - 22:00",
-    image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=160&h=160&fit=crop&auto=format&q=70",
     lat: -6.2088,
     lng: 106.8456,
     verified: true,
@@ -86,7 +85,7 @@ const umkmData: UMKMLocation[] = [
     address: "Jl. Sudirman No. 45, Jakarta Selatan",
     phone: "+62 813-9876-5432",
     openHours: "09:00 - 21:00",
-    image: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=160&h=160&fit=crop&auto=format&q=70",
     lat: -6.2185,
     lng: 106.8426,
     verified: true,
@@ -111,7 +110,7 @@ const umkmData: UMKMLocation[] = [
     address: "Jl. Gatot Subroto No. 78, Jakarta Barat",
     phone: "+62 821-5555-4444",
     openHours: "08:00 - 18:00",
-    image: "https://images.unsplash.com/photo-1615529182904-14819c35db37?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1615529182904-14819c35db37?w=160&h=160&fit=crop&auto=format&q=70",
     lat: -6.2114,
     lng: 106.8294,
     verified: true,
@@ -136,7 +135,7 @@ const umkmData: UMKMLocation[] = [
     address: "Jl. Thamrin No. 12, Jakarta Pusat",
     phone: "+62 822-7777-8888",
     openHours: "07:00 - 23:00",
-    image: "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=160&h=160&fit=crop&auto=format&q=70",
     lat: -6.1944,
     lng: 106.8229,
     verified: true,
@@ -149,7 +148,7 @@ const umkmData: UMKMLocation[] = [
     ],
     photos: [
       "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=400&h=300&fit=crop",
-      "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=400&h=300&fit=crop",
+      "https://images.unsplash.com/photo-1442512595331-8b74394b95c6?w=400&h=300&fit=crop",
     ]
   },
 ];
@@ -390,6 +389,7 @@ export default function RumahUMKM() {
                     <motion.button
                       onClick={handleBackToList}
                       className="p-2 hover:bg-white/80 rounded-full transition-colors touch-manipulation"
+                      aria-label="Kembali ke daftar"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -409,6 +409,7 @@ export default function RumahUMKM() {
                   <motion.button
                     onClick={() => setShowSidebar(false)}
                     className="lg:hidden p-2 hover:bg-white/80 rounded-full touch-manipulation"
+                    aria-label="Tutup panel UMKM"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -466,6 +467,13 @@ export default function RumahUMKM() {
                               src={umkm.image} 
                               alt={umkm.name}
                               className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover ring-2 ring-orange-100"
+                              width={80}
+                              height={80}
+                              srcSet={`${umkm.image}&w=64&h=64 64w, ${umkm.image}&w=80&h=80 80w, ${umkm.image}&w=120&h=120 120w`}
+                              sizes="(max-width: 1024px) 64px, 80px"
+                              loading={index === 0 ? 'eager' : 'lazy'}
+                              fetchPriority={index === 0 ? 'high' : undefined as any}
+                              decoding="async"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).src = 'https://via.placeholder.com/80?text=No+Image';
                               }}
@@ -484,6 +492,7 @@ export default function RumahUMKM() {
                                   toggleFavorite(umkm.id);
                                 }}
                                 className="flex-shrink-0 touch-manipulation p-1"
+                                aria-label={favorites.has(umkm.id) ? 'Hapus dari favorit' : 'Tambah ke favorit'}
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                               >
@@ -542,9 +551,13 @@ export default function RumahUMKM() {
                         {slides.map((src, idx) => (
                           <img
                             key={idx}
-                            src={src}
+                            src={src.replace(/w=400&h=300/, 'w=600&h=300')}
                             alt={`${selectedUMKM.name} ${idx + 1}`}
                             className="h-full w-full min-w-full flex-none object-cover snap-center"
+                            loading={idx === 0 ? 'eager' : 'lazy'}
+                            decoding="async"
+                            width={600}
+                            height={300}
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600x300?text=No+Image';
                             }}
@@ -951,7 +964,8 @@ export default function RumahUMKM() {
           `fixed left-0 right-0 bottom-0 z-0 transition-all duration-300 ` +
           `top-[64px] md:top-[80px] lg:top-[96px]`
         }>
-          {isClient && (
+          {/* Defer map until user enables */}
+          {isClient && showMap ? (
             <MapboxComponent 
               center={userLocation}
               zoom={hasGeoPermission ? 13 : 5}
@@ -959,6 +973,18 @@ export default function RumahUMKM() {
               selectedUMKM={selectedUMKM}
               onSelectUMKM={handleSelectUMKM}
             />
+          ) : (
+            <div className="absolute inset-0 grid place-items-center bg-white">
+              <div className="text-center space-y-3">
+                <p className="text-sm md:text-base text-slate-600">Peta belum dimuat untuk mempercepat loading.</p>
+                <button
+                  onClick={() => setShowMap(true)}
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white px-5 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl"
+                >
+                  Tampilkan Peta
+                </button>
+              </div>
+            </div>
           )}
 
           {/* Floating Controls */}
@@ -973,6 +999,7 @@ export default function RumahUMKM() {
               className="p-3 md:p-3.5 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 touch-manipulation border-2 border-blue-200 hover:border-blue-300 group"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              aria-label="Arahkan ke lokasi saya"
               onClick={() => {
                 if (navigator.geolocation) {
                   navigator.geolocation.getCurrentPosition((position) => {

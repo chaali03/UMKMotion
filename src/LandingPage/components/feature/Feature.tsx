@@ -88,7 +88,7 @@ const Feature1 = () => {
       {/* Header Section */}
       <article className="max-w-5xl mx-auto py-12 text-center space-y-4 px-8">
         <TimelineContent
-          as={motion.div}
+          as="div"
           animationNum={0}
           timelineRef={featuresRef}
           customVariants={revealVariants}
@@ -190,28 +190,38 @@ const Feature1 = () => {
               "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&h=150&q=80&fm=webp&fit=crop&auto=format,compress",
               "https://images.unsplash.com/photo-1617171594279-3aa1f300a0f2?w=200&h=150&q=80&fm=webp&fit=crop&auto=format,compress",
               "https://images.unsplash.com/photo-1659228135452-c4c7b5118047?w=200&h=150&q=80&fm=webp&fit=crop&auto=format,compress",
-            ].map((src, i) => (
-              <motion.div
-                key={i}
-                className="relative"
-                initial={{ scale: 0, rotate: 180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{
-                  delay: 2.0 + i * 0.2,
-                  duration: 0.5,
-                  type: "spring",
-                  stiffness: 200,
-                }}
-              >
-                <img
-                  src={src}
-                  alt={`User ${i + 1}`}
-                  className="rounded-2xl border-4 border-white h-16 w-16 object-cover shadow-lg ring-2 ring-purple-200"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </motion.div>
-            ))}
+            ].map((src, i) => {
+              const s48 = src.replace("w=200&h=150", "w=48&h=48");
+              const s64 = src.replace("w=200&h=150", "w=64&h=64");
+              const s96 = src.replace("w=200&h=150", "w=96&h=96");
+              const srcSet = `${s48} 48w, ${s64} 64w, ${s96} 96w`;
+              return (
+                <motion.div
+                  key={i}
+                  className="relative"
+                  initial={{ scale: 0, rotate: 180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{
+                    delay: 2.0 + i * 0.2,
+                    duration: 0.5,
+                    type: "spring",
+                    stiffness: 200,
+                  }}
+                >
+                  <img
+                    src={s64}
+                    srcSet={srcSet}
+                    sizes="(max-width: 640px) 48px, 64px"
+                    width={64}
+                    height={64}
+                    alt={`User ${i + 1}`}
+                    className="rounded-2xl border-4 border-white h-16 w-16 object-cover shadow-lg ring-2 ring-purple-200"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </motion.div>
+              );
+            })}
             <motion.div
               className="flex items-center justify-center rounded-2xl border-4 border-white h-16 w-16 bg-gradient-to-br from-purple-500 to-blue-500 shadow-lg ring-2 ring-purple-200"
               initial={{ scale: 0 }}
@@ -335,7 +345,7 @@ const Feature1 = () => {
                   className="p-2 bg-gray-100 rounded-xl group-hover:bg-gray-200 transition-colors"
                   whileHover={{ scale: 1.1, rotate: -10 }}
                 >
-                  <ArrowRight className="w-5 h-5 text-gray-700" />
+                  <ArrowRight className="w-5 h-5 text-gray-700" aria-label="Select plan" />
                 </motion.div>
               </motion.div>
             ))}
@@ -620,6 +630,7 @@ const Feature1 = () => {
                   transition={{ delay: 4.6, duration: 0.4, type: "spring" }}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
+                  aria-label="Adjust tone"
                   suppressHydrationWarning
                 >
                   <PencilLine className="h-3 w-3" />
@@ -651,6 +662,7 @@ const Feature1 = () => {
                 transition={{ delay: 5.2, duration: 0.4, type: "spring" }}
                 whileHover={{ scale: 1.1, rotate: -10 }}
                 whileTap={{ scale: 0.9 }}
+                aria-label="Kirim pesan"
                 suppressHydrationWarning
               >
                 <ArrowRight className="h-5 w-5" />

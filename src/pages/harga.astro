@@ -1,0 +1,16 @@
+---
+import LandingPageLayout from "../layouts/LandingPageLayout.astro";
+import Navbar from "../LandingPage/components/Header.astro";
+import Footer from "../LandingPage/components/Footer.astro";
+import PricingView from "../../Home/Pricing/harga";
+
+const title = "Pricing - UMKMotion";
+---
+
+<LandingPageLayout {title}>
+  <Navbar />
+  <main class="min-h-screen pt-20">
+    <PricingView client:visible />
+  </main>
+  <Footer />
+</LandingPageLayout>

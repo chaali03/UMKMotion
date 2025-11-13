@@ -5,6 +5,7 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
   const [localCategory, setLocalCategory] = useState(parentCategory || "all");
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(true);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const sectionRef = useRef(null);
   const searchInputRef = useRef(null);
 
@@ -100,12 +101,12 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
 
   const scrollPrev = () => {
     const section = sectionRef.current;
-    if (section) smoothScroll(section, section.scrollLeft - 500, 500);
+    if (section) smoothScroll(section, section.scrollLeft - 600, 500);
   };
 
   const scrollNext = () => {
     const section = sectionRef.current;
-    if (section) smoothScroll(section, section.scrollLeft + 500, 500);
+    if (section) smoothScroll(section, section.scrollLeft + 600, 500);
   };
 
   useEffect(() => {
@@ -220,15 +221,23 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
   return (
     <>
       <style>{`
+        /* ========================================
+           BASE STYLES 
+           ======================================== */
         .kategori-card {
-          background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-          border-radius: 42px;
-          padding: 56px;
-          margin: 32px auto;
-          max-width: 1600px;
-          border: 1px solid #e5e7eb;
+          background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+          border-radius: clamp(20px, 4vw, 32px);
+          padding: clamp(20px, 4vw, 48px);
+          margin: clamp(16px, 3vw, 32px) auto;
+          max-width: min(1800px, 95vw);
+          border: 1px solid rgba(255, 255, 255, 0.2);
           overflow: hidden;
           position: relative;
+          box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.05),
+            0 8px 24px rgba(0, 0, 0, 0.03),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(20px);
         }
 
         .kategori-card::before {
@@ -237,10 +246,12 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
           top: 0;
           left: 0;
           right: 0;
-          height: 6px;
-          background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c, #4facfe, #00f2fe, #43e97b, #667eea);
+          height: 4px;
+          background: linear-gradient(90deg, 
+            #667eea, #764ba2, #f093fb, #f5576c, 
+            #4facfe, #00f2fe, #43e97b, #667eea);
           background-size: 200% 100%;
-          animation: rainbowShimmer 4s linear infinite;
+          animation: rainbowShimmer 3s linear infinite;
         }
 
         @keyframes rainbowShimmer {
@@ -250,162 +261,173 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
 
         .search-form {
           display: flex;
-          gap: 24px;
-          margin-bottom: 48px;
+          gap: clamp(12px, 2vw, 24px);
+          margin-bottom: clamp(24px, 4vw, 48px);
           flex-wrap: wrap;
           position: relative;
         }
 
         .search-input-wrapper {
           flex: 1;
-          min-width: 400px;
+          min-width: min(100%, 300px);
           position: relative;
         }
 
         .search-icon {
           position: absolute;
-          left: 24px;
+          left: clamp(16px, 2vw, 24px);
           top: 50%;
           transform: translateY(-50%);
-          width: 28px;
-          height: 28px;
+          width: clamp(20px, 2.5vw, 28px);
+          height: clamp(20px, 2.5vw, 28px);
           color: #9ca3af;
           pointer-events: none;
-          transition: color 0.3s;
+          transition: all 0.3s ease;
+          z-index: 2;
         }
 
         .search-input-wrapper:focus-within .search-icon {
-          color: var(--brand-blue-ink);
+          color: #3b82f6;
+          transform: translateY(-50%) scale(1.1);
         }
 
         .search-input {
           width: 100%;
-          padding: 24px 28px 24px 68px;
-          border: 3px solid #9ca3af;
-          border-radius: 28px;
-          font-size: 1.15rem;
-          background: white;
+          padding: clamp(16px, 2.5vw, 24px) clamp(20px, 3vw, 28px) clamp(16px, 2.5vw, 24px) clamp(48px, 6vw, 64px);
+          border: 2px solid #e5e7eb;
+          border-radius: clamp(16px, 2vw, 24px);
+          font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+          background: rgba(255, 255, 255, 0.9);
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          font-weight: 500;
+          backdrop-filter: blur(10px);
         }
 
         .search-input::placeholder {
           color: #9ca3af;
-          font-size: 1.1rem;
+          font-weight: 400;
+          font-size: clamp(0.85rem, 1.4vw, 1.05rem);
         }
 
         .search-input:focus {
-          border-color: var(--brand-blue-ink);
-          background: white;
+          border-color: #3b82f6;
+          background: rgba(255, 255, 255, 0.95);
           outline: none;
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+          transform: translateY(-1px);
         }
 
         .search-btn {
-          background: var(--brand-orange);
+          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
           color: white;
           border: none;
-          padding: 0 48px;
-          border-radius: 28px;
-          font-weight: 800;
-          font-size: 1.2rem;
+          padding: 0 clamp(24px, 4vw, 48px);
+          border-radius: clamp(16px, 2vw, 24px);
+          font-weight: 700;
+          font-size: clamp(0.9rem, 1.5vw, 1.1rem);
           cursor: pointer;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           white-space: nowrap;
-          height: 72px;
+          height: clamp(52px, 7vw, 68px);
           position: relative;
           overflow: hidden;
-          letter-spacing: -0.5px;
+          letter-spacing: -0.2px;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          flex-shrink: 0;
         }
 
         .search-btn:hover {
-          filter: brightness(0.95);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
         }
 
         .search-btn:active {
-          background: var(--brand-blue-ink);
-          transform: scale(0.98);
+          transform: translateY(0);
         }
 
         .filter-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 36px;
-          gap: 24px;
+          margin-bottom: clamp(20px, 3vw, 40px);
+          gap: clamp(12px, 2vw, 24px);
         }
 
         .filter-title-wrapper {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: clamp(8px, 1.5vw, 16px);
+          flex: 1;
+          justify-content: center;
         }
 
         .filter-icon {
-          width: 32px;
-          height: 32px;
-          color: var(--brand-orange);
+          width: clamp(24px, 3vw, 32px);
+          height: clamp(24px, 3vw, 32px);
+          color: #3b82f6;
           animation: pulse 2s ease-in-out infinite;
+          flex-shrink: 0;
         }
 
         @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.8; transform: scale(1.15); }
+          50% { opacity: 0.8; transform: scale(1.1); }
         }
 
         .filter-title {
-          font-size: 2rem;
-          font-weight: 900;
-          color: var(--brand-blue-ink);
+          font-size: clamp(1.25rem, 2.5vw, 2rem);
+          font-weight: 800;
+          color: #1f2937;
           margin: 0;
           white-space: nowrap;
-          letter-spacing: -0.8px;
+          letter-spacing: -0.5px;
+          background: linear-gradient(135deg, #1f2937 0%, #3b82f6 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
         }
 
         .scroll-btn {
-          background: white;
-          border: 3px solid #e5e7eb;
-          width: 64px;
-          height: 64px;
+          background: rgba(255, 255, 255, 0.9);
+          border: 2px solid #e5e7eb;
+          width: clamp(44px, 6vw, 60px);
+          height: clamp(44px, 6vw, 60px);
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.3s ease;
           color: #6b7280;
           flex-shrink: 0;
           z-index: 10;
+          backdrop-filter: blur(10px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         .scroll-btn:hover:not(:disabled) {
-          border-color: var(--brand-orange);
-          color: var(--brand-orange);
-        }
-
-        .scroll-btn:active:not(:disabled) {
-          border-color: var(--brand-blue-ink);
-          color: var(--brand-blue-ink);
-          transform: scale(0.95);
+          border-color: #3b82f6;
+          color: #3b82f6;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
         }
 
         .scroll-btn:disabled {
-          opacity: 0.3;
+          opacity: 0.4;
           cursor: not-allowed;
-          background: #f9fafb;
-          color: #d1d5db;
-          border-color: #e5e7eb;
         }
 
         .scroll-btn svg {
-          width: 28px;
-          height: 28px;
+          width: clamp(18px, 2.5vw, 24px);
+          height: clamp(18px, 2.5vw, 24px);
         }
 
         .category-section {
           display: flex;
-          gap: 32px;
+          gap: clamp(12px, 2vw, 24px);
           overflow-x: auto;
           overflow-y: hidden;
-          padding: 24px 8px;
+          padding: clamp(12px, 2vw, 20px) clamp(4px, 1vw, 8px);
           scroll-behavior: smooth;
           cursor: grab;
           user-select: none;
@@ -417,57 +439,41 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
         }
 
         .category-section::-webkit-scrollbar { display: none; }
-
-        .category-section.grabbing { 
-          cursor: grabbing; 
-          scroll-behavior: auto; 
-        }
+        .category-section.grabbing { cursor: grabbing; scroll-behavior: auto; }
 
         .category-btn {
           flex-shrink: 0;
-          width: 320px;
-          padding: 56px 32px;
-          background: white;
-          border: 4px solid #e5e7eb;
-          border-radius: 42px;
+          padding: clamp(20px, 3vw, 40px) clamp(16px, 2.5vw, 28px);
+          background: rgba(255, 255, 255, 0.8);
+          border: 2px solid #e5e7eb;
+          border-radius: clamp(20px, 3vw, 28px);
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 24px;
+          gap: clamp(12px, 2vw, 20px);
           text-align: center;
           position: relative;
           overflow: hidden;
+          backdrop-filter: blur(10px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+          min-width: clamp(90px, 15vw, 200px);
         }
 
         .category-btn::before {
           content: '';
           position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
+          inset: 0;
           opacity: 0;
           transition: opacity 0.3s;
-        }
-
-        .category-btn[data-category="all"]::before { background: linear-gradient(135deg, rgba(102,126,234,0.08), rgba(118,75,162,0.08)); }
-        .category-btn[data-category="food"]::before { background: linear-gradient(135deg, rgba(240,147,251,0.08), rgba(245,87,108,0.08)); }
-        .category-btn[data-category="fashion"]::before { background: linear-gradient(135deg, rgba(250,112,154,0.08), rgba(254,225,64,0.08)); }
-        .category-btn[data-category="craft"]::before { background: linear-gradient(135deg, rgba(79,172,254,0.08), rgba(0,242,254,0.08)); }
-        .category-btn[data-category="beauty"]::before { background: linear-gradient(135deg, rgba(67,233,123,0.08), rgba(56,249,215,0.08)); }
-        .category-btn[data-category="agriculture"]::before { background: linear-gradient(135deg, rgba(150,251,196,0.08), rgba(249,245,134,0.08)); }
-        .category-btn[data-category="electronics"]::before { background: linear-gradient(135deg, rgba(161,140,209,0.08), rgba(251,194,235,0.08)); }
-        .category-btn[data-category="furniture"]::before { background: linear-gradient(135deg, rgba(255,236,210,0.08), rgba(252,182,159,0.08)); }
-        .category-btn[data-category="education"]::before { background: linear-gradient(135deg, rgba(255,154,86,0.08), rgba(254,207,239,0.08)); }
-
-        .category-btn:active {
-          transform: scale(0.98);
+          border-radius: clamp(18px, 3vw, 26px);
         }
 
         .category-btn:hover {
-          border-color: var(--brand-blue-ink);
+          border-color: #3b82f6;
+          transform: translateY(-4px);
+          box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1);
         }
 
         .category-btn:hover::before {
@@ -475,34 +481,23 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
         }
 
         .category-btn.active {
-          border-color: var(--brand-orange);
-          color: var(--brand-blue-ink);
-          background: white;
-        }
-
-        .category-btn.active::before {
-          background: linear-gradient(135deg, rgba(253,87,1,0.10), rgba(0,17,81,0.08));
-          opacity: 1;
-        }
-
-        .category-btn:focus-visible,
-        .scroll-btn:focus-visible,
-        .search-input:focus-visible,
-        .search-btn:focus-visible {
-          outline: 3px solid var(--brand-blue-ink);
-          outline-offset: 2px;
+          border-color: #3b82f6;
+          background: rgba(255, 255, 255, 0.95);
+          transform: translateY(-2px);
+          box-shadow: 0 12px 28px rgba(59, 130, 246, 0.15);
         }
 
         .category-icon {
-          width: 100px;
-          height: 100px;
+          width: clamp(44px, 8vw, 80px);
+          height: clamp(44px, 8vw, 80px);
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 50%;
+          border-radius: clamp(16px, 2.5vw, 24px);
           transition: all 0.3s ease;
           position: relative;
           z-index: 1;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         .category-btn[data-category="all"] .category-icon { background: linear-gradient(135deg, #eef2ff, #e0e7ff); }
@@ -516,14 +511,15 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
         .category-btn[data-category="education"] .category-icon { background: linear-gradient(135deg, #fff7ed, #fce7f3); }
 
         .category-btn.active .category-icon {
-          background: #f3f4f6;
+          transform: scale(1.08);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
 
         .category-btn svg {
-          width: 52px;
-          height: 52px;
+          width: clamp(18px, 4vw, 36px);
+          height: clamp(18px, 4vw, 36px);
           transition: all 0.3s ease;
-          stroke-width: 2.2;
+          stroke-width: 2;
         }
 
         .category-btn[data-category="all"] svg { color: #667eea; }
@@ -537,147 +533,199 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
         .category-btn[data-category="education"] svg { color: #ff9a56; }
 
         .category-btn.active svg { 
-          color: var(--brand-blue-ink);
+          color: #3b82f6;
+          transform: scale(1.15);
         }
 
         .category-btn span {
-          font-size: 1.4rem;
-          font-weight: 900;
+          font-size: clamp(0.8rem, 1.5vw, 1.1rem);
+          font-weight: 700;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          max-width: 240px;
+          max-width: clamp(70px, 15vw, 160px);
           position: relative;
           z-index: 1;
-          letter-spacing: -0.5px;
+          letter-spacing: -0.2px;
           color: #374151;
+          transition: color 0.3s ease;
         }
 
         .category-btn.active span {
-          color: var(--brand-blue-ink);
+          color: #1f2937;
+          font-weight: 800;
         }
 
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-          .kategori-card { 
-            padding: 48px 40px; 
-            margin: 28px 20px; 
-            border-radius: 38px; 
-          }
-          .category-btn { 
-            width: 280px; 
-            padding: 48px 28px;
-          }
-          .category-icon { width: 90px; height: 90px; }
-          .category-btn svg { width: 48px; height: 48px; }
-        }
+        /* ========================================
+           RESPONSIVE BREAKPOINTS 
+           ======================================== */
 
-        @media (max-width: 1024px) {
-          .kategori-card { 
-            padding: 40px 32px; 
-            margin: 24px 16px; 
+        /* 📱 Mobile First - Extra Small (< 480px) */
+        @media (max-width: 479px) {
+          .kategori-card {
+            padding: 16px 8px;
+            margin: 12px 4px;
+            border-radius: 16px;
           }
-          .search-input-wrapper {
-            min-width: 350px;
-          }
-          .category-btn { 
-            width: 260px; 
-            padding: 44px 24px;
-          }
-          .category-section { gap: 28px; }
-          .filter-title { font-size: 1.8rem; }
-        }
 
-        @media (max-width: 768px) {
-          .kategori-card { 
-            padding: 36px 24px; 
-            margin: 20px 12px; 
-            border-radius: 32px; 
+          .search-form {
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
           }
-          .search-form { 
-            flex-direction: column; 
-            gap: 16px; 
-            margin-bottom: 40px;
-          }
+
           .search-input-wrapper {
             min-width: 100%;
           }
-          .search-input, .search-btn { 
-            width: 100%; 
-            height: 68px; 
+
+          .search-input, .search-btn {
+            width: 100%;
+            height: 48px;
+            font-size: 0.85rem;
+            border-radius: 12px;
+          }
+
+          .search-icon {
+            width: 18px;
+            height: 18px;
+            left: 12px;
+          }
+
+          .filter-header {
+            margin-bottom: 16px;
+            gap: 8px;
+          }
+
+          .filter-title {
             font-size: 1.1rem;
           }
-          .search-input { padding: 22px 24px 22px 60px; }
-          .filter-header { margin-bottom: 32px; }
-          .filter-title { font-size: 1.6rem; }
-          .filter-icon { width: 28px; height: 28px; }
-          .scroll-btn { width: 56px; height: 56px; }
-          .scroll-btn svg { width: 24px; height: 24px; }
-          .category-section { gap: 24px; padding: 20px 6px; }
-          .category-btn { 
-            width: 220px; 
-            padding: 40px 20px;
-            border-radius: 36px;
-          }
-          .category-icon { width: 80px; height: 80px; }
-          .category-btn svg { width: 44px; height: 44px; }
-          .category-btn span { font-size: 1.3rem; max-width: 180px; }
-        }
 
-        @media (max-width: 640px) {
-          .kategori-card { padding: 32px 20px; }
-          .category-section { gap: 20px; }
-          .category-btn { 
-            width: 200px; 
-            padding: 36px 18px;
+          .filter-icon {
+            width: 20px;
+            height: 20px;
           }
-          .category-icon { width: 72px; height: 72px; }
-          .category-btn svg { width: 40px; height: 40px; }
-          .category-btn span { 
-            font-size: 1.2rem; 
-            max-width: 160px; 
-          }
-          .filter-title { font-size: 1.5rem; }
-        }
 
-        @media (max-width: 480px) {
-          .kategori-card { 
-            padding: 28px 16px; 
-            margin: 16px 8px;
-            border-radius: 28px;
+          .scroll-btn {
+            width: 40px;
+            height: 40px;
           }
-          .search-form { gap: 14px; }
-          .search-input, .search-btn { height: 64px; }
-          .search-input { 
-            padding: 20px 20px 20px 56px;
-            font-size: 1rem;
+
+          .category-section {
+            gap: 8px;
+            padding: 10px 4px;
           }
-          .search-icon { left: 20px; width: 24px; height: 24px; }
-          .filter-header { margin-bottom: 28px; }
-          .filter-title { font-size: 1.4rem; }
-          .scroll-btn { width: 52px; height: 52px; }
-          .category-section { gap: 16px; padding: 16px 4px; }
-          .category-btn { 
-            width: 180px; 
-            padding: 32px 16px;
-            border-radius: 32px;
+
+          .category-btn {
+            min-width: 80px;
+            padding: 14px 8px;
+            gap: 8px;
+            border-radius: 14px;
           }
-          .category-icon { width: 64px; height: 64px; }
-          .category-btn svg { width: 36px; height: 36px; }
-          .category-btn span { 
-            font-size: 1.1rem; 
-            max-width: 140px; 
+
+          .category-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+          }
+
+          .category-btn svg {
+            width: 16px;
+            height: 16px;
+          }
+
+          .category-btn span {
+            font-size: 0.75rem;
+            max-width: 64px;
           }
         }
 
-        @media (max-width: 360px) {
-          .category-btn { 
-            width: 160px; 
-            padding: 28px 14px;
+        /* 📱 Small Mobile (480px - 639px) */
+        @media (min-width: 480px) and (max-width: 639px) {
+          .search-form {
+            flex-direction: column;
+            gap: 12px;
           }
-          .category-btn span { 
-            font-size: 1rem; 
-            max-width: 120px; 
+
+          .category-btn {
+            min-width: 100px;
+            padding: 18px 12px;
+          }
+        }
+
+        /* 📱 Mobile (640px - 767px) */
+        @media (min-width: 640px) and (max-width: 767px) {
+          .search-form {
+            flex-direction: column;
+          }
+
+          .category-btn {
+            min-width: 110px;
+          }
+        }
+
+        /* 📱 Tablet (768px - 1023px) */
+        @media (min-width: 768px) and (max-width: 1023px) {
+          .search-input-wrapper {
+            min-width: 400px;
+          }
+
+          .category-btn {
+            min-width: 140px;
+          }
+        }
+
+        /* 💻 Desktop (1024px - 1439px) */
+        @media (min-width: 1024px) and (max-width: 1439px) {
+          .search-input-wrapper {
+            min-width: 450px;
+          }
+
+          .category-btn {
+            min-width: 160px;
+          }
+        }
+
+        /* 🖥️ Large Desktop (1440px+) */
+        @media (min-width: 1440px) {
+          .search-input-wrapper {
+            min-width: 500px;
+          }
+
+          .category-btn {
+            min-width: 180px;
+          }
+        }
+
+        /* 🖥️ Ultra Wide (1920px+) */
+        @media (min-width: 1920px) {
+          .kategori-card {
+            max-width: 2000px;
+            padding: 56px;
+          }
+
+          .category-btn {
+            min-width: 220px;
+            padding: 48px 32px;
+          }
+        }
+
+        /* Touch Device Optimization */
+        @media (hover: none) and (pointer: coarse) {
+          .category-btn:hover {
+            transform: none;
+          }
+
+          .category-btn:active {
+            transform: scale(0.97);
+          }
+
+          .scroll-btn {
+            display: none;
+          }
+
+          .filter-title-wrapper {
+            flex: 1;
+            justify-content: center;
           }
         }
       `}</style>
@@ -690,7 +738,9 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
               ref={searchInputRef} 
               type="text" 
               className="search-input" 
-              placeholder="Cari produk, jasa, atau UMKM favorit Anda..." 
+              placeholder="Cari produk, jasa, atau UMKM favorit..." 
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
             />
           </div>
           <button type="submit" className="search-btn">

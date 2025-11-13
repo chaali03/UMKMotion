@@ -50,8 +50,11 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
     <!-- Critical resource hints for LCP optimization -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://images.unsplash.com" />
     <link rel="dns-prefetch" href="https://i.pravatar.cc" />
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://randomuser.me" crossorigin />
+    <link rel="dns-prefetch" href="https://randomuser.me" />
     
     <!-- Load fonts with display swap - no preload to avoid 404 -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" media="print" onload="this.media='all'" />
@@ -589,7 +592,7 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
       </main>
       <!-- Floating AI Button -->
       { !isAIPage && (
-        <FloatingAIButton client:visible />
+        <FloatingAIButton client:load />
       ) }
     </div>
   </body>

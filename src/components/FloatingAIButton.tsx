@@ -87,7 +87,7 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
         document.body
       )}
 
-      <div ref={buttonRef} className="fixed bottom-6 right-6 z-50">
+      <div ref={buttonRef} className="fixed bottom-6 right-6 z-[9999]">
         {/* Main Button */}
         <motion.button
           onClick={handleClick}
@@ -114,7 +114,7 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           className="relative z-10"
         >
-          <img src="/asset/optimized/LogoDina-tiny.webp" alt="Dina AI" className="w-full h-full rounded-[14px] object-contain" width="96" height="96" loading="lazy" />
+          <img src="/asset/optimized/LogoDina-tiny.webp" alt="Dina AI" className="w-full h-full rounded-[14px] object-contain" width="80" height="80" sizes="(max-width: 640px) 64px, (max-width: 1024px) 80px, 96px" loading="lazy" />
         </motion.div>
         
         {/* Ripple removed for clean image-only look */}
@@ -122,7 +122,7 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
       </div>
 
       {/* Floating particles */}
-      <div className="fixed bottom-6 right-6 z-50 pointer-events-none">
+      <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none">
       <AnimatePresence>
         {isHovered && (
           <>

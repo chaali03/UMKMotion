@@ -6,10 +6,15 @@ const Feature = lazy(() => import('../LandingPage/components/feature/Feature'));
 const CircularGallery = lazy(() => import('./CircularGallery'));
 
 const LoadingSkeleton = () => (
-  <div className="animate-pulse">
-    <div className="h-64 bg-gray-200 rounded-lg mb-4"></div>
-    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+  <div aria-hidden className="w-full">
+    {/* Transparent placeholder to avoid gray flash */}
+    <div
+      className="w-full"
+      style={{
+        height: '1px',
+        background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.03), transparent)',
+      }}
+    />
   </div>
 );
 
@@ -19,9 +24,19 @@ export const LazyFeature = () => (
   </Suspense>
 );
 
+// Provide gallery items from public assets
+const GALLERY_ITEMS = [
+  { image: '/asset/optimized/umkm/umkm1.webp', text: 'UMKM 1' },
+  { image: '/asset/optimized/umkm/umkm2.webp', text: 'UMKM 2' },
+  { image: '/asset/optimized/umkm/umkm3.webp', text: 'UMKM 3' },
+  { image: '/asset/optimized/umkm/umkm4.webp', text: 'UMKM 4' },
+  { image: '/asset/optimized/umkm/umkm5.webp', text: 'UMKM 5' },
+  { image: '/asset/optimized/umkm/umkm6.webp', text: 'UMKM 6' },
+];
+
 export const LazyCircularGallery = () => (
   <Suspense fallback={<LoadingSkeleton />}>
-    <CircularGallery />
+    <CircularGallery items={GALLERY_ITEMS} className="h-full w-full" />
   </Suspense>
 );
 

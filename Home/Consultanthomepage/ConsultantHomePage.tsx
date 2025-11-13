@@ -328,8 +328,14 @@ const ConsultantHomePage: React.FC = () => {
             <div className="rounded-2xl overflow-hidden shadow-xl bg-white">
               <img
                 className="w-full h-72 object-cover"
-                src="https://images.unsplash.com/photo-1556745753-b2904692b3cd?w=1400&h=900&fit=crop&q=60"
+                src="https://images.unsplash.com/photo-1556745753-b2904692b3cd?w=1400&h=900&fit=crop&q=60&fm=webp&auto=format,compress"
                 alt="UMKM banner"
+                width={1400}
+                height={900}
+                sizes="(min-width: 1024px) 768px, 100vw"
+                loading="lazy"
+                decoding="async"
+                fetchPriority="low"
               />
               <div className="p-4 flex items-center justify-between">
                 <div>
@@ -386,7 +392,17 @@ const ConsultantHomePage: React.FC = () => {
               className="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col"
             >
               <div className="relative">
-                <img src={c.image} alt={c.name} className="w-full h-48 object-cover" />
+                <img 
+                  src={`${c.image}&fm=webp&auto=format,compress`} 
+                  alt={c.name} 
+                  className="w-full h-48 object-cover" 
+                  width={800}
+                  height={800}
+                  sizes="(min-width: 1024px) 400px, 100vw"
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
+                />
                 <div className="absolute left-3 top-3 bg-white/90 text-orange-600 font-semibold px-3 py-1 rounded-lg shadow">
                   {c.availability}
                 </div>
@@ -480,9 +496,14 @@ const ConsultantHomePage: React.FC = () => {
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="flex items-center gap-3">
                 <img
-                  src={selectedConsultant.image}
+                  src={`${selectedConsultant.image}&fm=webp&auto=format,compress`}
                   alt={selectedConsultant.name}
                   className="w-12  h-12 rounded-lg object-cover"
+                  width={48}
+                  height={48}
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
                 />
                 <div>
                   <div className="font-bold">{selectedConsultant.name}</div>

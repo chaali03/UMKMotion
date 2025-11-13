@@ -5,7 +5,7 @@ import { Button } from "../../../components/ui/button";
 import ShimmerButton from "../../../components/ui/shimmer-button";
 import { cn } from "../../../lib/utils";
 import HomeHeader from "../header/header.js";
-import CircularGallery from "../../../components/CircularGallery.jsx";
+import { LazyCircularGallery } from "../../../components/LazyFeature";
 import NewItemsLoading from "./new-items-loading";
 import WordAnimator from "./word-animator";
 
@@ -247,6 +247,11 @@ const Index = () => {
                       src={`https://i.pravatar.cc/48?img=${i+20}`} 
                       alt="user" 
                       className="h-11 w-11 rounded-full ring-4 ring-white dark:ring-black object-cover shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:z-10" 
+                      width={44}
+                      height={44}
+                      loading="lazy"
+                      decoding="async"
+                      fetchPriority="low"
                     />
                   </div>
                 ))}
@@ -301,24 +306,14 @@ const Index = () => {
             
             <div className="mx-auto w-full max-w-6xl xl:max-w-[126rem] 2xl:max-w-[140rem] px-4">
               <div className="h-72 md:h-96 lg:h-[28rem] xl:h-[32rem] 2xl:h-[38rem] float-subtle">
-                <CircularGallery
-                  className="h-full w-full"
-                  items={[
-                    { image: "/asset/optimized/umkm/umkm1.webp", text: "UMKM 1" },
-                    { image: "/asset/optimized/umkm/umkm2.webp", text: "UMKM 2" },
-                    { image: "/asset/optimized/umkm/umkm3.webp", text: "UMKM 3" },
-                    { image: "/asset/optimized/umkm/umkm4.webp", text: "UMKM 4" },
-                    { image: "/asset/optimized/umkm/umkm5.webp", text: "UMKM 5" },
-                    { image: "/asset/optimized/umkm/umkm6.webp", text: "UMKM 6" },
-                  ]}
-                />
+                <LazyCircularGallery />
               </div>
             </div>
           </div>
         </article>
 
-        {/* Enhanced grid blocks */}
-        <div className="flex h-screen overflow-hidden top-0 left-0 inset-0 z-0 absolute pointer-events-none opacity-40">
+        {/* Enhanced grid blocks (pushed behind to avoid gray overlay flash) */}
+        <div className="flex h-screen overflow-hidden top-0 left-0 inset-0 -z-10 absolute pointer-events-none opacity-10">
           {blocks}
         </div>
       </section>
