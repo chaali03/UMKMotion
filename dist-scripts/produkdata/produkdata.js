@@ -1191,7 +1191,7 @@ export async function seedProduk() {
             negara_asal: "Indonesia",
             deskripsi_produk: "Meja kayu jati solid dengan desain minimalis modern buatan pengrajin Jepara. Tahan lama, anti rayap, dan cocok untuk ruang makan atau ruang kerja.",
             keyword: "meja jati, mebel jepara",
-            gambar_produk: "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+            gambar_produk: "https://kursicafe.net/wp-content/uploads/2020/07/Meja-Jati-Solid-Tebal-Kaki-Besi-Alami.jpg",
             thumbnail_produk: "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
             galeri_gambar: [
                 "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",

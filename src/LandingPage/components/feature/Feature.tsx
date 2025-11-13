@@ -2,7 +2,7 @@
 import React, { useRef } from "react";
 import { TimelineContent } from "../../../components/ui/timeline-animation";
 import { ArrowRight, PencilLine, Sparkles, TrendingUp, Users, Zap } from "lucide-react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import HoverTranslateTwo from "../../../components/ui/interactive-card-stack";
 
 const Feature1 = () => {
@@ -55,7 +55,11 @@ const Feature1 = () => {
   };
 
   return (
-    <section className="max-w-7xl mx-auto p-4 relative bg-white text-gray-900 dark:bg-white dark:text-gray-900 [color-scheme:light]" ref={featuresRef}>
+    <section
+      className="max-w-7xl mx-auto p-4 relative bg-white text-gray-900 dark:bg-white dark:text-gray-900 [color-scheme:light]"
+      ref={featuresRef}
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '1200px 1200px' } as React.CSSProperties}
+    >
       {/* Background Decoration */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
@@ -88,6 +92,7 @@ const Feature1 = () => {
           animationNum={0}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 mb-4"
         >
           <Sparkles className="w-4 h-4 text-purple-600" />
@@ -101,6 +106,7 @@ const Feature1 = () => {
           animationNum={0}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="md:text-6xl sm:text-5xl text-4xl font-bold bg-gradient-to-br from-gray-900 via-gray-800 to-gray-600 bg-clip-text text-transparent leading-tight"
         >
           Direktori UMKM <br />
@@ -112,6 +118,7 @@ const Feature1 = () => {
           animationNum={1}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="text-gray-600 sm:text-lg text-base sm:w-[70%] w-full mx-auto leading-relaxed"
         >
           Temukan ribuan UMKM terpercaya di seluruh Indonesia—dari kuliner, fashion, kerajinan tangan, hingga teknologi. Semua dalam satu platform yang mudah diakses.
@@ -125,6 +132,7 @@ const Feature1 = () => {
           animationNum={0}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="lg:col-span-5 sm:col-span-6 col-span-12 relative w-full h-[400px] rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-xl hover:shadow-2xl transition-all duration-500 group"
         >
           {/* Enhanced Grid Pattern */}
@@ -156,6 +164,7 @@ const Feature1 = () => {
           animationNum={1}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="lg:col-span-3 sm:col-span-6 col-span-12 border flex flex-col justify-between rounded-2xl p-6 relative border-gray-200 bg-white shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden group"
         >
           {/* Enhanced Gradient Background */}
@@ -178,9 +187,9 @@ const Feature1 = () => {
             transition={{ delay: 1.8, duration: 0.6 }}
           >
             {[
-              "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200",
-              "https://images.unsplash.com/photo-1617171594279-3aa1f300a0f2?q=80&w=200",
-              "https://images.unsplash.com/photo-1659228135452-c4c7b5118047?q=80&w=200",
+              "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&h=150&q=80&fm=webp&fit=crop&auto=format,compress",
+              "https://images.unsplash.com/photo-1617171594279-3aa1f300a0f2?w=200&h=150&q=80&fm=webp&fit=crop&auto=format,compress",
+              "https://images.unsplash.com/photo-1659228135452-c4c7b5118047?w=200&h=150&q=80&fm=webp&fit=crop&auto=format,compress",
             ].map((src, i) => (
               <motion.div
                 key={i}
@@ -198,6 +207,8 @@ const Feature1 = () => {
                   src={src}
                   alt={`User ${i + 1}`}
                   className="rounded-2xl border-4 border-white h-16 w-16 object-cover shadow-lg ring-2 ring-purple-200"
+                  loading="lazy"
+                  decoding="async"
                 />
               </motion.div>
             ))}
@@ -248,6 +259,7 @@ const Feature1 = () => {
           animationNum={2}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="lg:col-span-4 sm:col-span-6 col-span-12 border rounded-2xl p-6 group border-gray-200 bg-white shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
         >
           {/* Background Decoration */}
@@ -336,6 +348,7 @@ const Feature1 = () => {
           animationNum={3}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="lg:col-span-7 sm:col-span-6 col-span-12 relative border p-6 rounded-2xl overflow-hidden border-gray-200 bg-white shadow-xl hover:shadow-2xl transition-all duration-500 group"
         >
           {/* Background Decoration */}
@@ -564,6 +577,7 @@ const Feature1 = () => {
           animationNum={4}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="lg:col-span-5 sm:col-span-6 col-span-12 relative border p-6 rounded-2xl overflow-hidden border-gray-200 bg-white shadow-xl hover:shadow-2xl transition-all duration-500"
         >
           {/* Background Decoration */}

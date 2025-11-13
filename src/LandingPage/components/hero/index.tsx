@@ -32,6 +32,9 @@ const Index = () => {
 
   useEffect(() => {
     const updateBlocks = () => {
+      // Check if window is available (client-side only)
+      if (typeof window === 'undefined') return;
+      
       const { innerWidth, innerHeight } = window;
       const blockSize = innerWidth * 0.06;
       const amountOfBlocks = Math.ceil(innerHeight / blockSize);

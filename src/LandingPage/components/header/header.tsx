@@ -194,9 +194,13 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                     className="left-3 top-3 bottom-3 fixed z-50 outline-none w-80 flex"
                     style={{ "--initial-transform": "calc(100% + 12px)" } as React.CSSProperties}
                     id="mobile-drawer"
+                    aria-describedby="mobile-drawer-description"
                   >
                     <VisuallyHidden>
                       <Drawer.Title>Menu Navigasi</Drawer.Title>
+                      <Drawer.Description id="mobile-drawer-description">
+                        Menu navigasi utama untuk mengakses halaman-halaman website
+                      </Drawer.Description>
                     </VisuallyHidden>
                     <div className="dark:bg-gradient-to-br dark:from-neutral-950 dark:to-neutral-900 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 dark:border-neutral-800 p-5 h-full w-full grow flex flex-col rounded-2xl shadow-2xl">
                       {/* Drawer Header */}

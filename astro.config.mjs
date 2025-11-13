@@ -55,11 +55,34 @@ export default defineConfig({
       // OneDrive can lock files; polling reduces EPERM rename races
       watch: { usePolling: true, interval: 500 },
     },
+    build: {
+      // Optimize bundle splitting
+      // Let Rollup decide chunking to avoid circular chunk deps causing TDZ
+      rollupOptions: {},
+      // Increase chunk size warning limit
+      chunkSizeWarningLimit: 1000,
+      // Enable minification
+      minify: true
+    },
+    optimizeDeps: {
+      include: [
+        'react', 
+        'react-dom', 
+        'react-dom/client',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
+        'three', 
+        'firebase/app', 
+        'firebase/auth', 
+        'firebase/firestore'
+      ],
+      force: true
+    },
     resolve: {
+      dedupe: ['react', 'react-dom'],
       alias: {
-        'src': path.resolve(__dirname, './src'),
         '@': path.resolve(__dirname, './src'),
-        '@homepagelayout': path.resolve(__dirname, './src/layouts/HomepageLayout.astro')
+        'src': path.resolve(__dirname, './src')
       }
     }
   }
