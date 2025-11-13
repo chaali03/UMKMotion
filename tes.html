@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stores + Produk Viewer</title>
+  <style>
+    :root {
+      --bg: #0f1724;
+      --card: #0b1220;
+      --muted: #94a3b8;
+      --accent: #06b6d4;
+      --accent-2: #60a5fa;
+      --white: #e6eef6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg, #071022 0%, #081226 100%);
+      color: var(--white);
+      padding: 28px;
+    }
+    .container { max-width: 1300px; margin: 0 auto; }
+    header { display:flex; gap:12px; align-items:center; margin-bottom:18px; }
+    h1 { margin:0; font-size:20px; letter-spacing: -0.2px; }
+    p.lead { margin:0; color:var(--muted); font-size:13px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;
+      padding:16px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+      margin-bottom:18px;
+    }
+    .controls { display:flex; gap:8px; align-items:center; }
+    button {
+      background: linear-gradient(90deg,var(--accent),var(--accent-2));
+      color:#042027;
+      border: none;
+      padding:8px 12px;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+    }
+    button.secondary {
+      background: transparent;
+      color: var(--white);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    #status { color:var(--muted); margin-left:8px; font-size:13px; }
+    .store {
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .store h3 { margin: 0 0 8px; font-size: 18px; }
+    .store-meta { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    table {
+      width:100%;
+      border-collapse: collapse;
+      margin-top:12px;
+      font-size:13px;
+    }
+    thead th {
+      text-align:left;
+      padding:8px 10px;
+      color:var(--muted);
+      border-bottom:1px solid rgba(255,255,255,0.04);
+    }
+    tbody td {
+      padding:8px 10px;
+      vertical-align: top;
+      border-bottom:1px dashed rgba(255,255,255,0.03);
+    }
+    img.thumb {
+      width:50px; height:50px;
+      object-fit:cover;
+      border-radius:6px;
+    }
+    .empty { padding:28px; text-align:center; color:var(--muted); }
+    .galeri img {
+      width:40px; height:40px; object-fit:cover;
+      border-radius:4px; margin-right:4px;
+      cursor: pointer;
+    }
+    .modal {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    .modal-content {
+      background: var(--card);
+      border-radius:12px;
+      padding:20px;
+      width:90%; max-width:700px;
+      max-height:90%;
+      overflow-y:auto;
+      box-shadow:0 8px 24px rgba(0,0,0,0.6);
+    }
+    .modal-content img { width:100%; border-radius:8px; margin-bottom:12px; }
+    .close { float:right; cursor:pointer; font-size:20px; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Stores + Produk Viewer</h1>
+        <p class="lead">Menampilkan data dari <strong>stores</strong> → subcollection <strong>produk</strong>.</p>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="controls">
+        <button id="btnLoad">Load Stores & Produk</button>
+        <button id="btnClear" class="secondary">Clear</button>
+        <span id="status">Ready</span>
+      </div>
+
+      <div id="content"></div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span id="closeModal" class="close">&times;</span>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    const firebaseConfig = {
+      apiKey: "AIzaSyAb8ETVtNgh1hHhO_6D8Oj5ElNIMMixCuc",
+      authDomain: "umkmotion-a39b9.firebaseapp.com",
+      projectId: "umkmotion-a39b9",
+      storageBucket: "umkmotion-a39b9.firebasestorage.app",
+      messagingSenderId: "437792595769",
+      appId: "1:437792595769:web:ce18f9d1cc7bba5e7d12e8"
+    };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const btnLoad = document.getElementById("btnLoad");
+    const btnClear = document.getElementById("btnClear");
+    const statusEl = document.getElementById("status");
+    const content = document.getElementById("content");
+    const modal = document.getElementById("modal");
+    const modalBody = document.getElementById("modalBody");
+    const closeModal = document.getElementById("closeModal");
+
+    let allProducts = [];
+
+    function setStatus(t) { statusEl.textContent = t; }
+
+    async function loadData() {
+      setStatus("Memuat stores...");
+      content.innerHTML = '<div class="empty">Memuat data...</div>';
+
+      try {
+        const storesSnap = await getDocs(collection(db, "stores"));
+        if (storesSnap.empty) {
+          content.innerHTML = '<div class="empty">Tidak ada toko.</div>';
+          setStatus("Selesai (0)");
+          return;
+        }
+
+        let html = '';
+        allProducts = [];
+
+        for (const storeDoc of storesSnap.docs) {
+          const store = storeDoc.data();
+          const storeId = storeDoc.id;
+
+          // Ambil produk dari subcollection
+          const produkSnap = await getDocs(collection(db, "stores", storeId, "produk"));
+          const produk = produkSnap.docs.map(d => ({ id: d.id, ...d.data(), storeId, store }));
+
+          allProducts.push(...produk.map((p, i) => ({ ...p, globalIndex: allProducts.length + i })));
+
+          const img = store.profileImage || store.image || 'https://via.placeholder.com/60?text=Logo';
+
+          html += `
+            <div class="store">
+              <div style="display:flex; gap:12px; align-items:center;">
+                <img src="${img}" class="thumb">
+                <div>
+                  <h3>${escape(store.nama_toko)}</h3>
+                  <div class="store-meta">
+                    ${store.kategori} • ${store.lokasi_toko?.split(',')[0]} • 
+                    Rating: ${store.rating_toko || '-'} stars (${store.jumlah_review || 0} ulasan)
+                  </div>
+                </div>
+              </div>
+
+              ${produk.length === 0 ? 
+                '<div class="empty" style="margin-top:12px;">Belum ada produk.</div>' :
+                `<table>
+                  <thead>
+                    <tr>
+                      <th>Produk</th>
+                      <th>Harga</th>
+                      <th>Stok</th>
+                      <th>Galeri</th>
+                      <th>Detail</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${produk.map((p, i) => {
+                      const idx = allProducts.length - produk.length + i;
+                      return `
+                        <tr>
+                          <td><strong>${escape(p.nama_produk)}</strong></td>
+                          <td>${rupiah(p.harga)}${p.diskon ? ` <small style="color:#f59e0b;">-${p.diskon}%</small>` : ''}</td>
+                          <td>${p.stok > 0 ? p.stok : '<span style="color:#ef4444;">Habis</span>'}</td>
+                          <td>
+                            <div class="galeri">
+                              ${(p.gambar || []).slice(0,3).map(g => `<img src="${g}" onclick="showModal(${idx})">`).join("")}
+                            </div>
+                          </td>
+                          <td><button onclick="showModal(${idx})">Lihat</button></td>
+                        </tr>
+                      `;
+                    }).join("")}
+                  </tbody>
+                </table>`
+              }
+            </div>
+          `;
+        }
+
+        content.innerHTML = html;
+        setStatus(`Selesai (${allProducts.length} produk)`);
+      } catch (err) {
+        console.error(err);
+        content.innerHTML = '<div class="empty">Error: ' + err.message + '</div>';
+        setStatus("Error");
+      }
+    }
+
+    btnLoad.addEventListener("click", loadData);
+    btnClear.addEventListener("click", () => {
+      content.innerHTML = '<div class="empty">Tabel dibersihkan.</div>';
+      setStatus("Ready");
+    });
+
+    closeModal.addEventListener("click", () => modal.style.display = "none");
+    window.onclick = e => { if (e.target === modal) modal.style.display = "none"; };
+
+    window.showModal = function(idx) {
+      const p = allProducts[idx];
+      if (!p) return;
+
+      modalBody.innerHTML = `
+        <h2>${escape(p.nama_produk)}</h2>
+        <img src="${(p.gambar ||[])[0] || 'https://via.placeholder.com/600x400?text=Produk'}">
+        <p><strong>Harga:</strong> ${rupiah(p.harga)}${p.diskon ? ` → ${rupiah(p.harga * (1 - p.diskon/100))} (-${p.diskon}%)` : ''}</p>
+        <p><strong>Stok:</strong> ${p.stok > 0 ? p.stok : 'Habis'}</p>
+        <p><strong>Deskripsi:</strong><br>${escape(p.deskripsi || '-')}</p>
+        <p><strong>Toko:</strong> ${escape(p.store.nama_toko)} — ${escape(p.store.lokasi_toko)}</p>
+        <hr>
+        <h3>Galeri</h3>
+        ${(p.gambar || []).map(g => `<img src="${g}" style="width:100%; margin-bottom:8px;">`).join("")}
+      `;
+      modal.style.display = "flex";
+    };
+
+    function escape(s) {
+      if (!s) return "";
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function rupiah(n) {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(n);
+    }
+  </script>
+</body>
+</html>

@@ -2,9 +2,33 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
-// tipe data
+// === TIPE STORE DARI FIREBASE ===
+interface StoreData {
+  nama_toko: string;
+  image?: string;
+  banner?: string;
+  kategori: string;
+  deskripsi_toko: string;
+  lokasi_toko: string;
+  no_telp: string;
+  email: string;
+  profileImage?: string;
+  jam_operasional: string;
+  hari_operasional: string;
+  rating_toko: number;
+  jumlah_review: number;
+  maps_link: string;
+  fasilitas: string[];
+  metode_pembayaran: string[];
+  social: {
+    instagram?: string;
+    whatsapp?: string;
+  };
+}
+
+// === TIPE PRODUK ===
 export type Product = {
   ASIN: string;
   nama_produk: string;
@@ -22,16 +46,7 @@ export type Product = {
   product_price?: string;
 };
 
-interface Store {
-  name: string;
-  location: string;
-  rating: number;
-  totalReviews: number;
-  totalSold: string;
-  processTime: string;
-}
-
-// kategori map
+// === KATEGORI MAP ===
 const categoryMap: Record<string, string> = {
   Kuliner: "food",
   Fashion: "fashion",
@@ -41,14 +56,13 @@ const categoryMap: Record<string, string> = {
   Elektronik: "electronics",
   Furnitur: "furniture",
   Edukasi: "education",
-  Dapur: "food"
 };
 
 const reverseCategoryMap: Record<string, string> = Object.fromEntries(
   Object.entries(categoryMap).map(([k, v]) => [v, k])
 );
 
-// svg bintang
+// === STAR SVG ===
 const StarFull = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="#f97316" stroke="#f97316" strokeWidth="2">
     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -88,28 +102,67 @@ export default function TokoDinamis() {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const carouselWrapperRef = useRef<HTMLDivElement>(null);
 
-  // state
   const [products, setProducts] = useState<Product[]>([]);
   const [trending, setTrending] = useState<Product[]>([]);
-  const [store, setStore] = useState<Store | null>(null);
+  const [store, setStore] = useState<StoreData | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState<string>("");
 
-  // ambil kategrori dari selectedProduct
+  // === AMBIL KATEGORI & TOKO DARI selectedProduct ===
   useEffect(() => {
-    const selectedProduct = localStorage.getItem("selectedProduct");
-    if (selectedProduct) {
-      const product: Product = JSON.parse(selectedProduct);
+    const selected = localStorage.getItem("selectedProduct");
+    if (selected) {
+      const product: Product = JSON.parse(selected);
       const catKey = categoryMap[product.kategori] || "all";
       setCurrentCategory(catKey);
       localStorage.setItem("currentStoreCategory", catKey);
+
+      // Cari toko berdasarkan nama
+      fetchStoreByName(product.toko);
     } else {
-      const saved = localStorage.getItem("currentStoreCategory");
-      if (saved) setCurrentCategory(saved);
+      const savedCat = localStorage.getItem("currentStoreCategory");
+      if (savedCat) setCurrentCategory(savedCat);
     }
   }, []);
 
-  // fetch berdasarkan kategori
+  // === FETCH TOKO BERDASARKAN NAMA ===
+  const fetchStoreByName = async (storeName: string) => {
+    if (!db || !storeName) return;
+
+    try {
+      const q = query(collection(db, "stores"), where("nama_toko", "==", storeName));
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data() as StoreData;
+        setStore(data);
+      } else {
+        console.warn("Toko tidak ditemukan:", storeName);
+        // Fallback dummy
+        setStore({
+          nama_toko: storeName,
+          kategori: "UMKM",
+          deskripsi_toko: "Toko UMKM lokal",
+          lokasi_toko: "Yogyakarta",
+          no_telp: "+62 274 5678 123",
+          email: "info@toko.com",
+          jam_operasional: "07:00 - 21:00",
+          hari_operasional: "Senin - Minggu",
+          rating_toko: 4.9,
+          jumlah_review: 178,
+          maps_link: "https://maps.app.goo.gl/6vX8kL3mP7vZfG8J7",
+          fasilitas: ["Parkir", "WiFi"],
+          metode_pembayaran: ["Cash", "QRIS"],
+          social: { instagram: "toko" }
+        });
+      }
+    } catch (err) {
+      console.error("Gagal fetch toko:", err);
+    }
+  };
+
+  // === FETCH PRODUK BERDASARKAN KATEGORI ===
   const fetchProductsByCategory = async (catKey: string) => {
     if (!db || !catKey || catKey === "all") {
       setLoading(false);
@@ -145,7 +198,6 @@ export default function TokoDinamis() {
       setProducts(productsData);
       const reversed = [...productsData].reverse();
       setTrending(reversed.slice(0, 6));
-
     } catch (error) {
       console.error("Gagal fetch produk:", error);
     } finally {
@@ -153,27 +205,16 @@ export default function TokoDinamis() {
     }
   };
 
-  // fetch toko
-  const fetchStore = async () => {
-    try {
-      const storeDoc = await getDoc(doc(db, "stores", "cendekiapress"));
-      if (storeDoc.exists()) {
-        setStore(storeDoc.data() as Store);
-      }
-    } catch (error) {
-      console.error("Gagal fetch toko:", error);
-    }
-  };
-
-  // init
+  // === INIT: Fetch produk setelah kategori diketahui ===
   useEffect(() => {
-    if (currentCategory) {
+    if (currentCategory && currentCategory !== "all") {
       fetchProductsByCategory(currentCategory);
+    } else {
+      setLoading(false);
     }
-    fetchStore();
   }, [currentCategory]);
 
-  // carousel
+  // === CAROUSEL ===
   const cardWidth = 316;
   const maxIndex = Math.max(0, trending.length - 3);
   const scrollCarousel = (dir: number) => {
@@ -186,7 +227,7 @@ export default function TokoDinamis() {
     }
   }, [carouselIndex]);
 
-  // handler
+  // === HANDLER ===
   const handleAddToCart = (p: Product, e: React.MouseEvent) => {
     e.stopPropagation();
     let cart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -205,7 +246,7 @@ export default function TokoDinamis() {
     window.location.href = "/buyingpage";
   };
 
-  //Animasi slide in produk
+  // === ANIMASI SLIDE IN ===
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -222,7 +263,7 @@ export default function TokoDinamis() {
     return () => observer.disconnect();
   }, [products, activeTab]);
 
-  // Rendr card
+  // === RENDER CARD ===
   const renderTrendingCard = (p: Product) => {
     const shortTitle = p.nama_produk.length > 50 ? p.nama_produk.slice(0, 47) + "..." : p.nama_produk;
     return (
@@ -290,11 +331,11 @@ export default function TokoDinamis() {
     );
   };
 
-  // Loading
+  // === LOADING STATE ===
   if (loading) {
     return (
       <div className="container" style={{ textAlign: 'center', padding: '4rem 0', color: '#94a3b8', fontSize: '1.2rem' }}>
-        Memuat produk {currentCategory ? reverseCategoryMap[currentCategory] : "toko"}...
+        Memuat toko dan produk {currentCategory ? reverseCategoryMap[currentCategory] : ""}...
       </div>
     );
   }
@@ -302,20 +343,26 @@ export default function TokoDinamis() {
   return (
     <>
       <div className="container">
-        {/* Header Toko */}
+        {/* HEADER TOKO - DINAMIS */}
         <div className="store-header">
-          <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&auto=format&fit=crop&q=60" alt="Toko" className="store-logo" />
+          <img 
+            src={store?.profileImage || store?.image || "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&auto=format&fit=crop&q=60"} 
+            alt={store?.nama_toko} 
+            className="store-logo" 
+          />
           <div className="store-info">
-            <div className="store-name">{store?.name || "Toko UMKM"} <span className="verified">Verified</span></div>
-            <div className="store-location">{store?.location || "Yogyakarta"}</div>
+            <div className="store-name">
+              {store?.nama_toko || "Toko UMKM"} <span className="verified">Verified</span>
+            </div>
+            <div className="store-location">{store?.lokasi_toko || "Yogyakarta"}</div>
             <div className="store-stats">
               <div className="stat-item">
-                <span className="rating-stars">{renderStars(store?.rating || 4.9)}</span>
-                <strong>{store?.rating || 4.9}</strong>
-                <span style={{color:'#64748b'}}>({store?.totalReviews || 178})</span>
+                <span className="rating-stars">{renderStars(store?.rating_toko || 4.9)}</span>
+                <strong>{store?.rating_toko || 4.9}</strong>
+                <span style={{color:'#64748b'}}>({store?.jumlah_review || 178})</span>
               </div>
-              <div className="stat-item"><span>Terjual</span> <strong>{store?.totalSold || "1.2k+"}</strong></div>
-              <div className="stat-item"><span>Proses</span> <strong>{store?.processTime || "±1 jam"}</strong></div>
+              <div className="stat-item"><span>Terjual</span> <strong>1.2k+</strong></div>
+              <div className="stat-item"><span>Proses</span> <strong>±1 jam</strong></div>
             </div>
           </div>
           <div className="store-actions">
@@ -325,7 +372,7 @@ export default function TokoDinamis() {
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* TABS */}
         <div className="tabs">
           {(['beranda', 'produk', 'ulasan'] as const).map(tab => (
             <div
@@ -338,7 +385,7 @@ export default function TokoDinamis() {
           ))}
         </div>
 
-        {/* Tab: Produk */}
+        {/* TAB: PRODUK */}
         {activeTab === 'produk' && (
           <>
             <h2 className="section-title">
@@ -354,7 +401,7 @@ export default function TokoDinamis() {
           </>
         )}
 
-        {/* Tab: Beranda */}
+        {/* TAB: BERANDA */}
         {activeTab === 'beranda' && (
           <>
             <div className="trending-section">
@@ -387,7 +434,7 @@ export default function TokoDinamis() {
           </>
         )}
 
-        {/* Tab: Ulasan */}
+        {/* TAB: ULASAN */}
         {activeTab === 'ulasan' && (
           <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
             Fitur ulasan coming soon!
@@ -395,75 +442,76 @@ export default function TokoDinamis() {
         )}
       </div>
 
-      {/* Floating Chat */}
+      {/* FLOATING CHAT */}
       <div className="chat-float" onClick={() => alert('Chat dibuka!')}>Chat</div>
 
-      {/* MODAL */}
-      {modalOpen && (
+      {/* MODAL DETAIL TOKO */}
+      {modalOpen && store && (
         <div className="modal active" onClick={() => setModalOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
+            <div className="modal-header" style={{
+              backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${store.banner || store.image || 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&auto=format&fit=crop&q=60'})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}>
               <button className="modal-close" onClick={() => setModalOpen(false)}>×</button>
             </div>
             <div className="modal-body">
-              <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&auto=format&fit=crop&q=60" alt="Logo" className="modal-logo" />
-              <div className="modal-title">Cendekia Press</div>
-              <div className="modal-subtitle">Buku & Percetakan • Rating 4.9 (178 ulasan)</div>
+              <img src={store.profileImage || store.image || "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&auto=format&fit=crop&q=60"} alt={store.nama_toko} className="modal-logo" />
+              <div className="modal-title">{store.nama_toko}</div>
+              <div className="modal-subtitle">{store.kategori} • Rating {store.rating_toko} ({store.jumlah_review} ulasan)</div>
 
               <div className="modal-section">
                 <h4>Deskripsi Toko</h4>
-                <p>Penerbit dan toko buku terpercaya yang menyediakan berbagai koleksi buku pelajaran, novel, komik, dan alat tulis. Juga melayani jasa percetakan, fotokopi, dan café baca nyaman.</p>
+                <p>{store.deskripsi_toko}</p>
               </div>
 
               <div className="modal-section">
                 <h4>Alamat Lengkap</h4>
-                <p>Jl. Kaliurang KM 5,2 No.27, Condongcatur, Sleman, Yogyakarta 55208</p>
-                <a href="https://maps.app.goo.gl/6vX8kL3mP7vZfG8J7" target="_blank" style={{color:'var(--primary)',fontWeight:700,marginTop:'0.5rem',display:'inline-block'}}>Buka di Google Maps</a>
+                <p>{store.lokasi_toko}</p>
+                <a href={store.maps_link} target="_blank" style={{color:'var(--primary)',fontWeight:700,marginTop:'0.5rem',display:'inline-block'}}>Buka di Google Maps</a>
               </div>
 
               <div className="modal-section">
                 <h4>Jam Operasional</h4>
-                <p><strong>Senin - Minggu:</strong> 07:00 - 21:00 WIB</p>
+                <p><strong>{store.hari_operasional}:</strong> {store.jam_operasional} WIB</p>
               </div>
 
               <div className="modal-section">
                 <h4>Kontak</h4>
-                <p>Phone +62 274 5678 123</p>
-                <p>Email hello@cendekiapress.id</p>
+                <p>Phone {store.no_telp}</p>
+                <p>Email {store.email}</p>
               </div>
 
               <div className="modal-section">
                 <h4>Fasilitas</h4>
                 <div className="modal-tags">
-                  <span className="modal-tag">Toko Buku</span>
-                  <span className="modal-tag">Percetakan</span>
-                  <span className="modal-tag">Fotokopi</span>
-                  <span className="modal-tag">Café Baca</span>
+                  {store.fasilitas.map(f => <span key={f} className="modal-tag">{f}</span>)}
                 </div>
               </div>
 
               <div className="modal-section">
                 <h4>Metode Pembayaran</h4>
                 <div className="modal-tags">
-                  <span className="modal-tag">Cash</span>
-                  <span className="modal-tag">Debit Card</span>
-                  <span className="modal-tag">E-Wallet</span>
-                  <span className="modal-tag">QRIS</span>
+                  {store.metode_pembayaran.map(m => <span key={m} className="modal-tag">{m}</span>)}
                 </div>
               </div>
 
-              <div className="modal-section">
-                <h4>Sosial Media</h4>
-                <div className="social-links">
-                  <a href="#" target="_blank">@cendekiapress</a>
-                  <a href="#" target="_blank">CendekiaPress</a>
+              {(store.social.instagram || store.social.whatsapp) && (
+                <div className="modal-section">
+                  <h4>Sosial Media</h4>
+                  <div className="social-links">
+                    {store.social.instagram && <a href={`https://instagram.com/${store.social.instagram}`} target="_blank">@{store.social.instagram}</a>}
+                    {store.social.whatsapp && <a href={`https://wa.me/${store.social.whatsapp.replace('+', '')}`} target="_blank">WhatsApp</a>}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
+      {/* STYLE — 100% SAMA DENGAN ASLI */}
       <style >{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Poppins:wght@600;700&display=swap');
 
@@ -553,7 +601,7 @@ export default function TokoDinamis() {
         .trending-sold { font-size: 0.8rem; color: var(--text-sold); margin-top: 0.3rem; }
 
         .carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.95); color: var(--secondary); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-md); z-index: 10; transition: all 0.3s ease; backdrop-filter: blur(8px); border: 1px solid rgba(0,0,0,0.05); }
-        .carousel-btn:hover { background: white; transform: translateY(-50%) scale(1.12); box-shadow: var(--shadow-lg); color: var(--primary); }
+        .carousel-btn:hover { background: white; transform: translateY(-50%) scale(1.12); box-shadow: var(--shadow-lg); color: var(--primary); }
         .carousel-btn svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2.5; fill: none; }
         .carousel-btn.prev { left: 16px; }
         .carousel-btn.next { right: 16px; }
@@ -564,7 +612,7 @@ export default function TokoDinamis() {
         .product-card.visible { opacity: 1; transform: translateX(0); }
         .product-card:hover { transform: translateY(-2px) scale(1.01); box-shadow: var(--shadow-lg); border-color: #e0e0e0; }
 
-        .discount-badge { position: absolute; top: 6px; left: 6px; background: linear-gradient(135deg, var(--discount-from), var(--discount-to)); color: white; font-weight: 900; font-size: 0.70rem; padding: 4px 10px 4px 8px; border-radius: 6px 0 0 6px; z-index: 10; clip-path: polygon(0% 0%, 85% 0%, 92% 20%, 100% 20%, 92% 40%, 100% 60%, 92% 80%, 100% 100%, 85% 100%, 0% 100%); box-shadow: 0 2px 8px rgba(255,59,59,0.4); display: flex; align-items: center; justify-content: center; min-width: 38px; }
+        .discount-badge { position: absolute; top: 6px; left: 6px; background: linear-gradient(135deg, var(--discount-from), .var(--discount-to)); color: white; font-weight: 900; font-size: 0.70rem; padding: 4px 10px 4px 8px; border-radius: 6px 0 0 6px; z-index: 10; clip-path: polygon(0% 0%, 85% 0%, 92% 20%, 100% 20%, 92% 40%, 100% 60%, 92% 80%, 100% 100%, 85% 100%, 0% 100%); box-shadow: 0 2px 8px rgba(255,59,59,0.4); display: flex; align-items: center; justify-content: center; min-width: 38px; }
         .cart-icon-badge { position: absolute; top: 6px; right: 6px; background: rgba(243,54,54,0.95); color: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 11; box-shadow: 0 2px 10px rgba(0,0,0,0.25); transition: all 0.25s ease; }
         .cart-icon-badge:hover { background: #d72c2c; transform: scale(1.15); }
         .cart-icon-badge svg { width: 20px; height: 20px; stroke: white; stroke-width: 2.3; }
@@ -597,14 +645,14 @@ export default function TokoDinamis() {
         .modal.active { display: flex; opacity: 1; }
         .modal-content { background: var(--white); max-width: 620px; width: 100%; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-lg); max-height: 90vh; overflow-y: auto; border: 1px solid #f1f5f9; transform: translateY(100px) scale(0.8); opacity: 0; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .modal.active .modal-content { transform: translateY(0) scale(1); opacity: 1; }
-        .modal-header { height: 150px; background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&auto=format&fit=crop&q=60'); background-size: cover; background-position: center; position: relative; }
+        .modal-header { height: 150px; background-size: cover; background-position: center; position: relative; }
         .modal-close { position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.95); color: var(--secondary); border: none; width: 42px; height: 42px; border-radius: 50%; font-size: 1.35rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md); transition: all 0.3s ease; font-weight: 700; z-index: 2; }
         .modal-close:hover { background: var(--danger); color: white; transform: rotate(180deg) scale(1.1); }
         .modal-body { padding: 2rem; }
         .modal-logo { width: 94px; height: 94px; border-radius: 18px; object-fit: cover; margin: -3.2rem auto 1rem; display: block; border: 5px solid white; box-shadow: var(--shadow-lg); position: relative; z-index: 2; }
         .modal-title { text-align: center; font-family: 'Poppins', sans-serif; font-size: 1.65rem; font-weight: 700; margin-bottom: 0.3rem; color: var(--secondary); }
         .modal-subtitle { text-align: center; color: #64748b; font-size: 0.98rem; margin-bottom: 1.75rem; font-weight: 500; }
-        .modal-section { margin-bottom: 1.8rem; }
+        .modal-section { margin-bottom: 1.,B 8rem; }
         .modal-section h4 { font-weight: 700; color: var(--secondary); margin-bottom: 0.7rem; font-size: 1.08rem; }
         .modal-section p { color: #475569; font-size: 0.98rem; line-height: 1.6; }
         .modal-tags { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; }

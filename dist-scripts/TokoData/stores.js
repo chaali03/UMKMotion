@@ -52,7 +52,7 @@ export const stores = [
         lokasi_toko: "Jl. Imogiri Timur No.123, Giwangan, Kec. Umbulharjo, Kota Yogyakarta, Daerah Istimewa Yogyakarta 55163",
         no_telp: "+62 274 8901 234",
         email: "hello@karyanusantara.id",
-        profileImage: "https://images.unsplash.com/photo-1582639590011-f5a8416d1101?w=400&auto=format&fit=crop&q=60",
+        profileImage: "https://klik-online.com/wp-content/uploads/2023/12/DUTA.jpg",
         jam_operasional: "09:00 - 21:00",
         hari_operasional: "Senin - Minggu",
         rating_toko: 4.9,
