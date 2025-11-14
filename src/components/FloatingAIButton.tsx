@@ -114,7 +114,16 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           className="relative z-10"
         >
-          <img src="/asset/optimized/LogoDina-tiny.webp" alt="Dina AI" className="w-full h-full rounded-[14px] object-contain" width="80" height="80" sizes="(max-width: 640px) 64px, (max-width: 1024px) 80px, 96px" loading="lazy" />
+          <img
+            src="/asset/optimized/LogoDina-tiny.webp"
+            alt="Dina AI"
+            className="w-full h-full rounded-[14px] object-contain"
+            width="80"
+            height="80"
+            sizes="(max-width: 640px) 64px, (max-width: 1024px) 80px, 96px"
+            fetchPriority="high"
+            decoding="async"
+          />
         </motion.div>
         
         {/* Ripple removed for clean image-only look */}

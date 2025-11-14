@@ -3,8 +3,9 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 const LazyRadio = React.lazy(() =>
   import('react-loader-spinner').then((m) => ({ default: m.Radio }))
@@ -41,6 +42,7 @@ function FetchData() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [isClient, setIsClient] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const loadStartRef = useRef<number>(0);
   const MIN_SPINNER_MS = 600;
 
@@ -48,7 +50,14 @@ function FetchData() {
     setIsClient(true);
   }, []);
 
-  const PRODUCTS_PER_PAGE = 18;
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
+    });
+    return () => unsub();
+  }, []);
+
+  const PRODUCTS_PER_PAGE = 16;
 
   useEffect(() => {
     const handleCategoryChange = (e: CustomEvent<string>) => {
@@ -209,9 +218,32 @@ function FetchData() {
             product_price: formatToIDR(p.harga_produk),
           }));
 
-          setAllProducts(transformed);
-          setDisplayedProducts(transformed.slice(0, PRODUCTS_PER_PAGE));
-          setHasMore(transformed.length > PRODUCTS_PER_PAGE);
+          // Deduplicate by normalized image URL; fallback to normalized product name
+          const normUrl = (u?: string) => {
+            if (!u) return '';
+            let s = u.trim().toLowerCase();
+            s = s.replace(/^https?:\/\//, '');
+            const q = s.indexOf('?');
+            if (q !== -1) s = s.substring(0, q);
+            // common size suffixes after last underscore or @
+            s = s.replace(/(_\d+x\d+|@\dx)\.(webp|jpg|jpeg|png)$/i, '.$2');
+            return s;
+          };
+          const normName = (t?: string) => (t || '').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+          const seenMock = new Set<string>();
+          const uniqueMock = transformed.filter((p) => {
+            const keyUrl = normUrl(p.thumbnail_produk || p.gambar_produk);
+            const keyName = normName(p.nama_produk);
+            const key = keyUrl || `name:${keyName}`;
+            if (!key) return true;
+            if (seenMock.has(key)) return false;
+            seenMock.add(key);
+            return true;
+          });
+
+          setAllProducts(uniqueMock);
+          setDisplayedProducts(uniqueMock.slice(0, PRODUCTS_PER_PAGE));
+          setHasMore(uniqueMock.length > PRODUCTS_PER_PAGE);
           finishLoading();
           return;
         }
@@ -246,9 +278,31 @@ function FetchData() {
           product_price: formatToIDR(p.harga_produk),
         }));
 
-        setAllProducts(transformed);
-        setDisplayedProducts(transformed.slice(0, PRODUCTS_PER_PAGE));
-        setHasMore(transformed.length > PRODUCTS_PER_PAGE);
+        // Deduplicate by normalized image URL; fallback to normalized product name
+        const normUrl = (u?: string) => {
+          if (!u) return '';
+          let s = u.trim().toLowerCase();
+          s = s.replace(/^https?:\/\//, '');
+          const q = s.indexOf('?');
+          if (q !== -1) s = s.substring(0, q);
+          s = s.replace(/(_\d+x\d+|@\dx)\.(webp|jpg|jpeg|png)$/i, '.$2');
+          return s;
+        };
+        const normName = (t?: string) => (t || '').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+        const seen = new Set<string>();
+        const unique = transformed.filter((p) => {
+          const keyUrl = normUrl(p.thumbnail_produk || p.gambar_produk);
+          const keyName = normName(p.nama_produk);
+          const key = keyUrl || `name:${keyName}`;
+          if (!key) return true;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+        setAllProducts(unique);
+        setDisplayedProducts(unique.slice(0, PRODUCTS_PER_PAGE));
+        setHasMore(unique.length > PRODUCTS_PER_PAGE);
       } catch (err: any) {
         console.error("ERROR FETCH:", err);
         alert(`Gagal ambil data: ${err.message}`);
@@ -294,24 +348,31 @@ function FetchData() {
         }
 
         .product-card {
-          background: white;
-          border-radius: 20px;
+          background: linear-gradient(145deg, #ffffff 0%, #fefefe 100%);
+          border-radius: 24px;
           overflow: hidden;
-          transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+          transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           cursor: pointer;
           position: relative;
-          border: 1.5px solid #f1f5f9;
+          border: 1px solid rgba(226, 232, 240, 0.6);
           display: flex;
           flex-direction: column;
           height: 100%;
-          min-height: 420px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.03);
+          min-height: 460px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6);
+          backdrop-filter: blur(20px);
         }
 
         .product-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 28px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
-          border-color: var(--brand-orange);
+          transform: translateY(-8px) scale(1.02);
+          box-shadow: 0 25px 50px rgba(0,0,0,0.18), 0 12px 30px rgba(253,87,1,0.15), inset 0 1px 0 rgba(255,255,255,0.8);
+          border-color: rgba(253,87,1,0.4);
+          background: linear-gradient(145deg, #ffffff 0%, #fcfcfc 100%);
+        }
+
+        .product-card:hover .price-discounted {
+          transform: scale(1.05);
+          transition: transform 0.3s ease;
         }
 
         .discount-badge {
@@ -330,28 +391,47 @@ function FetchData() {
 
         .product-image {
           width: 100%;
-          height: 200px;
-          background: linear-gradient(135deg, rgba(0,17,81,0.03) 0%, rgba(253,87,1,0.03) 100%);
+          height: 240px;
+          background: linear-gradient(135deg, rgba(0,17,81,0.03) 0%, rgba(253,87,1,0.03) 50%, rgba(99,102,241,0.02) 100%);
           overflow: hidden;
           position: relative;
+          border-radius: 20px;
+          margin: 12px;
+          width: calc(100% - 24px);
+          box-shadow: 0 8px 25px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.3);
         }
         .discount-chip {
           display: inline-flex;
           align-items: center;
-          padding: 6px 10px;
-          border-radius: 9999px;
-          font-size: 0.75rem;
-          font-weight: 800;
-          color: #ef4444;
-          background: #fee2e2;
-          border: 1px solid #fecaca;
-          box-shadow: 0 2px 6px rgba(239,68,68,0.2);
+          padding: 10px 16px;
+          border-radius: 16px;
+          font-size: 0.8rem;
+          font-weight: 900;
+          color: white;
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+          border: 1px solid rgba(255,255,255,0.2);
+          box-shadow: 0 6px 20px rgba(239,68,68,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+          text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
         .discount-chip-overlay {
           position: absolute;
-          top: 10px;
-          left: 10px;
+          top: 12px;
+          left: 12px;
           z-index: 5;
+        }
+
+        .favorite-icon-overlay {
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          z-index: 6;
+          display: none;
+          transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        .favorite-icon-overlay:hover {
+          transform: scale(1.1);
+          box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
         }
 
         .product-image img {
@@ -366,17 +446,18 @@ function FetchData() {
         }
 
         .product-info {
-          padding: 16px;
+          padding: 24px;
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 16px;
           flex-grow: 1;
+          background: linear-gradient(180deg, transparent 0%, rgba(248,250,252,0.3) 100%);
         }
 
         .product-title {
-          font-size: 0.95rem;
-          font-weight: 600;
-          color: var(--brand-blue-ink);
+          font-size: 1.1rem;
+          font-weight: 800;
+          color: #0f172a;
           line-height: 1.4;
           margin: 0;
           display: -webkit-box;
@@ -384,7 +465,8 @@ function FetchData() {
           -webkit-box-orient: vertical;
           overflow: hidden;
           text-overflow: ellipsis;
-          min-height: 2.7rem;
+          min-height: 3.2rem;
+          letter-spacing: -0.02em;
         }
 
         .rating-sold {
@@ -398,25 +480,57 @@ function FetchData() {
           display: flex;
           align-items: center;
           gap: 6px;
-          color: #fbbf24;
-          font-weight: 600;
-          font-size: 0.8rem;
+          color: #f59e0b;
+          font-weight: 800;
+          font-size: 0.9rem;
+          text-shadow: 0 1px 2px rgba(245,158,11,0.2);
         }
 
         .sold {
-          font-size: 0.75rem;
-          color: #64748b;
-          background: #f8fafc;
-          padding: 4px 8px;
-          border-radius: 6px;
-          font-weight: 600;
+          font-size: 0.8rem;
+          color: #475569;
+          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+          padding: 8px 12px;
+          border-radius: 12px;
+          font-weight: 700;
+          border: 1px solid #cbd5e1;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6);
         }
 
         .price-large {
-          font-size: 1.2rem;
-          font-weight: 800;
-          color: var(--brand-blue-ink);
-          margin: 4px 0;
+          font-size: 1.4rem;
+          font-weight: 900;
+          color: #0f172a;
+          margin: 0;
+          background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          letter-spacing: -0.03em;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          line-height: 1.2;
+        }
+
+        .price-container {
+          margin: 8px 0;
+        }
+
+        .price-discounted {
+          color: #ef4444 !important;
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%) !important;
+          -webkit-background-clip: text !important;
+          -webkit-text-fill-color: transparent !important;
+          background-clip: text !important;
+        }
+
+        .old-price {
+          text-decoration: line-through !important;
+          color: #94a3b8 !important;
+          font-weight: 600;
+          font-size: 0.95rem;
+          opacity: 0.8;
+          letter-spacing: -0.01em;
+          display: block;
         }
 
         .bonus-promo {
@@ -432,59 +546,66 @@ function FetchData() {
         }
 
         .store-name {
-          font-size: 0.8rem;
+          font-size: 0.9rem;
           color: var(--brand-orange);
-          font-weight: 600;
-          margin: 4px 0 0;
+          font-weight: 800;
+          margin: 8px 0 0;
           display: flex;
           align-items: center;
-          gap: 6px;
-          padding-top: 10px;
-          border-top: 1px dashed #e2e8f0;
+          gap: 10px;
+          padding-top: 16px;
+          border-top: 1px solid rgba(226, 232, 240, 0.8);
+          letter-spacing: -0.01em;
         }
 
         .store-name::before {
           content: '✓';
-          background: var(--brand-orange);
+          background: linear-gradient(135deg, var(--brand-orange) 0%, #f97316 50%, #ea580c 100%);
           color: white;
-          width: 16px;
-          height: 16px;
+          width: 20px;
+          height: 20px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 0.6rem;
+          font-size: 0.7rem;
           font-weight: 900;
+          box-shadow: 0 4px 12px rgba(253,87,1,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+          border: 1px solid rgba(255,255,255,0.2);
         }
 
         .action-buttons {
           margin-top: auto;
-          padding-top: 12px;
+          padding-top: 16px;
           display: flex;
-          gap: 8px;
+          gap: 10px;
           align-items: center;
         }
 
         .btn-buy {
           flex: 1;
-          padding: 12px 16px;
-          border-radius: 12px;
-          font-size: 0.85rem;
-          font-weight: 700;
+          padding: 16px 20px;
+          border-radius: 16px;
+          font-size: 0.95rem;
+          font-weight: 900;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
+          gap: 10px;
           cursor: pointer;
-          transition: all 0.2s ease;
-          border: none;
-          background: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-500) 100%);
+          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          border: 1px solid rgba(255,255,255,0.2);
+          background: linear-gradient(135deg, var(--brand-orange) 0%, #f97316 50%, #ea580c 100%);
           color: white;
+          box-shadow: 0 6px 20px rgba(253,87,1,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+          text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+          letter-spacing: -0.01em;
         }
 
         .btn-buy:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(253, 87, 1, 0.3);
+          transform: translateY(-3px) scale(1.02);
+          box-shadow: 0 12px 30px rgba(253, 87, 1, 0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+          background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%);
         }
 
         .btn-icon {
@@ -493,18 +614,24 @@ function FetchData() {
         }
 
         .cart-icon-badge {
-          width: 48px;
-          height: 48px;
-          background: linear-gradient(135deg, var(--brand-orange) 0%, #f97316 100%);
-          border-radius: 14px;
+          width: 56px;
+          height: 56px;
+          background: linear-gradient(135deg, #64748b 0%, #475569 50%, #334155 100%);
+          border-radius: 18px;
+          box-shadow: 0 6px 18px rgba(100,116,139,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-          border: 2px solid transparent;
+          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          border: 1px solid rgba(255,255,255,0.1);
           position: relative;
           overflow: hidden;
+        }
+
+        @media (max-width: 640px) {
+          .favorite-icon-overlay { display: inline-flex; }
+          .action-buttons .favorite-icon-badge { display: none; }
         }
 
         .cart-icon-badge:hover {
@@ -918,7 +1045,7 @@ function FetchData() {
                 return (
                   <ProductCard
                     key={item.ASIN}
-                    image={item.thumbnail_produk || item.gambar_produk || "https://via.placeholder.com/400x400"}
+                    image={item.thumbnail_produk || item.gambar_produk || "/asset/placeholder/product.webp"}
                     shortTitle={shortTitle}
                     price={item.product_price || formatToIDR(item.harga_produk)}
                     rating={rating}
@@ -934,9 +1061,15 @@ function FetchData() {
 
             {hasMore && (
               <div className="load-more-wrapper">
-                <button className="load-more-btn" onClick={loadMore} disabled={loadingMore}>
-                  <span>{loadingMore ? "Memuat..." : "Lihat Lebih Banyak"}</span>
-                </button>
+                {isLoggedIn ? (
+                  <button className="load-more-btn" onClick={loadMore} disabled={loadingMore}>
+                    <span>{loadingMore ? "Memuat..." : "Lihat Lebih Banyak"}</span>
+                  </button>
+                ) : (
+                  <a className="load-more-btn" href="/login">
+                    <span>Masuk untuk Lihat Lebih Banyak</span>
+                  </a>
+                )}
               </div>
             )}
           </>
@@ -960,6 +1093,29 @@ interface ProductCardProps {
 
 function ProductCard({ image, shortTitle, price, rating, sold, seller, discount, product, onProductClick }: ProductCardProps) {
   const toIDR = (n: number) => "Rp " + n.toLocaleString("id-ID");
+  const initialSrc = (image && image.trim()) || (product.thumbnail_produk as any) || (product.gambar_produk as any) || "/asset/placeholder/product.webp";
+  const [imgSrc, setImgSrc] = React.useState<string>(initialSrc);
+  const handleImgError = () => {
+    const gallery = (product as any)?.galeri_gambar;
+    const alt1 = (product as any)?.gambar_produk || (Array.isArray(gallery) ? gallery[0] : undefined);
+    if (imgSrc && alt1 && imgSrc !== alt1) {
+      setImgSrc(alt1);
+      return;
+    }
+    // Try thumbnail without query as a fallback
+    const thumb = (product as any)?.thumbnail_produk;
+    if (thumb && imgSrc !== thumb) {
+      try {
+        const u = new URL(thumb, window.location.origin);
+        setImgSrc(u.origin + u.pathname);
+        return;
+      } catch {
+        setImgSrc(thumb);
+        return;
+      }
+    }
+    setImgSrc("/asset/placeholder/product.webp");
+  };
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     let cart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -996,16 +1152,74 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
 
   // Only show discount badge if there's actual discount
   const hasDiscount = discount && discount !== "0%";
+  // Compute discounted price and original price for display
+  const parsePercent = (d?: string) => {
+    if (!d) return undefined;
+    const m = d.match(/(\d+(?:[\.,]\d+)?)/);
+    return m ? parseFloat(m[1].replace(',', '.')) : undefined;
+  };
+  
+  // Determine original price - prioritize harga_asli if available and greater than harga_produk
+  let originalPrice: number | null = null;
+  if (product.harga_asli && typeof product.harga_asli === 'number' && product.harga_asli > product.harga_produk) {
+    originalPrice = product.harga_asli;
+  }
+  
+  const percent = (typeof product.persentase_diskon === 'number' ? product.persentase_diskon : parsePercent(discount)) || 0;
+  let discountedPrice = product.harga_produk;
+  
+  if (hasDiscount) {
+    if (originalPrice && originalPrice > product.harga_produk) {
+      // If harga_asli exists and is greater, use harga_produk as discounted price
+      discountedPrice = product.harga_produk;
+    } else if (percent > 0) {
+      // Calculate discounted price from percentage
+      if (originalPrice) {
+        discountedPrice = Math.max(0, Math.round(originalPrice * (1 - percent / 100)));
+      } else {
+        // Calculate from harga_produk and set it as original
+        originalPrice = product.harga_produk;
+        discountedPrice = Math.max(0, Math.round(originalPrice * (1 - percent / 100)));
+      }
+    }
+  }
+  
+  // Show old price if there's a discount and we have an original price that's higher than discounted
+  const showOldPrice = hasDiscount && originalPrice && originalPrice > discountedPrice;
 
   return (
     <div className="product-card" onClick={() => onProductClick(product)}>
       <div className="product-image">
-        <img src={image} alt={shortTitle} loading="lazy" />
+        <img
+          src={imgSrc}
+          alt={shortTitle}
+          loading="lazy"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          onError={handleImgError}
+        />
         {hasDiscount && (
           <div className="discount-chip-overlay" aria-label={`Diskon ${discount}`}>
             <span className="discount-chip">Diskon {discount}</span>
           </div>
         )}
+        <div 
+          className="favorite-icon-overlay"
+          onClick={handleAddToFavorites}
+          aria-label="Tambah ke favorit"
+          title="Favorit"
+          style={{
+            alignItems: 'center', justifyContent: 'center',
+            width: 40, height: 40, borderRadius: 12,
+            background: 'white', border: '1px solid #e2e8f0',
+            boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+            color: isFavorited() ? '#ef4444' : '#475569'
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill={isFavorited() ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </div>
       </div>
       <div className="product-info">
         <div>
@@ -1016,13 +1230,19 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
               <div className="sold">{sold}</div>
             </div>
             <div className="engagement" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div className="likes" title="Suka" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <div className="likes" title="Suka" style={{ 
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                color: '#ef4444', fontSize: '0.8rem', fontWeight: 600
+              }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
                 <span>{typeof product.likes === 'number' ? product.likes : 0}</span>
               </div>
-              <div className="interactions" title="Interaksi" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <div className="interactions" title="Interaksi" style={{ 
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                color: '#3b82f6', fontSize: '0.8rem', fontWeight: 600
+              }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
                 </svg>
@@ -1030,14 +1250,20 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
               </div>
             </div>
           </div>
-          <div className="price-large" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>{price}</span>
-            {hasDiscount && product.harga_asli && product.harga_asli > product.harga_produk && (
-              <span className="old-price" style={{
-                textDecoration: 'line-through', color: '#94a3b8', fontWeight: 600, fontSize: '0.9rem'
-              }}>
-                {toIDR(product.harga_asli as number)}
-              </span>
+          <div className="price-container">
+            {showOldPrice ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+                  <span className="price-large price-discounted">
+                    {toIDR(discountedPrice)}
+                  </span>
+                </div>
+                <span className="old-price">
+                  {toIDR(originalPrice as number)}
+                </span>
+              </>
+            ) : (
+              <span className="price-large">{toIDR(discountedPrice)}</span>
             )}
           </div>
           {Array.isArray(product.tags) && product.tags.length > 0 && (
@@ -1047,9 +1273,19 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
                 .slice(0, 4)
                 .map((tag, idx) => (
                 <span key={idx} className="tag-chip" style={{
-                  display: 'inline-flex', alignItems: 'center', padding: '4px 8px',
-                  borderRadius: 9999, fontSize: 12, fontWeight: 600, color: '#0f172a',
-                  background: '#f1f5f9', border: '1px solid #e2e8f0'
+                  display: 'inline-flex', alignItems: 'center', padding: '8px 14px',
+                  borderRadius: 14, fontSize: 12, fontWeight: 800, color: '#374151',
+                  background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #e5e7eb 100%)',
+                  border: '1px solid #d1d5db',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7)',
+                  transition: 'all 0.3s cubic-bezier(0.23, 1, 0.32, 1)',
+                  cursor: 'pointer'
+                }} onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px) scale(1.02)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)';
+                }} onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7)';
                 }}>
                   {tag}
                 </span>

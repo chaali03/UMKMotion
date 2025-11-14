@@ -1,5 +1,6 @@
 // src/components/Etalase/Kategori.jsx
 import React, { useState, useEffect, useRef } from "react";
+import { Utensils, Wrench, Shirt, Palette, HeartPulse, Sprout, Laptop, Armchair, Ellipsis, Sparkles, GraduationCap } from "lucide-react";
 
 export default function Kategori({ selectedCategory: parentCategory, setSelectedCategory: setParentCategory, onSearch }) {
   const [localCategory, setLocalCategory] = useState(parentCategory || "all");
@@ -14,55 +15,61 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
       id: "all", 
       label: "Semua", 
       color: { gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", light: "#f0f4ff", text: "#667eea" },
-      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><circle cx="15" cy="9" r="2"/><circle cx="12" cy="15" r="2"/></svg> 
+      icon: <Sparkles />
     },
     { 
       id: "food", 
       label: "Kuliner", 
       color: { gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", light: "#fff0f5", text: "#f5576c" },
-      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg> 
+      icon: <Utensils />
+    },
+    { 
+      id: "service", 
+      label: "Jasa", 
+      color: { gradient: "linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)", light: "#ebf5ff", text: "#3b82f6" },
+      icon: <Wrench />
     },
     { 
       id: "fashion", 
       label: "Fashion", 
       color: { gradient: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", light: "#fff8e7", text: "#fa709a" },
-      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> 
+      icon: <Shirt />
     },
     { 
       id: "craft", 
       label: "Kerajinan", 
       color: { gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", light: "#e7f9ff", text: "#00f2fe" },
-      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg> 
+      icon: <Palette />
     },
     { 
       id: "beauty", 
       label: "Kesehatan", 
       color: { gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)", light: "#e7fff9", text: "#38f9d7" },
-      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
+      icon: <HeartPulse />
     },
     { 
       id: "agriculture", 
       label: "Pertanian", 
       color: { gradient: "linear-gradient(135deg, #96fbc4 0%, #f9f586 100%)", light: "#f7ffe7", text: "#7cb342" },
-      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12 6v6l4 2"/></svg> 
+      icon: <Sprout />
     },
     { 
       id: "electronics", 
       label: "Elektronik", 
       color: { gradient: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)", light: "#fceeff", text: "#a18cd1" },
-      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> 
+      icon: <Laptop />
     },
     { 
       id: "furniture", 
       label: "Furniture", 
       color: { gradient: "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)", light: "#fff5f0", text: "#fcb69f" },
-      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9v11M21 9v11M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2M3 9h18"/><path d="M5 20h14"/></svg> 
+      icon: <Armchair />
     },
     { 
       id: "education", 
       label: "Edukasi", 
-      color: { gradient: "linear-gradient(135deg, #ff9a56 0%, #fecfef 100%)", light: "#fff0f7", text: "#ff9a56" },
-      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 
+      color: { gradient: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)", light: "#eef2ff", text: "#3b82f6" },
+      icon: <GraduationCap />
     },
   ];
 

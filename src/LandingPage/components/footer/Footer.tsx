@@ -45,6 +45,8 @@ export default function Footer() {
   const [isMobile, setIsMobile] = useState(false);
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [serverMsg, setServerMsg] = useState<string>("");
   const inView = useInView(ref, { once: true, margin: "-10% 0px -10% 0px" });
 
   useEffect(() => {
@@ -85,13 +87,33 @@ export default function Footer() {
     }
   };
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
-    setTimeout(() => {
+    if (!email) return;
+    setIsSending(true);
+    setServerMsg("");
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.message || 'Gagal mengirim email');
+      }
+      setIsSubmitted(true);
+      setServerMsg('Voucher terkirim ke email kamu.');
       setEmail("");
-      setIsSubmitted(false);
-    }, 3000);
+    } catch (err: any) {
+      setServerMsg(err?.message || 'Gagal mengirim email. Coba lagi.');
+    } finally {
+      setIsSending(false);
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setServerMsg("");
+      }, 4000);
+    }
   };
 
   return (
@@ -148,7 +170,8 @@ export default function Footer() {
                     whileHover={!isMobile ? { y: -2, scale: 1.01 } : {}}
                     whileTap={{ scale: 0.95 }}
                     type="submit"
-                    className="group relative overflow-hidden rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-white shadow-lg shadow-orange-300/50 transition-all duration-300 hover:shadow-xl hover:shadow-orange-400/60"
+                    disabled={isSending}
+                    className={`group relative overflow-hidden rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-white shadow-lg shadow-orange-300/50 transition-all duration-300 hover:shadow-xl hover:shadow-orange-400/60 ${isSending ? 'opacity-80 cursor-not-allowed' : ''}`}
                     suppressHydrationWarning
                   >
                     <span className="relative flex items-center justify-center gap-1.5 sm:gap-2">
@@ -156,6 +179,11 @@ export default function Footer() {
                         <>
                           <CheckCircle2 className="h-4 w-4" />
                           <span>Terkirim!</span>
+                        </>
+                      ) : isSending ? (
+                        <>
+                          <Send className="h-4 w-4 animate-pulse" />
+                          <span>Mengirim...</span>
                         </>
                       ) : (
                         <>
@@ -167,14 +195,14 @@ export default function Footer() {
                   </motion.button>
                 </div>
               </form>
-              {isSubmitted && (
+              {(isSubmitted || serverMsg) && (
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-xs sm:text-sm text-green-600 flex items-center gap-1.5"
+                  className={`text-xs sm:text-sm ${isSubmitted ? 'text-green-600' : 'text-red-600'} flex items-center gap-1.5`}
                 >
                   <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Terima kasih! Cek email kamu untuk konfirmasi.
+                  {serverMsg || 'Terima kasih! Cek email kamu untuk konfirmasi.'}
                 </motion.p>
               )}
             </div>

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { uploadProducts, getAllProducts, deleteAllProducts, } from "../lib/database.js";
 export async function seedProduk() {
     console.log("🚀 Menjalankan seed produk penuh...");
@@ -1191,7 +1192,7 @@ export async function seedProduk() {
             negara_asal: "Indonesia",
             deskripsi_produk: "Meja kayu jati solid dengan desain minimalis modern buatan pengrajin Jepara. Tahan lama, anti rayap, dan cocok untuk ruang makan atau ruang kerja.",
             keyword: "meja jati, mebel jepara",
-            gambar_produk: "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+            gambar_produk: "https://kursicafe.net/wp-content/uploads/2020/07/Meja-Jati-Solid-Tebal-Kaki-Besi-Alami.jpg",
             thumbnail_produk: "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
             galeri_gambar: [
                 "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/img/VqbcmM/2024/7/29/dc0fbd3b-7aab-4b44-bf26-86dde87f1daf.jpg~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
@@ -1576,7 +1577,7 @@ export async function seedProduk() {
         }
         // Hapus kondisi_produk, nolkan diskon, samakan harga_produk dengan harga_asli
         const { kondisi_produk, persentase_diskon, harga_produk, harga_asli, ...rest } = p;
-        // Tambahkan tags bervariasi
+        // Variasi tag dari Firestore
         const tagOptions = [
             "Gratis Ongkir",
             "Voucher Gede",
@@ -1585,15 +1586,31 @@ export async function seedProduk() {
             "Garansi",
             "Official Store",
         ];
-        const tags = [
+        // Tentukan apakah produk ini didiskon (balanced: kira-kira separuh)
+        const alreadyDiscounted = typeof rest.persentase_diskon === 'number' && rest.persentase_diskon > 0;
+        const shouldDiscount = alreadyDiscounted || (idx % 2 === 0);
+        // Tentukan persentase diskon
+        const discountCandidates = [10, 12, 15, 18, 20, 25, 30];
+        const chosenDiscount = alreadyDiscounted
+            ? Math.max(1, Math.round(Number(rest.persentase_diskon)))
+            : (shouldDiscount ? discountCandidates[idx % discountCandidates.length] : 0);
+        // Hitung harga setelah diskon jika ada
+        const hargaSesudahDiskon = chosenDiscount > 0
+            ? Math.max(100, Math.round(harga_asli * (1 - chosenDiscount / 100)))
+            : harga_asli;
+        // Siapkan tags; jika diskon, tambahkan tag Diskon di depan
+        const baseTags = [
             tagOptions[idx % tagOptions.length],
             tagOptions[(idx + 1) % tagOptions.length],
         ];
+        const tags = chosenDiscount > 0
+            ? ([`Diskon ${chosenDiscount}%`, ...baseTags])
+            : baseTags;
         return {
             ...rest,
             harga_asli,
-            harga_produk: harga_asli,
-            persentase_diskon: 0,
+            harga_produk: hargaSesudahDiskon,
+            persentase_diskon: chosenDiscount,
             upload_at: d.toISOString().slice(0, 10), // YYYY-MM-DD dalam 2025 dan <= 2025-11-13
             tags,
         };
