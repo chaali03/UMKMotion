@@ -791,15 +791,11 @@ export default function MapboxComponent({
           const el = document.createElement('div');
           el.className = 'gmap-user-location';
           el.innerHTML = `
-            <div class="user-accuracy-circle" style="width: ${Math.max(accuracy * 2, 20)}px; height: ${Math.max(accuracy * 2, 20)}px;"></div>
+            <div class="user-accuracy-circle" style="width: ${Math.min(Math.max(accuracy, 20), 120)}px; height: ${Math.min(Math.max(accuracy, 20), 120)}px;"></div>
             <div class="user-pulse-ring"></div>
             <div class="user-dot">
               <div class="user-dot-inner"></div>
               ${heading !== null ? `<div class="user-direction-arrow" style="transform: rotate(${heading}deg)"></div>` : ''}
-            </div>
-            <div class="user-crosshair">
-              <div class="crosshair-h"></div>
-              <div class="crosshair-v"></div>
             </div>
           `;
           // Click-to-center instantly to user indicator
@@ -823,7 +819,7 @@ export default function MapboxComponent({
           // Update accuracy circle size
           const accuracyCircle = userMarker.current.getElement().querySelector('.user-accuracy-circle') as HTMLElement;
           if (accuracyCircle) {
-            const size = Math.max(accuracy * 2, 20);
+            const size = Math.min(Math.max(accuracy, 20), 120);
             accuracyCircle.style.width = size + 'px';
             accuracyCircle.style.height = size + 'px';
           }
@@ -1029,10 +1025,10 @@ export default function MapboxComponent({
                 
                 if (userMarker.current) {
                   userMarker.current.setLngLat([lon, lat]);
-                  // Update accuracy circle
+                  // Update accuracy circle (clamped)
                   const accuracyCircle = userMarker.current.getElement().querySelector('.user-accuracy-circle') as HTMLElement;
-                  if (accuracyCircle && acc) {
-                    const size = Math.max(acc * 2, 20);
+                  if (accuracyCircle && typeof acc === 'number') {
+                    const size = Math.min(Math.max(acc, 20), 120);
                     accuracyCircle.style.width = size + 'px';
                     accuracyCircle.style.height = size + 'px';
                     const opacity = Math.max(0.1, Math.min(0.3, (50 - acc) / 50));
@@ -1040,11 +1036,8 @@ export default function MapboxComponent({
                   }
                   // Update direction arrow
                   const directionArrow = userMarker.current.getElement().querySelector('.user-direction-arrow') as HTMLElement;
-                  if (directionArrow && hdg !== null) {
+                  if (directionArrow && typeof hdg === 'number') {
                     directionArrow.style.transform = `rotate(${hdg}deg)`;
-                    directionArrow.style.display = 'block';
-                  } else if (directionArrow) {
-                    directionArrow.style.display = 'none';
                   }
                 }
 

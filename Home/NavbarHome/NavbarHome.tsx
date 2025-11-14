@@ -60,7 +60,41 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
     return () => unsubscribe();
   }, []);
 
-  const userInitial = user?.nickname?.charAt(0).toUpperCase() || user?.displayName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U';
+  // Generate initials from name (same as profile.tsx)
+  const getInitials = (name: string | null | undefined): string => {
+    if (!name) return 'U';
+    const words = name.trim().split(/\s+/);
+    if (words.length === 1) {
+      return words[0].substring(0, 2).toUpperCase();
+    }
+    return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+  };
+
+  // Generate color based on name for consistent avatar color (same as profile.tsx)
+  const getAvatarColor = (name: string | null | undefined): string => {
+    if (!name) return 'bg-orange-500';
+    const colors = [
+      'bg-orange-500',
+      'bg-blue-500',
+      'bg-purple-500',
+      'bg-green-500',
+      'bg-pink-500',
+      'bg-indigo-500',
+      'bg-teal-500',
+      'bg-red-500',
+      'bg-amber-500',
+      'bg-cyan-500',
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
+  const displayName = user?.nickname || user?.displayName || (user?.email ? user.email.split('@')[0] : 'Pengguna');
+  const userInitial = getInitials(displayName);
+  const avatarColor = getAvatarColor(displayName);
   const [isMobile, setIsMobile] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -223,7 +257,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
       description: "Informasi tentang UMKM"
     },
     { 
-      href: "", 
+      href: "/ConsultantPage", 
       label: "Konsultasi", 
       icon: Lightbulb,
       description: "Konsultasi bisnis UMKM"
@@ -439,7 +473,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                           href="/profile"
                           className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
                         >
-                          <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-semibold">
+                          <span className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold ${avatarColor}`}>
                             {loading ? '...' : userInitial}
                           </span>
                           Profil Saya
@@ -546,7 +580,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                     <button
                       ref={profileBtnRef}
                       onClick={() => setShowProfileMenu((v) => !v)}
-                      className="w-11 h-11 rounded-full bg-gradient-to-br from-[#ff7a1a] to-[#ff4d00] text-white font-semibold flex items-center justify-center ring-2 ring-white shadow hover:shadow-md transition-all hover:scale-105"
+                      className={`w-11 h-11 rounded-full text-white font-semibold flex items-center justify-center ring-2 ring-white shadow hover:shadow-md transition-all hover:scale-105 ${avatarColor}`}
                       aria-haspopup="menu"
                       aria-expanded={showProfileMenu}
                     >
@@ -569,7 +603,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                           className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors duration-200"
                           onClick={() => setShowProfileMenu(false)}
                         >
-                          <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#ff7a1a] to-[#ff4d00] text-white flex items-center justify-center text-xs font-semibold">
+                          <span className={`w-6 h-6 rounded-full text-white flex items-center justify-center text-xs font-semibold ${avatarColor}`}>
                             {loading ? '...' : userInitial}
                           </span>
                           <span>Profil Saya</span>
@@ -627,7 +661,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                 </a>
                 <a
                   href="/profile"
-                  className="w-11 h-11 rounded-full bg-gradient-to-br from-[#ff7a1a] to-[#ff4d00] text-white font-semibold flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                  className={`w-11 h-11 rounded-full text-white font-semibold flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105 ${avatarColor}`}
                 >
                   {userInitial}
                 </a>

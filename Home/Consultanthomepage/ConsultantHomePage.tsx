@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
-import { motion, useMotionValue, useTransform } from "framer-motion";
+import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import {
   MessageCircle,
   Store,
@@ -9,6 +9,28 @@ import {
   Target,
   Calendar,
   ArrowRight,
+  Search,
+  Filter,
+  Star,
+  Clock,
+  MapPin,
+  CheckCircle,
+  X,
+  Phone,
+  Video,
+  FileText,
+  TrendingUp,
+  Briefcase,
+  GraduationCap,
+  Sparkles,
+  ChevronDown,
+  Heart,
+  Share2,
+  BookOpen,
+  MoreVertical,
+  Paperclip,
+  Smile,
+  Send,
 } from "lucide-react";
 
 type Consultant = {
@@ -20,6 +42,15 @@ type Consultant = {
   price: string;
   image: string;
   availability: string;
+  location?: string;
+  languages?: string[];
+  clientsCount?: number;
+  successRate?: string;
+  education?: string;
+  certifications?: string[];
+  bio?: string;
+  specialties?: string[];
+  responseTime?: string;
 };
 
 const CONSULTANTS: Consultant[] = [
@@ -33,6 +64,15 @@ const CONSULTANTS: Consultant[] = [
     image:
       "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&h=800&fit=crop&q=60",
     availability: "Online",
+    location: "Jakarta",
+    languages: ["Bahasa Indonesia", "English"],
+    clientsCount: 245,
+    successRate: "94%",
+    education: "S2 Manajemen Keuangan, Universitas Indonesia",
+    certifications: ["CFA", "Certified Financial Planner"],
+    bio: "Spesialis keuangan dengan pengalaman 15 tahun membantu UMKM mengelola keuangan dan meningkatkan profitabilitas.",
+    specialties: ["Cash Flow Management", "Financial Planning", "Investment Strategy"],
+    responseTime: "< 2 jam",
   },
   {
     id: 2,
@@ -44,6 +84,15 @@ const CONSULTANTS: Consultant[] = [
     image:
       "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&h=800&fit=crop&q=60",
     availability: "Online",
+    location: "Bandung",
+    languages: ["Bahasa Indonesia", "English"],
+    clientsCount: 189,
+    successRate: "91%",
+    education: "S2 Marketing, ITB",
+    certifications: ["Google Ads Certified", "Facebook Blueprint"],
+    bio: "Expert dalam digital marketing dengan track record meningkatkan penjualan UMKM hingga 300% melalui strategi digital.",
+    specialties: ["Social Media Marketing", "SEO", "Content Strategy"],
+    responseTime: "< 1 jam",
   },
   {
     id: 3,
@@ -55,6 +104,15 @@ const CONSULTANTS: Consultant[] = [
     image:
       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800&h=800&fit=crop&q=60",
     availability: "Online",
+    location: "Surabaya",
+    languages: ["Bahasa Indonesia", "English", "Mandarin"],
+    clientsCount: 312,
+    successRate: "96%",
+    education: "MBA, Harvard Business School",
+    certifications: ["PMP", "Business Strategy"],
+    bio: "Konsultan strategi bisnis yang telah membantu ratusan UMKM melakukan ekspansi dan meningkatkan market share.",
+    specialties: ["Business Expansion", "Market Analysis", "Strategic Planning"],
+    responseTime: "< 3 jam",
   },
   {
     id: 4,
@@ -66,6 +124,15 @@ const CONSULTANTS: Consultant[] = [
     image:
       "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=800&h=800&fit=crop&q=60",
     availability: "Online",
+    location: "Yogyakarta",
+    languages: ["Bahasa Indonesia"],
+    clientsCount: 156,
+    successRate: "89%",
+    education: "S.H., Universitas Gadjah Mada",
+    certifications: ["Advokat", "Legal Consultant"],
+    bio: "Ahli hukum yang fokus membantu UMKM menyelesaikan masalah legalitas dan perizinan dengan cepat dan tepat.",
+    specialties: ["Business Registration", "Legal Compliance", "Contract Review"],
+    responseTime: "< 4 jam",
   },
   {
     id: 5,
@@ -77,6 +144,15 @@ const CONSULTANTS: Consultant[] = [
     image:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=800&fit=crop&q=60",
     availability: "Online",
+    location: "Jakarta",
+    languages: ["Bahasa Indonesia", "English"],
+    clientsCount: 278,
+    successRate: "92%",
+    education: "S1 Teknik Informatika, UI",
+    certifications: ["E-commerce Specialist", "Shopify Expert"],
+    bio: "Spesialis e-commerce yang telah membantu UMKM menjual produk secara online dengan strategi marketplace yang efektif.",
+    specialties: ["Shopify Setup", "Marketplace Optimization", "Digital Sales"],
+    responseTime: "< 2 jam",
   },
   {
     id: 6,
@@ -88,6 +164,15 @@ const CONSULTANTS: Consultant[] = [
     image:
       "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=800&h=800&fit=crop&q=60",
     availability: "Online",
+    location: "Medan",
+    languages: ["Bahasa Indonesia", "English"],
+    clientsCount: 201,
+    successRate: "93%",
+    education: "S2 Operations Management, IPB",
+    certifications: ["Lean Six Sigma", "Operations Excellence"],
+    bio: "Expert dalam optimasi operasional yang membantu UMKM meningkatkan efisiensi dan mengurangi biaya operasional.",
+    specialties: ["Process Optimization", "Supply Chain", "Quality Management"],
+    responseTime: "< 2 jam",
   },
 ];
 
@@ -109,6 +194,11 @@ const features = [
 const ConsultantHomePage: React.FC = () => {
   const [showChatPage, setShowChatPage] = useState(false);
   const [selectedConsultant, setSelectedConsultant] = useState<Consultant | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"rating" | "price" | "experience">("rating");
+  const [showFilters, setShowFilters] = useState(false);
   const heroRef = useRef<HTMLElement | null>(null);
 
   // parallax: mouse position
@@ -118,6 +208,9 @@ const ConsultantHomePage: React.FC = () => {
   const tY = useTransform(mvY, (v) => `${v * 10}px`);
 
   useEffect(() => {
+    // Only run on client side to avoid hydration mismatch
+    if (typeof window === "undefined") return;
+    
     const onMove = (e: MouseEvent) => {
       const x = (e.clientX / window.innerWidth - 0.5) * 2;
       const y = (e.clientY / window.innerHeight - 0.5) * 2;
@@ -137,6 +230,40 @@ const ConsultantHomePage: React.FC = () => {
     setShowChatPage(false);
     setSelectedConsultant(null);
   };
+
+  const openDetail = (c: Consultant) => {
+    setSelectedConsultant(c);
+    setShowDetailModal(true);
+  };
+
+  const closeDetail = () => {
+    setShowDetailModal(false);
+    setSelectedConsultant(null);
+  };
+
+  // Filter and sort consultants
+  const filteredConsultants = CONSULTANTS.filter((c) => {
+    const matchesSearch = 
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.specialty.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.location?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSpecialty = selectedSpecialty === "all" || c.specialty === selectedSpecialty;
+    return matchesSearch && matchesSpecialty;
+  }).sort((a, b) => {
+    if (sortBy === "rating") {
+      return parseFloat(b.rating) - parseFloat(a.rating);
+    } else if (sortBy === "price") {
+      const priceA = parseInt(a.price.replace(/\D/g, ""));
+      const priceB = parseInt(b.price.replace(/\D/g, ""));
+      return priceA - priceB;
+    } else {
+      const expA = parseInt(a.experience.replace(/\D/g, ""));
+      const expB = parseInt(b.experience.replace(/\D/g, ""));
+      return expB - expA;
+    }
+  });
+
+  const specialties = Array.from(new Set(CONSULTANTS.map((c) => c.specialty)));
 
   // If chat page is shown, render the chat component
   if (showChatPage && selectedConsultant) {
@@ -317,11 +444,86 @@ const ConsultantHomePage: React.FC = () => {
       <section id="consultants" className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 py-12">
         <div className="text-center mb-8">
           <h2 className="text-2xl sm:text-3xl font-extrabold">Konsultan UMKM Profesional</h2>
-          <p className="text-slate-600 mt-2 max-w-2xl mx-auto">Pilih konsultan yang paling cocok untuk masalah lu. Chat dulu, atau langsung booking sesi.</p>
+          <p className="text-slate-600 mt-2 max-w-2xl mx-auto">Pilih konsultan yang paling cocok untuk masalah Anda. Chat dulu, atau langsung booking sesi.</p>
+        </div>
+
+        {/* Search and Filter Bar */}
+        <div className="mb-8 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Search Input */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Cari konsultan, spesialisasi, atau lokasi..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 rounded-2xl border border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white shadow-sm"
+              />
+            </div>
+
+            {/* Filter Button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl border border-orange-200 bg-white hover:bg-orange-50 transition-colors font-semibold text-slate-700"
+            >
+              <Filter className="w-5 h-5" />
+              Filter
+              <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
+            </button>
+          </div>
+
+          {/* Filter Panel */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden bg-white rounded-2xl border border-orange-200 shadow-sm p-6"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Specialty Filter */}
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Spesialisasi</label>
+                    <select
+                      value={selectedSpecialty}
+                      onChange={(e) => setSelectedSpecialty(e.target.value)}
+                      className="w-full px-4 py-2 rounded-xl border border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                    >
+                      <option value="all">Semua Spesialisasi</option>
+                      {specialties.map((spec) => (
+                        <option key={spec} value={spec}>{spec}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Sort By */}
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Urutkan Berdasarkan</label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as any)}
+                      className="w-full px-4 py-2 rounded-xl border border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                    >
+                      <option value="rating">Rating Tertinggi</option>
+                      <option value="price">Harga Terendah</option>
+                      <option value="experience">Pengalaman Terbanyak</option>
+                    </select>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Results Count */}
+          <div className="text-sm text-slate-600">
+            Menampilkan <span className="font-semibold text-orange-600">{filteredConsultants.length}</span> dari {CONSULTANTS.length} konsultan
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {CONSULTANTS.map((c) => (
+          {filteredConsultants.map((c) => (
             <motion.article
               key={c.id}
               layout
@@ -347,30 +549,65 @@ const ConsultantHomePage: React.FC = () => {
 
               <div className="p-4 flex flex-col gap-3 flex-1">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-lg font-bold">{c.name}</h3>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold cursor-pointer hover:text-orange-600 transition-colors" onClick={() => openDetail(c)}>{c.name}</h3>
                     <div className="text-xs text-slate-500">{c.specialty}</div>
+                    {c.location && (
+                      <div className="flex items-center gap-1 text-xs text-slate-400 mt-1">
+                        <MapPin size={12} />
+                        {c.location}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-amber-500 font-bold">★ {c.rating}</div>
+                  <div className="flex items-center gap-1 text-amber-500 font-bold">
+                    <Star size={16} className="fill-amber-500" />
+                    {c.rating}
+                  </div>
                 </div>
 
-                <div className="text-sm text-slate-500">{c.experience} • <span className="font-semibold text-slate-700">{c.price}</span></div>
+                <div className="flex items-center gap-4 text-xs text-slate-500">
+                  <div className="flex items-center gap-1">
+                    <Briefcase size={12} />
+                    {c.experience}
+                  </div>
+                  {c.responseTime && (
+                    <div className="flex items-center gap-1">
+                      <Clock size={12} />
+                      {c.responseTime}
+                    </div>
+                  )}
+                </div>
 
-                <div className="mt-auto flex gap-3">
+                {c.successRate && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-1 text-green-600">
+                      <TrendingUp size={12} />
+                      <span className="font-semibold">Success Rate: {c.successRate}</span>
+                    </div>
+                    {c.clientsCount && (
+                      <span className="text-slate-400">• {c.clientsCount}+ klien</span>
+                    )}
+                  </div>
+                )}
+
+                <div className="text-sm font-semibold text-orange-600">{c.price}</div>
+
+                <div className="mt-auto flex gap-2">
                   <button
                     onClick={() => openChat(c)}
-                    className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-4 py-2 rounded-xl font-semibold hover:brightness-95"
+                    className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-4 py-2 rounded-xl font-semibold hover:brightness-95 transition-all shadow-md hover:shadow-lg"
                     aria-label={`Chat ${c.name}`}
                   >
                     <MessageCircle size={16} />
-                    Chat Sekarang
+                    Chat
                   </button>
 
                   <button
-                    onClick={() => alert("Fitur booking belum aktif — coba chat dulu")}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-orange-100 text-orange-600 font-semibold"
+                    onClick={() => openDetail(c)}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-orange-200 text-orange-600 font-semibold hover:bg-orange-50 transition-colors"
                   >
-                    Booking Sesi
+                    <BookOpen size={16} />
+                    Detail
                   </button>
                 </div>
               </div>
@@ -414,94 +651,202 @@ const ConsultantHomePage: React.FC = () => {
           </div>
         </div>
       </section>
-<<<<<<< HEAD:src/Consultanthomepage/ConsultantHomePage.tsx
-=======
 
-      {/* CHAT OVERLAY */}
-      {showChat && selectedConsultant && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/30"
-          role="dialog"
-          aria-modal="true"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 40, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 40, scale: 0.88 }}
-            transition={{ type: "spring", stiffness: 120, damping: 14 }}
-            className="w-full max-w-xs bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <div className="flex items-center gap-3">
-                <img
-                  src={`${selectedConsultant.image}&fm=webp&auto=format,compress`}
-                  alt={selectedConsultant.name}
-                  className="w-12  h-12 rounded-lg object-cover"
-                  width={48}
-                  height={48}
-                  loading="lazy"
-                  decoding="async"
-                  fetchPriority="low"
-                />
-                <div>
-                  <div className="font-bold">{selectedConsultant.name}</div>
-                  <div className="text-sm text-slate-500">{selectedConsultant.specialty}</div>
-                </div>
-              </div>
-              <button
-                onClick={closeChat}
-                className="p-2 rounded-lg hover:bg-slate-100"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Messages */}
-            <div
-              ref={messagesEndRef}
-              className="p-4 flex-1 overflow-y-auto space-y-3 bg-gradient-to-b from-white to-orange-50"
+      {/* Detail Modal */}
+      <AnimatePresence>
+        {showDetailModal && selectedConsultant && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeDetail}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="fixed inset-4 sm:inset-8 md:inset-12 lg:inset-16 z-50 overflow-y-auto"
             >
-              {messages.map((m) => (
+              <div className="min-h-full flex items-center justify-center p-4">
                 <div
-                  key={m.id}
-                  className={`max-w-[75%] px-3 py-2 rounded-lg ${
-                    m.sender === "user"
-                      ? "ml-auto bg-gradient-to-r from-orange-600 to-amber-500 text-white"
-                      : "bg-white border border-slate-100 text-slate-900"
-                  }`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
                 >
-                  <div className="text-sm">{m.text}</div>
-                  <div className="text-xs mt-1 text-slate-400 text-right">
-                    {m.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                  {/* Header */}
+                  <div className="relative">
+                    <div className="h-48 bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600" />
+                    <button
+                      onClick={closeDetail}
+                      className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg transition-colors"
+                    >
+                      <X size={20} className="text-slate-700" />
+                    </button>
+                    <div className="absolute -bottom-16 left-8">
+                      <img
+                        src={selectedConsultant.image}
+                        alt={selectedConsultant.name}
+                        className="w-32 h-32 rounded-2xl object-cover border-4 border-white shadow-xl"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="pt-20 px-8 pb-8">
+                    <div className="flex items-start justify-between mb-6">
+                      <div>
+                        <h2 className="text-3xl font-bold text-slate-900 mb-2">{selectedConsultant.name}</h2>
+                        <p className="text-lg text-slate-600 mb-3">{selectedConsultant.specialty}</p>
+                        <div className="flex items-center gap-4 text-sm text-slate-500">
+                          {selectedConsultant.location && (
+                            <div className="flex items-center gap-1">
+                              <MapPin size={16} />
+                              {selectedConsultant.location}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1 text-amber-500 font-semibold">
+                            <Star size={16} className="fill-amber-500" />
+                            {selectedConsultant.rating} Rating
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button className="p-2 rounded-xl hover:bg-orange-50 transition-colors">
+                          <Heart size={20} className="text-slate-600" />
+                        </button>
+                        <button className="p-2 rounded-xl hover:bg-orange-50 transition-colors">
+                          <Share2 size={20} className="text-slate-600" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-3 gap-4 mb-8">
+                      <div className="bg-orange-50 rounded-2xl p-4 text-center">
+                        <div className="text-2xl font-bold text-orange-600 mb-1">{selectedConsultant.experience}</div>
+                        <div className="text-xs text-slate-600">Pengalaman</div>
+                      </div>
+                      {selectedConsultant.clientsCount && (
+                        <div className="bg-amber-50 rounded-2xl p-4 text-center">
+                          <div className="text-2xl font-bold text-amber-600 mb-1">{selectedConsultant.clientsCount}+</div>
+                          <div className="text-xs text-slate-600">Klien</div>
+                        </div>
+                      )}
+                      {selectedConsultant.successRate && (
+                        <div className="bg-green-50 rounded-2xl p-4 text-center">
+                          <div className="text-2xl font-bold text-green-600 mb-1">{selectedConsultant.successRate}</div>
+                          <div className="text-xs text-slate-600">Success Rate</div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bio */}
+                    {selectedConsultant.bio && (
+                      <div className="mb-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-2">Tentang</h3>
+                        <p className="text-slate-600 leading-relaxed">{selectedConsultant.bio}</p>
+                      </div>
+                    )}
+
+                    {/* Education & Certifications */}
+                    <div className="grid md:grid-cols-2 gap-6 mb-6">
+                      {selectedConsultant.education && (
+                        <div>
+                          <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+                            <GraduationCap size={20} className="text-orange-600" />
+                            Pendidikan
+                          </h3>
+                          <p className="text-slate-600">{selectedConsultant.education}</p>
+                        </div>
+                      )}
+                      {selectedConsultant.certifications && selectedConsultant.certifications.length > 0 && (
+                        <div>
+                          <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+                            <Award size={20} className="text-orange-600" />
+                            Sertifikasi
+                          </h3>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedConsultant.certifications.map((cert, idx) => (
+                              <span
+                                key={idx}
+                                className="px-3 py-1 bg-orange-100 text-orange-700 rounded-lg text-sm font-semibold"
+                              >
+                                {cert}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Specialties */}
+                    {selectedConsultant.specialties && selectedConsultant.specialties.length > 0 && (
+                      <div className="mb-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-3">Keahlian Khusus</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedConsultant.specialties.map((spec, idx) => (
+                            <span
+                              key={idx}
+                              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium"
+                            >
+                              {spec}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Languages */}
+                    {selectedConsultant.languages && selectedConsultant.languages.length > 0 && (
+                      <div className="mb-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-3">Bahasa</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedConsultant.languages.map((lang, idx) => (
+                            <span
+                              key={idx}
+                              className="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-sm font-medium"
+                            >
+                              {lang}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-4 pt-6 border-t border-slate-200">
+                      <button
+                        onClick={() => {
+                          closeDetail();
+                          openChat(selectedConsultant);
+                        }}
+                        className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-6 py-3 rounded-2xl font-semibold hover:brightness-95 transition-all shadow-lg hover:shadow-xl"
+                      >
+                        <MessageCircle size={20} />
+                        Mulai Chat
+                      </button>
+                      <button
+                        onClick={() => {
+                          closeDetail();
+                          // Navigate to booking page
+                          if (typeof window !== "undefined") {
+                            window.location.href = `/consultant/booking?consultant=${selectedConsultant.id}`;
+                          }
+                        }}
+                        className="flex-1 inline-flex items-center justify-center gap-2 border-2 border-orange-600 text-orange-600 px-6 py-3 rounded-2xl font-semibold hover:bg-orange-50 transition-colors"
+                      >
+                        <Calendar size={20} />
+                        Booking Sesi
+                      </button>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Input */}
-            <div className="px-4 py-3 border-t flex items-center gap-3">
-              <input
-                value={inputMsg}
-                onChange={(e) => setInputMsg(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Ketik pesan..."
-                className="flex-1 rounded-2xl border border-slate-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200"
-              />
-              <button
-                onClick={sendMessage}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-4 py-2 rounded-2xl"
-              >
-                <Send size={16} />
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
->>>>>>> refs/remotes/origin/main:Home/Consultanthomepage/ConsultantHomePage.tsx
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -512,6 +857,8 @@ type Message = {
   text: string;
   sender: "user" | "consultant";
   timestamp: Date;
+  attachments?: { type: "file" | "image"; url: string; name: string }[];
+  reactions?: string[];
 };
 
 type ConsultantChatPageProps = {
@@ -531,7 +878,9 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
 
   const [inputMsg, setInputMsg] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -565,6 +914,23 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
     }, 1500);
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // In a real app, you would upload the file and get a URL
+    const fileUrl = URL.createObjectURL(file);
+    const newM: Message = {
+      id: messages.length + 1,
+      text: `Mengirim file: ${file.name}`,
+      sender: "user",
+      timestamp: new Date(),
+      attachments: [{ type: file.type.startsWith("image/") ? "image" : "file", url: fileUrl, name: file.name }],
+    };
+
+    setMessages((prev) => [...prev, newM]);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white flex flex-col">
       {/* Header */}
@@ -596,8 +962,37 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
               <div>
                 <h1 className="font-bold text-slate-900">{consultant.name}</h1>
                 <p className="text-xs text-slate-500">{consultant.specialty}</p>
+                {consultant.responseTime && (
+                  <p className="text-xs text-green-600 flex items-center gap-1 mt-0.5">
+                    <Clock size={10} />
+                    Respon {consultant.responseTime}
+                  </p>
+                )}
               </div>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              className="p-2 rounded-lg hover:bg-orange-50 transition-colors"
+              aria-label="Panggilan suara"
+              title="Panggilan Suara"
+            >
+              <Phone size={20} className="text-slate-600" />
+            </button>
+            <button
+              className="p-2 rounded-lg hover:bg-orange-50 transition-colors"
+              aria-label="Panggilan video"
+              title="Panggilan Video"
+            >
+              <Video size={20} className="text-slate-600" />
+            </button>
+            <button
+              className="p-2 rounded-lg hover:bg-orange-50 transition-colors"
+              aria-label="Menu lainnya"
+            >
+              <MoreVertical size={20} className="text-slate-600" />
+            </button>
           </div>
         </div>
       </motion.header>
@@ -619,25 +1014,50 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"} group`}
             >
-              <div
-                className={`max-w-[70%] sm:max-w-md ${
-                  m.sender === "user"
-                    ? "bg-gradient-to-r from-orange-600 to-amber-500 text-white rounded-2xl rounded-tr-sm"
-                    : "bg-white text-slate-900 rounded-2xl rounded-tl-sm shadow-sm border border-orange-100"
-                } px-4 py-3`}
-              >
-                <p className="text-sm leading-relaxed">{m.text}</p>
+              <div className="flex flex-col max-w-[70%] sm:max-w-md">
                 <div
-                  className={`text-xs mt-1 ${
-                    m.sender === "user" ? "text-orange-100" : "text-slate-400"
-                  }`}
+                  className={`${
+                    m.sender === "user"
+                      ? "bg-gradient-to-r from-orange-600 to-amber-500 text-white rounded-2xl rounded-tr-sm"
+                      : "bg-white text-slate-900 rounded-2xl rounded-tl-sm shadow-sm border border-orange-100"
+                  } px-4 py-3 relative`}
                 >
-                  {m.timestamp.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {m.attachments && m.attachments.length > 0 && (
+                    <div className="mb-2 space-y-2">
+                      {m.attachments.map((att, attIdx) => (
+                        <div key={attIdx} className="rounded-xl overflow-hidden">
+                          {att.type === "image" ? (
+                            <img src={att.url} alt={att.name} className="max-w-full h-auto rounded-lg" />
+                          ) : (
+                            <div className="flex items-center gap-2 p-2 bg-slate-100 rounded-lg">
+                              <FileText size={16} className="text-slate-600" />
+                              <span className="text-xs text-slate-700 truncate">{att.name}</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-sm leading-relaxed">{m.text}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <div
+                      className={`text-xs ${
+                        m.sender === "user" ? "text-orange-100" : "text-slate-400"
+                      }`}
+                    >
+                      {m.timestamp.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                    {m.sender === "consultant" && (
+                      <button className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-slate-400 hover:text-orange-600">
+                        Reaksi
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -683,11 +1103,49 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
         className="bg-white border-t border-orange-100 shadow-lg sticky bottom-0"
       >
         <div className="max-w-5xl mx-auto px-4 py-4">
+          {/* Quick replies */}
+          {messages.length <= 2 && (
+            <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+              {["Tentang pricing", "Strategi marketing", "Ekspansi bisnis", "Manajemen keuangan"].map(
+                (reply, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setInputMsg(reply)}
+                    className="flex-shrink-0 px-4 py-2 rounded-full bg-orange-50 border border-orange-200 text-sm text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-colors font-medium"
+                  >
+                    {reply}
+                  </button>
+                )
+              )}
+            </div>
+          )}
+
           <div className="flex items-end gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={handleFileUpload}
+              accept="image/*,.pdf,.doc,.docx"
+            />
+            
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="p-3 rounded-xl hover:bg-orange-50 transition-colors"
+              aria-label="Lampiran"
+              title="Kirim File"
+            >
+              <Paperclip size={20} className="text-slate-600" />
+            </button>
+
             <div className="flex-1 relative">
               <textarea
                 value={inputMsg}
-                onChange={(e) => setInputMsg(e.target.value)}
+                onChange={(e) => {
+                  setInputMsg(e.target.value);
+                  e.target.style.height = "auto";
+                  e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -696,9 +1154,17 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
                 }}
                 placeholder="Ketik pesan Anda..."
                 rows={1}
-                className="w-full resize-none rounded-2xl border border-orange-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent bg-orange-50/30"
+                className="w-full resize-none rounded-2xl border border-orange-200 px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent bg-orange-50/30"
                 style={{ minHeight: "48px", maxHeight: "120px" }}
               />
+              <button
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="absolute right-2 bottom-2 p-2 rounded-xl hover:bg-orange-100 transition-colors"
+                aria-label="Emoji"
+                title="Emoji"
+              >
+                <Smile size={20} className="text-slate-500" />
+              </button>
             </div>
 
             <button
@@ -707,23 +1173,8 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
               className="p-3 rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 text-white hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
               aria-label="Kirim pesan"
             >
-              <MessageCircle size={20} />
+              <Send size={20} />
             </button>
-          </div>
-
-          {/* Quick replies */}
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
-            {["Tentang pricing", "Strategi marketing", "Ekspansi bisnis"].map(
-              (reply, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setInputMsg(reply)}
-                  className="flex-shrink-0 px-4 py-2 rounded-full bg-white border border-orange-200 text-sm text-slate-700 hover:bg-orange-50 hover:border-orange-300 transition-colors"
-                >
-                  {reply}
-                </button>
-              )
-            )}
           </div>
         </div>
       </motion.footer>

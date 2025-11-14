@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Sparkles, MapPin, BarChart3, Megaphone, CheckCircle2, XCircle, AlertCircle, Loader2, UserX, ShieldAlert } from "lucide-react";
-import { signInWithEmail, signInWithGoogle, checkEmailExists } from "../lib/auth";
+import { signInWithEmail, signInWithGoogle, checkEmailExistsStrict } from "../lib/auth";
 import { auth } from "../lib/firebase";
 
 export default function LoginPage() {
@@ -101,13 +101,16 @@ export default function LoginPage() {
     e.preventDefault();
     setErrors({});
 
+    // Normalize email
+    const emailNorm = email.trim().toLowerCase();
+
     // Validation
-    if (!email) {
+    if (!emailNorm) {
       setErrors({ email: "Email harus diisi" });
       showNotification("warning", "Email Kosong", "Silakan masukkan alamat email Anda", <Mail size={22} />);
       return;
     }
-    if (!validateEmail(email)) {
+    if (!validateEmail(emailNorm)) {
       setErrors({ email: "Format email tidak valid" });
       showNotification("error", "Format Email Salah", "Periksa kembali format email Anda (contoh: user@email.com)", <AlertCircle size={22} />);
       return;
@@ -126,7 +129,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await signInWithEmail(email, password);
+      await signInWithEmail(emailNorm, password);
       const redirectTo = await processPendingAction();
       showNotification(
         "success", 
@@ -193,7 +196,7 @@ export default function LoginPage() {
       } else if (err.code === 'auth/invalid-credential') {
         // Check if email exists first
         try {
-          const exists = await checkEmailExists(email);
+          const exists = await checkEmailExistsStrict(emailNorm);
           if (!exists) {
             errorMessage = "Email ini belum terdaftar di sistem kami";
             fieldErrors.email = errorMessage;

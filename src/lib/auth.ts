@@ -1,5 +1,5 @@
 import { GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail, sendEmailVerification, signOut, fetchSignInMethodsForEmail } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDocs, collection, query, where } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 export const googleProvider = new GoogleAuthProvider();
@@ -41,6 +41,27 @@ export async function checkEmailExists(email: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+// Stricter existence check: try Auth, then fallback to Firestore users collection.
+// If any check errors, return true to avoid false "email tidak terdaftar" when password sebenarnya salah.
+export async function checkEmailExistsStrict(email: string): Promise<boolean> {
+  const e = (email || '').trim().toLowerCase();
+  try {
+    const methods = await fetchSignInMethodsForEmail(auth, e);
+    if (methods && methods.length > 0) return true;
+  } catch {
+    // ignore and fallback
+  }
+  try {
+    const q = query(collection(db, 'users'), where('email', '==', e));
+    const snap = await getDocs(q);
+    if (!snap.empty) return true;
+  } catch {
+    // If Firestore query fails, assume exists to prevent misleading message
+    return true;
+  }
+  return false;
 }
 
 export async function sendPasswordReset(email: string, redirectUrl?: string) {

@@ -116,7 +116,7 @@ function FetchData() {
     for (const v of vals) {
       if (typeof v === 'number' && !isNaN(v)) return v;
       if (typeof v === 'string' && v.trim()) {
-        const m = v.match(/-?\d+(?:[\.,]\d+)?/);
+        const m = v.match(/-?\d+(?:[.,]\d+)?/);
         if (m) {
           const n = Number(m[0].replace(',', '.'));
           if (!isNaN(n)) return n;
@@ -134,7 +134,7 @@ function FetchData() {
     const id = Math.random().toString(36).substr(2, 9);
     const newToast = { id, type, title, message };
     setToasts(prev => [...prev, newToast]);
-    
+
     setTimeout(() => {
       setToasts(prev => prev.filter(toast => toast.id !== id));
     }, 3000);
@@ -314,9 +314,9 @@ function FetchData() {
           setDisplayedProducts(unique);
           setHasMore(false);
         } else {
-          const limitedProducts = unique.slice(0, 8);
+          const limitedProducts = unique.slice(0, 10);
           setDisplayedProducts(limitedProducts);
-          setHasMore(unique.length > 8);
+          setHasMore(unique.length > 10);
         }
       } catch (err: any) {
         console.error("ERROR FETCH:", err);
@@ -345,111 +345,80 @@ function FetchData() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
-        /* ========================================
-           SMOOTH ANIMATIONS & TRANSITIONS
-           ======================================== */
-        
         * {
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
         }
-
+        
         @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-
+        
         @keyframes slideInFromLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
+          from { opacity: 0; transform: translateX(-20px); }
+          to { opacity: 1; transform: translateX(0); }
         }
-
+        
         @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
         }
-
+        
         @keyframes shimmer {
-          0% {
-            background-position: -1000px 0;
-          }
-          100% {
-            background-position: 1000px 0;
-          }
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
         }
-
+        
         @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-8px);
-          }
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
         }
-
+        
         @keyframes pulse-glow {
-          0%, 100% {
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
-          }
-          50% {
-            box-shadow: 0 8px 30px rgba(253,87,1,0.15), 0 4px 12px rgba(253,87,1,0.08);
-          }
+          0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04); }
+          50% { box-shadow: 0 8px 30px rgba(253,87,1,0.15), 0 4px 12px rgba(253,87,1,0.08); }
         }
-
+        
         .product-container {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          background: linear-gradient(180deg, rgba(0,17,81,0.02) 0%, rgba(253,87,1,0.02) 100%);
-          padding: 24px 16px;
+          background: linear-gradient(180deg, rgba(253, 87, 1, 0.02) 0%, rgba(253, 146, 66, 0.05) 100%);
+          padding: 20px 12px;
           max-width: 1600px;
           margin: 0 auto;
           min-height: 100vh;
           animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+          overflow: visible;
         }
-
+        
         .product-list {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-          gap: 18px;
+          grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+          gap: 12px;
           justify-content: center;
+          padding: 5px 0;
+          overflow: visible;
         }
-
+        
         .product-card {
           background: linear-gradient(145deg, #ffffff 0%, #fefefe 100%);
-          border-radius: 18px;
-          overflow: hidden;
-          transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+          border-radius: 12px;
+          overflow: visible;
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
           cursor: pointer;
           position: relative;
           border: 1px solid rgba(226, 232, 240, 0.6);
           display: flex;
           flex-direction: column;
           height: 100%;
-          min-height: 380px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6);
+          min-height: 240px;
+          box-shadow: none;
           backdrop-filter: blur(20px);
           animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
-          will-change: transform, box-shadow, border-color;
+          will-change: transform;
+          margin: 3px;
         }
-
+        
         .product-card:nth-child(1) { animation-delay: 0.05s; }
         .product-card:nth-child(2) { animation-delay: 0.1s; }
         .product-card:nth-child(3) { animation-delay: 0.15s; }
@@ -458,183 +427,177 @@ function FetchData() {
         .product-card:nth-child(6) { animation-delay: 0.3s; }
         .product-card:nth-child(7) { animation-delay: 0.35s; }
         .product-card:nth-child(8) { animation-delay: 0.4s; }
-
+        
         .product-card:hover {
-          transform: translateY(-10px) scale(1.02);
-          box-shadow: 0 25px 50px rgba(0,0,0,0.18), 0 15px 35px rgba(253,87,1,0.15), inset 0 1px 0 rgba(255,255,255,0.9);
+          transform: translateY(-5px) scale(1.02);
+          box-shadow: none;
           border-color: rgba(253,87,1,0.5);
           background: linear-gradient(145deg, #ffffff 0%, #fcfcfc 100%);
           z-index: 10;
         }
-
+        
         .product-card:active {
-          transform: translateY(-8px) scale(1.015);
+          transform: translateY(-3px) scale(1.015);
           transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
-        .product-card:hover .price-discounted {
-          transform: scale(1.08);
-          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
+        
         .discount-badge {
           position: absolute;
-          top: 10px;
-          left: 10px;
+          top: 6px;
+          left: 6px;
           background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
           color: white;
           font-weight: 800;
-          font-size: 0.7rem;
-          padding: 5px 10px;
-          border-radius: 6px;
+          font-size: 0.6rem;
+          padding: 3px 6px;
+          border-radius: 4px;
           z-index: 10;
-          box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+          box-shadow: none;
           animation: float 3s ease-in-out infinite;
         }
-
+        
         .product-image {
           width: 100%;
-          height: 180px;
-          background: linear-gradient(135deg, rgba(0,17,81,0.03) 0%, rgba(253,87,1,0.03) 50%, rgba(99,102,241,0.02) 100%);
+          height: 110px;
+          background: linear-gradient(135deg, rgba(234, 88, 12, 0.10) 0%, rgba(251, 146, 60, 0.08) 50%, rgba(253, 186, 116, 0.06) 100%);
           overflow: hidden;
           position: relative;
-          border-radius: 16px;
-          margin: 10px;
-          width: calc(100% - 20px);
-          box-shadow: 0 6px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.3);
+          border-radius: 10px;
+          margin: 6px;
+          width: calc(100% - 12px);
+          box-shadow: none;
         }
         
         .discount-chip {
           display: inline-flex;
           align-items: center;
-          padding: 6px 12px;
-          border-radius: 12px;
-          font-size: 0.7rem;
+          padding: 4px 8px;
+          border-radius: 8px;
+          font-size: 0.6rem;
           font-weight: 900;
           color: white;
           background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
           border: 1px solid rgba(255,255,255,0.2);
-          box-shadow: 0 4px 15px rgba(239,68,68,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
-          text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          box-shadow: none;
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
+        
         .product-card:hover .discount-chip {
           transform: scale(1.05);
-          box-shadow: 0 6px 20px rgba(239,68,68,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+          box-shadow: none;
         }
         
         .discount-chip-overlay {
           position: absolute;
-          top: 10px;
-          left: 10px;
+          top: 6px;
+          left: 6px;
           z-index: 5;
         }
-
+        
         .favorite-icon-overlay {
           position: absolute;
-          top: 10px;
-          right: 10px;
+          top: 6px;
+          right: 6px;
           z-index: 6;
           display: none;
-          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         
         .favorite-icon-overlay:hover {
           transform: scale(1.15) rotate(5deg);
-          box-shadow: 0 8px 25px rgba(0,0,0,0.2) !important;
+          box-shadow: none !important;
         }
-
+        
         .favorite-icon-overlay:active {
           transform: scale(1.05) rotate(0deg);
         }
-
+        
         .product-image img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
           filter: brightness(1);
         }
-
+        
         .product-card:hover .product-image img {
-          transform: scale(1.12) rotate(1deg);
+          transform: scale(1.08) rotate(1deg);
           filter: brightness(1.05);
         }
-
+        
         .product-info {
-          padding: 16px;
+          padding: 8px;
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 6px;
           flex-grow: 1;
           background: linear-gradient(180deg, transparent 0%, rgba(248,250,252,0.3) 100%);
         }
-
+        
         .product-title {
-          font-size: 0.9rem;
-          font-weight: 800;
+          font-size: 0.75rem;
+          font-weight: 700;
           color: #0f172a;
-          line-height: 1.3;
+          line-height: 1.2;
           margin: 0;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
           text-overflow: ellipsis;
-          min-height: 2.6rem;
+          min-height: 1.8rem;
           letter-spacing: -0.02em;
           transition: color 0.3s ease;
         }
-
+        
         .product-card:hover .product-title {
           color: var(--brand-orange, #FD5701);
         }
-
+        
         .rating-sold {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 6px;
+          gap: 4px;
         }
-
+        
         .rating {
           display: flex;
           align-items: center;
-          gap: 4px;
+          gap: 2px;
           color: #f59e0b;
-          font-weight: 800;
-          font-size: 0.75rem;
+          font-weight: 700;
+          font-size: 0.65rem;
           text-shadow: 0 1px 2px rgba(245,158,11,0.2);
           transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
+        
         .product-card:hover .rating {
           transform: scale(1.05);
           text-shadow: 0 2px 4px rgba(245,158,11,0.3);
         }
-
+        
         .sold {
-          font-size: 0.7rem;
+          font-size: 0.6rem;
           color: #334155;
           background: rgba(255, 255, 255, 0.6);
-          padding: 5px 8px;
-          border-radius: 8px;
-          font-weight: 700;
+          padding: 3px 5px;
+          border-radius: 6px;
+          font-weight: 600;
           border: none;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+          box-shadow: none;
           backdrop-filter: saturate(120%) blur(6px);
           transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
+        
         .product-card:hover .sold {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+          transform: translateY(-1px);
+          box-shadow: none;
         }
-
+        
         .price-large {
-          font-size: 1.15rem;
-          font-weight: 900;
+          font-size: 0.85rem;
+          font-weight: 800;
           color: #0f172a;
           margin: 0;
           background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
@@ -642,19 +605,19 @@ function FetchData() {
           -webkit-text-fill-color: transparent;
           background-clip: text;
           letter-spacing: -0.03em;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          line-height: 1.2;
-          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          text-shadow: none;
+          line-height: 1.1;
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
+        
         .product-card:hover .price-large {
           transform: scale(1.03);
         }
-
+        
         .price-container {
-          margin: 6px 0;
+          margin: 4px 0;
         }
-
+        
         .price-discounted {
           color: #ef4444 !important;
           background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%) !important;
@@ -662,661 +625,454 @@ function FetchData() {
           -webkit-text-fill-color: transparent !important;
           background-clip: text !important;
         }
-
+        
         .old-price {
           text-decoration: line-through !important;
           color: #94a3b8 !important;
-          font-weight: 600;
-          font-size: 0.85rem;
+          font-weight: 500;
+          font-size: 0.7rem;
           opacity: 0.8;
           letter-spacing: -0.01em;
           display: block;
           transition: opacity 0.3s ease;
         }
-
+        
         .product-card:hover .old-price {
           opacity: 1;
         }
-
+        
         .bonus-promo {
-          font-size: 0.7rem;
+          font-size: 0.6rem;
           color: var(--brand-orange);
-          font-weight: 700;
+          font-weight: 600;
           background: #fff7ed;
-          padding: 5px 8px;
-          border-radius: 6px;
+          padding: 3px 5px;
+          border-radius: 4px;
           border: 1px solid #fed7aa;
           display: inline-block;
           width: fit-content;
           transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
+        
         .product-card:hover .bonus-promo {
-          transform: translateX(3px);
+          transform: translateX(2px);
         }
-
+        
         .store-name {
-          font-size: 0.75rem;
+          font-size: 0.65rem;
           color: var(--brand-orange);
-          font-weight: 800;
-          margin: 6px 0 0;
+          font-weight: 700;
+          margin: 4px 0 0;
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding-top: 10px;
+          gap: 4px;
+          padding-top: 6px;
           border-top: 1px solid rgba(226, 232, 240, 0.8);
           letter-spacing: -0.01em;
           transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
+        
         .product-card:hover .store-name {
           color: #f97316;
-          transform: translateX(3px);
+          transform: translateX(2px);
         }
-
+        
         .store-name::before {
           content: '✓';
           background: linear-gradient(135deg, var(--brand-orange) 0%, #f97316 50%, #ea580c 100%);
           color: white;
-          width: 18px;
-          height: 18px;
+          width: 14px;
+          height: 14px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 0.65rem;
+          font-size: 0.55rem;
           font-weight: 900;
-          box-shadow: 0 4px 12px rgba(253,87,1,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+          box-shadow: none;
           border: 1px solid rgba(255,255,255,0.2);
           transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
+        
         .product-card:hover .store-name::before {
-          transform: scale(1.15) rotate(360deg);
+          transform: scale(1.1) rotate(360deg);
         }
-
+        
         .action-buttons {
           margin-top: auto;
-          padding-top: 10px;
+          padding-top: 6px;
           display: flex;
-          gap: 8px;
+          gap: 5px;
           align-items: center;
         }
-
+        
         .btn-buy {
           flex: 1;
-          padding: 12px 16px;
-          border-radius: 12px;
-          font-size: 0.8rem;
-          font-weight: 900;
+          padding: 8px 10px;
+          border-radius: 8px;
+          font-size: 0.7rem;
+          font-weight: 800;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
+          gap: 4px;
           cursor: pointer;
-          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
           border: 1px solid rgba(255,255,255,0.2);
           background: linear-gradient(135deg, var(--brand-orange) 0%, #f97316 50%, #ea580c 100%);
           color: white;
-          box-shadow: 0 4px 15px rgba(253,87,1,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+          box-shadow: none;
           text-shadow: 0 1px 2px rgba(0,0,0,0.2);
           letter-spacing: -0.01em;
         }
-
+        
         .btn-buy:hover {
-          transform: translateY(-4px) scale(1.03);
-          box-shadow: 0 12px 30px rgba(253, 87, 1, 0.5), inset 0 1px 0 rgba(255,255,255,0.5);
-          background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%);
+          transform: translateY(-2px) scale(1.03);
+          box-shadow: none;
         }
-
+        
         .btn-buy:active {
-          transform: translateY(-2px) scale(1.01);
+          transform: translateY(-1px) scale(1.01);
         }
-
+        
         .btn-icon {
-          width: 14px;
-          height: 14px;
+          width: 12px;
+          height: 12px;
           transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
+        
         .btn-buy:hover .btn-icon {
           transform: rotate(15deg) scale(1.1);
         }
-
+        
         .cart-icon-badge {
-          width: 46px;
-          height: 46px;
+          width: 32px;
+          height: 32px;
           background: linear-gradient(135deg, #64748b 0%, #475569 50%, #334155 100%);
-          border-radius: 14px;
-          box-shadow: 0 4px 15px rgba(100,116,139,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+          border-radius: 8px;
+          box-shadow: none;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
           border: 1px solid rgba(255,255,255,0.1);
           position: relative;
           overflow: hidden;
         }
-
-        @media (max-width: 640px) {
-          .favorite-icon-overlay { display: inline-flex; }
-          .action-buttons .favorite-icon-badge { display: none; }
-        }
-
+        
         .cart-icon-badge:hover {
-          transform: scale(1.12) rotate(5deg);
-          box-shadow: 0 8px 25px rgba(100,116,139,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+          transform: scale(1.1) rotate(5deg);
+          box-shadow: none;
         }
-
+        
         .cart-icon-badge:active {
           transform: scale(1.05) rotate(0deg);
         }
-
+        
         .cart-icon-badge svg {
-          width: 18px;
-          height: 18px;
+          width: 14px;
+          height: 14px;
           stroke: white;
           stroke-width: 2.5;
           transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
+        
         .cart-icon-badge:hover svg {
-          transform: scale(1.15);
+          transform: scale(1.1);
         }
-
+        
         .favorite-icon-badge {
-          width: 42px;
-          height: 42px;
+          width: 30px;
+          height: 30px;
           background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-          border-radius: 12px;
+          border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-          border: 2px solid transparent;
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          border: 1px solid transparent;
           position: relative;
           overflow: hidden;
           color: #64748b;
         }
-
+        
         .favorite-icon-badge.favorited {
           background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
           color: white;
           animation: pulse-glow 2s ease-in-out infinite;
         }
-
+        
         .favorite-icon-badge:hover {
-          transform: translateY(-4px) scale(1.1) rotate(-5deg);
-          box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+          transform: translateY(-2px) scale(1.08) rotate(-5deg);
+          box-shadow: none;
           border-color: #ef4444;
         }
-
+        
         .favorite-icon-badge:active {
-          transform: translateY(-2px) scale(1.05) rotate(0deg);
+          transform: translateY(-1px) scale(1.05) rotate(0deg);
         }
-
+        
         .favorite-icon-badge svg {
-          width: 18px;
-          height: 18px;
+          width: 14px;
+          height: 14px;
           transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
+        
         .favorite-icon-badge:hover svg {
-          transform: scale(1.2);
+          transform: scale(1.15);
         }
-
+        
         .engagement {
-          font-size: 0.7rem;
+          font-size: 0.6rem;
           color: #64748b;
           transition: all 0.3s ease;
         }
-
+        
         .product-card:hover .engagement {
-          transform: translateY(-2px);
+          transform: translateY(-1px);
         }
-
+        
         .engagement svg {
           color: #94a3b8;
           transition: all 0.3s ease;
         }
-
+        
         .product-card:hover .engagement svg {
           color: #64748b;
         }
-
+        
         .likes, .interactions {
           font-weight: 500;
         }
-
+        
         .load-more-wrapper {
           text-align: center;
-          margin: 40px 0 20px;
+          margin: 30px 0 15px;
           animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s backwards;
         }
-
+        
         .load-more-btn {
           background: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-500) 100%);
           color: white;
           border: none;
-          padding: 14px 40px;
-          border-radius: 12px;
+          padding: 12px 30px;
+          border-radius: 10px;
           font-weight: 700;
-          font-size: 0.9rem;
+          font-size: 0.8rem;
           cursor: pointer;
-          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
           text-decoration: none;
           display: inline-block;
         }
-
+        
         .load-more-btn:hover:not(:disabled) {
-          transform: translateY(-4px) scale(1.05);
-          box-shadow: 0 8px 25px rgba(253, 87, 1, 0.4);
+          transform: translateY(-3px) scale(1.05);
+          box-shadow: none;
         }
-
+        
         .load-more-btn:active:not(:disabled) {
-          transform: translateY(-2px) scale(1.02);
+          transform: translateY(-1px) scale(1.02);
         }
-
+        
         .load-more-btn:disabled {
           opacity: 0.5;
           cursor: not-allowed;
         }
-
+        
         .loader-wrap {
           display: flex;
           align-items: center;
           justify-content: center;
-          min-height: 50vh;
-          padding: 40px 0;
+          min-height: 40vh;
+          padding: 30px 0;
           animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
-
+        
         .tag-chip {
           animation: slideInFromLeft 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
         }
-
+        
         .tag-chip:nth-child(1) { animation-delay: 0.1s; }
         .tag-chip:nth-child(2) { animation-delay: 0.15s; }
         .tag-chip:nth-child(3) { animation-delay: 0.2s; }
-
-        /* ========================================
-           RESPONSIVE DESIGN - 4 CARD DI DESKTOP
-           ======================================== */
-
-        /* 🖥️ Ultra Wide Desktop (1920px+) - 5 columns */
-        @media (min-width: 1920px) {
-          .product-list { 
-            grid-template-columns: repeat(5, 1fr); 
-            gap: 20px;
+        
+        /* Responsive breakpoints untuk mobile */
+        @media (min-width: 640px) {
+          .product-list {
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 14px;
           }
-          .product-card { min-height: 380px; }
-          .product-image { height: 180px; }
-        }
-
-        /* 🖥️ Large Desktop (1440px - 1919px) - 4 columns */
-        @media (min-width: 1440px) and (max-width: 1919px) {
-          .product-list { 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 18px;
+          .product-card {
+            min-height: 260px;
+          }
+          .product-image {
+            height: 120px;
           }
         }
-
-        /* 🖥️ Desktop (1200px - 1439px) - 4 columns */
-        @media (min-width: 1200px) and (max-width: 1439px) {
-          .product-list { 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 18px;
-          }
-        }
-
-        /* 💻 Small Desktop (1024px - 1199px) - 4 columns */
-        @media (min-width: 1024px) and (max-width: 1199px) {
-          .product-list { 
-            grid-template-columns: repeat(4, 1fr); 
+        
+        @media (min-width: 768px) {
+          .product-list {
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 16px;
           }
-          .product-container { padding: 20px 16px; }
-        }
-
-        /* 📱 Tablet Landscape (900px - 1023px) - 3 columns */
-        @media (min-width: 900px) and (max-width: 1023px) {
-          .product-container { padding: 20px 14px; }
-          .product-list { 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 14px;
+          .product-card {
+            min-height: 280px;
           }
-          .product-card { min-height: 360px; }
-          .product-image { height: 170px; }
-          .product-info { padding: 12px; gap: 8px; }
-          .product-title { font-size: 0.85rem; min-height: 2.4rem; }
-          .price-large { font-size: 1.05rem; }
-        }
-
-        /* 📱 Tablet Portrait (768px - 899px) - 2 columns */
-        @media (min-width: 768px) and (max-width: 899px) {
-          .product-container { padding: 18px 14px; }
-          .product-list { 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 14px;
-          }
-          .product-card { 
-            min-height: 360px;
-            border-radius: 16px;
-          }
-          .product-image { height: 170px; }
-          .product-info { padding: 12px; gap: 8px; }
-          .product-title { font-size: 0.85rem; min-height: 2.3rem; }
-          .price-large { font-size: 1rem; }
-          .btn-buy { padding: 10px 12px; font-size: 0.8rem; }
-          .cart-icon-badge { width: 40px; height: 40px; }
-        }
-
-        /* 📱 MOBILE - 2 CARD (640px - 767px) */
-        @media (min-width: 640px) and (max-width: 767px) {
-          .product-container { 
-            padding: 18px 14px; 
-          }
-          .product-list { 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 14px;
-            max-width: 600px;
-            margin: 0 auto;
-          }
-          .product-card { 
-            min-height: 350px;
-            border-radius: 16px;
-          }
-          .product-image { 
-            height: 160px; 
-          }
-          .product-info { 
-            padding: 12px; 
-            gap: 8px; 
-          }
-          .product-title { 
-            font-size: 0.85rem; 
-            min-height: 2.3rem;
-            line-height: 1.3;
-          }
-          .price-large { 
-            font-size: 1rem; 
-            margin: 2px 0;
-          }
-          .rating {
-            font-size: 0.75rem;
-            gap: 4px;
-          }
-          .sold {
-            font-size: 0.7rem;
-            padding: 4px 6px;
-          }
-          .bonus-promo {
-            font-size: 0.7rem;
-            padding: 4px 8px;
-          }
-          .store-name {
-            font-size: 0.75rem;
-            padding-top: 8px;
-          }
-          .action-buttons {
-            gap: 8px;
-            padding-top: 10px;
-          }
-          .btn-buy { 
-            padding: 10px 12px;
-            font-size: 0.8rem;
-            border-radius: 10px;
-          }
-          .cart-icon-badge { 
-            width: 40px; 
-            height: 40px;
-            border-radius: 10px;
-          }
-          .favorite-icon-badge { 
-            width: 40px; 
-            height: 40px;
-            border-radius: 10px;
-          }
-          .cart-icon-badge svg { 
-            width: 18px; 
-            height: 18px; 
-          }
-          .discount-badge { 
-            font-size: 0.7rem; 
-            padding: 4px 8px; 
-            top: 8px;
-            left: 8px;
+          .product-image {
+            height: 130px;
           }
         }
-
-        /* 📱 Small Mobile (480px - 639px) - 2 columns */
-        @media (min-width: 480px) and (max-width: 639px) {
-          .product-container { 
-            padding: 16px 12px; 
+        
+        @media (min-width: 1024px) {
+          .product-list {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 18px;
           }
-          .product-list { 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 12px;
-          }
-          .product-card { 
-            min-height: 340px;
-            border-radius: 14px;
-          }
-          .product-image { 
-            height: 150px; 
-          }
-          .product-info { 
-            padding: 10px; 
-            gap: 6px; 
-          }
-          .product-title { 
-            font-size: 0.8rem; 
-            min-height: 2.1rem;
-          }
-          .price-large { 
-            font-size: 0.95rem; 
-          }
-          .btn-buy { 
-            padding: 8px 10px;
-            font-size: 0.75rem;
-          }
-          .cart-icon-badge { 
-            width: 36px; 
-            height: 36px; 
-          }
-          .favorite-icon-badge { 
-            width: 36px; 
-            height: 36px; 
-          }
-        }
-
-        /* 📱 Very Small Mobile (up to 479px) - 2 columns */
-        @media (max-width: 479px) {
-          .product-container { 
-            padding: 12px 8px; 
-          }
-          .product-list { 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 10px;
-          }
-          .product-card { 
-            min-height: 320px;
-            border-radius: 12px;
-          }
-          .product-image { 
-            height: 140px; 
-          }
-          .product-info { 
-            padding: 8px; 
-            gap: 6px; 
-          }
-          .product-title { 
-            font-size: 0.75rem; 
-            min-height: 2rem;
-            line-height: 1.2;
-          }
-          .price-large { 
-            font-size: 0.9rem; 
-          }
-          .rating, .sold {
-            font-size: 0.65rem;
-          }
-          .bonus-promo {
-            font-size: 0.65rem;
-            padding: 3px 6px;
-          }
-          .store-name {
-            font-size: 0.7rem;
-          }
-          .btn-buy { 
-            padding: 8px;
-            font-size: 0.7rem;
-            border-radius: 8px;
-          }
-          .cart-icon-badge { 
-            width: 32px; 
-            height: 32px;
-            border-radius: 8px;
-          }
-          .cart-icon-badge svg { 
-            width: 16px; 
-            height: 16px; 
-          }
-          .discount-badge { 
-            font-size: 0.65rem; 
-            padding: 3px 6px; 
-            top: 6px;
-            left: 6px;
-          }
-          .load-more-btn {
-            padding: 12px 32px;
-            font-size: 0.85rem;
-          }
-        }
-
-        /* 📱 Extra Small Mobile (up to 360px) - 2 columns */
-        @media (max-width: 360px) {
-          .product-container { 
-            padding: 10px 6px; 
-          }
-          .product-list { 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 8px;
-          }
-          .product-card { 
+          .product-card {
             min-height: 300px;
           }
-          .product-image { 
-            height: 130px; 
-          }
-          .product-info { 
-            padding: 6px; 
-          }
-          .product-title { 
-            font-size: 0.7rem; 
-          }
-          .price-large { 
-            font-size: 0.85rem; 
+          .product-image {
+            height: 140px;
           }
         }
-
-        /* Reduce motion for accessibility */
+        
+        @media (min-width: 1280px) {
+          .product-list {
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+          }
+          .product-card {
+            min-height: 320px;
+          }
+          .product-image {
+            height: 150px;
+          }
+        }
+        
+        @media (min-width: 1536px) {
+          .product-list {
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 24px;
+          }
+          .product-card {
+            min-height: 340px;
+          }
+          .product-image {
+            height: 160px;
+          }
+        }
+        
         @media (prefers-reduced-motion: reduce) {
-          *,
-          *::before,
-          *::after {
+          *, *::before, *::after {
             animation-duration: 0.01ms !important;
             animation-iteration-count: 1 !important;
             transition-duration: 0.01ms !important;
           }
         }
-
-        /* Add-to-cart/favorite animations */
+        
         @keyframes pop-bounce {
           0% { transform: scale(1); }
           40% { transform: scale(1.2); }
           100% { transform: scale(1); }
         }
+        
         @keyframes heart-bounce {
           0% { transform: scale(1); }
           30% { transform: scale(1.3); }
           60% { transform: scale(0.95); }
           100% { transform: scale(1); }
         }
+        
         @keyframes toast-slide-in {
           0% { transform: translateX(100%); opacity: 0; }
           100% { transform: translateX(0); opacity: 1; }
         }
+        
         @keyframes toast-slide-out {
           0% { transform: translateX(0); opacity: 1; }
           100% { transform: translateX(100%); opacity: 0; }
         }
-        .cart-pop { animation: pop-bounce 0.35s ease; }
-        .heart-pop { animation: heart-bounce 0.45s ease; }
         
-        /* Toast notification styles */
+        .cart-pop {
+          animation: pop-bounce 0.35s ease;
+        }
+        
+        .heart-pop {
+          animation: heart-bounce 0.45s ease;
+        }
+        
         .toast-container {
           position: fixed;
-          top: 100px;
-          right: 20px;
+          top: 80px;
+          right: 10px;
           z-index: 9999;
           pointer-events: none;
         }
+        
         .toast {
           background: white;
-          border-radius: 12px;
-          padding: 16px 20px;
-          margin-bottom: 12px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+          border-radius: 10px;
+          padding: 12px 16px;
+          margin-bottom: 8px;
+          box-shadow: 0 6px 20px rgba(0,0,0,0.12);
           border: 1px solid #e2e8f0;
           display: flex;
           align-items: center;
-          gap: 12px;
-          min-width: 280px;
+          gap: 10px;
+          min-width: 250px;
           animation: toast-slide-in 0.3s ease-out;
         }
+        
         .toast.toast-out {
           animation: toast-slide-out 0.3s ease-in;
         }
+        
         .toast-success {
-          border-left: 4px solid #10b981;
+          border-left: 3px solid #10b981;
         }
+        
         .toast-cart {
-          border-left: 4px solid #f59e0b;
+          border-left: 3px solid #f59e0b;
         }
+        
         .toast-icon {
-          width: 24px;
-          height: 24px;
+          width: 20px;
+          height: 20px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
-          font-size: 14px;
+          font-size: 12px;
         }
+        
         .toast-success .toast-icon {
           background: #10b981;
         }
+        
         .toast-cart .toast-icon {
           background: #f59e0b;
         }
+        
         .toast-content {
           flex: 1;
         }
+        
         .toast-title {
           font-weight: 600;
           color: #1f2937;
           margin-bottom: 2px;
+          font-size: 0.85rem;
         }
+        
         .toast-message {
-          font-size: 14px;
+          font-size: 0.75rem;
           color: #6b7280;
         }
       `}</style>
 
-      {/* Toast Notifications */}
       <div className="toast-container">
         {toasts.map((toast) => (
           <div key={toast.id} className={`toast toast-${toast.type}`}>
@@ -1336,63 +1092,57 @@ function FetchData() {
           <div className="loader-wrap">
             {isClient ? (
               <React.Suspense fallback={null}>
-                <LazyRadioAny
-                  visible={true}
-                  height={80}
-                  width={80}
-                  color="#FD5701"
-                  colors={["#FD5701", "#FD5701", "#FD5701"]}
-                  outerCircleColor="#FD5701"
-                  innerCircleColor="#FD5701"
-                  barColor="#FD5701"
-                  ariaLabel="radio-loading"
-                  wrapperStyle={{}}
-                  wrapperClass=""
-                />
+                <LazyRadioAny visible={true} height={60} width={60} color="#FD5701" 
+                  colors={["#FD5701", "#FD5701", "#FD5701"]} 
+                  outerCircleColor="#FD5701" innerCircleColor="#FD5701" 
+                  barColor="#FD5701" ariaLabel="radio-loading" 
+                  wrapperStyle={{}} wrapperClass="" />
               </React.Suspense>
             ) : null}
           </div>
         ) : displayedProducts.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px 0", animation: 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-            <p style={{ color: "#666", fontSize: "1rem", marginBottom: "16px" }}>
+          <div style={{ 
+            textAlign: "center", 
+            padding: "30px 0", 
+            animation: 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1)' 
+          }}>
+            <p style={{ color: "#666", fontSize: "0.9rem", marginBottom: "12px" }}>
               Tidak ada produk ditemukan.
             </p>
             {!isLoggedIn && (
               <div style={{ 
                 background: "linear-gradient(135deg, #fff5f5, #ffe0e0)", 
-                padding: "20px", 
-                borderRadius: "12px", 
-                margin: "20px auto", 
-                maxWidth: "400px",
+                padding: "16px", 
+                borderRadius: "10px", 
+                margin: "15px auto", 
+                maxWidth: "350px",
                 animation: 'scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s backwards'
               }}>
-                <p style={{ color: "#f33636", fontWeight: "600", marginBottom: "12px" }}>
+                <p style={{ color: "#f33636", fontWeight: "600", marginBottom: "8px", fontSize: "0.85rem" }}>
                   💡 Ingin melihat lebih banyak produk?
                 </p>
-                <p style={{ color: "#666", fontSize: "0.9rem", marginBottom: "16px" }}>
+                <p style={{ color: "#666", fontSize: "0.8rem", marginBottom: "12px" }}>
                   Masuk untuk mengakses katalog lengkap dan fitur eksklusif!
                 </p>
-                <a 
-                  href="/login" 
-                  style={{
-                    display: "inline-block",
-                    background: "linear-gradient(135deg, #f33636, #ff6b6b)",
-                    color: "white",
-                    padding: "10px 20px",
-                    borderRadius: "8px",
-                    textDecoration: "none",
-                    fontWeight: "600",
-                    fontSize: "0.9rem",
-                    transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
-                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(243, 54, 54, 0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
+                <a href="/login" style={{ 
+                  display: "inline-block", 
+                  background: "linear-gradient(135deg, #f33636, #ff6b6b)", 
+                  color: "white", 
+                  padding: "8px 16px", 
+                  borderRadius: "6px", 
+                  textDecoration: "none", 
+                  fontWeight: "600", 
+                  fontSize: "0.8rem",
+                  transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
+                  e.currentTarget.style.boxShadow = '0 6px 15px rgba(243, 54, 54, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
                 >
                   Masuk Sekarang
                 </a>
@@ -1403,11 +1153,9 @@ function FetchData() {
           <>
             <div className="product-list">
               {displayedProducts.map((item) => {
-                const shortTitle = item.nama_produk.length > 50 ? item.nama_produk.slice(0, 47) + "..." : item.nama_produk;
+                const shortTitle = item.nama_produk.length > 40 ? item.nama_produk.slice(0, 37) + "..." : item.nama_produk;
                 const rating = renderStars(item.rating_bintang);
-                const sold = item.unit_terjual != null 
-                  ? `${item.unit_terjual} terjual` 
-                  : "0 terjual";
+                const sold = item.unit_terjual != null ? `${item.unit_terjual} terjual` : "0 terjual";
 
                 return (
                   <ProductCard
@@ -1468,6 +1216,7 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
   const [imgSrc, setImgSrc] = React.useState<string>(initialSrc);
   const [cartPop, setCartPop] = React.useState(false);
   const [heartPop, setHeartPop] = React.useState(false);
+  
   const handleImgError = () => {
     const gallery = (product as any)?.galeri_gambar;
     const alt1 = (product as any)?.gambar_produk || (Array.isArray(gallery) ? gallery[0] : undefined);
@@ -1488,15 +1237,15 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
     }
     setImgSrc("/asset/placeholder/product.webp");
   };
-  
+
   const flyToNavbar = (target: 'cart' | 'favorites') => {
     try {
-      const cardImg = (document.querySelector('.product-card img[src="' + imgSrc.replace(/"/g, '\\"') + '"]') as HTMLImageElement) || null;
+      const cardImg = (document.querySelector('.product-card img[src="' + imgSrc.replace(/"/g, '"') + '"]') as HTMLImageElement) || null;
       const targetEl = document.getElementById(target === 'cart' ? 'nav-cart-btn-desktop' : 'nav-fav-btn-desktop')
         || document.getElementById(target === 'cart' ? 'nav-cart-btn-mobile' : 'nav-fav-btn-mobile');
       if (!targetEl) return;
 
-      const imgRect = (cardImg || (document.activeElement as any))?.getBoundingClientRect?.() || { top: window.innerHeight/2, left: window.innerWidth/2, width: 80, height: 80 } as DOMRect;
+      const imgRect = (cardImg || (document.activeElement as any))?.getBoundingClientRect?.() || { top: window.innerHeight/2, left: window.innerWidth/2, width: 60, height: 60 } as DOMRect;
       const targetRect = targetEl.getBoundingClientRect();
 
       const flyImg = document.createElement('img');
@@ -1510,10 +1259,10 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
         left: imgRect.left + 'px',
         width: imgRect.width + 'px',
         height: imgRect.height + 'px',
-        borderRadius: '12px',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+        borderRadius: '8px',
+        boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
         transform: 'scale(1)',
-        transition: 'transform 700ms cubic-bezier(0.16, 1, 0.3, 1), top 700ms cubic-bezier(0.16, 1, 0.3, 1), left 700ms cubic-bezier(0.16, 1, 0.3, 1), width 700ms, height 700ms, opacity 300ms',
+        transition: 'transform 600ms cubic-bezier(0.16, 1, 0.3, 1), top 600ms cubic-bezier(0.16, 1, 0.3, 1), left 600ms cubic-bezier(0.16, 1, 0.3, 1), width 600ms, height 600ms, opacity 250ms',
       } as CSSStyleDeclaration);
       document.body.appendChild(flyImg);
 
@@ -1527,13 +1276,12 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
         flyImg.style.transform = 'scale(0.6) rotate(10deg)';
         setTimeout(() => {
           flyImg.style.opacity = '0';
-          setTimeout(() => flyImg.remove(), 250);
-        }, 720);
+          setTimeout(() => flyImg.remove(), 200);
+        }, 620);
       });
 
-      // pulse target
       targetEl.classList.add('badge-pulse');
-      setTimeout(() => targetEl.classList.remove('badge-pulse'), 700);
+      setTimeout(() => targetEl.classList.remove('badge-pulse'), 600);
     } catch {}
   };
 
@@ -1556,12 +1304,10 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
     const existing = cart.find((p: Product) => p.ASIN === product.ASIN);
     if (existing) {
       showToast('cart', 'Sudah di Keranjang', shortTitle);
-      // soft feedback without changing data
       setCartPop(true);
       setTimeout(() => setCartPop(false), 400);
-      // keep navbar count as-is
-      window.dispatchEvent(new CustomEvent('cartUpdated', { 
-        detail: { type: 'cart', count: cart.length } 
+      window.dispatchEvent(new CustomEvent('cartUpdated', {
+        detail: { type: 'cart', count: cart.length }
       }));
       return;
     } else {
@@ -1570,17 +1316,16 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
     }
     localStorage.setItem("cart", JSON.stringify(cart));
     flyToNavbar('cart');
-    
-    // Trigger navbar update
-    window.dispatchEvent(new CustomEvent('cartUpdated', { 
-      detail: { type: 'cart', count: cart.length } 
+
+    window.dispatchEvent(new CustomEvent('cartUpdated', {
+      detail: { type: 'cart', count: cart.length }
     }));
-    
+
     setCartPop(true);
     setTimeout(() => setCartPop(false), 400);
   };
 
-  const handleAddToFavorites = (e: React.MouseEvent) => {
+  const handleAddToFavorites = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isLoggedIn) {
       try {
@@ -1595,8 +1340,11 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
       window.location.href = "/login";
       return;
     }
+    
     let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
     const existing = favorites.find((p: Product) => p.ASIN === product.ASIN);
+    const delta = existing ? -1 : 1; // -1 jika hapus, +1 jika tambah
+    
     if (existing) {
       favorites = favorites.filter((p: Product) => p.ASIN !== product.ASIN);
       showToast('favorite', 'Dihapus dari Favorit', shortTitle);
@@ -1604,16 +1352,29 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
       favorites.push(product);
       showToast('favorite', 'Ditambahkan ke Favorit!', shortTitle);
     }
+    
     localStorage.setItem("favorites", JSON.stringify(favorites));
     flyToNavbar('favorites');
-    
-    // Trigger navbar update
-    window.dispatchEvent(new CustomEvent('favoritesUpdated', { 
-      detail: { type: 'favorites', count: favorites.length } 
+
+    window.dispatchEvent(new CustomEvent('favoritesUpdated', {
+      detail: { type: 'favorites', count: favorites.length }
     }));
-    
+
+    // Update count di Firestore
+    try {
+      const { updateProductFavorites } = await import('../../lib/favorites');
+      await updateProductFavorites(product.ASIN, delta);
+      
+      // Update tampilan lokal langsung
+      if (product.likes !== undefined) {
+        product.likes = Math.max(0, product.likes + delta);
+      }
+    } catch (error) {
+      console.warn('Gagal update favorit ke Firestore:', error);
+    }
+
     setHeartPop(true);
-    setTimeout(() => setHeartPop(false), 450);
+    setTimeout(() => setHeartPop(false), 400);
   };
 
   const isFavorited = () => {
@@ -1624,18 +1385,18 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
   const hasDiscount = discount && discount !== "0%";
   const parsePercent = (d?: string) => {
     if (!d) return undefined;
-    const m = d.match(/(\d+(?:[\.,]\d+)?)/);
+    const m = d.match(/(\d+(?:[.,]\d+)?)/);
     return m ? parseFloat(m[1].replace(',', '.')) : undefined;
   };
-  
+
   let originalPrice: number | null = null;
   if (product.harga_asli && typeof product.harga_asli === 'number' && product.harga_asli > product.harga_produk) {
     originalPrice = product.harga_asli;
   }
-  
+
   const percent = (typeof product.persentase_diskon === 'number' ? product.persentase_diskon : parsePercent(discount)) || 0;
   let discountedPrice = product.harga_produk;
-  
+
   if (hasDiscount) {
     if (originalPrice && originalPrice > product.harga_produk) {
       discountedPrice = product.harga_produk;
@@ -1648,76 +1409,63 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
       }
     }
   }
-  
+
   const showOldPrice = hasDiscount && originalPrice && originalPrice > discountedPrice;
 
   return (
     <div className="product-card" onClick={() => onProductClick(product)}>
       <div className="product-image">
-        <img
-          src={imgSrc}
-          alt={shortTitle}
-          loading="lazy"
-          decoding="async"
-          referrerPolicy="no-referrer"
-          onError={handleImgError}
-        />
+        <img src={imgSrc} alt={shortTitle} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleImgError} />
         {hasDiscount && (
           <div className="discount-chip-overlay" aria-label={`Diskon ${discount}`}>
             <span className="discount-chip">Diskon {discount}</span>
           </div>
         )}
-        <div 
-          className={`favorite-icon-overlay ${heartPop ? 'heart-pop' : ''}`}
-          onClick={handleAddToFavorites}
-          aria-label="Tambah ke favorit"
-          title="Favorit"
-          style={{
-            alignItems: 'center', justifyContent: 'center',
-            width: 36, height: 36, borderRadius: 10,
-            background: 'white', border: '1px solid #e2e8f0',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-            color: isFavorited() ? '#ef4444' : '#475569'
-          }}
-        >
-          <svg viewBox="0 0 24 24" width="16" height="16" fill={isFavorited() ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+        <div className={`favorite-icon-overlay ${heartPop ? 'heart-pop' : ''}`} onClick={handleAddToFavorites} aria-label="Tambah ke favorit" title="Favorit" style={{ 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          width: 28, 
+          height: 28, 
+          borderRadius: 8, 
+          background: 'white', 
+          border: '1px solid #e2e8f0', 
+          boxShadow: '0 3px 8px rgba(0,0,0,0.1)', 
+          color: isFavorited() ? '#ef4444' : '#475569' 
+        }}>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill={isFavorited() ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
         </div>
       </div>
+      
       <div className="product-info">
         <div>
           <h3 className="product-title">{shortTitle}</h3>
-          <div className="rating-sold" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className="rating-sold" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div className="rating"><span>{rating}</span></div>
               <div className="sold">{sold}</div>
             </div>
-            <div className="engagement" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div className="likes" title="Suka" style={{ 
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                color: '#ef4444', fontSize: '0.7rem', fontWeight: 600
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <div className="engagement" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div className="likes" title="Suka" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#ef4444', fontSize: '0.55rem', fontWeight: 600 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
                 <span>{typeof product.likes === 'number' ? product.likes : 0}</span>
               </div>
-              <div className="interactions" title="Interaksi" style={{ 
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                color: '#3b82f6', fontSize: '0.7rem', fontWeight: 600
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <div className="interactions" title="Interaksi" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#3b82f6', fontSize: '0.55rem', fontWeight: 600 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
                 </svg>
                 <span>{typeof product.interactions === 'number' ? product.interactions : 0}</span>
               </div>
             </div>
           </div>
+          
           <div className="price-container">
             {showOldPrice ? (
               <>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 3 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
                   <span className="price-large price-discounted">
                     {toIDR(discountedPrice)}
                   </span>
@@ -1730,34 +1478,44 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
               <span className="price-large">{toIDR(discountedPrice)}</span>
             )}
           </div>
+          
           {Array.isArray(product.tags) && product.tags.length > 0 && (
-            <div className="tag-list" style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 5 }}>
+            <div className="tag-list" style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 3 }}>
               {product.tags
                 .filter(tag => !/\bdiskon\b/i.test(tag))
-                .slice(0, 3)
+                .slice(0, 2)
                 .map((tag, idx) => (
-                <span key={idx} className="tag-chip" style={{
-                  display: 'inline-flex', alignItems: 'center', padding: '5px 10px',
-                  borderRadius: 10, fontSize: '0.65rem', fontWeight: 800, color: '#374151',
-                  background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #e5e7eb 100%)',
-                  border: '1px solid #d1d5db',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7)',
-                  transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  cursor: 'pointer'
-                }} onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
-                  e.currentTarget.style.boxShadow = '0 6px 15px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.9)';
-                }} onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7)';
-                }}>
-                  {tag}
-                </span>
-              ))}
+                  <span key={idx} className="tag-chip" style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    padding: '3px 6px', 
+                    borderRadius: 6, 
+                    fontSize: '0.55rem', 
+                    fontWeight: 700, 
+                    color: '#374151', 
+                    background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #e5e7eb 100%)', 
+                    border: '1px solid #d1d5db', 
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7)', 
+                    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)', 
+                    cursor: 'pointer' 
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-1px) scale(1.05)';
+                    e.currentTarget.style.boxShadow = '0 3px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7)';
+                  }}>
+                    {tag}
+                  </span>
+                ))}
             </div>
           )}
+          
           <p className="store-name" title={seller}>{seller}</p>
         </div>
+        
         <div className="action-buttons">
           <button className="btn-buy" onClick={(e) => { e.stopPropagation(); onProductClick(product); }} aria-label="Beli produk">
             <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1773,11 +1531,7 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
             </svg>
           </div>
-          <div 
-            className={`favorite-icon-badge ${isFavorited() ? 'favorited' : ''} ${heartPop ? 'heart-pop' : ''}`} 
-            onClick={handleAddToFavorites}
-            aria-label="Tambah ke favorit"
-          >
+          <div className={`favorite-icon-badge ${isFavorited() ? 'favorited' : ''} ${heartPop ? 'heart-pop' : ''}`} onClick={handleAddToFavorites} aria-label="Tambah ke favorit">
             <svg viewBox="0 0 24 24" fill={isFavorited() ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>

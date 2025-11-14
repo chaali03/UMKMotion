@@ -1,4 +1,38 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// Lazy load GoogleGenerativeAI to avoid SSR issues
+let GoogleGenerativeAI: any = null;
+let genAI: any = null;
+
+const getGenAI = async () => {
+  if (typeof window === 'undefined') {
+    // Server-side: return null or use REST API directly
+    return null;
+  }
+  
+  if (!GoogleGenerativeAI) {
+    try {
+      const module = await import('@google/generative-ai');
+      GoogleGenerativeAI = module.GoogleGenerativeAI;
+    } catch (error) {
+      console.error('Failed to load @google/generative-ai:', error);
+      return null;
+    }
+  }
+  
+  if (!genAI) {
+    const API_KEY = (window.ENV?.GEMINI_API_KEY) || 
+                    (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || 
+                    'your-gemini-api-key';
+    
+    if (!API_KEY || API_KEY === 'your-gemini-api-key') {
+      console.warn('Gemini API key not found. Please set GEMINI_API_KEY environment variable.');
+      return null;
+    }
+    
+    genAI = new GoogleGenerativeAI(API_KEY);
+  }
+  
+  return genAI;
+};
 
 const API_KEY = (typeof window !== 'undefined' && window.ENV?.GEMINI_API_KEY) || 
                 (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || 
@@ -7,8 +41,6 @@ const API_KEY = (typeof window !== 'undefined' && window.ENV?.GEMINI_API_KEY) ||
 if (!API_KEY || API_KEY === 'your-gemini-api-key') {
   console.warn('Gemini API key not found. Please set GEMINI_API_KEY environment variable.');
 }
-
-const genAI = new GoogleGenerativeAI(API_KEY);
 
 // Preferred models in order per modality; start with v1beta-compatible (pro) to avoid 404s
 const TEXT_MODEL_CANDIDATES = [
@@ -161,6 +193,16 @@ export async function generateResponse(prompt: string, imageData?: string): Prom
 export async function generateStreamResponse(prompt: string): Promise<ReadableStream> {
   const fullPrompt = `${DINA_SYSTEM_PROMPT}\n\nPertanyaan pengguna: ${prompt}`;
 
+  // Only use streaming on client-side
+  if (typeof window === 'undefined') {
+    throw new Error('Streaming hanya tersedia di client-side');
+  }
+
+  const ai = await getGenAI();
+  if (!ai) {
+    throw new Error('Google Generative AI tidak tersedia');
+  }
+
   let lastError: any = null;
   const discovered = await listAvailableModels();
   const candidates = Array.from(new Set([
@@ -169,7 +211,7 @@ export async function generateStreamResponse(prompt: string): Promise<ReadableSt
   ])); // streaming for text prompts
   for (const modelName of candidates) {
     try {
-      const model = genAI.getGenerativeModel({
+      const model = ai.getGenerativeModel({
         model: modelName,
         generationConfig: {
           temperature: 0.7,

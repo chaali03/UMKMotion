@@ -83,9 +83,20 @@ export default defineConfig({
         'firebase/app', 
         'firebase/auth', 
         'firebase/firestore',
-        'firebase/storage'
+        'firebase/storage',
+        // Ensure vaul is pre-bundled to avoid 504 Outdated Optimize Dep
+        'vaul',
+        // Ensure Motion (Framer Motion v12 package) is pre-bundled
+        'motion',
+        'motion/react'
       ],
+      // Force re-optimize on dev startup to invalidate any stale cache
+      force: true,
       // Let Vite decide when to re-optimize to avoid frequent invalidations
+    },
+    // Ensure SSR bundles vaul instead of treating it as external
+    ssr: {
+      noExternal: ['vaul', 'motion']
     },
     resolve: {
       dedupe: ['react', 'react-dom'],

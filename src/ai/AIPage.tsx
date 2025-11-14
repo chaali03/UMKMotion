@@ -402,6 +402,38 @@ const AIPage: React.FC = () => {
     return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
+  // Generate initials from name
+  const getInitials = (name: string): string => {
+    if (!name) return 'U';
+    const words = name.trim().split(/\s+/);
+    if (words.length === 1) {
+      return words[0].substring(0, 2).toUpperCase();
+    }
+    return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+  };
+
+  // Generate color based on name for consistent avatar color
+  const getAvatarColor = (name: string): string => {
+    if (!name) return 'bg-orange-500';
+    const colors = [
+      'bg-orange-500',
+      'bg-blue-500',
+      'bg-purple-500',
+      'bg-green-500',
+      'bg-pink-500',
+      'bg-indigo-500',
+      'bg-teal-500',
+      'bg-red-500',
+      'bg-amber-500',
+      'bg-cyan-500',
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
   return (
     <div className="flex min-h-screen bg-slate-50 overflow-hidden" style={{ minHeight: '100svh' }}>
       {/* Sidebar Overlay for Mobile */}
@@ -707,14 +739,8 @@ const AIPage: React.FC = () => {
                       <span className="text-sm font-semibold text-slate-900 truncate max-w-[120px] lg:max-w-[160px]">{displayName}</span>
                       <span className="text-[11px] text-slate-500">Masuk</span>
                     </div>
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden ring-2 ring-white shadow">
-                      {currentUser?.photoURL ? (
-                        <img src={currentUser.photoURL} alt="Profil" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-600">
-                          <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                        </div>
-                      )}
+                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm ring-2 ring-white shadow-lg ${getAvatarColor(displayName)}`}>
+                      {getInitials(displayName)}
                     </div>
                   </div>
                 )
@@ -924,9 +950,9 @@ const AIPage: React.FC = () => {
                     {message.sender === 'user' && (
                       <motion.div
                         whileHover={{ scale: 1.05, rotate: -5 }}
-                        className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg border-2 border-white"
+                        className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center text-white font-bold text-xs sm:text-sm md:text-base shadow-lg border-2 border-white ${getAvatarColor(displayName)}`}
                       >
-                        <User className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
+                        {isAuthed ? getInitials(displayName) : 'U'}
                       </motion.div>
                     )}
                   </motion.div>

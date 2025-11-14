@@ -52,6 +52,28 @@ const MapLoading = () => (
 const JAKARTA_CENTER: [number, number] = [-6.2, 106.816];
 const VALID_CATEGORIES = new Set(["Kuliner", "Fashion", "Kerajinan", "Teknologi"]);
 
+// Parse open hours like "08:00 - 21:00" into today's status
+function isCurrentlyOpen(openHours?: string): boolean {
+  if (!openHours) return false;
+  // Accept formats: "08:00 - 21:00" or "08:00-21:00"
+  const m = openHours.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+  if (!m) return false;
+  const [, h1, m1, h2, m2] = m;
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(parseInt(h1, 10), parseInt(m1, 10), 0, 0);
+  const end = new Date(now);
+  end.setHours(parseInt(h2, 10), parseInt(m2, 10), 0, 0);
+  // Handle overnight e.g., 21:00 - 02:00
+  if (end <= start) {
+    if (now >= start) return true;
+    const yesterdayStart = new Date(start);
+    yesterdayStart.setDate(start.getDate() - 1);
+    return now < end && now.getDate() === end.getDate();
+  }
+  return now >= start && now <= end;
+}
+
 function mapStoreToUMKM(data: any, id: string): UMKMLocation {
   const lat = typeof data.lat === 'number' ? data.lat : (typeof data.latitude === 'number' ? data.latitude : JAKARTA_CENTER[0]);
   const lng = typeof data.lng === 'number' ? data.lng : (typeof data.longitude === 'number' ? data.longitude : JAKARTA_CENTER[1]);
@@ -71,10 +93,10 @@ function mapStoreToUMKM(data: any, id: string): UMKMLocation {
     lat, lng,
     verified: true,
     description: data.deskripsi_toko || data.deskripsi || 'UMKM lokal',
-    isOpen: true,
+    isOpen: isCurrentlyOpen(data.jam_operasional || '08:00 - 21:00'),
+    photos: photos as string[],
     products: [],
-    photos,
-  };
+  } as UMKMLocation;
 }
 
 export default function RumahUMKM() {
@@ -101,6 +123,15 @@ export default function RumahUMKM() {
   const [umkmList, setUmkmList] = useState<UMKMLocation[]>([]);
   const [loadingStores, setLoadingStores] = useState<boolean>(true);
   const [loadingProducts, setLoadingProducts] = useState<boolean>(false);
+
+  // Helper: choose the best image for list cards
+  const pickImage = (u: UMKMLocation): string => {
+    const candidates = [u.image, ...(u.photos || [])].filter(Boolean);
+    const first = candidates.find((s) => typeof s === 'string' && s.length > 0);
+    return first || '/LogoNavbar.webp';
+  };
+
+  // (filteredUMKM is defined later; this earlier duplicate is removed)
 
   const categories = [
     { id: 'all', label: 'Semua', icon: Sparkles, color: 'orange' },
@@ -143,6 +174,24 @@ export default function RumahUMKM() {
       }
     })();
     return () => { mounted = false; };
+  }, []);
+
+  // Update distances whenever userLocation or list changes
+  useEffect(() => {
+    setUmkmList(prev => prev.map(u => ({
+      ...u,
+      distance: haversine(userLocation, [u.lat, u.lng])
+    })));
+  }, [userLocation]);
+
+  // Recalculate open/closed every minute so the label stays accurate
+  useEffect(() => {
+    // initial sync
+    setUmkmList(prev => prev.map(u => ({ ...u, isOpen: isCurrentlyOpen(u.openHours) })));
+    const id = window.setInterval(() => {
+      setUmkmList(prev => prev.map(u => ({ ...u, isOpen: isCurrentlyOpen(u.openHours) })));
+    }, 60_000);
+    return () => window.clearInterval(id);
   }, []);
 
   // Distance helper
@@ -293,18 +342,23 @@ export default function RumahUMKM() {
     return () => track.removeEventListener('scroll', handler as EventListener);
   }, [selectedUMKM]);
 
-  // Filter UMKM
-  const filteredUMKM = umkmList.map(u => ({
-    ...u,
-    distance: userLocation ? haversine(userLocation, [u.lat, u.lng]) : u.distance,
-  })).filter((umkm: UMKMLocation) => {
-    const matchesSearch = umkm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         umkm.category.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter UMKM + sort by nearest
+  const filteredUMKM = React.useMemo(() => {
+    const q = (searchQuery || '').trim().toLowerCase();
     const expectedLabel = idToLabel[selectedCategory] || 'Semua';
-    const matchesCategory = selectedCategory === 'all' || umkm.category === expectedLabel;
-    const matchesVerified = !verifiedOnly || !!umkm.verified;
-    return matchesSearch && matchesCategory && matchesVerified;
-  });
+    const withDistance = umkmList.map(u => ({
+      ...u,
+      distance: userLocation ? haversine(userLocation, [u.lat, u.lng]) : u.distance,
+    }));
+    const filtered = withDistance.filter((umkm: UMKMLocation) => {
+      const hay = [umkm.name, umkm.category, umkm.address].filter(Boolean).map(s => s!.toLowerCase());
+      const matchesSearch = !q || hay.some(s => s.includes(q));
+      const matchesCategory = selectedCategory === 'all' || umkm.category === expectedLabel;
+      const matchesVerified = !verifiedOnly || !!umkm.verified;
+      return matchesSearch && matchesCategory && matchesVerified;
+    });
+    return filtered.sort((a, b) => (a.distance ?? 1e9) - (b.distance ?? 1e9));
+  }, [umkmList, userLocation, searchQuery, selectedCategory, verifiedOnly]);
 
   const categoryCounts = React.useMemo(() => {
     const map: Record<string, number> = {};
@@ -518,13 +572,11 @@ export default function RumahUMKM() {
                           <div className="relative flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
                             <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-amber-400/20 rounded-xl blur-sm group-hover:blur-md transition-all duration-300"></div>
                             <img 
-                              src={umkm.image} 
+                              src={pickImage(umkm)} 
                               alt={umkm.name}
-                              className="relative w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover ring-2 ring-orange-200/60 group-hover:ring-orange-400 transition-all duration-300 shadow-md"
+                              className="relative w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover object-[center_65%] ring-2 ring-orange-200/60 group-hover:ring-orange-400 transition-all duration-300 shadow-md"
                               width={80}
                               height={80}
-                              srcSet={`${umkm.image}&w=64&h=64 64w, ${umkm.image}&w=80&h=80 80w, ${umkm.image}&w=120&h=120 120w`}
-                              sizes="(max-width: 1024px) 64px, 80px"
                               loading={index === 0 ? 'eager' : 'lazy'}
                               fetchPriority={index === 0 ? 'high' : undefined as any}
                               decoding="async"
@@ -607,7 +659,7 @@ export default function RumahUMKM() {
                         {slides.map((src, idx) => (
                           <img
                             key={idx}
-                            src={src.replace(/w=400&h=300/, 'w=600&h=300')}
+                            src={/w=\d+&h=\d+/.test(src) ? src.replace(/w=\d+&h=\d+/, 'w=600&h=300') : src}
                             alt={`${selectedUMKM.name} ${idx + 1}`}
                             className="h-full w-full min-w-full flex-none object-cover snap-center"
                             loading={idx === 0 ? 'eager' : 'lazy'}
