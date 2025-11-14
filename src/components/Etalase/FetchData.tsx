@@ -43,6 +43,7 @@ function FetchData() {
   const [hasMore, setHasMore] = useState(true);
   const [isClient, setIsClient] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [toasts, setToasts] = useState<Array<{id: string, type: 'cart' | 'favorite', title: string, message: string}>>([]);
   const loadStartRef = useRef<number>(0);
   const MIN_SPINNER_MS = 600;
 
@@ -103,7 +104,6 @@ function FetchData() {
     return "0%";
   };
 
-  // Normalize various Firestore field names to our Product shape
   const normalizeTags = (data: any): string[] | undefined => {
     const cands = [data?.tags, data?.tag, data?.promoTags, data?.labels, data?.label, data?.promo_labels];
     const arr = cands.find((v) => Array.isArray(v)) as string[] | undefined;
@@ -116,7 +116,6 @@ function FetchData() {
     for (const v of vals) {
       if (typeof v === 'number' && !isNaN(v)) return v;
       if (typeof v === 'string' && v.trim()) {
-        // Extract leading number from strings like '10%', '10 persen', '10.5'
         const m = v.match(/-?\d+(?:[\.,]\d+)?/);
         if (m) {
           const n = Number(m[0].replace(',', '.'));
@@ -127,11 +126,18 @@ function FetchData() {
     return null;
   };
 
-  // Kita tidak lagi men-generate bonusText; tag akan langsung dipakai dari Firestore
-
   const handleProductClick = (product: Product) => {
-    localStorage.setItem("selectedProduct", JSON.stringify(product));
-    window.location.href = "/buyingpage";
+    window.location.href = `/product/${product.ASIN}`;
+  };
+
+  const showToast = (type: 'cart' | 'favorite', title: string, message: string) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const newToast = { id, type, title, message };
+    setToasts(prev => [...prev, newToast]);
+    
+    setTimeout(() => {
+      setToasts(prev => prev.filter(toast => toast.id !== id));
+    }, 3000);
   };
 
   useEffect(() => {
@@ -218,14 +224,12 @@ function FetchData() {
             product_price: formatToIDR(p.harga_produk),
           }));
 
-          // Deduplicate by normalized image URL; fallback to normalized product name
           const normUrl = (u?: string) => {
             if (!u) return '';
             let s = u.trim().toLowerCase();
             s = s.replace(/^https?:\/\//, '');
             const q = s.indexOf('?');
             if (q !== -1) s = s.substring(0, q);
-            // common size suffixes after last underscore or @
             s = s.replace(/(_\d+x\d+|@\dx)\.(webp|jpg|jpeg|png)$/i, '.$2');
             return s;
           };
@@ -242,8 +246,14 @@ function FetchData() {
           });
 
           setAllProducts(uniqueMock);
-          setDisplayedProducts(uniqueMock.slice(0, PRODUCTS_PER_PAGE));
-          setHasMore(uniqueMock.length > PRODUCTS_PER_PAGE);
+          if (isLoggedIn) {
+            setDisplayedProducts(uniqueMock);
+            setHasMore(false);
+          } else {
+            const limitedProducts = uniqueMock.slice(0, 8);
+            setDisplayedProducts(limitedProducts);
+            setHasMore(uniqueMock.length > 8);
+          }
           finishLoading();
           return;
         }
@@ -278,7 +288,6 @@ function FetchData() {
           product_price: formatToIDR(p.harga_produk),
         }));
 
-        // Deduplicate by normalized image URL; fallback to normalized product name
         const normUrl = (u?: string) => {
           if (!u) return '';
           let s = u.trim().toLowerCase();
@@ -301,8 +310,14 @@ function FetchData() {
         });
 
         setAllProducts(unique);
-        setDisplayedProducts(unique.slice(0, PRODUCTS_PER_PAGE));
-        setHasMore(unique.length > PRODUCTS_PER_PAGE);
+        if (isLoggedIn) {
+          setDisplayedProducts(unique);
+          setHasMore(false);
+        } else {
+          const limitedProducts = unique.slice(0, 8);
+          setDisplayedProducts(limitedProducts);
+          setHasMore(unique.length > 8);
+        }
       } catch (err: any) {
         console.error("ERROR FETCH:", err);
         alert(`Gagal ambil data: ${err.message}`);
@@ -312,7 +327,7 @@ function FetchData() {
     };
 
     fetchProducts();
-  }, [category, searchQuery]);
+  }, [category, searchQuery, isLoggedIn]);
 
   const loadMore = () => {
     if (loadingMore || !hasMore) return;
@@ -331,174 +346,294 @@ function FetchData() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
+        /* ========================================
+           SMOOTH ANIMATIONS & TRANSITIONS
+           ======================================== */
+        
+        * {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes slideInFromLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes shimmer {
+          0% {
+            background-position: -1000px 0;
+          }
+          100% {
+            background-position: 1000px 0;
+          }
+        }
+
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-8px);
+          }
+        }
+
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+          }
+          50% {
+            box-shadow: 0 8px 30px rgba(253,87,1,0.15), 0 4px 12px rgba(253,87,1,0.08);
+          }
+        }
+
         .product-container {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           background: linear-gradient(180deg, rgba(0,17,81,0.02) 0%, rgba(253,87,1,0.02) 100%);
-          padding: 32px 20px;
+          padding: 24px 16px;
           max-width: 1600px;
           margin: 0 auto;
           min-height: 100vh;
+          animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .product-list {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 24px;
+          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+          gap: 18px;
           justify-content: center;
         }
 
         .product-card {
           background: linear-gradient(145deg, #ffffff 0%, #fefefe 100%);
-          border-radius: 24px;
+          border-radius: 18px;
           overflow: hidden;
-          transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
           cursor: pointer;
           position: relative;
           border: 1px solid rgba(226, 232, 240, 0.6);
           display: flex;
           flex-direction: column;
           height: 100%;
-          min-height: 460px;
+          min-height: 380px;
           box-shadow: 0 4px 20px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6);
           backdrop-filter: blur(20px);
+          animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+          will-change: transform, box-shadow, border-color;
         }
 
+        .product-card:nth-child(1) { animation-delay: 0.05s; }
+        .product-card:nth-child(2) { animation-delay: 0.1s; }
+        .product-card:nth-child(3) { animation-delay: 0.15s; }
+        .product-card:nth-child(4) { animation-delay: 0.2s; }
+        .product-card:nth-child(5) { animation-delay: 0.25s; }
+        .product-card:nth-child(6) { animation-delay: 0.3s; }
+        .product-card:nth-child(7) { animation-delay: 0.35s; }
+        .product-card:nth-child(8) { animation-delay: 0.4s; }
+
         .product-card:hover {
-          transform: translateY(-8px) scale(1.02);
-          box-shadow: 0 25px 50px rgba(0,0,0,0.18), 0 12px 30px rgba(253,87,1,0.15), inset 0 1px 0 rgba(255,255,255,0.8);
-          border-color: rgba(253,87,1,0.4);
+          transform: translateY(-10px) scale(1.02);
+          box-shadow: 0 25px 50px rgba(0,0,0,0.18), 0 15px 35px rgba(253,87,1,0.15), inset 0 1px 0 rgba(255,255,255,0.9);
+          border-color: rgba(253,87,1,0.5);
           background: linear-gradient(145deg, #ffffff 0%, #fcfcfc 100%);
+          z-index: 10;
+        }
+
+        .product-card:active {
+          transform: translateY(-8px) scale(1.015);
+          transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .product-card:hover .price-discounted {
-          transform: scale(1.05);
-          transition: transform 0.3s ease;
+          transform: scale(1.08);
+          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .discount-badge {
           position: absolute;
-          top: 12px;
-          left: 12px;
+          top: 10px;
+          left: 10px;
           background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
           color: white;
           font-weight: 800;
-          font-size: 0.75rem;
-          padding: 6px 12px;
-          border-radius: 8px;
+          font-size: 0.7rem;
+          padding: 5px 10px;
+          border-radius: 6px;
           z-index: 10;
           box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+          animation: float 3s ease-in-out infinite;
         }
 
         .product-image {
           width: 100%;
-          height: 240px;
+          height: 180px;
           background: linear-gradient(135deg, rgba(0,17,81,0.03) 0%, rgba(253,87,1,0.03) 50%, rgba(99,102,241,0.02) 100%);
           overflow: hidden;
           position: relative;
-          border-radius: 20px;
-          margin: 12px;
-          width: calc(100% - 24px);
-          box-shadow: 0 8px 25px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.3);
+          border-radius: 16px;
+          margin: 10px;
+          width: calc(100% - 20px);
+          box-shadow: 0 6px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.3);
         }
+        
         .discount-chip {
           display: inline-flex;
           align-items: center;
-          padding: 10px 16px;
-          border-radius: 16px;
-          font-size: 0.8rem;
+          padding: 6px 12px;
+          border-radius: 12px;
+          font-size: 0.7rem;
           font-weight: 900;
           color: white;
           background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
           border: 1px solid rgba(255,255,255,0.2);
-          box-shadow: 0 6px 20px rgba(239,68,68,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+          box-shadow: 0 4px 15px rgba(239,68,68,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
           text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+
+        .product-card:hover .discount-chip {
+          transform: scale(1.05);
+          box-shadow: 0 6px 20px rgba(239,68,68,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+        }
+        
         .discount-chip-overlay {
           position: absolute;
-          top: 12px;
-          left: 12px;
+          top: 10px;
+          left: 10px;
           z-index: 5;
         }
 
         .favorite-icon-overlay {
           position: absolute;
-          top: 12px;
-          right: 12px;
+          top: 10px;
+          right: 10px;
           z-index: 6;
           display: none;
-          transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         
         .favorite-icon-overlay:hover {
-          transform: scale(1.1);
-          box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+          transform: scale(1.15) rotate(5deg);
+          box-shadow: 0 8px 25px rgba(0,0,0,0.2) !important;
+        }
+
+        .favorite-icon-overlay:active {
+          transform: scale(1.05) rotate(0deg);
         }
 
         .product-image img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: all 0.4s ease;
+          transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+          filter: brightness(1);
         }
 
         .product-card:hover .product-image img {
-          transform: scale(1.08);
+          transform: scale(1.12) rotate(1deg);
+          filter: brightness(1.05);
         }
 
         .product-info {
-          padding: 24px;
+          padding: 16px;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 10px;
           flex-grow: 1;
           background: linear-gradient(180deg, transparent 0%, rgba(248,250,252,0.3) 100%);
         }
 
         .product-title {
-          font-size: 1.1rem;
+          font-size: 0.9rem;
           font-weight: 800;
           color: #0f172a;
-          line-height: 1.4;
+          line-height: 1.3;
           margin: 0;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
           text-overflow: ellipsis;
-          min-height: 3.2rem;
+          min-height: 2.6rem;
           letter-spacing: -0.02em;
+          transition: color 0.3s ease;
+        }
+
+        .product-card:hover .product-title {
+          color: var(--brand-orange, #FD5701);
         }
 
         .rating-sold {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
         }
 
         .rating {
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 4px;
           color: #f59e0b;
           font-weight: 800;
-          font-size: 0.9rem;
+          font-size: 0.75rem;
           text-shadow: 0 1px 2px rgba(245,158,11,0.2);
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .product-card:hover .rating {
+          transform: scale(1.05);
+          text-shadow: 0 2px 4px rgba(245,158,11,0.3);
         }
 
         .sold {
-          font-size: 0.8rem;
-          color: #475569;
-          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
-          padding: 8px 12px;
-          border-radius: 12px;
+          font-size: 0.7rem;
+          color: #334155;
+          background: rgba(255, 255, 255, 0.6);
+          padding: 5px 8px;
+          border-radius: 8px;
           font-weight: 700;
-          border: 1px solid #cbd5e1;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6);
+          border: none;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+          backdrop-filter: saturate(120%) blur(6px);
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .product-card:hover .sold {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
         .price-large {
-          font-size: 1.4rem;
+          font-size: 1.15rem;
           font-weight: 900;
           color: #0f172a;
           margin: 0;
@@ -509,10 +644,15 @@ function FetchData() {
           letter-spacing: -0.03em;
           text-shadow: 0 2px 4px rgba(0,0,0,0.1);
           line-height: 1.2;
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .product-card:hover .price-large {
+          transform: scale(1.03);
         }
 
         .price-container {
-          margin: 8px 0;
+          margin: 6px 0;
         }
 
         .price-discounted {
@@ -527,103 +667,133 @@ function FetchData() {
           text-decoration: line-through !important;
           color: #94a3b8 !important;
           font-weight: 600;
-          font-size: 0.95rem;
+          font-size: 0.85rem;
           opacity: 0.8;
           letter-spacing: -0.01em;
           display: block;
+          transition: opacity 0.3s ease;
+        }
+
+        .product-card:hover .old-price {
+          opacity: 1;
         }
 
         .bonus-promo {
-          font-size: 0.75rem;
+          font-size: 0.7rem;
           color: var(--brand-orange);
           font-weight: 700;
           background: #fff7ed;
-          padding: 6px 10px;
+          padding: 5px 8px;
           border-radius: 6px;
           border: 1px solid #fed7aa;
           display: inline-block;
           width: fit-content;
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .product-card:hover .bonus-promo {
+          transform: translateX(3px);
         }
 
         .store-name {
-          font-size: 0.9rem;
+          font-size: 0.75rem;
           color: var(--brand-orange);
           font-weight: 800;
-          margin: 8px 0 0;
+          margin: 6px 0 0;
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding-top: 16px;
+          gap: 8px;
+          padding-top: 10px;
           border-top: 1px solid rgba(226, 232, 240, 0.8);
           letter-spacing: -0.01em;
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .product-card:hover .store-name {
+          color: #f97316;
+          transform: translateX(3px);
         }
 
         .store-name::before {
           content: '✓';
           background: linear-gradient(135deg, var(--brand-orange) 0%, #f97316 50%, #ea580c 100%);
           color: white;
-          width: 20px;
-          height: 20px;
+          width: 18px;
+          height: 18px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 0.7rem;
+          font-size: 0.65rem;
           font-weight: 900;
           box-shadow: 0 4px 12px rgba(253,87,1,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
           border: 1px solid rgba(255,255,255,0.2);
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .product-card:hover .store-name::before {
+          transform: scale(1.15) rotate(360deg);
         }
 
         .action-buttons {
           margin-top: auto;
-          padding-top: 16px;
+          padding-top: 10px;
           display: flex;
-          gap: 10px;
+          gap: 8px;
           align-items: center;
         }
 
         .btn-buy {
           flex: 1;
-          padding: 16px 20px;
-          border-radius: 16px;
-          font-size: 0.95rem;
+          padding: 12px 16px;
+          border-radius: 12px;
+          font-size: 0.8rem;
           font-weight: 900;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 10px;
+          gap: 8px;
           cursor: pointer;
-          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
           border: 1px solid rgba(255,255,255,0.2);
           background: linear-gradient(135deg, var(--brand-orange) 0%, #f97316 50%, #ea580c 100%);
           color: white;
-          box-shadow: 0 6px 20px rgba(253,87,1,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+          box-shadow: 0 4px 15px rgba(253,87,1,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
           text-shadow: 0 1px 2px rgba(0,0,0,0.2);
           letter-spacing: -0.01em;
         }
 
         .btn-buy:hover {
-          transform: translateY(-3px) scale(1.02);
-          box-shadow: 0 12px 30px rgba(253, 87, 1, 0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+          transform: translateY(-4px) scale(1.03);
+          box-shadow: 0 12px 30px rgba(253, 87, 1, 0.5), inset 0 1px 0 rgba(255,255,255,0.5);
           background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%);
         }
 
+        .btn-buy:active {
+          transform: translateY(-2px) scale(1.01);
+        }
+
         .btn-icon {
-          width: 16px;
-          height: 16px;
+          width: 14px;
+          height: 14px;
+          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .btn-buy:hover .btn-icon {
+          transform: rotate(15deg) scale(1.1);
         }
 
         .cart-icon-badge {
-          width: 56px;
-          height: 56px;
+          width: 46px;
+          height: 46px;
           background: linear-gradient(135deg, #64748b 0%, #475569 50%, #334155 100%);
-          border-radius: 18px;
-          box-shadow: 0 6px 18px rgba(100,116,139,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+          border-radius: 14px;
+          box-shadow: 0 4px 15px rgba(100,116,139,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
           border: 1px solid rgba(255,255,255,0.1);
           position: relative;
           overflow: hidden;
@@ -635,26 +805,36 @@ function FetchData() {
         }
 
         .cart-icon-badge:hover {
-          transform: scale(1.05);
+          transform: scale(1.12) rotate(5deg);
+          box-shadow: 0 8px 25px rgba(100,116,139,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+
+        .cart-icon-badge:active {
+          transform: scale(1.05) rotate(0deg);
         }
 
         .cart-icon-badge svg {
-          width: 20px;
-          height: 20px;
+          width: 18px;
+          height: 18px;
           stroke: white;
           stroke-width: 2.5;
+          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .cart-icon-badge:hover svg {
+          transform: scale(1.15);
         }
 
         .favorite-icon-badge {
-          width: 48px;
-          height: 48px;
+          width: 42px;
+          height: 42px;
           background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-          border-radius: 14px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
           border: 2px solid transparent;
           position: relative;
           overflow: hidden;
@@ -664,26 +844,46 @@ function FetchData() {
         .favorite-icon-badge.favorited {
           background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
           color: white;
+          animation: pulse-glow 2s ease-in-out infinite;
         }
 
         .favorite-icon-badge:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
+          transform: translateY(-4px) scale(1.1) rotate(-5deg);
+          box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
           border-color: #ef4444;
         }
 
+        .favorite-icon-badge:active {
+          transform: translateY(-2px) scale(1.05) rotate(0deg);
+        }
+
         .favorite-icon-badge svg {
-          width: 20px;
-          height: 20px;
+          width: 18px;
+          height: 18px;
+          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .favorite-icon-badge:hover svg {
+          transform: scale(1.2);
         }
 
         .engagement {
-          font-size: 0.75rem;
+          font-size: 0.7rem;
           color: #64748b;
+          transition: all 0.3s ease;
+        }
+
+        .product-card:hover .engagement {
+          transform: translateY(-2px);
         }
 
         .engagement svg {
           color: #94a3b8;
+          transition: all 0.3s ease;
+        }
+
+        .product-card:hover .engagement svg {
+          color: #64748b;
         }
 
         .likes, .interactions {
@@ -693,6 +893,7 @@ function FetchData() {
         .load-more-wrapper {
           text-align: center;
           margin: 40px 0 20px;
+          animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s backwards;
         }
 
         .load-more-btn {
@@ -704,12 +905,18 @@ function FetchData() {
           font-weight: 700;
           font-size: 0.9rem;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          text-decoration: none;
+          display: inline-block;
         }
 
         .load-more-btn:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(253, 87, 1, 0.3);
+          transform: translateY(-4px) scale(1.05);
+          box-shadow: 0 8px 25px rgba(253, 87, 1, 0.4);
+        }
+
+        .load-more-btn:active:not(:disabled) {
+          transform: translateY(-2px) scale(1.02);
         }
 
         .load-more-btn:disabled {
@@ -723,70 +930,79 @@ function FetchData() {
           justify-content: center;
           min-height: 50vh;
           padding: 40px 0;
+          animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
+        .tag-chip {
+          animation: slideInFromLeft 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+        }
+
+        .tag-chip:nth-child(1) { animation-delay: 0.1s; }
+        .tag-chip:nth-child(2) { animation-delay: 0.15s; }
+        .tag-chip:nth-child(3) { animation-delay: 0.2s; }
 
         /* ========================================
-           RESPONSIVE DESIGN OPTIMIZATION - DIUBAH UNTUK 3 CARD DI DESKTOP
+           RESPONSIVE DESIGN - 4 CARD DI DESKTOP
            ======================================== */
 
-        /* 🖥️ Ultra Wide Desktop (1920px+) - 4 columns (tetap 4 untuk layar sangat lebar) */
+        /* 🖥️ Ultra Wide Desktop (1920px+) - 5 columns */
         @media (min-width: 1920px) {
           .product-list { 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 28px;
-          }
-          .product-card { min-height: 440px; }
-          .product-image { height: 220px; }
-        }
-
-        /* 🖥️ Large Desktop (1440px - 1919px) - 3 columns */
-        @media (min-width: 1440px) and (max-width: 1919px) {
-          .product-list { 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 24px;
-          }
-        }
-
-        /* 🖥️ Desktop (1200px - 1439px) - 3 columns */
-        @media (min-width: 1200px) and (max-width: 1439px) {
-          .product-list { 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 22px;
-          }
-        }
-
-        /* 💻 Small Desktop (1024px - 1199px) - 3 columns */
-        @media (min-width: 1024px) and (max-width: 1199px) {
-          .product-list { 
-            grid-template-columns: repeat(3, 1fr); 
+            grid-template-columns: repeat(5, 1fr); 
             gap: 20px;
           }
-          .product-container { padding: 28px 16px; }
+          .product-card { min-height: 380px; }
+          .product-image { height: 180px; }
         }
 
-        /* 📱 Tablet Landscape (900px - 1023px) - 2 columns */
-        @media (min-width: 900px) and (max-width: 1023px) {
-          .product-container { padding: 24px 16px; }
+        /* 🖥️ Large Desktop (1440px - 1919px) - 4 columns */
+        @media (min-width: 1440px) and (max-width: 1919px) {
           .product-list { 
-            grid-template-columns: repeat(2, 1fr); 
+            grid-template-columns: repeat(4, 1fr); 
             gap: 18px;
           }
-          .product-card { min-height: 400px; }
-          .product-image { height: 180px; }
-          .product-info { padding: 14px; gap: 10px; }
-          .product-title { font-size: 0.9rem; min-height: 2.5rem; }
-          .price-large { font-size: 1.1rem; }
+        }
+
+        /* 🖥️ Desktop (1200px - 1439px) - 4 columns */
+        @media (min-width: 1200px) and (max-width: 1439px) {
+          .product-list { 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 18px;
+          }
+        }
+
+        /* 💻 Small Desktop (1024px - 1199px) - 4 columns */
+        @media (min-width: 1024px) and (max-width: 1199px) {
+          .product-list { 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 16px;
+          }
+          .product-container { padding: 20px 16px; }
+        }
+
+        /* 📱 Tablet Landscape (900px - 1023px) - 3 columns */
+        @media (min-width: 900px) and (max-width: 1023px) {
+          .product-container { padding: 20px 14px; }
+          .product-list { 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 14px;
+          }
+          .product-card { min-height: 360px; }
+          .product-image { height: 170px; }
+          .product-info { padding: 12px; gap: 8px; }
+          .product-title { font-size: 0.85rem; min-height: 2.4rem; }
+          .price-large { font-size: 1.05rem; }
         }
 
         /* 📱 Tablet Portrait (768px - 899px) - 2 columns */
         @media (min-width: 768px) and (max-width: 899px) {
-          .product-container { padding: 20px 16px; }
+          .product-container { padding: 18px 14px; }
           .product-list { 
             grid-template-columns: repeat(2, 1fr); 
-            gap: 16px;
+            gap: 14px;
           }
           .product-card { 
-            min-height: 380px;
+            min-height: 360px;
             border-radius: 16px;
           }
           .product-image { height: 170px; }
@@ -800,16 +1016,16 @@ function FetchData() {
         /* 📱 MOBILE - 2 CARD (640px - 767px) */
         @media (min-width: 640px) and (max-width: 767px) {
           .product-container { 
-            padding: 20px 16px; 
+            padding: 18px 14px; 
           }
           .product-list { 
             grid-template-columns: repeat(2, 1fr); 
-            gap: 16px;
+            gap: 14px;
             max-width: 600px;
             margin: 0 auto;
           }
           .product-card { 
-            min-height: 360px;
+            min-height: 350px;
             border-radius: 16px;
           }
           .product-image { 
@@ -834,7 +1050,7 @@ function FetchData() {
           }
           .sold {
             font-size: 0.7rem;
-            padding: 3px 6px;
+            padding: 4px 6px;
           }
           .bonus-promo {
             font-size: 0.7rem;
@@ -875,7 +1091,7 @@ function FetchData() {
           }
         }
 
-        /* 📱 Small Mobile (480px - 639px) - 2 columns lebih kecil */
+        /* 📱 Small Mobile (480px - 639px) - 2 columns */
         @media (min-width: 480px) and (max-width: 639px) {
           .product-container { 
             padding: 16px 12px; 
@@ -916,7 +1132,7 @@ function FetchData() {
           }
         }
 
-        /* 📱 Very Small Mobile (up to 479px) - 2 columns compact */
+        /* 📱 Very Small Mobile (up to 479px) - 2 columns */
         @media (max-width: 479px) {
           .product-container { 
             padding: 12px 8px; 
@@ -980,7 +1196,7 @@ function FetchData() {
           }
         }
 
-        /* 📱 Extra Small Mobile (up to 360px) - Tetap 2 columns tapi lebih compact */
+        /* 📱 Extra Small Mobile (up to 360px) - 2 columns */
         @media (max-width: 360px) {
           .product-container { 
             padding: 10px 6px; 
@@ -1005,7 +1221,115 @@ function FetchData() {
             font-size: 0.85rem; 
           }
         }
+
+        /* Reduce motion for accessibility */
+        @media (prefers-reduced-motion: reduce) {
+          *,
+          *::before,
+          *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+
+        /* Add-to-cart/favorite animations */
+        @keyframes pop-bounce {
+          0% { transform: scale(1); }
+          40% { transform: scale(1.2); }
+          100% { transform: scale(1); }
+        }
+        @keyframes heart-bounce {
+          0% { transform: scale(1); }
+          30% { transform: scale(1.3); }
+          60% { transform: scale(0.95); }
+          100% { transform: scale(1); }
+        }
+        @keyframes toast-slide-in {
+          0% { transform: translateX(100%); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toast-slide-out {
+          0% { transform: translateX(0); opacity: 1; }
+          100% { transform: translateX(100%); opacity: 0; }
+        }
+        .cart-pop { animation: pop-bounce 0.35s ease; }
+        .heart-pop { animation: heart-bounce 0.45s ease; }
+        
+        /* Toast notification styles */
+        .toast-container {
+          position: fixed;
+          top: 100px;
+          right: 20px;
+          z-index: 9999;
+          pointer-events: none;
+        }
+        .toast {
+          background: white;
+          border-radius: 12px;
+          padding: 16px 20px;
+          margin-bottom: 12px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+          border: 1px solid #e2e8f0;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-width: 280px;
+          animation: toast-slide-in 0.3s ease-out;
+        }
+        .toast.toast-out {
+          animation: toast-slide-out 0.3s ease-in;
+        }
+        .toast-success {
+          border-left: 4px solid #10b981;
+        }
+        .toast-cart {
+          border-left: 4px solid #f59e0b;
+        }
+        .toast-icon {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 14px;
+        }
+        .toast-success .toast-icon {
+          background: #10b981;
+        }
+        .toast-cart .toast-icon {
+          background: #f59e0b;
+        }
+        .toast-content {
+          flex: 1;
+        }
+        .toast-title {
+          font-weight: 600;
+          color: #1f2937;
+          margin-bottom: 2px;
+        }
+        .toast-message {
+          font-size: 14px;
+          color: #6b7280;
+        }
       `}</style>
+
+      {/* Toast Notifications */}
+      <div className="toast-container">
+        {toasts.map((toast) => (
+          <div key={toast.id} className={`toast toast-${toast.type}`}>
+            <div className="toast-icon">
+              {toast.type === 'cart' ? '🛒' : '❤️'}
+            </div>
+            <div className="toast-content">
+              <div className="toast-title">{toast.title}</div>
+              <div className="toast-message">{toast.message}</div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       <div className="product-container">
         {loading ? (
@@ -1029,9 +1353,52 @@ function FetchData() {
             ) : null}
           </div>
         ) : displayedProducts.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#666", fontSize: "1rem", padding: "40px 0" }}>
-            Tidak ada produk ditemukan.
-          </p>
+          <div style={{ textAlign: "center", padding: "40px 0", animation: 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+            <p style={{ color: "#666", fontSize: "1rem", marginBottom: "16px" }}>
+              Tidak ada produk ditemukan.
+            </p>
+            {!isLoggedIn && (
+              <div style={{ 
+                background: "linear-gradient(135deg, #fff5f5, #ffe0e0)", 
+                padding: "20px", 
+                borderRadius: "12px", 
+                margin: "20px auto", 
+                maxWidth: "400px",
+                animation: 'scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s backwards'
+              }}>
+                <p style={{ color: "#f33636", fontWeight: "600", marginBottom: "12px" }}>
+                  💡 Ingin melihat lebih banyak produk?
+                </p>
+                <p style={{ color: "#666", fontSize: "0.9rem", marginBottom: "16px" }}>
+                  Masuk untuk mengakses katalog lengkap dan fitur eksklusif!
+                </p>
+                <a 
+                  href="/login" 
+                  style={{
+                    display: "inline-block",
+                    background: "linear-gradient(135deg, #f33636, #ff6b6b)",
+                    color: "white",
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    textDecoration: "none",
+                    fontWeight: "600",
+                    fontSize: "0.9rem",
+                    transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
+                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(243, 54, 54, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  Masuk Sekarang
+                </a>
+              </div>
+            )}
+          </div>
         ) : (
           <>
             <div className="product-list">
@@ -1054,6 +1421,8 @@ function FetchData() {
                     discount={item.discount || getDiscount(item)}
                     product={item}
                     onProductClick={handleProductClick}
+                    isLoggedIn={isLoggedIn}
+                    showToast={showToast}
                   />
                 );
               })}
@@ -1089,12 +1458,16 @@ interface ProductCardProps {
   discount: string;
   product: Product;
   onProductClick: (p: Product) => void;
+  isLoggedIn: boolean;
+  showToast: (type: 'cart' | 'favorite', title: string, message: string) => void;
 }
 
-function ProductCard({ image, shortTitle, price, rating, sold, seller, discount, product, onProductClick }: ProductCardProps) {
+function ProductCard({ image, shortTitle, price, rating, sold, seller, discount, product, onProductClick, isLoggedIn, showToast }: ProductCardProps) {
   const toIDR = (n: number) => "Rp " + n.toLocaleString("id-ID");
   const initialSrc = (image && image.trim()) || (product.thumbnail_produk as any) || (product.gambar_produk as any) || "/asset/placeholder/product.webp";
   const [imgSrc, setImgSrc] = React.useState<string>(initialSrc);
+  const [cartPop, setCartPop] = React.useState(false);
+  const [heartPop, setHeartPop] = React.useState(false);
   const handleImgError = () => {
     const gallery = (product as any)?.galeri_gambar;
     const alt1 = (product as any)?.gambar_produk || (Array.isArray(gallery) ? gallery[0] : undefined);
@@ -1102,7 +1475,6 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
       setImgSrc(alt1);
       return;
     }
-    // Try thumbnail without query as a fallback
     const thumb = (product as any)?.thumbnail_produk;
     if (thumb && imgSrc !== thumb) {
       try {
@@ -1116,33 +1488,132 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
     }
     setImgSrc("/asset/placeholder/product.webp");
   };
+  
+  const flyToNavbar = (target: 'cart' | 'favorites') => {
+    try {
+      const cardImg = (document.querySelector('.product-card img[src="' + imgSrc.replace(/"/g, '\\"') + '"]') as HTMLImageElement) || null;
+      const targetEl = document.getElementById(target === 'cart' ? 'nav-cart-btn-desktop' : 'nav-fav-btn-desktop')
+        || document.getElementById(target === 'cart' ? 'nav-cart-btn-mobile' : 'nav-fav-btn-mobile');
+      if (!targetEl) return;
+
+      const imgRect = (cardImg || (document.activeElement as any))?.getBoundingClientRect?.() || { top: window.innerHeight/2, left: window.innerWidth/2, width: 80, height: 80 } as DOMRect;
+      const targetRect = targetEl.getBoundingClientRect();
+
+      const flyImg = document.createElement('img');
+      flyImg.src = imgSrc;
+      flyImg.alt = 'flying';
+      Object.assign(flyImg.style, {
+        position: 'fixed',
+        zIndex: '9999',
+        pointerEvents: 'none',
+        top: imgRect.top + 'px',
+        left: imgRect.left + 'px',
+        width: imgRect.width + 'px',
+        height: imgRect.height + 'px',
+        borderRadius: '12px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+        transform: 'scale(1)',
+        transition: 'transform 700ms cubic-bezier(0.16, 1, 0.3, 1), top 700ms cubic-bezier(0.16, 1, 0.3, 1), left 700ms cubic-bezier(0.16, 1, 0.3, 1), width 700ms, height 700ms, opacity 300ms',
+      } as CSSStyleDeclaration);
+      document.body.appendChild(flyImg);
+
+      requestAnimationFrame(() => {
+        const endTop = targetRect.top + targetRect.height / 2 - imgRect.height * 0.15;
+        const endLeft = targetRect.left + targetRect.width / 2 - imgRect.width * 0.15;
+        flyImg.style.top = endTop + 'px';
+        flyImg.style.left = endLeft + 'px';
+        flyImg.style.width = imgRect.width * 0.3 + 'px';
+        flyImg.style.height = imgRect.height * 0.3 + 'px';
+        flyImg.style.transform = 'scale(0.6) rotate(10deg)';
+        setTimeout(() => {
+          flyImg.style.opacity = '0';
+          setTimeout(() => flyImg.remove(), 250);
+        }, 720);
+      });
+
+      // pulse target
+      targetEl.classList.add('badge-pulse');
+      setTimeout(() => targetEl.classList.remove('badge-pulse'), 700);
+    } catch {}
+  };
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isLoggedIn) {
+      try {
+        const pending = {
+          type: 'cart' as const,
+          product,
+          returnUrl: window.location.href,
+          createdAt: Date.now(),
+        };
+        localStorage.setItem('pendingAction', JSON.stringify(pending));
+      } catch {}
+      window.location.href = "/login";
+      return;
+    }
     let cart = JSON.parse(localStorage.getItem("cart") || "[]");
     const existing = cart.find((p: Product) => p.ASIN === product.ASIN);
     if (existing) {
-      existing.quantity = (existing.quantity || 1) + 1;
+      showToast('cart', 'Sudah di Keranjang', shortTitle);
+      // soft feedback without changing data
+      setCartPop(true);
+      setTimeout(() => setCartPop(false), 400);
+      // keep navbar count as-is
+      window.dispatchEvent(new CustomEvent('cartUpdated', { 
+        detail: { type: 'cart', count: cart.length } 
+      }));
+      return;
     } else {
       cart.push({ ...product, quantity: 1 });
+      showToast('cart', 'Ditambahkan ke Keranjang!', shortTitle);
     }
     localStorage.setItem("cart", JSON.stringify(cart));
-    alert("Berhasil ditambahkan ke keranjang!");
+    flyToNavbar('cart');
+    
+    // Trigger navbar update
+    window.dispatchEvent(new CustomEvent('cartUpdated', { 
+      detail: { type: 'cart', count: cart.length } 
+    }));
+    
+    setCartPop(true);
+    setTimeout(() => setCartPop(false), 400);
   };
 
   const handleAddToFavorites = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isLoggedIn) {
+      try {
+        const pending = {
+          type: 'favorites' as const,
+          product,
+          returnUrl: window.location.href,
+          createdAt: Date.now(),
+        };
+        localStorage.setItem('pendingAction', JSON.stringify(pending));
+      } catch {}
+      window.location.href = "/login";
+      return;
+    }
     let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
     const existing = favorites.find((p: Product) => p.ASIN === product.ASIN);
     if (existing) {
-      // Remove from favorites
       favorites = favorites.filter((p: Product) => p.ASIN !== product.ASIN);
-      alert("Dihapus dari favorit!");
+      showToast('favorite', 'Dihapus dari Favorit', shortTitle);
     } else {
-      // Add to favorites
       favorites.push(product);
-      alert("Ditambahkan ke favorit!");
+      showToast('favorite', 'Ditambahkan ke Favorit!', shortTitle);
     }
     localStorage.setItem("favorites", JSON.stringify(favorites));
+    flyToNavbar('favorites');
+    
+    // Trigger navbar update
+    window.dispatchEvent(new CustomEvent('favoritesUpdated', { 
+      detail: { type: 'favorites', count: favorites.length } 
+    }));
+    
+    setHeartPop(true);
+    setTimeout(() => setHeartPop(false), 450);
   };
 
   const isFavorited = () => {
@@ -1150,16 +1621,13 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
     return favorites.some((p: Product) => p.ASIN === product.ASIN);
   };
 
-  // Only show discount badge if there's actual discount
   const hasDiscount = discount && discount !== "0%";
-  // Compute discounted price and original price for display
   const parsePercent = (d?: string) => {
     if (!d) return undefined;
     const m = d.match(/(\d+(?:[\.,]\d+)?)/);
     return m ? parseFloat(m[1].replace(',', '.')) : undefined;
   };
   
-  // Determine original price - prioritize harga_asli if available and greater than harga_produk
   let originalPrice: number | null = null;
   if (product.harga_asli && typeof product.harga_asli === 'number' && product.harga_asli > product.harga_produk) {
     originalPrice = product.harga_asli;
@@ -1170,21 +1638,17 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
   
   if (hasDiscount) {
     if (originalPrice && originalPrice > product.harga_produk) {
-      // If harga_asli exists and is greater, use harga_produk as discounted price
       discountedPrice = product.harga_produk;
     } else if (percent > 0) {
-      // Calculate discounted price from percentage
       if (originalPrice) {
         discountedPrice = Math.max(0, Math.round(originalPrice * (1 - percent / 100)));
       } else {
-        // Calculate from harga_produk and set it as original
         originalPrice = product.harga_produk;
         discountedPrice = Math.max(0, Math.round(originalPrice * (1 - percent / 100)));
       }
     }
   }
   
-  // Show old price if there's a discount and we have an original price that's higher than discounted
   const showOldPrice = hasDiscount && originalPrice && originalPrice > discountedPrice;
 
   return (
@@ -1204,19 +1668,19 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
           </div>
         )}
         <div 
-          className="favorite-icon-overlay"
+          className={`favorite-icon-overlay ${heartPop ? 'heart-pop' : ''}`}
           onClick={handleAddToFavorites}
           aria-label="Tambah ke favorit"
           title="Favorit"
           style={{
             alignItems: 'center', justifyContent: 'center',
-            width: 40, height: 40, borderRadius: 12,
+            width: 36, height: 36, borderRadius: 10,
             background: 'white', border: '1px solid #e2e8f0',
-            boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
             color: isFavorited() ? '#ef4444' : '#475569'
           }}
         >
-          <svg viewBox="0 0 24 24" width="18" height="18" fill={isFavorited() ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill={isFavorited() ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
         </div>
@@ -1224,26 +1688,26 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
       <div className="product-info">
         <div>
           <h3 className="product-title">{shortTitle}</h3>
-          <div className="rating-sold" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="rating-sold" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div className="rating"><span>{rating}</span></div>
               <div className="sold">{sold}</div>
             </div>
-            <div className="engagement" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="engagement" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div className="likes" title="Suka" style={{ 
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                color: '#ef4444', fontSize: '0.8rem', fontWeight: 600
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                color: '#ef4444', fontSize: '0.7rem', fontWeight: 600
               }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
                 <span>{typeof product.likes === 'number' ? product.likes : 0}</span>
               </div>
               <div className="interactions" title="Interaksi" style={{ 
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                color: '#3b82f6', fontSize: '0.8rem', fontWeight: 600
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                color: '#3b82f6', fontSize: '0.7rem', fontWeight: 600
               }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
                 </svg>
                 <span>{typeof product.interactions === 'number' ? product.interactions : 0}</span>
@@ -1253,7 +1717,7 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
           <div className="price-container">
             {showOldPrice ? (
               <>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 3 }}>
                   <span className="price-large price-discounted">
                     {toIDR(discountedPrice)}
                   </span>
@@ -1267,22 +1731,22 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
             )}
           </div>
           {Array.isArray(product.tags) && product.tags.length > 0 && (
-            <div className="tag-list" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+            <div className="tag-list" style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 5 }}>
               {product.tags
                 .filter(tag => !/\bdiskon\b/i.test(tag))
-                .slice(0, 4)
+                .slice(0, 3)
                 .map((tag, idx) => (
                 <span key={idx} className="tag-chip" style={{
-                  display: 'inline-flex', alignItems: 'center', padding: '8px 14px',
-                  borderRadius: 14, fontSize: 12, fontWeight: 800, color: '#374151',
+                  display: 'inline-flex', alignItems: 'center', padding: '5px 10px',
+                  borderRadius: 10, fontSize: '0.65rem', fontWeight: 800, color: '#374151',
                   background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #e5e7eb 100%)',
                   border: '1px solid #d1d5db',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7)',
-                  transition: 'all 0.3s cubic-bezier(0.23, 1, 0.32, 1)',
+                  transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   cursor: 'pointer'
                 }} onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-1px) scale(1.02)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)';
+                  e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
+                  e.currentTarget.style.boxShadow = '0 6px 15px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.9)';
                 }} onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0) scale(1)';
                   e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7)';
@@ -1302,7 +1766,7 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
             </svg>
             Beli
           </button>
-          <div className="cart-icon-badge" onClick={handleAddToCart} aria-label="Tambah ke keranjang">
+          <div className={`cart-icon-badge ${cartPop ? 'cart-pop' : ''}`} onClick={handleAddToCart} aria-label="Tambah ke keranjang">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="9" cy="21" r="1" />
               <circle cx="20" cy="21" r="1" />
@@ -1310,7 +1774,7 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
             </svg>
           </div>
           <div 
-            className={`favorite-icon-badge ${isFavorited() ? 'favorited' : ''}`} 
+            className={`favorite-icon-badge ${isFavorited() ? 'favorited' : ''} ${heartPop ? 'heart-pop' : ''}`} 
             onClick={handleAddToFavorites}
             aria-label="Tambah ke favorit"
           >

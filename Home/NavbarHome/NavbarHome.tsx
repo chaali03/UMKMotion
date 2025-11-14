@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { signOutUser } from "@/lib/auth";
-import { AlignJustify, X, Home, Store, Building2, Users, Lightbulb, Heart, ShoppingCart } from "lucide-react";
+import { AlignJustify, X, Store, Building2, Users, Lightbulb, Heart, ShoppingCart } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Drawer } from "vaul";
@@ -23,6 +23,10 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
   const [pathname, setPathname] = useState("/homepage");
   const [user, setUser] = useState<{ displayName?: string | null; email?: string | null; nickname?: string; } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cartCount, setCartCount] = useState(0);
+  const [favoritesCount, setFavoritesCount] = useState(0);
+  const [animateCart, setAnimateCart] = useState(false);
+  const [animateFavorites, setAnimateFavorites] = useState(false);
   
   // Get user data from Firebase Auth and Firestore
   useEffect(() => {
@@ -106,6 +110,70 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
     };
   }, [scrolled]);
 
+  // Load cart and favorites count from localStorage
+  const loadCounts = () => {
+    try {
+      const cartData = JSON.parse(localStorage.getItem('cart') || '[]');
+      const favoritesData = JSON.parse(localStorage.getItem('favorites') || '[]');
+      setCartCount(cartData.length);
+      setFavoritesCount(favoritesData.length);
+    } catch (error) {
+      console.error('Error loading counts:', error);
+    }
+  };
+
+  // Listen for localStorage changes
+  useEffect(() => {
+    loadCounts();
+    
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'cart') {
+        const newCartData = JSON.parse(e.newValue || '[]');
+        const newCount = newCartData.length;
+        if (newCount !== cartCount) {
+          setCartCount(newCount);
+          setAnimateCart(true);
+          setTimeout(() => setAnimateCart(false), 600);
+        }
+      } else if (e.key === 'favorites') {
+        const newFavoritesData = JSON.parse(e.newValue || '[]');
+        const newCount = newFavoritesData.length;
+        if (newCount !== favoritesCount) {
+          setFavoritesCount(newCount);
+          setAnimateFavorites(true);
+          setTimeout(() => setAnimateFavorites(false), 600);
+        }
+      }
+    };
+
+    // Custom event listener for same-page updates
+    const handleCustomUpdate = (e: CustomEvent) => {
+      if (e.detail.type === 'cart') {
+        setCartCount(e.detail.count);
+        setAnimateCart(true);
+        setTimeout(() => setAnimateCart(false), 600);
+      } else if (e.detail.type === 'favorites') {
+        setFavoritesCount(e.detail.count);
+        setAnimateFavorites(true);
+        setTimeout(() => setAnimateFavorites(false), 600);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('cartUpdated', handleCustomUpdate as EventListener);
+    window.addEventListener('favoritesUpdated', handleCustomUpdate as EventListener);
+    
+    // Poll for changes every 2 seconds as fallback
+    const interval = setInterval(loadCounts, 2000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cartUpdated', handleCustomUpdate as EventListener);
+      window.removeEventListener('favoritesUpdated', handleCustomUpdate as EventListener);
+      clearInterval(interval);
+    };
+  }, [cartCount, favoritesCount]);
+
   // Close profile dropdown on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -143,13 +211,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
 
   const navItems = [
     { 
-      href: "/homepage", 
-      label: "Homepage", 
-      icon: Home,
-      description: "Halaman utama UMKMotion"
-    },
-    { 
-      href: "", 
+      href: "/etalase", 
       label: "Etalase", 
       icon: Store,
       description: "Lihat produk UMKM"
@@ -221,6 +283,61 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
 
         .map-fullscreen-active header {
           display: none !important;
+        }
+
+        /* Badge Animations */
+        @keyframes badge-bounce {
+          0% { transform: scale(0.3); opacity: 0; }
+          50% { transform: scale(1.2); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes badge-pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+        }
+
+        @keyframes icon-shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-2px); }
+          75% { transform: translateX(2px); }
+        }
+
+        .badge-animate {
+          animation: badge-bounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .badge-pulse {
+          animation: badge-pulse 0.6s ease-in-out;
+        }
+
+        .icon-shake {
+          animation: icon-shake 0.5s ease-in-out;
+        }
+
+        .cart-badge, .favorites-badge {
+          position: absolute;
+          top: -6px;
+          right: -6px;
+          min-width: 18px;
+          height: 18px;
+          border-radius: 9px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 700;
+          color: white;
+          border: 2px solid white;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .cart-badge {
+          background: linear-gradient(135deg, #f97316, #ea580c);
+        }
+
+        .favorites-badge {
+          background: linear-gradient(135deg, #ec4899, #db2777);
         }
       `}</style>
 
@@ -360,7 +477,9 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                 <nav className="flex justify-center">
                   <ul className="flex items-center gap-2 font-medium bg-gray-100/80 dark:bg-neutral-900/80 p-1.5 rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-neutral-800 shadow-lg">
                     {navItems.map((item, i) => {
-                      const active = item.href === "/homepage" ? pathname === "/homepage" : pathname.startsWith(item.href);
+                      const active = item.href
+                        ? (item.href === "/homepage" ? pathname === "/homepage" : pathname.startsWith(item.href))
+                        : false;
                       return (
                         <li key={item.href}>
                           <a
@@ -395,21 +514,33 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                 <div className="flex items-center gap-2.5 justify-end">
                   {/* Favorite */}
                   <a
+                    id="nav-fav-btn-desktop"
                     href="/favorites"
                     aria-label="Favorit"
                     title="Favorit"
                     className="group relative h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 hover:text-[#ff7a1a] shadow-sm hover:shadow-md transition-all"
                   >
-                    <Heart size={18} className="transition-transform duration-300 group-hover:scale-110" />
+                    <Heart size={18} className={`transition-transform duration-300 group-hover:scale-110 ${animateFavorites ? 'icon-shake' : ''}`} />
+                    {favoritesCount > 0 && (
+                      <span className={`favorites-badge ${animateFavorites ? 'badge-animate' : ''}`}>
+                        {favoritesCount > 99 ? '99+' : favoritesCount}
+                      </span>
+                    )}
                   </a>
                   {/* Cart */}
                   <a
+                    id="nav-cart-btn-desktop"
                     href="/cart"
                     aria-label="Keranjang"
                     title="Keranjang"
                     className="group relative h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 hover:text-[#ff7a1a] shadow-sm hover:shadow-md transition-all"
                   >
-                    <ShoppingCart size={18} className="transition-transform duration-300 group-hover:scale-110" />
+                    <ShoppingCart size={18} className={`transition-transform duration-300 group-hover:scale-110 ${animateCart ? 'icon-shake' : ''}`} />
+                    {cartCount > 0 && (
+                      <span className={`cart-badge ${animateCart ? 'badge-animate' : ''}`}>
+                        {cartCount > 99 ? '99+' : cartCount}
+                      </span>
+                    )}
                   </a>
                   <div className="relative" ref={profileRef}>
                     <button
@@ -467,20 +598,32 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
             {isMobile && (
               <nav className="flex items-center gap-2">
                 <a
+                  id="nav-fav-btn-mobile"
                   href="/favorites"
                   aria-label="Favorit"
                   title="Favorit"
-                  className="h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white text-gray-700"
+                  className="relative h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white text-gray-700"
                 >
-                  <Heart size={18} />
+                  <Heart size={18} className={animateFavorites ? 'icon-shake' : ''} />
+                  {favoritesCount > 0 && (
+                    <span className={`favorites-badge ${animateFavorites ? 'badge-animate' : ''}`}>
+                      {favoritesCount > 99 ? '99+' : favoritesCount}
+                    </span>
+                  )}
                 </a>
                 <a
+                  id="nav-cart-btn-mobile"
                   href="/cart"
                   aria-label="Keranjang"
                   title="Keranjang"
-                  className="h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white text-gray-700"
+                  className="relative h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white text-gray-700"
                 >
-                  <ShoppingCart size={18} />
+                  <ShoppingCart size={18} className={animateCart ? 'icon-shake' : ''} />
+                  {cartCount > 0 && (
+                    <span className={`cart-badge ${animateCart ? 'badge-animate' : ''}`}>
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
+                  )}
                 </a>
                 <a
                   href="/profile"

@@ -33,6 +33,8 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
       try { (window).__publicField = __publicField; } catch {}
       try { (self).__publicField = __publicField; } catch {}
       try { (globalThis).__publicField = __publicField; } catch {}
+      // Ensure the bare identifier exists in the global scope for any chunks evaluating it
+      try { (0, eval)("var __publicField = window.__publicField;"); } catch {}
     </script>
     
     <!-- Critical CSS - minimal for fastest FCP -->

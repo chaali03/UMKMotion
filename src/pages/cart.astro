@@ -1,0 +1,12 @@
+---
+import CartPage from "../components/Cart/CartPage.tsx";
+import NavbarSwitcher from "../components/NavbarSwitcher.tsx";
+import LandingPageLayout from "../layouts/LandingPageLayout.astro";
+---
+
+<LandingPageLayout title="Keranjang Belanja - UMKMotion">
+  <NavbarSwitcher client:load />
+  <main class="min-h-screen pt-20">
+    <CartPage client:load />
+  </main>
+</LandingPageLayout>

@@ -431,9 +431,9 @@ export default function RumahUMKM() {
   };
 
   return (
-    <div className="relative w-full h-screen bg-gradient-to-br from-orange-50 to-amber-50 overflow-hidden">
-      {/* Header with Glass Morphism Effect */}
-      <div className="absolute top-0 left-0 right-0 z-30 bg-white/80 backdrop-blur-md border-b border-orange-100 shadow-sm">
+    <div className="relative w-full h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100 overflow-hidden">
+      {/* Header with Enhanced Glass Morphism Effect */}
+      <div className="absolute top-0 left-0 right-0 z-30 bg-white/90 backdrop-blur-xl border-b border-orange-200/50 shadow-lg shadow-orange-100/50">
         <div className="container mx-auto px-4">
           <HomeHeader 
             localTheme={localTheme}
@@ -447,10 +447,10 @@ export default function RumahUMKM() {
         
         {/* Sidebar Panel - Sheet (shadcn) */}
         <Sheet open={showSidebar} onOpenChange={setShowSidebar}>
-          <SheetContent side="left" className="w-full sm:w-[90%] md:w-[420px] lg:w-[440px] rounded-r-3xl border-r border-orange-100 overflow-hidden group">
-            <div ref={sidebarRef} className="h-full flex flex-col bg-white/95 backdrop-blur-sm shadow-xl">
+          <SheetContent side="left" className="w-full sm:w-[90%] md:w-[420px] lg:w-[440px] rounded-r-3xl border-r-2 border-orange-200/60 overflow-hidden group shadow-2xl">
+            <div ref={sidebarRef} className="h-full flex flex-col bg-gradient-to-br from-white via-orange-50/30 to-amber-50/40 backdrop-blur-xl">
               {/* Search Header */}
-              <div className="flex-shrink-0 p-4 md:p-5 border-b bg-gradient-to-r from-orange-50 to-amber-50 border-orange-100 shadow-sm">
+              <div className="flex-shrink-0 p-4 md:p-5 border-b-2 bg-gradient-to-br from-orange-50 via-amber-50/80 to-orange-100/60 border-orange-200/60 shadow-md">
                 <div className="flex items-center gap-2 mb-3">
                   {viewMode !== 'list' && (
                     <motion.button
@@ -464,13 +464,13 @@ export default function RumahUMKM() {
                     </motion.button>
                   )}
                   <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-orange-400 w-4 h-4 md:w-5 md:h-5" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-orange-500 w-4 h-4 md:w-5 md:h-5 z-10" />
                     <input
                       type="text"
                       placeholder="Cari UMKM terdekat..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2.5 md:py-3 text-sm md:text-base rounded-xl bg-white border-2 border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all"
+                      className="w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2.5 md:py-3 text-sm md:text-base rounded-xl bg-white/90 backdrop-blur-sm border-2 border-orange-200/60 focus:border-orange-500 focus:ring-4 focus:ring-orange-200/40 focus:outline-none transition-all shadow-sm hover:shadow-md"
                     />
                   </div>
                   <motion.button
@@ -491,28 +491,36 @@ export default function RumahUMKM() {
               <div className="flex-1 overflow-y-auto overscroll-contain">
                 {viewMode === 'list' && (
                   <div className="p-4 md:p-5 space-y-3 md:space-y-4 custom-scrollbar overflow-y-auto flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm md:text-base font-semibold bg-gradient-to-r from-orange-700 to-orange-500 bg-clip-text text-transparent">
-                        {filteredUMKM.length} UMKM Ditemukan
-                      </h3>
-                      <span className="text-xs md:text-sm text-gray-500">Terdekat</span>
-                    </div>
+                    {loadingStores ? (
+                      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                        <Loader className="animate-spin h-8 w-8 text-orange-600" />
+                        <p className="text-sm text-gray-600 font-medium">Memuat UMKM...</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-sm md:text-base font-bold bg-gradient-to-r from-orange-700 via-orange-600 to-amber-600 bg-clip-text text-transparent">
+                            {filteredUMKM.length} UMKM Ditemukan
+                          </h3>
+                          <span className="text-xs md:text-sm text-gray-500 font-medium">Terdekat</span>
+                        </div>
 
                     {filteredUMKM.map((umkm, index) => (
                       <motion.div
                         key={umkm.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
+                        transition={{ delay: index * 0.05, type: "spring", stiffness: 100 }}
                         onClick={() => handleSelectUMKM(umkm)}
-                        className="bg-white border-2 border-gray-100 hover:border-orange-200 rounded-2xl p-3 cursor-pointer hover:shadow-xl transition-all group active:scale-98 touch-manipulation"
+                        className="bg-white/90 backdrop-blur-sm border-2 border-orange-100/60 hover:border-orange-300 rounded-2xl p-3 cursor-pointer hover:shadow-2xl hover:shadow-orange-200/50 transition-all duration-300 group active:scale-[0.98] touch-manipulation hover:-translate-y-1"
                       >
                         <div className="flex gap-3">
-                          <div className="relative flex-shrink-0">
+                          <div className="relative flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-amber-400/20 rounded-xl blur-sm group-hover:blur-md transition-all duration-300"></div>
                             <img 
                               src={umkm.image} 
                               alt={umkm.name}
-                              className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover ring-2 ring-orange-100"
+                              className="relative w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover ring-2 ring-orange-200/60 group-hover:ring-orange-400 transition-all duration-300 shadow-md"
                               width={80}
                               height={80}
                               srcSet={`${umkm.image}&w=64&h=64 64w, ${umkm.image}&w=80&h=80 80w, ${umkm.image}&w=120&h=120 120w`}
@@ -528,8 +536,8 @@ export default function RumahUMKM() {
                           </div>
                           
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2 mb-1">
-                              <h4 className="text-sm md:text-base font-semibold text-gray-800 truncate group-hover:bg-gradient-to-r group-hover:from-orange-700 group-hover:to-orange-500 group-hover:bg-clip-text group-hover:text-transparent transition-all">
+                            <div className="flex items-start justify-between gap-2 mb-1.5">
+                              <h4 className="text-sm md:text-base font-bold text-gray-900 truncate group-hover:bg-gradient-to-r group-hover:from-orange-700 group-hover:via-orange-600 group-hover:to-amber-600 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300">
                                 {umkm.name}
                               </h4>
                               <motion.button
@@ -574,13 +582,15 @@ export default function RumahUMKM() {
                         </div>
                       </motion.div>
                     ))}
+                      </>
+                    )}
                   </div>
                 )}
 
                 {viewMode === 'detail' && selectedUMKM && (
                   <div>
                     {/* Image Carousel */}
-                    <div className="relative h-44 md:h-52 lg:h-60 bg-gradient-to-br from-orange-200 to-orange-100 overflow-hidden">
+                    <div className="relative h-44 md:h-52 lg:h-60 bg-gradient-to-br from-orange-300 via-orange-200 to-amber-200 overflow-hidden shadow-inner">
                       {(() => {
                         const slides = [
                           selectedUMKM.image,
@@ -706,56 +716,64 @@ export default function RumahUMKM() {
                       </div>
 
                       {/* Quick Actions */}
-                      <div className="grid grid-cols-3 gap-2 mb-4">
+                      <div className="grid grid-cols-3 gap-2.5 mb-4">
                         <motion.button
                           onClick={handleStartNavigation}
-                          className="flex flex-col items-center gap-1.5 md:gap-2 p-2 md:p-3 bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl hover:shadow-md transition-all touch-manipulation border-2 border-orange-200"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                          className="flex flex-col items-center gap-1.5 md:gap-2 p-2.5 md:p-3 bg-gradient-to-br from-orange-50 via-orange-100/80 to-amber-50 rounded-xl hover:shadow-lg transition-all duration-300 touch-manipulation border-2 border-orange-200/60 hover:border-orange-300 group"
+                          whileHover={{ scale: 1.05, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
                         >
-                          <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-orange-600 to-orange-400 rounded-full flex items-center justify-center shadow-md">
+                          <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-600 via-orange-500 to-amber-500 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
                             <Navigation className="w-4 h-4 md:w-5 md:h-5 text-white" />
                           </div>
-                          <span className="text-xs font-medium text-gray-700">Rute</span>
+                          <span className="text-xs font-semibold text-gray-800 group-hover:text-orange-700 transition-colors">Rute</span>
                         </motion.button>
 
                         <motion.button
                           onClick={() => window.open(`tel:${selectedUMKM.phone}`)}
-                          className="flex flex-col items-center gap-1.5 md:gap-2 p-2 md:p-3 bg-green-50 rounded-xl hover:shadow-md transition-all touch-manipulation border-2 border-green-200"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                          className="flex flex-col items-center gap-1.5 md:gap-2 p-2.5 md:p-3 bg-gradient-to-br from-green-50 via-emerald-50/80 to-green-100/60 rounded-xl hover:shadow-lg transition-all duration-300 touch-manipulation border-2 border-green-200/60 hover:border-green-300 group"
+                          whileHover={{ scale: 1.05, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
                         >
-                          <div className="w-8 h-8 md:w-10 md:h-10 bg-green-600 rounded-full flex items-center justify-center shadow-md">
+                          <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-green-600 via-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
                             <Phone className="w-4 h-4 md:w-5 md:h-5 text-white" />
                           </div>
-                          <span className="text-xs font-medium text-gray-700">Telepon</span>
+                          <span className="text-xs font-semibold text-gray-800 group-hover:text-green-700 transition-colors">Telepon</span>
                         </motion.button>
 
                         <motion.button
-                          className="flex flex-col items-center gap-1.5 md:gap-2 p-2 md:p-3 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl hover:shadow-md transition-all touch-manipulation border-2 border-blue-200"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                          className="flex flex-col items-center gap-1.5 md:gap-2 p-2.5 md:p-3 bg-gradient-to-br from-blue-50 via-sky-50/80 to-blue-100/60 rounded-xl hover:shadow-lg transition-all duration-300 touch-manipulation border-2 border-blue-200/60 hover:border-blue-300 group"
+                          whileHover={{ scale: 1.05, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
                         >
-                          <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-blue-600 to-blue-400 rounded-full flex items-center justify-center shadow-md">
+                          <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 via-sky-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
                             <Share2 className="w-4 h-4 md:w-5 md:h-5 text-white" />
                           </div>
-                          <span className="text-xs font-medium text-gray-700">Bagikan</span>
+                          <span className="text-xs font-semibold text-gray-800 group-hover:text-blue-700 transition-colors">Bagikan</span>
                         </motion.button>
                       </div>
 
                       {/* Tabs */}
-                      <div className="flex gap-3 md:gap-4 mb-3 md:mb-4 border-b overflow-x-auto hide-scrollbar">
+                      <div className="flex gap-1 md:gap-2 mb-3 md:mb-4 border-b-2 border-orange-100/60 overflow-x-auto hide-scrollbar">
                         {(['overview', 'reviews', 'photos'] as const).map((tab) => (
                           <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`pb-2 px-3 font-medium transition-all capitalize text-sm md:text-base whitespace-nowrap touch-manipulation rounded-t-lg ${
+                            className={`pb-2.5 px-4 font-semibold transition-all duration-300 capitalize text-sm md:text-base whitespace-nowrap touch-manipulation rounded-t-xl relative ${
                               activeTab === tab
-                                ? 'border-b-2 border-orange-500 text-orange-600'
+                                ? 'text-orange-700'
                                 : 'text-gray-500 hover:text-gray-700'
                             }`}
                           >
                             {tab}
+                            {activeTab === tab && (
+                              <motion.div
+                                layoutId="activeTab"
+                                className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 rounded-full"
+                                initial={false}
+                                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                              />
+                            )}
                           </button>
                         ))}
                       </div>
@@ -767,45 +785,76 @@ export default function RumahUMKM() {
                             <p className="text-sm md:text-base text-gray-600 mb-3 md:mb-4">{selectedUMKM.description}</p>
                           </div>
 
-                          <div className="space-y-2 md:space-y-3">
-                            <div className="flex items-start gap-2 md:gap-3 p-2.5 md:p-3 bg-gradient-to-r from-orange-100 to-orange-50 rounded-xl border border-orange-200">
-                              <MapPin className="w-4 h-4 md:w-5 md:h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs md:text-sm font-medium text-gray-800 mb-1">Alamat</p>
-                                <p className="text-xs md:text-sm text-gray-600 break-words">{selectedUMKM.address}</p>
-                                <p className="text-xs md:text-sm text-orange-600 mt-1 font-medium">{selectedUMKM.distance} km dari Anda</p>
+                          <div className="space-y-3 md:space-y-4">
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.1 }}
+                              className="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-gradient-to-br from-orange-50 via-orange-100/60 to-amber-50 rounded-xl border-2 border-orange-200/60 shadow-sm hover:shadow-md transition-all duration-300"
+                            >
+                              <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg shadow-md">
+                                <MapPin className="w-4 h-4 md:w-5 md:h-5 text-white flex-shrink-0" />
                               </div>
-                              <button className="text-orange-600 hover:text-orange-700 flex-shrink-0 touch-manipulation p-1">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs md:text-sm font-bold text-gray-900 mb-1.5">Alamat</p>
+                                <p className="text-xs md:text-sm text-gray-700 break-words leading-relaxed">{selectedUMKM.address}</p>
+                                <p className="text-xs md:text-sm text-orange-700 mt-2 font-bold flex items-center gap-1">
+                                  <Navigation className="w-3 h-3" />
+                                  {selectedUMKM.distance} km dari Anda
+                                </p>
+                              </div>
+                              <motion.button 
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                className="text-orange-600 hover:text-orange-700 flex-shrink-0 touch-manipulation p-1.5 hover:bg-orange-100 rounded-lg transition-colors"
+                              >
                                 <Copy className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                              </button>
-                            </div>
+                              </motion.button>
+                            </motion.div>
 
-                            <div className="flex items-start gap-2 md:gap-3 p-2.5 md:p-3 bg-gradient-to-r from-blue-100 to-blue-50 rounded-xl border border-blue-200">
-                              <Clock className="w-4 h-4 md:w-5 md:h-5 text-blue-600 mt-0.5" />
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.2 }}
+                              className="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-gradient-to-br from-blue-50 via-sky-50/60 to-blue-100/40 rounded-xl border-2 border-blue-200/60 shadow-sm hover:shadow-md transition-all duration-300"
+                            >
+                              <div className="p-2 bg-gradient-to-br from-blue-500 to-sky-500 rounded-lg shadow-md">
+                                <Clock className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                              </div>
                               <div className="flex-1">
-                                <p className="text-xs md:text-sm font-medium text-gray-800 mb-1">Jam Operasional</p>
-                                <p className="text-xs md:text-sm text-gray-600">{selectedUMKM.openHours}</p>
+                                <p className="text-xs md:text-sm font-bold text-gray-900 mb-1.5">Jam Operasional</p>
+                                <p className="text-xs md:text-sm text-gray-700 font-medium">{selectedUMKM.openHours}</p>
                                 {selectedUMKM.isOpen !== undefined && (
-                                  <p className={`text-xs md:text-sm mt-1 font-medium ${selectedUMKM.isOpen ? 'text-green-600' : 'text-red-600'}`}>
-                                    {selectedUMKM.isOpen ? '● Buka sekarang' : '● Tutup'}
+                                  <p className={`text-xs md:text-sm mt-2 font-bold flex items-center gap-1.5 ${selectedUMKM.isOpen ? 'text-green-700' : 'text-red-600'}`}>
+                                    <Circle className={`w-2 h-2 ${selectedUMKM.isOpen ? 'fill-green-500' : 'fill-red-500'}`} />
+                                    {selectedUMKM.isOpen ? 'Buka sekarang' : 'Tutup'}
                                   </p>
                                 )}
                               </div>
-                            </div>
+                            </motion.div>
 
-                            <div className="flex items-start gap-2 md:gap-3 p-2.5 md:p-3 bg-gray-50 rounded-xl border border-gray-200">
-                              <Phone className="w-4 h-4 md:w-5 md:h-5 text-green-600 mt-0.5" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs md:text-sm font-medium text-gray-800 mb-1">Telepon</p>
-                                <p className="text-xs md:text-sm text-gray-600 break-all">{selectedUMKM.phone}</p>
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.3 }}
+                              className="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-gradient-to-br from-green-50 via-emerald-50/60 to-green-100/40 rounded-xl border-2 border-green-200/60 shadow-sm hover:shadow-md transition-all duration-300"
+                            >
+                              <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg shadow-md">
+                                <Phone className="w-4 h-4 md:w-5 md:h-5 text-white" />
                               </div>
-                              <button 
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs md:text-sm font-bold text-gray-900 mb-1.5">Telepon</p>
+                                <p className="text-xs md:text-sm text-gray-700 break-all font-medium">{selectedUMKM.phone}</p>
+                              </div>
+                              <motion.button 
                                 onClick={() => window.open(`tel:${selectedUMKM.phone}`)}
-                                className="text-green-600 hover:text-green-700 flex-shrink-0 touch-manipulation p-1"
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                className="text-green-600 hover:text-green-700 flex-shrink-0 touch-manipulation p-1.5 hover:bg-green-100 rounded-lg transition-colors"
                               >
                                 <ExternalLink className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                              </button>
-                            </div>
+                              </motion.button>
+                            </motion.div>
                           </div>
 
                           {/* Products */}
@@ -963,11 +1012,11 @@ export default function RumahUMKM() {
                           '_blank'
                         );
                       }}
-                      className="w-full bg-gradient-to-r from-orange-600 to-orange-400 text-white py-3 md:py-4 rounded-2xl font-bold text-base md:text-lg shadow-xl flex items-center justify-center gap-2 touch-manipulation hover:shadow-2xl"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      className="w-full bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white py-3.5 md:py-4 rounded-2xl font-bold text-base md:text-lg shadow-xl hover:shadow-2xl flex items-center justify-center gap-2.5 touch-manipulation transition-all duration-300 hover:from-orange-500 hover:via-orange-400 hover:to-amber-400"
+                      whileHover={{ scale: 1.03, y: -2 }}
+                      whileTap={{ scale: 0.97 }}
                     >
-                      <Navigation className="w-4 h-4 md:w-5 md:h-5" />
+                      <Navigation className="w-5 h-5 md:w-6 md:h-6" />
                       Mulai Navigasi
                     </motion.button>
 
@@ -987,16 +1036,16 @@ export default function RumahUMKM() {
             <motion.div
               initial={{ opacity: 0, x: 6 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.25 }}
-              whileHover={{ x: 2, scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.3, type: "spring" }}
+              whileHover={{ x: 3, scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setShowSidebar(false)}
-              className="w-10 h-28 sm:w-8 bg-white/95 backdrop-blur-md shadow-2xl rounded-r-2xl border-2 border-orange-300 ring-1 ring-orange-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-orange-50"
+              className="w-10 h-28 sm:w-8 bg-white/95 backdrop-blur-xl shadow-2xl rounded-r-2xl border-2 border-orange-300/80 ring-2 ring-orange-200/50 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-gradient-to-br hover:from-orange-50 hover:to-amber-50 transition-all duration-300"
             >
-              <div className="w-7 h-7 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-orange-500 to-amber-400 shadow-md flex items-center justify-center">
+              <div className="w-7 h-7 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-orange-500 via-orange-400 to-amber-500 shadow-lg flex items-center justify-center hover:shadow-xl transition-all duration-300">
                 <ChevronLeft className="w-4 h-4 sm:w-4 sm:h-4 text-white" />
               </div>
-              <div className="w-1.5 h-12 sm:h-10 rounded-full bg-gradient-to-b from-orange-400 to-amber-400 shadow-[0_0_12px_rgba(249,115,22,0.35)]"></div>
+              <div className="w-1.5 h-12 sm:h-10 rounded-full bg-gradient-to-b from-orange-400 via-orange-300 to-amber-400 shadow-[0_0_12px_rgba(249,115,22,0.4)]"></div>
             </motion.div>
           </div>
         )}
@@ -1007,13 +1056,14 @@ export default function RumahUMKM() {
             <motion.div
               initial={{ x: -60, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              whileHover={{ x: 2, scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              whileHover={{ x: 3, scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setShowSidebar(true)}
-              className="ml-0 w-8 h-28 bg-white/95 backdrop-blur-md shadow-xl rounded-r-2xl border-2 border-orange-200 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-orange-50 transition-all"
+              className="ml-0 w-8 h-28 bg-white/95 backdrop-blur-xl shadow-xl rounded-r-2xl border-2 border-orange-200/60 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-gradient-to-br hover:from-orange-50 hover:to-amber-50 transition-all duration-300 hover:border-orange-300"
             >
-              <ChevronRight className="w-4 h-4 text-orange-600" />
-              <div className="w-1.5 h-10 rounded-full bg-gradient-to-b from-orange-400 to-amber-400"></div>
+              <ChevronRight className="w-4 h-4 text-orange-600 group-hover:text-orange-700 transition-colors" />
+              <div className="w-1.5 h-10 rounded-full bg-gradient-to-b from-orange-400 via-orange-300 to-amber-400 shadow-[0_0_8px_rgba(249,115,22,0.3)]"></div>
             </motion.div>
           </div>
         )}
@@ -1033,16 +1083,26 @@ export default function RumahUMKM() {
               onSelectUMKM={handleSelectUMKM}
             />
           ) : (
-            <div className="absolute inset-0 grid place-items-center bg-white">
-              <div className="text-center space-y-3">
-                <p className="text-sm md:text-base text-slate-600">Peta belum dimuat untuk mempercepat loading.</p>
-                <button
+            <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center space-y-4 px-4"
+              >
+                <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-orange-200 to-amber-200 rounded-2xl shadow-lg mb-2">
+                  <Compass className="w-8 h-8 md:w-10 md:h-10 text-orange-600" />
+                </div>
+                <p className="text-sm md:text-base text-gray-700 font-medium">Peta belum dimuat untuk mempercepat loading.</p>
+                <motion.button
                   onClick={() => setShowMap(true)}
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white px-5 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white px-6 py-3.5 rounded-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300"
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
                 >
+                  <Navigation className="w-5 h-5" />
                   Tampilkan Peta
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
             </div>
           )}
 
@@ -1055,9 +1115,9 @@ export default function RumahUMKM() {
               : 'top-6 right-6'
           }`}>
             <motion.button
-              className="p-3 md:p-3.5 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 touch-manipulation border-2 border-blue-200 hover:border-blue-300 group"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="p-3 md:p-3.5 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 touch-manipulation border-2 border-blue-200/60 hover:border-blue-400 group"
+              whileHover={{ scale: 1.1, rotate: 15 }}
+              whileTap={{ scale: 0.9 }}
               aria-label="Arahkan ke lokasi saya"
               onClick={() => {
                 if (navigator.geolocation) {
@@ -1067,7 +1127,7 @@ export default function RumahUMKM() {
                 }
               }}
             >
-              <Compass className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
+              <Compass className="w-5 h-5 md:w-6 md:h-6 text-blue-600 group-hover:text-blue-700 transition-colors" />
             </motion.button>
           </div>
 
@@ -1077,12 +1137,13 @@ export default function RumahUMKM() {
               showSidebar ? 'hidden' : 'block'
             }`}>
             <motion.div
-              initial={{ y: 100 }}
-              animate={{ y: 0 }}
-              exit={{ y: 100 }}
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4 md:right-6 z-20"
             >
-              <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-4 md:p-5 max-w-md mx-auto border-2 border-orange-200 hover:border-orange-300 transition-all duration-300">
+              <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-4 md:p-5 max-w-md mx-auto border-2 border-orange-200/60 hover:border-orange-300 transition-all duration-300 hover:shadow-orange-200/50">
                 <div className="flex gap-3">
                   <img 
                     src={selectedUMKM.image} 
@@ -1102,12 +1163,12 @@ export default function RumahUMKM() {
                       <span className="text-gray-300">•</span>
                       <span className="text-xs md:text-sm text-gray-600">{selectedUMKM.distance} km</span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2.5">
                       <motion.button
                         onClick={() => setShowSidebar(true)}
-                        className="flex-1 bg-gradient-to-r from-orange-600 to-orange-400 text-white py-2 md:py-2.5 px-4 md:px-5 rounded-xl text-sm md:text-base font-medium touch-manipulation shadow-md hover:shadow-lg hover:from-orange-500 hover:to-orange-300 transition-all duration-300 flex items-center justify-center gap-2"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        className="flex-1 bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white py-2.5 md:py-3 px-4 md:px-5 rounded-xl text-sm md:text-base font-bold touch-manipulation shadow-lg hover:shadow-xl hover:from-orange-500 hover:via-orange-400 hover:to-amber-400 transition-all duration-300 flex items-center justify-center gap-2"
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
                       >
                         Detail
                       </motion.button>
@@ -1116,11 +1177,11 @@ export default function RumahUMKM() {
                           handleStartNavigation();
                           setShowSidebar(true);
                         }}
-                        className="flex-1 bg-white border-2 border-orange-500 text-orange-600 py-2 md:py-2.5 px-4 md:px-5 rounded-xl text-sm md:text-base font-medium flex items-center justify-center gap-2 touch-manipulation hover:bg-orange-50 transition-all duration-300"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        className="flex-1 bg-white/90 backdrop-blur-sm border-2 border-orange-400/80 text-orange-700 py-2.5 md:py-3 px-4 md:px-5 rounded-xl text-sm md:text-base font-bold flex items-center justify-center gap-2 touch-manipulation hover:bg-orange-50/80 transition-all duration-300 shadow-md hover:shadow-lg"
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
                       >
-                        <Navigation className="w-3 h-3 md:w-4 md:h-4" />
+                        <Navigation className="w-3.5 h-3.5 md:w-4 md:h-4" />
                         Rute
                       </motion.button>
                     </div>

@@ -255,7 +255,7 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                   <nav className="flex items-center gap-2.5">
                     {/* Favorite */}
                     <a
-                      href="/favorites"
+                      href="/login"
                       data-astro-prefetch="false"
                       aria-label="Favorit"
                       title="Favorit"
@@ -265,7 +265,7 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                     </a>
                     {/* Cart */}
                     <a
-                      href="/cart"
+                      href="/login"
                       data-astro-prefetch="false"
                       aria-label="Keranjang"
                       title="Keranjang"
@@ -290,7 +290,7 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
             {isMobile && (
               <nav className="flex items-center gap-2">
                 <a
-                  href="/favorites"
+                  href="/login"
                   data-astro-prefetch="false"
                   aria-label="Favorit"
                   className="h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white text-gray-700"
@@ -299,7 +299,7 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                   <Heart size={18} />
                 </a>
                 <a
-                  href="/cart"
+                  href="/login"
                   data-astro-prefetch="false"
                   aria-label="Keranjang"
                   className="h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white text-gray-700"
