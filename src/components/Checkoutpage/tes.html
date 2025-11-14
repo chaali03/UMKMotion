@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkout Pro - Kyou Hobby Shop</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #10b981;
+      --primary-light: #ecfdf5;
+      --primary-soft: #d1fae5;
+      --primary-hover: #059669;
+      --text: #1f2937;
+      --text-light: #6b7280;
+      --text-lighter: #9ca3af;
+      --border: #e5e7eb;
+      --bg: #ffffff;
+      --bg-alt: #f9fafb;
+      --shadow: 0 4px 12px rgba(0,0,0,0.05);
+      --shadow-lg: 0 12px 30px rgba(0,0,0,0.12);
+      --radius: 20px;
+      --radius-sm: 16px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-fast: all 0.2s ease;
+      --promo: #f59e0b;
+      --promo-bg: #fffbeb;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeInRight { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+    /* ===== HEADER ===== */
+    .page-header {
+      text-align: center;
+      padding: 2rem 1rem 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      opacity: 0;
+      animation: fadeDown 0.6s ease forwards;
+    }
+    .page-header h1 {
+      font-size: 1.875rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    /* ===== MAIN LAYOUT ===== */
+    .main-wrapper {
+      max-width: 1200px;
+      margin: 0 auto 3rem;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 2rem;
+    }
+
+    /* ===== CARD BASE ===== */
+    .card {
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      opacity: 0;
+    }
+    .card:nth-child(1) { animation: fadeUp 0.6s 0.1s ease forwards; }
+    .card:nth-child(2) { animation: fadeUp 0.6s 0.2s ease forwards; }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* ===== ADDRESS CARD ===== */
+    .address-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+      font-size: 1rem;
+    }
+    .address-header svg {
+      width: 20px;
+      height: 20px;
+      fill: var(--primary);
+      animation: pulse 2s infinite;
+    }
+
+    .address-text {
+      font-size: 0.95rem;
+      color: var(--text-light);
+      margin-bottom: 1rem;
+      line-height: 1.7;
+    }
+
+    .change-btn {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .change-btn:hover {
+      background: #a7f3d0;
+      transform: scale(1.05);
+    }
+
+    /* ===== PRODUCT CARD ===== */
+    .product-item {
+      display: flex;
+      gap: 1.25rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px dashed var(--border);
+      margin-bottom: 1.25rem;
+    }
+
+    .product-img {
+      width: 80px;
+      height: 80px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      border: 1px solid var(--border);
+      transition: var(--transition);
+    }
+    .product-img:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    .product-info { flex: 1; }
+    .product-shop {
+      font-size: 0.875rem;
+      color: var(--text-light);
+    }
+    .product-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin: 0.5rem 0;
+      line-height: 1.5;
+    }
+
+    .quantity-control {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .qty-btn {
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--border);
+      background: white;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    .qty-btn:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+      transform: scale(1.1);
+    }
+
+    .qty-input {
+      width: 60px;
+      height: 40px;
+      text-align: center;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 0;
+      font-weight: 700;
+      font-size: 1rem;
+      background: white;
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .qty-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .price {
+      font-weight: 800;
+      font-size: 1.5rem;
+      white-space: nowrap;
+      color: var(--text);
+      text-align: right;
+    }
+
+    /* ===== SHIPPING DROPDOWN ===== */
+    .shipping-wrapper { position: relative; margin: 1.25rem 0; }
+    .shipping-select {
+      width: 100%; padding: 1rem; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      background: white; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      transition: var(--transition);
+    }
+    .shipping-select:hover { border-color: #94a3b8; background: var(--bg-alt); }
+    .shipping-select.active {
+      border-color: var(--primary); border-bottom-color: transparent;
+      border-bottom-left-radius: 0; border-bottom-right-radius: 0; background: var(--primary-light);
+    }
+
+    .shipping-display { display: flex; flex-direction: column; gap: 0.25rem; }
+    .shipping-name { font-weight: 600; font-size: 0.95rem; }
+    .shipping-detail { font-size: 0.8rem; color: var(--text-light); }
+
+    .arrow-icon {
+      width: 20px; height: 20px; fill: #9ca3af; transition: var(--transition-fast);
+    }
+    .shipping-select:hover .arrow-icon { fill: var(--primary); }
+    .shipping-select.active .arrow-icon { transform: rotate(180deg); fill: var(--primary); }
+
+    .shipping-dropdown {
+      position: absolute; top: 100%; left: 0; right: 0; background: white;
+      border: 1.5px solid var(--primary); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      max-height: 280px; overflow: hidden; z-index: 10; box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+      opacity: 0; transform: translateY(-10px); visibility: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .shipping-dropdown.open {
+      opacity: 1; transform: translateY(0); visibility: visible; max-height: 500px;
+    }
+
+    .shipping-option {
+      padding: 0.875rem 1rem; border-bottom: 1px solid #f3f4f6; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center; transition: var(--transition);
+    }
+    .shipping-option:hover { background: var(--bg-alt); padding-left: 1.25rem; }
+    .shipping-option.selected {
+      background: var(--primary-light); border-left: 4px solid var(--primary); padding-left: calc(1rem - 4px);
+    }
+    .shipping-option:last-child { border-bottom: none; }
+
+    .option-left { display: flex; flex-direction: column; gap: 0.25rem; }
+    .option-name { font-weight: 600; font-size: 0.95rem; }
+    .option-price { font-weight: 700; color: var(--text); }
+    .option-detail { font-size: 0.8rem; color: var(--text-light); }
+
+    .checkmark-icon {
+      width: 18px; height: 18px; fill: none; stroke: var(--primary); stroke-width: 3;
+      stroke-linecap: round; stroke-linejoin: round; opacity: 0; transform: scale(0.8);
+      transition: all 0.25s ease;
+    }
+    .shipping-option.selected .checkmark-icon { opacity: 1; transform: scale(1); }
+
+    .shipping-from {
+      display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--text-light);
+      margin: 0.75rem 0; padding: 0.5rem; background: var(--bg-alt); border-radius: 8px;
+      transition: var(--transition);
+    }
+    .shipping-from:hover { background: #f1f5f9; }
+
+    .refund-note {
+      display: flex; align-items: center; gap: 0.75rem; padding: 1rem;
+      background: linear-gradient(135deg, #ffe5e5, #fff1f1); border: 1px solid #f8b4b4;
+      border-radius: 10px; font-size: 0.9rem; color: #b91c1c; transition: all 0.25s ease;
+      box-shadow: 0 2px 6px rgba(249, 113, 113, 0.15);
+    }
+    .refund-note:hover {
+      background: linear-gradient(135deg, #ffdede, #ffeaea);
+      transform: translateY(-2px); box-shadow: 0 4px 10px rgba(249, 113, 113, 0.25);
+    }
+    .refund-note input { width: 21px; height: 21px; cursor: pointer; accent-color: #ef4444; }
+
+    /* ===== RIGHT PANEL (DESKTOP) ===== */
+    .right-panel {
+      display: flex; flex-direction: column; background: var(--bg);
+      border-radius: var(--radius); border: 1px solid var(--border);
+      box-shadow: var(--shadow); overflow: hidden; transition: var(--transition);
+    }
+    .right-panel:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+
+    .summary-header {
+      padding: 1.75rem 1.75rem 0; font-weight: 700; font-size: 1.1rem; color: var(--text);
+    }
+
+    .payment-trigger {
+      margin: 1.25rem 1.75rem 0; padding: 1.25rem; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); background: white; display: flex; justify-content: space-between;
+      align-items: center; cursor: pointer; transition: var(--transition);
+    }
+    .payment-trigger:hover {
+      border-color: var(--primary); background: var(--primary-light);
+      transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16,185,129,0.2);
+    }
+    .payment-trigger:hover .right-arrow-icon { fill: var(--primary); transform: translateX(4px); }
+
+    .selected-method {
+      display: flex; align-items: center; gap: 0.75rem; font-weight: 600;
+    }
+    .payment-icon {
+      width: 36px; height: 36px; background: var(--primary); border-radius: 10px;
+      color: white; font-weight: bold; font-size: 0.8rem; display: flex;
+      align-items: center; justify-content: center; transition: var(--transition);
+    }
+
+    .right-arrow-icon {
+      width: 20px; height: 20px; fill: #9ca3af; transition: var(--transition-fast);
+    }
+
+    .promo-banner {
+      margin: 1.5rem 1.75rem; padding: 1rem; background: #fef3c7; border-radius: var(--radius-sm);
+      text-align: center; font-size: 0.9rem; color: #92400e; font-weight: 600; transition: var(--transition);
+    }
+    .promo-banner:hover { background: #fde68a; transform: scale(1.02); }
+
+    .summary-footer {
+      margin-top: auto; padding: 1.75rem; background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border-top: 1px dashed var(--border);
+    }
+    .summary-item {
+      display: flex; justify-content: space-between; margin-bottom: 0.75rem;
+      font-size: 0.95rem; color: var(--text-light); opacity: 0; transform: translateX(-20px);
+      animation: fadeInRight 0.5s forwards;
+    }
+    .summary-item:nth-child(1) { animation-delay: 0.1s; }
+    .summary-item:nth-child(2) { animation-delay: 0.2s; }
+    .summary-item:nth-child(3) { animation-delay: 0.3s; }
+
+    .cashback-row { color: var(--promo); font-weight: 700; }
+
+    .total-row {
+      display: flex; justify-content: space-between; padding-top: 1rem; margin-top: 1rem;
+      border-top: 2px dashed var(--border); font-weight: 800; font-size: 1.5rem;
+      opacity: 0; transform: translateY(10px); animation: fadeUp 0.5s 0.4s forwards;
+    }
+
+    .pay-btn {
+      width: 100%; margin-top: 1.5rem; padding: 1.1rem; background: var(--primary);
+      color: white; font-weight: 700; font-size: 1.1rem; border: none; border-radius: 16px;
+      cursor: pointer; transition: var(--transition); box-shadow: 0 6px 16px rgba(16,185,129,0.3);
+    }
+    .pay-btn:hover {
+      background: var(--primary-hover); transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 12px 30px rgba(16,185,129,0.4);
+    }
+
+    /* ===== MOBILE SUMMARY CARD ===== */
+    .summary-card {
+      background: var(--bg); border-radius: var(--radius); border: 1px solid var(--border);
+      box-shadow: var(--shadow); margin-top: 1.5rem; overflow: hidden;
+    }
+
+    /* ===== PAYMENT SIDEBAR ===== */
+    .promo-notice {
+      background: var(--promo-bg); border: 1px solid #fde68a; border-radius: 12px;
+      padding: 0.75rem 1rem; margin: 0.5rem 0 1rem; font-size: 0.85rem; color: #92400e;
+      text-align: center; font-weight: 600; display: flex; align-items: center;
+      justify-content: center; gap: 0.5rem; animation: fadeUp 0.5s ease;
+    }
+    .promo-notice svg { width: 18px; height: 18px; fill: var(--promo); }
+
+    .payment-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
+      display: none; align-items: center; justify-content: center; z-index: 9999;
+      backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.4s ease;
+    }
+    .payment-overlay.open { display: flex; opacity: 1; }
+
+    .payment-sidebar {
+      background: white; width: 90%; max-width: 480px; height: 90vh;
+      border-radius: var(--radius); display: flex; flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15); overflow: hidden;
+      transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .payment-overlay.open .payment-sidebar { transform: translateX(0); }
+
+    .sidebar-header {
+      padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex;
+      justify-content: space-between; align-items: center; flex-shrink: 0;
+    }
+    .sidebar-header h3 { font-weight: 700; font-size: 1.1rem; }
+    .close-sidebar {
+      background: none; border: none; font-size: 1.5rem; cursor: pointer;
+      color: var(--text-light); width: 36px; height: 36px; display: flex;
+      align-items: center; justify-content: center; border-radius: 50%;
+      transition: var(--transition);
+    }
+    .close-sidebar:hover { background: #f3f4f6; color: var(--text); transform: rotate(90deg); }
+
+    .sidebar-search { padding: 1rem; flex-shrink: 0; }
+    .search-input {
+      width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border);
+      border-radius: 12px; font-size: 0.95rem; background: var(--bg-alt); transition: var(--transition);
+    }
+    .search-input:focus {
+      outline: none; border-color: var(--primary); background: white;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .sidebar-tabs {
+      display: flex; border-bottom: 1px solid var(--border); overflow-x: auto;
+      flex-shrink: 0; scrollbar-width: none;
+    }
+    .sidebar-tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      padding: 0.75rem 1rem; font-size: 0.9rem; font-weight: 600; color: var(--text-light);
+      background: none; border: none; cursor: pointer; white-space: nowrap;
+      position: relative; transition: var(--transition);
+    }
+    .tab-btn.active { color: var(--primary); }
+    .tab-btn.active::after {
+      content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+      background: var(--primary); border-radius: 2px; transform: scaleX(0);
+      animation: tabLine 0.3s ease forwards;
+    }
+    @keyframes tabLine { to { transform: scaleX(1); } }
+
+    .sidebar-body { flex: 1; overflow-y: auto; padding: 1rem; -webkit-overflow-scrolling: touch; }
+
+    .payment-section {
+      margin: 1.5rem 0 0.75rem; font-weight: 700; font-size: 0.9rem;
+      text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;
+      display: flex; align-items: center; gap: 0.5rem; opacity: 0;
+      transform: translateY(-10px); animation: fadeDown 0.4s ease forwards;
+    }
+    .payment-section svg { width: 16px; height: 16px; fill: currentColor; }
+
+    .payment-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 0.75rem; margin-bottom: 1.5rem;
+    }
+    .payment-grid .payment-option {
+      flex-direction: column; text-align: center; padding: 1rem 0.5rem;
+      border-radius: 16px; transition: var(--transition-fast); opacity: 0;
+      transform: translateY(10px); will-change: transform, opacity; position: relative;
+    }
+    .payment-grid .payment-option.visible { opacity: 1; transform: translateY(0); }
+    .payment-grid .payment-option .icon {
+      width: 44px; height: 44px; margin: 0 auto 0.5rem; font-size: 0.85rem; border-radius: 12px;
+    }
+    .payment-grid .payment-option span {
+      font-size: 0.85rem; font-weight: 600; color: var(--text);
+    }
+    .payment-grid .payment-option:hover {
+      background: var(--primary-light); transform: translateY(-4px) scale(1.03);
+      box-shadow: 0 8px 20px rgba(16,185,129,0.15);
+    }
+    .cashback-badge {
+      position: absolute; top: -8px; right: -8px; background: var(--promo);
+      color: white; font-size: 0.65rem; font-weight: 700; padding: 0.25rem 0.5rem;
+      border-radius: 8px; box-shadow: 0 2px 6px rgba(245,158,11,0.3);
+    }
+
+    /* ===== MOBILE FIXED BAR ===== */
+    .mobile-fixed-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; background: white;
+      padding: 1rem; border-top: 1px solid var(--border); box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+      z-index: 999; display: none;
+    }
+    .total-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0 0.5rem; }
+    .total-label { font-size: 0.95rem; color: var(--text-light); font-weight: 600; }
+    .total-amount { font-size: 1.4rem; font-weight: 800; color: var(--text); }
+    .mobile-pay-btn { width: 100%; padding: 1rem; background: var(--primary); color: white; font-weight: 700; font-size: 1.1rem; border: none; border-radius: 16px; cursor: pointer; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 992px) {
+      .main-wrapper { grid-template-columns: 1fr; gap: 1.5rem; }
+      .right-panel { display: none; }
+      .mobile-fixed-bar { display: block; }
+      .product-item { flex-direction: column; }
+      .product-img { width: 80px; height: 80px; align-self: flex-start; }
+      .price { font-size: 1.4rem; margin-top: 0.5rem; }
+      .summary-footer { padding: 1.5rem; }
+      .payment-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (min-width: 993px) {
+      .mobile-fixed-bar { display: none; }
+      .summary-card { display: none; }
+      .payment-overlay { align-items: stretch; justify-content: flex-end; }
+      .payment-sidebar { width: 420px; height: 100vh; border-radius: 0; border-left: 1px solid var(--border); }
+      .sidebar-header { padding: 2rem 1.5rem 1rem; }
+      .right-panel { animation: fadeUp 0.6s 0.3s ease forwards; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="page-header">
+    <h1>Checkout</h1>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-wrapper">
+    <!-- LEFT PANEL -->
+    <div class="left-panel">
+      <!-- Address -->
+      <div class="card">
+        <div class="address-header">
+          <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          ALAMAT PENGIRIMAN
+        </div>
+        <div class="address-text">
+          <strong>Rumah - Endang Sarasvati</strong><br>
+          Jl. Melati No. 45, RT 02 RW 03, Kel. Sukamaju, Kec. Cilandak,
+        </div>
+        <button class="change-btn">Ganti</button>
+      </div>
+
+      <!-- Product + Shipping -->
+      <div class="card">
+        <div class="product-item">
+          <img src="https://via.placeholder.com/80/10b981/ffffff?text=Fig" alt="Figure" class="product-img">
+          <div class="product-info">
+            <div class="product-shop">Kyou Hobby Shop - Toko Anime</div>
+            <div class="product-name">PVC Figure 1/7 Elaina</div>
+            <div class="quantity-control">
+              <button class="qty-btn" id="decreaseQty">-</button>
+              <input type="number" class="qty-input" id="qtyInput" value="1" min="1">
+              <button class="qty-btn" id="increaseQty">+</button>
+            </div>
+          </div>
+          <div class="price" id="productPrice">Rp3.150.000</div>
+        </div>
+
+        <!-- SHIPPING -->
+        <div class="shipping-wrapper">
+          <div class="shipping-select" id="shippingSelect">
+            <div class="shipping-display">
+              <div class="shipping-name">Ekonomi</div>
+              <div class="shipping-detail">Rp10.000 • Bisa COD • Estimasi 7 - 11 Nov</div>
+            </div>
+            <svg class="arrow-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+          <div class="shipping-dropdown" id="shippingDropdown">
+            <div class="shipping-option" data-price="10000">
+              <div class="option-left">
+                <div class="option-name">Ekonomi</div>
+                <div class="option-price">Rp10.000</div>
+                <div class="option-detail">Bisa COD • Estimasi 7 - 11 Nov</div>
+              </div>
+              <svg class="checkmark-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="shipping-option" data-price="23000">
+              <div class="option-left">
+                <div class="option-name">Standard</div>
+                <div class="option-price">Rp23.000</div>
+                <div class="option-detail">Bisa COD • Estimasi besok - 9 Nov</div>
+              </div>
+              <svg class="checkmark-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="shipping-from">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+          </svg>
+          Dikirim dari Jakarta Selatan • Berat 2.0 kg
+        </div>
+
+        <div class="refund-note">
+          <input type="checkbox" id="insuranceCheck" checked>
+          Ganti rugi jika rusak/kecurian (Rp19.100)
+        </div>
+      </div>
+
+      <!-- MOBILE: RINGKASAN -->
+      <div class="summary-card">
+        <div class="summary-header">Ringkasan Pembayaran</div>
+        <div class="payment-trigger" id="openPayment">
+          <div class="selected-method">
+            <div class="payment-icon" style="background:#10b981;">BCA</div>
+            <span>BCA Virtual Account</span>
+          </div>
+          <svg class="right-arrow-icon" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="promo-banner">Pakai promo biar makin hemat!</div>
+        <div class="summary-footer">
+          <div class="summary-item"><span>Total Harga Produk</span><span id="totalProduct">Rp3.150.000</span></div>
+          <div class="summary-item"><span>Ongkir</span><span id="ongkir">Rp10.000</span></div>
+          <div class="summary-item" id="insuranceRow"><span>Asuransi</span><span id="insurancePrice">Rp19.100</span></div>
+          <div class="summary-item cashback-row" id="cashbackRow" style="display:none;"><span>Cashback GoPay/ShopeePay</span><span>-Rp50.000</span></div>
+          <div class="total-row"><span>Total Bayar</span><span id="finalTotal">Rp3.179.100</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL (DESKTOP) -->
+    <div class="right-panel">
+      <div class="summary-header">Ringkasan Pembayaran</div>
+      <div class="payment-trigger" id="openPaymentDesktop">
+        <div class="selected-method">
+          <div class="payment-icon" style="background:#10b981;">BCA</div>
+          <span>BCA Virtual Account</span>
+        </div>
+        <svg class="right-arrow-icon" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="promo-banner">Pakai promo biar makin hemat!</div>
+      <div class="summary-footer">
+        <div class="summary-item"><span>Total Harga Produk</span><span id="totalProductDesktop">Rp3.150.000</span></div>
+        <div class="summary-item"><span>Ongkir</span><span id="ongkirDesktop">Rp10.000</span></div>
+        <div class="summary-item" id="insuranceRowDesktop"><span>Asuransi</span><span id="insurancePriceDesktop">Rp19.100</span></div>
+        <div class="summary-item cashback-row" id="cashbackRowDesktop" style="display:none;"><span>Cashback GoPay/ShopeePay</span><span>-Rp50.000</span></div>
+        <div class="total-row"><span>Total Bayar</span><span id="finalTotalDesktop">Rp3.179.100</span></div>
+        <button class="pay-btn">Bayar Sekarang</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE FIXED BAR -->
+  <div class="mobile-fixed-bar">
+    <div class="total-bar">
+      <div class="total-label">Total Bayar</div>
+      <div class="total-amount" id="mobileTotal">Rp3.179.100</div>
+    </div>
+    <button class="mobile-pay-btn">Bayar Sekarang</button>
+  </div>
+
+  <!-- PAYMENT SIDEBAR -->
+  <div class="payment-overlay" id="paymentOverlay">
+    <div class="payment-sidebar">
+      <div class="sidebar-header">
+        <h3>Pilih Metode Pembayaran</h3>
+        <button class="close-sidebar" id="closeSidebar">×</button>
+      </div>
+      <div class="sidebar-search">
+        <input type="text" class="search-input" placeholder="Cari BCA, GoPay, dll..." id="searchInput">
+      </div>
+      <div class="sidebar-tabs">
+        <button class="tab-btn active" data-tab="all">Semua</button>
+        <button class="tab-btn" data-tab="bank">Bank</button>
+        <button class="tab-btn" data-tab="ewallet">E-Wallet</button>
+        <button class="tab-btn" data-tab="retail">Retail</button>
+      </div>
+      <div class="sidebar-body" id="paymentList"></div>
+    </div>
+  </div>
+
+  <script>
+    // === DATA HARGA ===
+    const baseProductPrice = 3150000;
+    const cashbackAmount = 50000;
+    const insuranceCost = 19100;
+
+    let quantity = 1;
+    let shippingCost = 10000;
+    let isInsurance = true;
+    let currentCashback = 0;
+
+    // Elements
+    const qtyInput = document.getElementById('qtyInput');
+    const decreaseBtn = document.getElementById('decreaseQty');
+    const increaseBtn = document.getElementById('increaseQty');
+    const productPriceEl = document.getElementById('productPrice');
+    const totalProductEl = document.getElementById('totalProduct');
+    const totalProductDesktop = document.getElementById('totalProductDesktop');
+    const ongkirEl = document.getElementById('ongkir');
+    const ongkirDesktop = document.getElementById('ongkirDesktop');
+    const insuranceRow = document.getElementById('insuranceRow');
+    const insuranceRowDesktop = document.getElementById('insuranceRowDesktop');
+    const insurancePriceEl = document.getElementById('insurancePrice');
+    const insurancePriceDesktop = document.getElementById('insurancePriceDesktop');
+    const insuranceCheck = document.getElementById('insuranceCheck');
+    const cashbackRow = document.getElementById('cashbackRow');
+    const cashbackRowDesktop = document.getElementById('cashbackRowDesktop');
+    const finalTotalEl = document.getElementById('finalTotal');
+    const finalTotalDesktop = document.getElementById('finalTotalDesktop');
+    const mobileTotalEl = document.getElementById('mobileTotal');
+
+    // === UPDATE TOTAL ===
+    function updateAllPrices() {
+      const productTotal = baseProductPrice * quantity;
+      const total = productTotal + shippingCost + (isInsurance ? insuranceCost : 0) - currentCashback;
+
+      productPriceEl.textContent = `Rp${productTotal.toLocaleString('id-ID')}`;
+      totalProductEl.textContent = `Rp${productTotal.toLocaleString('id-ID')}`;
+      totalProductDesktop.textContent = `Rp${productTotal.toLocaleString('id-ID')}`;
+      ongkirEl.textContent = `Rp${shippingCost.toLocaleString('id-ID')}`;
+      ongkirDesktop.textContent = `Rp${shippingCost.toLocaleString('id-ID')}`;
+      insurancePriceEl.textContent = `Rp${isInsurance ? insuranceCost.toLocaleString('id-ID') : '0'}`;
+      insurancePriceDesktop.textContent = `Rp${isInsurance ? insuranceCost.toLocaleString('id-ID') : '0'}`;
+      insuranceRow.style.display = isInsurance ? 'flex' : 'none';
+      insuranceRowDesktop.style.display = isInsurance ? 'flex' : 'none';
+      cashbackRow.style.display = currentCashback > 0 ? 'flex' : 'none';
+      cashbackRowDesktop.style.display = currentCashback > 0 ? 'flex' : 'none';
+      finalTotalEl.textContent = `Rp${total.toLocaleString('id-ID')}`;
+      finalTotalDesktop.textContent = `Rp${total.toLocaleString('id-ID')}`;
+      mobileTotalEl.textContent = `Rp${total.toLocaleString('id-ID')}`;
+    }
+
+    // === QUANTITY CONTROL ===
+    decreaseBtn.onclick = () => { if (quantity > 1) { quantity--; qtyInput.value = quantity; updateAllPrices(); } };
+    increaseBtn.onclick = () => { quantity++; qtyInput.value = quantity; updateAllPrices(); };
+    qtyInput.onchange = () => {
+      let val = parseInt(qtyInput.value);
+      if (isNaN(val) || val < 1) val = 1;
+      quantity = val;
+      qtyInput.value = quantity;
+      updateAllPrices();
+    };
+
+    // === INSURANCE ===
+    insuranceCheck.onchange = () => { isInsurance = insuranceCheck.checked; updateAllPrices(); };
+
+    // === SHIPPING LOGIC ===
+    const shippingSelect = document.getElementById('shippingSelect');
+    const shippingDropdown = document.getElementById('shippingDropdown');
+    const shippingOptions = shippingDropdown.querySelectorAll('.shipping-option');
+
+    function updateShippingDisplay(option) {
+      const name = option.querySelector('.option-name').textContent;
+      const price = option.dataset.price;
+      const detail = option.querySelector('.option-detail').textContent;
+      shippingSelect.innerHTML = `
+        <div class="shipping-display">
+          <div class="shipping-name">${name}</div>
+          <div class="shipping-detail">Rp${parseInt(price).toLocaleString('id-ID')} • ${detail}</div>
+        </div>
+        <svg class="arrow-icon" viewBox="0 0 24 24">
+          <path d="M7 10l5 5 5-5z"/>
+        </svg>
+      `;
+    }
+
+    shippingSelect.addEventListener('click', e => {
+      e.stopPropagation();
+      const open = shippingDropdown.classList.toggle('open');
+      shippingSelect.classList.toggle('active', open);
+    });
+
+    shippingOptions.forEach(opt => {
+      opt.addEventListener('click', e => {
+        e.stopPropagation();
+        shippingOptions.forEach(o => {
+          o.classList.remove('selected');
+          o.querySelector('.checkmark-icon').style.opacity = '0';
+          o.querySelector('.checkmark-icon').style.transform = 'scale(0.8)';
+        });
+        opt.classList.add('selected');
+        const check = opt.querySelector('.checkmark-icon');
+        check.style.opacity = '1';
+        check.style.transform = 'scale(1)';
+        updateShippingDisplay(opt);
+        shippingCost = parseInt(opt.dataset.price);
+        updateAllPrices();
+        shippingDropdown.classList.remove('open');
+        shippingSelect.classList.remove('active');
+      });
+    });
+
+    document.addEventListener('click', () => {
+      shippingDropdown.classList.remove('open');
+      shippingSelect.classList.remove('active');
+    });
+    shippingDropdown.addEventListener('click', e => e.stopPropagation());
+
+    const defaultShipping = shippingOptions[0];
+    defaultShipping.classList.add('selected');
+    defaultShipping.querySelector('.checkmark-icon').style.opacity = '1';
+    defaultShipping.querySelector('.checkmark-icon').style.transform = 'scale(1)';
+    updateShippingDisplay(defaultShipping);
+
+    // === PAYMENT DATA (FULL) ===
+    const paymentGroups = [
+      {
+        title: "E-Wallet",
+        icon: `<svg viewBox="0 0 24 24"><path d="M19 7h-1V6a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V10a3 3 0 0 0-3-3zm1 11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1h3a1 1 0 0 1 1 1z"/></svg>`,
+        items: [
+          { id: 'gopay', name: 'GoPay', icon: 'Go', color: '#00b14f', size: '0.9rem', cashback: true },
+          { id: 'ovo', name: 'OVO', icon: 'OVO', color: '#6f42c1' },
+          { id: 'dana', name: 'DANA', icon: 'DANA', color: '#2e86de' },
+          { id: 'shopeepay', name: 'ShopeePay', icon: 'SPay', color: '#ee4d2d', size: '0.7rem', cashback: true },
+          { id: 'linkaja', name: 'LinkAja', icon: 'LA', color: '#e74c3c' },
+        ]
+      },
+      {
+        title: "Bank Transfer",
+        icon: `<svg viewBox="0 0 24 24"><path d="M21 7h-3V6a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v1H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1zM8 7h8v1H8zm12 10H4V9h16z"/></svg>`,
+        items: [
+          { id: 'bca', name: 'BCA', icon: 'BCA', color: '#10b981' },
+          { id: 'bni', name: 'BNI', icon: 'BNI', color: '#e67e22' },
+          { id: 'mandiri', name: 'Mandiri', icon: 'MDR', color: '#f1c40f', text: '#2c3e50' },
+          { id: 'bri', name: 'BRI', icon: 'BRI', color: '#2980b9' },
+          { id: 'cimb', name: 'CIMB Niaga', icon: 'CN', color: '#c0392b' },
+          { id: 'permata', name: 'Permata', icon: 'P', color: '#8e44ad' },
+          { id: 'danamon', name: 'Danamon', icon: 'D', color: '#27ae60' },
+          { id: 'bsi', name: 'BSI', icon: 'BSI', color: '#16a085' },
+          { id: 'mega', name: 'Bank Mega', icon: 'M', color: '#34495e' },
+        ]
+      },
+      {
+        title: "QRIS",
+        icon: `<svg viewBox="0 0 24 24"><path d="M3 3h18v18H3V3zm16 16V5H5v14h14zM7 7h10v2H7V7zm0 4h4v2H7v-2zm6 0h4v2h-4v-2zm-6 4h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2z"/></svg>`,
+        items: [{ id: 'qris', name: 'QRIS', icon: 'QR', color: '#2c3e50' }]
+      },
+      {
+        title: "Retail Outlet",
+        icon: `<svg viewBox="0 0 24 24"><path d="M21 7H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1zM4 9h16v6H4V9zm3 8v2h10v-2H7z"/></svg>`,
+        items: [
+          { id: 'indomaret', name: 'Indomaret', icon: 'I', color: '#27ae60' },
+          { id: 'alfamart', name: 'Alfamart', icon: 'A', color: '#3498db' },
+        ]
+      },
+      {
+        title: "Lainnya",
+        icon: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17v-2h2v2h-2zm1-4c-1.85 0-3.43-1.15-4.06-2.75l1.81-.72C10.21 12.7 11.03 13 12 13c1.66 0 3-1.34 3-3s-1.34-3-3-3c-1.54 0-2.85.94-3.41 2.28l-1.81-.72C7.57 6.15 9.15 5 11 5c2.76 0 5 2.24 5 5s-2.24 5-5 5z"/></svg>`,
+        items: [{ id: 'cod', name: 'COD', icon: 'COD', color: '#95a5a6' }]
+      }
+    ];
+
+    let selectedMethod = paymentGroups[1].items[0];
+    const paymentList = document.getElementById('paymentList');
+    const overlay = document.getElementById('paymentOverlay');
+    const openBtn = document.getElementById('openPayment');
+    const openBtnDesktop = document.getElementById('openPaymentDesktop');
+    const closeBtn = document.getElementById('closeSidebar');
+    const searchInput = document.getElementById('searchInput');
+
+    // === RENDER PAYMENTS ===
+    function renderPayments(filter = 'all', search = '') {
+      paymentList.innerHTML = '';
+      const fragment = document.createDocumentFragment();
+
+      const promo = document.createElement('div');
+      promo.className = 'promo-notice';
+      promo.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Dapatkan cashback Rp50.000 dengan GoPay atau ShopeePay!`;
+      fragment.appendChild(promo);
+
+      paymentGroups.forEach((group, groupIndex) => {
+        const filteredItems = group.items.filter(item => {
+          const matchSearch = item.name.toLowerCase().includes(search.toLowerCase());
+          const matchFilter = filter === 'all' || 
+            (filter === 'bank' && group.title === 'Bank Transfer') ||
+            (filter === 'ewallet' && group.title === 'E-Wallet') ||
+            (filter === 'retail' && group.title === 'Retail Outlet') ||
+            group.title === 'QRIS' || group.title === 'Lainnya';
+          return matchSearch && matchFilter;
+        });
+
+        if (filteredItems.length === 0) return;
+
+        const title = document.createElement('div');
+        title.className = 'payment-section';
+        title.innerHTML = `${group.icon} ${group.title}`;
+        fragment.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'payment-grid';
+
+        filteredItems.forEach((method, i) => {
+          const item = document.createElement('div');
+          item.className = 'payment-option';
+          item.innerHTML = `
+            <div class="icon" style="background:${method.color}; color:${method.text || 'white'}; font-size:${method.size || '0.85rem'}">
+              ${method.icon}
+            </div>
+            <span>${method.name}</span>
+            ${method.cashback ? '<div class="cashback-badge">Cashback</div>' : ''}
+          `;
+          item.onclick = () => selectMethod(method, item);
+          grid.appendChild(item);
+
+          requestAnimationFrame(() => {
+            setTimeout(() => item.classList.add('visible'), (groupIndex * 100) + (i * 30));
+          });
+        });
+
+        fragment.appendChild(grid);
+      });
+
+      paymentList.appendChild(fragment);
+    }
+
+    // === SELECT METHOD ===
+    function selectMethod(method, el) {
+      selectedMethod = method;
+      document.querySelectorAll('.payment-option').forEach(e => {
+        e.style.background = ''; e.style.transform = ''; e.style.boxShadow = '';
+      });
+      el.style.background = '#ecfdf5'; el.style.transform = 'translateY(-4px) scale(1.03)'; el.style.boxShadow = '0 8px 20px rgba(16,185,129,0.15)';
+
+      const badge = method.cashback ? '<span style="background:#f59e0b;color:white;padding:2px 6px;border-radius:6px;font-size:0.7rem;margin-left:8px;">Cashback</span>' : '';
+      const html = `<div class="selected-method"><div class="payment-icon" style="background:${method.color}; font-size:${method.size || '0.8rem'}">${method.icon}</div><span>${method.name}</span>${badge}</div><svg class="right-arrow-icon" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>`;
+      openBtn.innerHTML = html;
+      openBtnDesktop.innerHTML = html;
+
+      currentCashback = method.cashback ? cashbackAmount : 0;
+      updateAllPrices();
+      setTimeout(() => overlay.classList.remove('open'), 300);
+    }
+
+    // === SIDEBAR CONTROL ===
+    openBtn.onclick = openBtnDesktop.onclick = () => {
+      overlay.classList.add('open');
+      renderPayments();
+    };
+    closeBtn.onclick = () => overlay.classList.remove('open');
+    overlay.onclick = e => { if (e.target === overlay) overlay.classList.remove('open'); };
+
+    // Tabs & Search
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderPayments(btn.dataset.tab, searchInput.value);
+      };
+    });
+
+    let searchTimeout;
+    searchInput.oninput = () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        const active = document.querySelector('.tab-btn.active').dataset.tab;
+        renderPayments(active, searchInput.value);
+      }, 150);
+    };
+
+    // === INIT ===
+    renderPayments();
+    updateAllPrices();
+  </script>
+</body>
+</html>

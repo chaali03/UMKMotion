@@ -86,6 +86,12 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
       label: "Konsultan", 
       icon: Lightbulb,
       description: "Konsultasi bisnis UMKM"
+    },
+    { 
+      href: "/checkout", 
+      label: "Checkout", 
+      icon: ShoppingCart,
+      description: "Selesaikan pembelian Anda"
     }
   ];
 

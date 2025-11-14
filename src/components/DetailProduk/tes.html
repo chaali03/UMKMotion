@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Masker Medis 3 Ply - Interactive UI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root {
+      --primary: #27ae60;
+      --primary-dark: #219653;
+      --danger: #e74c3c;
+      --text: #2c3e50;
+      --gray: #95a5a6;
+      --light: #f8f9fa;
+      --border: #eee;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f5f6f5;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      margin: 20px auto;
+    }
+
+    /* Header Sertifikasi */
+    .cert-bar {
+      background: white;
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .cert-bar img {
+      height: 22px;
+      margin: 0 8px;
+      filter: grayscale(100%);
+      opacity: 0.7;
+    }
+    .cert-bar .k510 { font-weight: bold; margin-left: 20px; }
+
+    /* Main Layout */
+    .main {
+      display: flex;
+      gap: 40px;
+      padding: 30px;
+      flex-wrap: wrap;
+    }
+
+    /* Gambar + Carousel */
+    .image-section {
+      flex: 1;
+      min-width: 350px;
+      position: relative;
+    }
+    .carousel {
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .carousel img {
+      width: 100%;
+      height: auto;
+      display: none;
+      transition: transform 0.4s ease;
+    }
+    .carousel img.active {
+      display: block;
+    }
+    .carousel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.1));
+      pointer-events: none;
+    }
+
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.9);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      transition: 0.3s;
+      z-index: 10;
+    }
+    .nav-arrow:hover { background: white; transform: translateY(-50%) scale(1.1); }
+    .prev { left: 15px; }
+    .next { right: 15px; }
+
+    .thumbnails {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      justify-content: center;
+    }
+    .thumb {
+      width: 70px;
+      height: 70px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .thumb.active, .thumb:hover {
+      border-color: var(--primary);
+      transform: scale(1.05);
+    }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Fitur Icons */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin: 30px 0;
+    }
+    .feature {
+      text-align: center;
+      padding: 12px;
+      border-radius: 16px;
+      background: #f0fdf4;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    .feature:hover {
+      background: #dcfce7;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(39,174,96,0.15);
+    }
+    .icon-circle {
+      width: 56px;
+      height: 56px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 10px;
+      font-size: 24px;
+      color: var(--primary);
+      box-shadow: 0 4px 15px rgba(39,174,96,0.2);
+    }
+    .feature small { font-size: 11px; color: var(--gray); }
+
+    /* Info Produk */
+    .info-section {
+      flex: 1;
+      min-width: 350px;
+    }
+    .title {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .rating {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+    .stars { color: #f39c12; }
+    .review-count { color: var(--gray); font-size: 14px; }
+
+    .price {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--danger);
+      margin-bottom: 16px;
+    }
+    .price s {
+      color: var(--gray);
+      font-size: 20px;
+      margin-left: 10px;
+    }
+
+    .desc {
+      font-size: 15px;
+      color: #555;
+      margin-bottom: 24px;
+      line-height: 1.8;
+    }
+
+    /* Varian */
+    .variant-group {
+      margin-bottom: 20px;
+    }
+    .variant-group label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+    .variants {
+      display: flex;
+      gap: 12px;
+    }
+    .variant-btn {
+      padding: 12px 20px;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      background: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      min-width: 120px;
+      text-align: center;
+    }
+    .variant-btn.active {
+      border-color: var(--primary);
+      background: #f0fdf4;
+      color: var(--primary);
+      box-shadow: 0 4px 15px rgba(39,174,96,0.2);
+    }
+
+    /* Quantity */
+    .qty-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .qty-btn {
+      width: 40px;
+      height: 40px;
+      border: 2px solid #ddd;
+      background: white;
+      border-radius: 12px;
+      font-size: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .qty-btn:hover { border-color: var(--primary); color: var(--primary); }
+    #qty {
+      width: 60px;
+      text-align: center;
+      padding: 8px;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    /* Action Buttons */
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .btn {
+      flex: 1;
+      padding: 16px;
+      border: none;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-buy {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-buy:hover { background: var(--primary-dark); transform: translateY(-2px); }
+    .btn-cart {
+      background: white;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+    .btn-cart:hover { background: #f0fdf4; }
+
+    /* Extra Buttons */
+    .extra-actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    .icon-btn {
+      flex: 1;
+      padding: 12px;
+      background: #f8f9fa;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.3s;
+    }
+    .icon-btn:hover { background: #e9ecef; }
+    .wishlist.active { color: var(--danger); }
+
+    /* Toko */
+    .seller-card {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 16px;
+      margin-bottom: 30px;
+      gap: 12px;
+    }
+    .seller-img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 20px;
+    }
+    .seller-info h4 { margin-bottom: 4px; }
+    .follow-btn {
+      margin-left: auto;
+      padding: 8px 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Ulasan */
+    .reviews-section {
+      padding: 30px;
+      border-top: 1px solid var(--border);
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .filter-stars {
+      display: flex;
+      gap: 8px;
+    }
+    .star-filter {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .star-filter.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .review {
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+    }
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .reviewer { font-weight: 600; }
+    .verified { color: var(--primary); font-size: 12px; }
+
+    /* Sticky Bar (Mobile) */
+    .sticky-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      padding: 12px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+      display: none;
+      align-items: center;
+      gap: 12px;
+      z-index: 1000;
+    }
+    .sticky-bar.show { display: flex; }
+    .sticky-price { font-weight: bold; color: var(--danger); }
+
+    /* Chat Bubble */
+    .chat-bubble {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 8px 25px rgba(39,174,96,0.3);
+      cursor: pointer;
+      z-index: 999;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 8px 25px rgba(39,174,96,0.3); }
+      50% { box-shadow: 0 8px 35px rgba(39,174,96,0.5); }
+      100% { box-shadow: 0 8px 25px rgba(39,174,96,0.3); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main { flex-direction: column; padding: 20px; gap: 20px; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .actions, .extra-actions { flex-direction: column; }
+      .sticky-bar { display: flex; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Sertifikasi -->
+    <div class="cert-bar">
+      <img src="https://via.placeholder.com/60x22/333/fff?text=FDA" alt="FDA">
+      <img src="https://via.placeholder.com/60x22/333/fff?text=CE" alt="CE">
+      <img src="https://via.placeholder.com/60x22/333/fff?text=FC" alt="FC">
+      <img src="https://via.placeholder.com/60x22/333/fff?text=RoHS" alt="RoHS">
+      <span class="k510">510K</span>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+
+      <!-- Gambar & Fitur -->
+      <div class="image-section">
+        <div class="carousel">
+          <img src="https://via.placeholder.com/600x600/f0f0f0/27ae60?text=Masker+50+Pcs" alt="50 Pcs" class="active" data-variant="50">
+          <img src="https://via.placeholder.com/600x600/e8f5e9/27ae60?text=Masker+100+Pcs" alt="100 Pcs" data-variant="100">
+          <div class="nav-arrow prev" onclick="prevSlide()">←</div>
+          <div class="nav-arrow next" onclick="nextSlide()">→</div>
+        </div>
+
+        <div class="thumbnails">
+          <div class="thumb active" onclick="setSlide(0)"><img src="https://via.placeholder.com/100/27ae60/fff?text=50" alt=""></div>
+          <div class="thumb" onclick="setSlide(1)"><img src="https://via.placeholder.com/100/27ae60/fff?text=100" alt=""></div>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature" data-tooltip="Tiga warna backlight untuk hasil jelas">
+            <div class="icon-circle"><i class="fas fa-lightbulb"></i></div>
+            <div>Three Color Backlight</div>
+          </div>
+          <div class="feature" data-tooltip="Simpan hingga 32 hasil pengukuran">
+            <div class="icon-circle"><i class="fas fa-memory"></i></div>
+            <div>Memory Function</div>
+          </div>
+          <div class="feature" data-tooltip="Mati otomatis hemat baterai">
+            <div class="icon-circle"><i class="fas fa-power-off"></i></div>
+            <div>Auto Shutdown</div>
+          </div>
+          <div class="feature" data-tooltip="Ganti satuan suhu mudah">
+            <div class="icon-circle"><i class="fas fa-thermometer-half"></i></div>
+            <div>C/F Conversion</div>
+          </div>
+          <div class="feature" data-tooltip="Aman tanpa merkuri">
+            <div class="icon-circle"><i class="fas fa-ban"></i></div>
+            <div>Mercury Free</div>
+          </div>
+          <div class="feature" data-tooltip="Jarak aman 3-5 cm">
+            <div class="icon-circle"><i class="fas fa-shield-alt"></i></div>
+            <div>3-5CM Distance</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info Produk -->
+      <div class="info-section">
+        <h1 class="title">Masker Medis 3 Ply - Isi 50 Pcs</h1>
+        <div class="rating">
+          <div class="stars">★★★★☆</div>
+          <span>4.8</span>
+          <span class="review-count">(18 Ulasan)</span>
+        </div>
+
+        <div class="price">Rp 35.000 <s>Rp 75.000</s></div>
+
+        <p class="desc">
+          Masker medis 3 lapis dengan filter meltblown, bersertifikat Kemenkes. 
+          Nyaman digunakan sehari-hari, perlindungan maksimal dari debu dan droplet.
+        </p>
+
+        <!-- Varian -->
+        <div class="variant-group">
+          <label>Pilih Varian</label>
+          <div class="variants">
+            <div class="variant-btn active" data-variant="50" onclick="selectVariant(this)">Isi 50 Pcs</div>
+            <div class="variant-btn" data-variant="100" onclick="selectVariant(this)">Isi 100 Pcs</div>
+          </div>
+        </div>
+
+        <!-- Jumlah -->
+        <div class="qty-group">
+          <label>Jumlah</label>
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <input type="text" id="qty" value="1" readonly>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+
+        <!-- Tombol Utama -->
+        <div class="actions">
+          <button class="btn btn-buy"><i class="fas fa-bolt"></i> Beli Sekarang</button>
+          <button class="btn btn-cart"><i class="fas fa-cart-plus"></i> Keranjang</button>
+        </div>
+
+        <!-- Extra -->
+        <div class="extra-actions">
+          <button class="icon-btn wishlist" onclick="toggleWishlist(this)"><i class="fas fa-heart"></i> Wishlist</button>
+          <button class="icon-btn" onclick="shareProduct()"><i class="fas fa-share-alt"></i> Bagikan</button>
+        </div>
+
+        <!-- Toko -->
+        <div class="seller-card">
+          <div class="seller-img">MD</div>
+          <div class="seller-info">
+            <h4>MedShop Official</h4>
+            <div>★★★★★ 4.9 (2.5k+)</div>
+            <div style="font-size:13px; color:var(--primary);">Online • Jakarta</div>
+          </div>
+          <button class="follow-btn">Ikuti</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ulasan -->
+    <div class="reviews-section">
+      <div class="section-title">
+        <span>Ulasan Pembeli (18)</span>
+        <div class="filter-stars">
+          <div class="star-filter active" data-star="all">Semua</div>
+          <div class="star-filter" data-star="5">5★</div>
+          <div class="star-filter" data-star="4">4★</div>
+        </div>
+      </div>
+
+      <div id="reviews-list">
+        <div class="review">
+          <div class="review-header">
+            <span class="reviewer">Ahmad R.</span>
+            <span class="verified">Verified</span>
+          </div>
+          <div class="stars">★★★★★</div>
+          <p>Masker tebal, nyaman, pengiriman cepat!</p>
+        </div>
+        <div class="review">
+          <div class="review-header">
+            <span class="reviewer">Siti N.</span>
+            <span class="verified">Verified</span>
+          </div>
+          <div class="stars">★★★★☆</div>
+          <p>Kualitas oke, tapi kemasan agak penyok.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sticky Bar Mobile -->
+  <div class="sticky-bar" id="stickyBar">
+    <div class="sticky-price">Rp 35.000</div>
+    <button class="btn btn-buy" style="flex:1; padding:12px; font-size:14px;">Beli</button>
+    <button class="btn btn-cart" style="flex:1; padding:12px; font-size:14px;">Keranjang</button>
+  </div>
+
+  <!-- Chat Bubble -->
+  <div class="chat-bubble" onclick="alert('Chat dengan penjual!')">
+    <i class="fas fa-comment-dots"></i>
+  </div>
+
+  <script>
+    // Carousel
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.carousel img');
+    const thumbs = document.querySelectorAll('.thumb');
+
+    function showSlide(n) {
+      slides.forEach(s => s.classList.remove('active'));
+      thumbs.forEach(t => t.classList.remove('active'));
+      slides[n].classList.add('active');
+      thumbs[n].classList.add('active');
+      currentSlide = n;
+    }
+
+    function nextSlide() { showSlide((currentSlide + 1) % slides.length); }
+    function prevSlide() { showSlide((currentSlide - 1 + slides.length) % slides.length); }
+    function setSlide(n) { showSlide(n); }
+
+    // Varian
+    function selectVariant(el) {
+      document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      const variant = el.getAttribute('data-variant');
+      document.querySelectorAll('.carousel img').forEach(img => {
+        img.classList.remove('active');
+        if (img.getAttribute('data-variant') == variant) img.classList.add('active');
+      });
+    }
+
+    // Qty
+    function changeQty(val) {
+      const input = document.getElementById('qty');
+      let qty = parseInt(input.value) + val;
+      if (qty < 1) qty = 1;
+      input.value = qty;
+    }
+
+    // Wishlist
+    function toggleWishlist(btn) {
+      btn.classList.toggle('active');
+      btn.innerHTML = btn.classList.contains('active') 
+        ? '<i class="fas fa-heart"></i> Wishlist' 
+        : '<i class="far fa-heart"></i> Wishlist';
+    }
+
+    // Share
+    function shareProduct() {
+      if (navigator.share) {
+        navigator.share({ title: document.title, url: window.location.href });
+      } else {
+        alert('Link disalin!');
+      }
+    }
+
+    // Sticky Bar
+    window.addEventListener('scroll', () => {
+      document.getElementById('stickyBar').classList.toggle('show', window.scrollY > 300);
+    });
+
+    // Filter Ulasan
+    document.querySelectorAll('.star-filter').forEach(f => {
+      f.addEventListener('click', () => {
+        document.querySelectorAll('.star-filter').forEach(x => x.classList.remove('active'));
+        f.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
