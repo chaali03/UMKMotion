@@ -131,7 +131,7 @@ export default function ProductRecommendations() {
 
   return (
     <>
-      <style jsx>{`
+      <style >{`
         .rec-title {
           font-size: 20px;
           font-weight: 700;

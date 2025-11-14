@@ -100,7 +100,7 @@ export default function AnotherProduct() {
 
   return (
     <>
-      <style jsx>{`
+      <style>{`
         .section-title {
           font-size: 22px;
           font-weight: 800;
