@@ -3,6 +3,7 @@
 import BuyComponent from '../components/ProductDetail/ProductDetail.js';
 import CommentSection from '../components/ProductDetail/CommentSection.tsx';
 import ProductRecommendations from '../components/ProductDetail/ProductRecommendations.tsx';
+import AnotherProduct from '../components/ProductDetail/AnotherProduct.tsx'
 
 // Ambil ASIN dari localStorage (paling reliable)
 const getAsin = () => {
@@ -49,15 +50,18 @@ const asin = getAsin();
       <BuyComponent client:only="react" />
     </div>
     
+    <!-- REKOMENDASI -->
+    <div id="recommendations" style="margin-top: 64px;">
+      <ProductRecommendations client:only="react" />
+    </div>
 
     <!-- KOMENTAR -->
     <div id="comment-section" style="margin-top: 48px;">
     </div>
 
-    <!-- REKOMENDASI -->
-    <div id="recommendations" style="margin-top: 64px;">
-      <ProductRecommendations client:only="react" />
-    </div>
+    <div style="margin-top: 80px;">
+      <AnotherProduct client:only="react" />
+    </div>    
 
     <!-- Script kecil buat kasih tahu CommentSection kalau ASIN berubah (opsional tapi bagus) -->
     <script>
