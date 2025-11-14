@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { uploadProducts, getAllProducts, deleteAllProducts, } from "../lib/database.js";
 export async function seedProduk() {
     console.log("🚀 Menjalankan seed produk penuh...");
@@ -1560,7 +1561,68 @@ export async function seedProduk() {
             jam_operasional: "07:00 - 21:00"
         },
     ];
-    await uploadProducts(products);
+    const productsWithUpload = products.map((p, idx) => {
+        // Base tanggal maksimum: 13 Nov 2025
+        const maxDate = new Date("2025-11-13T00:00:00Z");
+        const d = new Date(maxDate);
+        // Geser mundur per index agar unik per produk dan tetap di 2025
+        d.setDate(maxDate.getDate() - idx);
+        // Clamp ke 2025-01-01 jika melewati awal tahun
+        const minDate = new Date("2025-01-01T00:00:00Z");
+        if (d < minDate) {
+            // Jika produk lebih banyak dari jumlah hari, gunakan siklus dari awal tahun, tetap unik bulan-tanggal selama stok hari mencukupi
+            const dayOfYear = (idx % ((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24) + 1)) | 0;
+            d.setTime(minDate.getTime());
+            d.setDate(minDate.getDate() + dayOfYear);
+        }
+
+        // Hapus kondisi_produk, nolkan diskon, samakan harga_produk dengan harga_asli
+        const { kondisi_produk, persentase_diskon, harga_produk, harga_asli, ...rest } = p as any;
+
+        // Variasi tag dari Firestore
+        const tagOptions = [
+            "Gratis Ongkir",
+            "Voucher Gede",
+            "Cashback",
+            "COD",
+            "Garansi",
+            "Official Store",
+        ];
+
+        // Tentukan apakah produk ini didiskon (balanced: kira-kira separuh)
+        const alreadyDiscounted = typeof rest.persentase_diskon === 'number' && rest.persentase_diskon > 0;
+        const shouldDiscount = alreadyDiscounted || (idx % 2 === 0);
+
+        // Tentukan persentase diskon
+        const discountCandidates = [10, 12, 15, 18, 20, 25, 30];
+        const chosenDiscount = alreadyDiscounted
+            ? Math.max(1, Math.round(Number(rest.persentase_diskon)))
+            : (shouldDiscount ? discountCandidates[idx % discountCandidates.length] : 0);
+
+        // Hitung harga setelah diskon jika ada
+        const hargaSesudahDiskon = chosenDiscount > 0
+            ? Math.max(100, Math.round(harga_asli * (1 - chosenDiscount / 100)))
+            : harga_asli;
+
+        // Siapkan tags; jika diskon, tambahkan tag Diskon di depan
+        const baseTags = [
+            tagOptions[idx % tagOptions.length],
+            tagOptions[(idx + 1) % tagOptions.length],
+        ];
+        const tags = chosenDiscount > 0
+            ? ([`Diskon ${chosenDiscount}%`, ...baseTags])
+            : baseTags;
+
+        return {
+            ...rest,
+            harga_asli,
+            harga_produk: hargaSesudahDiskon,
+            persentase_diskon: chosenDiscount,
+            upload_at: d.toISOString().slice(0, 10), // YYYY-MM-DD dalam 2025 dan <= 2025-11-13
+            tags,
+        };
+    });
+    await uploadProducts(productsWithUpload);
     // Cek semua produk setelah upload
     let all = await getAllProducts();
     console.log("📦 Produk setelah upload:");

@@ -1,6 +1,6 @@
 ---
 // Astro wrapper for SearchBar component
-import SearchBar from './searchbar/SearchBar.tsx';
+import SearchBarComponent from './searchbar/SearchBar.tsx';
 ---
 <style>
   /* Create spacing above the search bar to avoid covering 'maju bersama.' on small screens */
@@ -17,6 +17,6 @@ import SearchBar from './searchbar/SearchBar.tsx';
 </style>
 
 <div class="searchbar-after-scroll">
-  <SearchBar client:load />
+  <SearchBarComponent client:visible />
   
 </div>

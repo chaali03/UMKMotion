@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import TestimonialSection from './testimonial/TestimonialSection';
-import Footer from '../LandingPage/components/footer/Footer';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
+const TestimonialSection = lazy(() => import('./testimonial/TestimonialSection'));
+const Footer = lazy(() => import('../LandingPage/components/footer/Footer'));
 import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { TimelineContent } from "@/components/ui/timeline-animation";
 import VerticalCutReveal from "@/components/ui/vertical-cut-reveal";
@@ -86,7 +86,7 @@ function HeroKonsultanAbout() {
             />
           </>
         )}
-        {/* Grid pattern overlays (pushed further back) */}
+        {/* Grid pattern overlays */}
         <motion.div 
           style={prefersReducedMotion ? undefined : { y }}
           className="absolute inset-0 -z-20 bg-[linear-gradient(to_right,#f97316_1px,transparent_1px),linear-gradient(to_bottom,#f97316_1px,transparent_1px)] bg-[size:3rem_3rem] opacity-[0.02]"
@@ -189,7 +189,7 @@ function HeroKonsultanAbout() {
             </div>
           </TimelineContent>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons - SIMPLIFIED */}
           <TimelineContent
             as="div"
             animationNum={4}
@@ -198,45 +198,25 @@ function HeroKonsultanAbout() {
           >
             <div className="flex flex-col sm:flex-row gap-3">
               <motion.button
-                whileHover={prefersReducedMotion ? {} : { y: -3, scale: 1.02, backgroundPosition: '100% 0' }}
-                whileTap={{ scale: 0.985 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 aria-label="Jadwalkan Konsultasi"
-                className="group relative text-white px-6 py-3 rounded-xl font-semibold text-base inline-flex items-center justify-center gap-2.5 shadow-xl shadow-blue-500/20 overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-400/40"
-                style={{
-                  backgroundImage: 'linear-gradient(135deg, #12307a 0%, #2f5fe7 50%, #7c3aed 100%)',
-                  backgroundSize: '200% 100%',
-                  backgroundPosition: '0% 0',
-                  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.18)'
-                }}
+                className="bg-gradient-to-r from-orange-600 to-amber-600 text-white px-8 py-4 rounded-2xl font-bold text-base inline-flex items-center justify-center gap-3 shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-400/40"
               >
-                {!prefersReducedMotion && (
-                  <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-                )}
-                <span className="pointer-events-none absolute inset-0" style={{
-                  background: 'radial-gradient(90% 140% at 50% 50%, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.08) 36%, rgba(255,255,255,0.02) 60%, rgba(255,255,255,0) 75%)'
-                }} />
-                <Calendar className="w-4 h-4" />
-                <span className="relative">Jadwalkan Konsultasi</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform relative" />
+                <Calendar className="w-5 h-5" />
+                <span>Jadwalkan Konsultasi</span>
+                <ArrowRight className="w-5 h-5" />
               </motion.button>
 
               <motion.button
-                whileHover={prefersReducedMotion ? {} : { y: -2, scale: 1.02 }}
-                whileTap={{ scale: 0.985 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 aria-label="Pelajari Layanan"
-                className="group relative bg-white border-2 border-slate-200 text-slate-900 px-6 py-3 rounded-xl font-semibold text-base inline-flex items-center justify-center gap-2.5 hover:border-orange-300 transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/40 overflow-hidden"
-                style={{
-                  backgroundImage: prefersReducedMotion ? undefined : 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(15,23,42,0.03) 100%)'
-                }}
+                className="bg-white border-2 border-slate-200 text-slate-900 px-6 py-4 rounded-2xl font-semibold text-base inline-flex items-center justify-center gap-2.5 hover:border-orange-300 hover:bg-orange-50/50 transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/40"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>Pelajari Layanan</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
-                {!prefersReducedMotion && (
-                  <span className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{
-                    background: 'radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 60%)'
-                  }} />
-                )}
+                <ArrowRight className="w-4 h-4" />
               </motion.button>
             </div>
           </TimelineContent>
@@ -280,22 +260,21 @@ function HeroKonsultanAbout() {
             <div className="relative z-[1] bg-gradient-to-br from-white/80 to-orange-50/60 p-3 rounded-3xl border-2 border-white/60 shadow-none">
               <div className="relative rounded-2xl overflow-hidden">
                 <motion.img
-                  src="https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=1074&auto=format&fit=crop"
+                  src="https://images.unsplash.com/photo-1557804506-669a67965ba0?q=60&w=800&auto=format&fit=crop"
                   alt="Kolaborasi Konsultan"
                   className="w-full h-[400px] sm:h-[500px] object-cover"
-                  loading="lazy"
+                  loading="eager"
+                  fetchPriority="high"
                   decoding="async"
+                  width={600}
+                  height={500}
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 600px"
-                  initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 1.06 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   transition={{ duration: 0.8 }}
                 />
-                
-                {/* Removed overlay to avoid dark edge near image */}
-                
-                {/* Floating badges */}
 
-                {/* 2) Success metric badge at bottom (refined) */}
+                {/* Success metric badge at bottom */}
                 <motion.div
                   initial={{ y: prefersReducedMotion ? 0 : 50, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -329,8 +308,6 @@ function HeroKonsultanAbout() {
                 </motion.div>
               </div>
             </div>
-
-            {/* Removed decorative blurred blobs around image to avoid shadow-like glow */}
           </motion.div>
         </TimelineContent>
       </div>
@@ -356,7 +333,6 @@ const KonsulPage: React.FC = () => {
 
       {/* Enhanced Stats Section */}
       <section ref={statsRef} className="relative py-16 sm:py-20 px-4 bg-gradient-to-b from-white via-orange-50/20 to-white overflow-hidden">
-        {/* Background decoration */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(249,115,22,0.05)_0%,transparent_50%)]" />
         
         <div className="relative max-w-7xl mx-auto">
@@ -387,7 +363,6 @@ const KonsulPage: React.FC = () => {
                 whileHover={prefersReducedMotion ? {} : { scale: 1.055, y: -10, rotate: -1.2 }}
                 className="group relative bg-gradient-to-br from-white to-orange-50/50 border-2 border-orange-100/60 rounded-3xl p-6 sm:p-8 shadow-xl hover:shadow-2xl hover:border-orange-200 transition-all duration-300 overflow-hidden"
               >
-                {/* Gradient overlay on hover */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${s.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
                 
                 <div className="relative space-y-4">
@@ -416,7 +391,6 @@ const KonsulPage: React.FC = () => {
 
       {/* Enhanced Content Section */}
       <section ref={contentRef} className="relative py-16 sm:py-20 px-4 overflow-hidden">
-        {/* Background decoration */}
         <div className="absolute inset-0">
           <div className="absolute top-1/4 right-0 w-96 h-96 bg-gradient-to-br from-orange-200/20 to-transparent blur-3xl rounded-full" />
           <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-gradient-to-tr from-blue-200/20 to-transparent blur-3xl rounded-full" />
@@ -434,12 +408,16 @@ const KonsulPage: React.FC = () => {
             >
               <div className="relative z-[1] bg-gradient-to-br from-white/80 to-orange-50/60 p-3 rounded-3xl border-2 border-white/60 shadow-none">
                 <img 
-                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=700&fit=crop" 
+                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=500&fit=crop&auto=format&q=65" 
                   alt="Professional Coach" 
                   className="w-full h-[500px] object-cover rounded-2xl"
+                  loading="lazy"
+                  decoding="async"
+                  width={600}
+                  height={500}
+                  sizes="(max-width: 1024px) 100vw, 600px"
                 />
                 
-                {/* Floating achievement badge (safe inset to avoid clipping) */}
                 <motion.div
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
@@ -454,7 +432,6 @@ const KonsulPage: React.FC = () => {
                 </motion.div>
               </div>
 
-              {/* Decorative elements */}
               <div className="absolute -bottom-6 -left-6 w-40 h-40 bg-gradient-to-br from-orange-400/20 to-amber-400/20 rounded-3xl blur-2xl -z-10" />
             </motion.div>
 
@@ -491,36 +468,29 @@ const KonsulPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <motion.a 
-                  href="#"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="group bg-gradient-to-r from-orange-600 to-amber-600 text-white px-6 py-3 rounded-xl font-semibold text-base inline-flex items-center justify-center gap-2.5 shadow-xl shadow-orange-500/30"
-                >
-                  <Calendar className="w-4 h-4" />
-                  Jadwalkan Konsultasi Anda
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
-                </motion.a>
-                
-                <motion.a 
-                  href="#"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="group text-orange-600 font-semibold text-base inline-flex items-center justify-center gap-2 hover:gap-2.5 transition-all"
-                >
-                  Pelajari Program
-                  <ArrowRight className="w-4 h-4" />
-                </motion.a>
-              </div>
+              {/* Simple CTA Button */}
+              <motion.a 
+                href="#"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-orange-600 to-amber-600 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-400/40"
+              >
+                <Calendar className="w-5 h-5" />
+                <span>Jadwalkan Konsultasi Anda</span>
+                <ArrowRight className="w-5 h-5" />
+              </motion.a>
             </motion.div>
           </div>
         </div>
       </section>
       
-      <TestimonialSection />
+      <Suspense fallback={<div className="py-12" aria-hidden />}> 
+        <TestimonialSection />
+      </Suspense>
 
-      <Footer />
+      <Suspense fallback={<div className="py-8" aria-hidden />}> 
+        <Footer />
+      </Suspense>
     </div>
   );
 };

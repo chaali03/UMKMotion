@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from "react";
 import Earth from "@/components/ui/globe";
 import { Quote, Sparkles } from "lucide-react";
 import AnimatedDots from "./animated-dots";
+import { motion } from "motion/react";
+import { TestimonialsColumn } from "@/components/testimonials-columns-1";
 
 interface Testimonial {
   id: number;
@@ -17,71 +19,141 @@ interface Testimonial {
 const testimonials: Testimonial[] = [
   {
     id: 1,
-    name: "Budi Santoso",
-    company: "Warung Makan Sederhana",
-    title: "Pemilik UMKM Kuliner",
+    name: "Briana Patton",
+    company: "",
+    title: "Manajer Operasional",
     content:
-      "Konsultasi dengan tim UMKMotion benar-benar mengubah cara saya mengelola bisnis. Dari pembukuan yang berantakan, sekarang saya bisa memantau keuangan dengan jelas dan omzet meningkat 40% dalam 3 bulan!",
+      "ERP ini merevolusi operasional kami: keuangan dan inventaris jadi jauh lebih rapi. Platform berbasis cloud membuat tim tetap produktif, bahkan saat kerja jarak jauh.",
     rating: 5,
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=faces",
+    image: "https://randomuser.me/api/portraits/women/1.jpg",
     color: "orange",
   },
   {
     id: 2,
-    name: "Siti Nurhaliza",
-    company: "Batik Nusantara",
-    title: "Pengrajin Batik",
+    name: "Bilal Ahmed",
+    company: "",
+    title: "Manajer TI",
     content:
-      "Berkat bimbingan digital marketing dari konsultan UMKMotion, produk batik saya sekarang dikenal hingga ke luar kota. Penjualan online meningkat drastis dan saya bisa mempekerjakan 5 karyawan baru.",
+      "Implementasi ERP berjalan mulus dan cepat. Antarmuka yang mudah dan bisa dikustom membuat pelatihan tim jadi ringan.",
     rating: 5,
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=faces",
+    image: "https://randomuser.me/api/portraits/men/2.jpg",
     color: "blue",
   },
   {
     id: 3,
-    name: "Ahmad Fauzi",
-    company: "Toko Elektronik Jaya",
-    title: "Pemilik Toko Elektronik",
+    name: "Saman Malik",
+    company: "",
+    title: "Kepala Dukungan Pelanggan",
     content:
-      "Strategi pemasaran yang diberikan sangat aplikatif. Dalam 2 bulan, toko saya sudah punya sistem inventori yang rapi dan customer database yang terorganisir. Profit naik 35%!",
+      "Tim support luar biasa: mendampingi dari setup hingga pendampingan berkelanjutan, membuat kami benar-benar puas.",
     rating: 5,
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=faces",
+    image: "https://randomuser.me/api/portraits/women/3.jpg",
     color: "orange",
   },
   {
     id: 4,
-    name: "Dewi Lestari",
-    company: "Kue Tradisional Ibu",
-    title: "Pengusaha Kue Rumahan",
+    name: "Omar Raza",
+    company: "",
+    title: "CEO",
     content:
-      "Awalnya saya ragu untuk ikut konsultasi, tapi ternyata sangat membantu! Sekarang saya punya brand identity yang kuat, packaging yang menarik, dan orderan membludak setiap hari.",
-    rating: 4,
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=faces",
+      "Integrasi yang mulus dari ERP ini meningkatkan proses bisnis dan efisiensi kami. Sangat direkomendasikan berkat antarmukanya yang intuitif.",
+    rating: 5,
+    image: "https://randomuser.me/api/portraits/men/4.jpg",
     color: "orange",
   },
   {
     id: 5,
-    name: "Rizki Pratama",
-    company: "Konveksi Mandiri",
-    title: "Pemilik Konveksi",
+    name: "Zainab Hussain",
+    company: "",
+    title: "Manajer Proyek",
     content:
-      "Tim konsultan membantu saya merestrukturisasi bisnis dari nol. Sekarang produksi lebih efisien, biaya operasional turun 25%, dan saya bisa ekspansi ke 3 kota besar.",
+      "Fiturnya yang kuat dan support yang sigap mengubah alur kerja kami—produktivitas meningkat signifikan.",
     rating: 5,
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=faces",
+    image: "https://randomuser.me/api/portraits/women/5.jpg",
     color: "orange",
   },
   {
     id: 6,
-    name: "Linda Wijaya",
-    company: "Salon Cantik",
-    title: "Pemilik Salon Kecantikan",
+    name: "Aliza Khan",
+    company: "",
+    title: "Analis Bisnis",
     content:
-      "Konsultasi bisnis dari UMKMotion membuka mata saya tentang pentingnya customer experience. Sekarang pelanggan lebih loyal dan repeat order meningkat 60%.",
+      "Implementasi yang mulus melebihi ekspektasi. Proses jadi lebih ringkas dan performa bisnis meningkat.",
     rating: 5,
-    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=faces",
+    image: "https://randomuser.me/api/portraits/women/6.jpg",
     color: "orange",
   },
 ];
+
+const testimonialsData = [
+  {
+    text:
+      "ERP ini merevolusi operasional kami—keuangan dan inventaris jadi tertata. Karena berbasis cloud, tim tetap produktif meski remote.",
+    image: "https://randomuser.me/api/portraits/women/1.jpg",
+    name: "Briana Patton",
+    role: "Manajer Operasional",
+  },
+  {
+    text:
+      "Implementasinya cepat dan lancar. UI ramah pengguna dan bisa dikustom, pelatihan tim jadi jauh lebih mudah.",
+    image: "https://randomuser.me/api/portraits/men/2.jpg",
+    name: "Bilal Ahmed",
+    role: "Manajer TI",
+  },
+  {
+    text:
+      "Tim supportnya istimewa—mendampingi saat setup hingga pendampingan lanjutan. Kami sangat puas.",
+    image: "https://randomuser.me/api/portraits/women/3.jpg",
+    name: "Saman Malik",
+    role: "Kepala Dukungan Pelanggan",
+  },
+  {
+    text:
+      "Integrasinya mulus dan meningkatkan efisiensi operasional. Antarmuka intuitif—sangat direkomendasikan.",
+    image: "https://randomuser.me/api/portraits/men/4.jpg",
+    name: "Omar Raza",
+    role: "CEO",
+  },
+  {
+    text:
+      "Fitur yang kuat dan dukungan cepat membuat alur kerja kami jauh lebih efisien.",
+    image: "https://randomuser.me/api/portraits/women/5.jpg",
+    name: "Zainab Hussain",
+    role: "Manajer Proyek",
+  },
+  {
+    text:
+      "Implementasi mulus melampaui ekspektasi. Proses lebih ringkas, performa bisnis meningkat.",
+    image: "https://randomuser.me/api/portraits/women/6.jpg",
+    name: "Aliza Khan",
+    role: "Analis Bisnis",
+  },
+  {
+    text:
+      "Fungsi bisnis kami membaik berkat desain ramah pengguna dan feedback pelanggan yang positif.",
+    image: "https://randomuser.me/api/portraits/men/7.jpg",
+    name: "Farhan Siddiqui",
+    role: "Direktur Pemasaran",
+  },
+  {
+    text:
+      "Mereka menghadirkan solusi melampaui ekspektasi—memahami kebutuhan kami dan meningkatkan operasional.",
+    image: "https://randomuser.me/api/portraits/women/8.jpg",
+    name: "Sana Sheikh",
+    role: "Manajer Penjualan",
+  },
+  {
+    text:
+      "Dengan ERP ini, visibilitas online dan konversi meningkat signifikan—mendorong performa bisnis.",
+    image: "https://randomuser.me/api/portraits/men/9.jpg",
+    name: "Hassan Ali",
+    role: "Manajer E‑commerce",
+  },
+];
+
+const firstColumn = testimonialsData.slice(0, 3);
+const secondColumn = testimonialsData.slice(3, 6);
+const thirdColumn = testimonialsData.slice(6, 9);
 
 const getColorClasses = (color: string) => {
   const colors = {
@@ -111,6 +183,7 @@ const TestimonialCard = ({ testimonial }: { testimonial: Testimonial }) => {
         group relative
         bg-white/95 backdrop-blur-sm
         border-2 border-slate-200/80
+        shadow-md ring-1 ring-slate-100 hover:ring-2 hover:ring-orange-200
         
         /* Responsive width dengan batasan maksimum */
         w-full
@@ -174,7 +247,7 @@ const TestimonialCard = ({ testimonial }: { testimonial: Testimonial }) => {
           >
             <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white flex-shrink-0" />
             <p className="text-xs sm:text-sm font-bold text-white truncate max-w-[140px] sm:max-w-[160px]">
-              {testimonial.company}
+              {testimonial.company || "Pengguna UMKMotion"}
             </p>
           </div>
         </div>
@@ -241,6 +314,9 @@ const TestimonialCard = ({ testimonial }: { testimonial: Testimonial }) => {
               alt={testimonial.name}
               className="block object-cover object-center w-full h-full rounded-2xl transition-transform duration-300 group-hover:scale-105 border-0 ring-0 outline-none"
               loading="lazy"
+              decoding="async"
+              width={56}
+              height={56}
             />
             
             {/* Verified Badge - tepat di dalam avatar */}
@@ -343,7 +419,7 @@ function TestimonialSection() {
   return (
     <section ref={sectionRef} className="relative min-h-screen py-16 sm:py-20 md:py-24 lg:py-28 bg-gradient-to-b from-white via-orange-50/30 to-white overflow-x-hidden">
       {/* Gradient Mask */}
-      <div className="absolute inset-0 z-0 [mask-image:radial-gradient(ellipse_50%_50%_at_50%_10%,#000_60%,transparent_100%)]" />
+      <div className="absolute inset-0 z-0 [mask-image:radial-gradient(to_bottom,transparent,black_25%,black_75%,transparent)]" />
       
       {/* Header Section */}
       <div className="relative z-10 max-w-7xl mx-auto text-center px-4 sm:px-6 md:px-8 mb-12 sm:mb-16 md:mb-20">
@@ -402,14 +478,12 @@ function TestimonialSection() {
         />
       </div>
 
-      {/* Testimonial Grid */}
+      {/* Testimonial Columns (animated) */}
       <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-10 sm:py-12 md:py-14">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10 justify-items-center">
-          {testimonials.map((testimonial, idx) => (
-            <div key={`grid-${testimonial.id}`} className="js-reveal" style={{ ["--d" as any]: `${0.06 * (idx + 1) + 0.18}s` }}>
-              <TestimonialCard testimonial={testimonial} />
-            </div>
-          ))}
+        <div className="flex justify-center gap-6 [mask-image:linear-gradient(to_bottom,transparent,black_20%,black_80%,transparent)] max-h-[740px] overflow-hidden">
+          <TestimonialsColumn testimonials={firstColumn as any} duration={15} />
+          <TestimonialsColumn testimonials={secondColumn as any} className="hidden md:block" duration={19} />
+          <TestimonialsColumn testimonials={thirdColumn as any} className="hidden lg:block" duration={17} />
         </div>
       </div>
 

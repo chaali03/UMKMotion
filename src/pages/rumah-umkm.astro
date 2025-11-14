@@ -9,6 +9,24 @@ import RumahUMKM from '../RumahUMKM/RumahUMKM';
   </div>
 </Layout>
 
+<script is:inline>
+  if (typeof globalThis !== 'undefined' && typeof globalThis.__publicField !== 'function') {
+    globalThis.__publicField = function (obj, key, value) {
+      try {
+        Object.defineProperty(obj, key, {
+          enumerable: true,
+          configurable: true,
+          writable: true,
+          value,
+        });
+      } catch (error) {
+        obj[key] = value;
+      }
+      return value;
+    };
+  }
+</script>
+
 <style is:global>
   /* Leaflet custom styles */
   .leaflet-container {

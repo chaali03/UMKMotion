@@ -1,6 +1,6 @@
 "use client";
+import React, { type MouseEvent, useRef, useState } from "react";
 import { motion, useSpring } from "framer-motion";
-import { type MouseEvent, useRef, useState } from "react";
 import { 
   ArrowRight, Sparkles,
   Utensils, Wrench, Shirt, Palette,

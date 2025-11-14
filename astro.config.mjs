@@ -1,11 +1,12 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-import netlify from '@astrojs/netlify/functions';
+import netlify from '@astrojs/netlify';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'url';
+import viteCompression from 'vite-plugin-compression';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -23,55 +24,74 @@ export default defineConfig({
   // Performance optimizations
   build: {
     inlineStylesheets: 'auto',
+    assets: '_astro',
+    // Use temp directory if dist is locked (OneDrive issue workaround)
+    ...(process.env.ASTRO_TEMP_OUTPUT ? { 
+      outDir: process.env.ASTRO_TEMP_OUTPUT 
+    } : {}),
   },
+  
+  // Remove experimental config that doesn't exist
 
   // Prefetch optimization
   prefetch: {
     prefetchAll: false,
-    defaultStrategy: 'viewport'
+    defaultStrategy: 'tap'
   },
 
   // Vite config
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [
+      tailwindcss(),
+      // Pre-compress assets for better TTFB - cast to any to avoid type conflicts
+      ...(process.env.NODE_ENV === 'production' ? [
+        /** @type {any} */ (viteCompression({ algorithm: 'brotliCompress' })),
+        /** @type {any} */ (viteCompression({ algorithm: 'gzip' })),
+      ] : []),
+    ],
     // Store Vite cache in system temp to avoid OneDrive/AV file locks on Windows
     cacheDir: path.resolve(os.tmpdir(), 'umkmotion-vite-cache'),
     server: {
       // OneDrive can lock files; polling reduces EPERM rename races
       watch: { usePolling: true, interval: 500 },
     },
-    resolve: {
-      alias: {
-        'src': path.resolve(__dirname, './src'),
-        '@': path.resolve(__dirname, './src'),
-        '@homepagelayout': path.resolve(__dirname, './src/layouts/HomepageLayout.astro')
-      }
-    },
-
-    // TAMBAHIN INI AJA BRO! (cuma 1 baris)
-    define: {
-      'process.env': 'import.meta.env',
-    },
-    // END OF TAMBAHAN
-
     build: {
+      // Optimize bundle splitting
+      // Let Rollup decide chunking to avoid circular chunk deps causing TDZ
       rollupOptions: {
         output: {
           manualChunks: {
-            // Separate heavy libraries
-            'vendor-animation': ['framer-motion', 'gsap'],
-            'vendor-maps': ['@react-google-maps/api', 'mapbox-gl', 'maplibre-gl'],
-            'vendor-3d': ['three', '@react-three/fiber', '@react-three/drei', 'cobe'],
-            'vendor-ui': ['lucide-react', '@radix-ui/react-icons']
+            'vendor-icons': ['lucide-react'],
+            'vendor-motion': ['framer-motion'],
+            'vendor-ui': ['vaul']
           }
         }
-      }
+      },
+      // Increase chunk size warning limit
+      chunkSizeWarningLimit: 1000,
+      // Enable minification
+      minify: true
     },
     optimizeDeps: {
-      // In dev on OneDrive, avoid optimizer touching node_modules/.vite
-      noDiscovery: process.env.NODE_ENV === 'development',
-      include: process.env.NODE_ENV === 'development' ? [] : ['react', 'react-dom'],
-      exclude: ['@react-three/fiber', '@react-three/drei']
+      include: [
+        'react', 
+        'react-dom', 
+        'react-dom/client',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
+        'three', 
+        'firebase/app', 
+        'firebase/auth', 
+        'firebase/firestore'
+      ],
+      force: true
+    },
+    resolve: {
+      dedupe: ['react', 'react-dom'],
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+        'src': path.resolve(__dirname, './src')
+      }
     }
   }
 });

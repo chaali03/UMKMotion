@@ -49,7 +49,6 @@ const STORAGE_KEY = 'saskia_chat_sessions';
 
 const AIPage: React.FC = () => {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>(() => {
-    // Default: start with a fresh chat (no anonymous persistence)
     return [{ id: '1', title: 'Percakapan Baru', messages: [], createdAt: new Date(), updatedAt: new Date() }];
   });
 
@@ -91,7 +90,6 @@ const AIPage: React.FC = () => {
     session.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Helper to always scroll to the bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -101,7 +99,6 @@ const AIPage: React.FC = () => {
     setVoiceSupported(!!SR);
   }, []);
 
-  // Persist only for logged-in users with a per-user key
   useEffect(() => {
     if (!currentUser) return;
     try {
@@ -110,7 +107,6 @@ const AIPage: React.FC = () => {
     } catch {}
   }, [chatSessions, currentUser]);
 
-  // Hydrate from storage after auth resolves
   useEffect(() => {
     if (!currentUser) return;
     try {
@@ -125,7 +121,6 @@ const AIPage: React.FC = () => {
           messages: (session.messages || []).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }))
         }));
         setChatSessions(restored.length ? restored : [{ id: '1', title: 'Percakapan Baru', messages: [], createdAt: new Date(), updatedAt: new Date() }]);
-        // Ensure current session id points to first
         if (restored.length) setCurrentSessionId(restored[0].id);
       }
     } catch {}
@@ -137,9 +132,17 @@ const AIPage: React.FC = () => {
 
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
-      setIsSidebarOpen(true);
-    }
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -400,7 +403,7 @@ const AIPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex min-h-screen bg-slate-50 overflow-hidden" style={{ minHeight: '100svh' }}>
       {/* Sidebar Overlay for Mobile */}
       <AnimatePresence>
         {mounted && isSidebarOpen && (
@@ -423,22 +426,22 @@ const AIPage: React.FC = () => {
             animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed lg:relative w-80 h-full bg-white border-r border-slate-200 flex flex-col z-50 shadow-xl lg:shadow-none"
+            className="fixed lg:relative w-80 max-w-[85vw] h-full bg-white border-r border-slate-200 flex flex-col z-50 shadow-xl lg:shadow-none"
           >
             {/* Sidebar Header */}
-            <div className="p-6 border-b border-slate-200">
+            <div className="p-4 sm:p-6 border-b border-slate-200">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <motion.div 
                     whileHover={{ rotate: 360 }}
                     transition={{ duration: 0.6 }}
-                    className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg"
+                    className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg"
                   >
-                    <MessageSquare className="w-6 h-6 text-white" />
+                    <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </motion.div>
                   <div>
-                    <h2 className="font-bold text-slate-900 text-lg">Riwayat Chat</h2>
-                    <p className="text-sm text-slate-500">{chatSessions.length} percakapan</p>
+                    <h2 className="font-bold text-slate-900 text-base sm:text-lg">Riwayat Chat</h2>
+                    <p className="text-xs sm:text-sm text-slate-500">{chatSessions.length} percakapan</p>
                   </div>
                 </div>
                 <motion.button
@@ -447,7 +450,7 @@ const AIPage: React.FC = () => {
                   onClick={() => setIsSidebarOpen(false)}
                   className="p-2 hover:bg-slate-100 rounded-xl transition-colors lg:hidden"
                 >
-                  <ChevronLeft className="w-5 h-5 text-slate-600" />
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" />
                 </motion.button>
               </div>
 
@@ -467,24 +470,24 @@ const AIPage: React.FC = () => {
                 whileHover={{ scale: 1.02, y: -1 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={createNewChat}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold shadow-lg transition-all"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold shadow-lg transition-all text-sm sm:text-base"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 Mulai Chat Baru
               </motion.button>
             </div>
 
             {/* Chat Sessions List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 custom-scrollbar">
               <AnimatePresence mode="popLayout">
                 {filteredSessions.length === 0 ? (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-16 px-4"
+                    className="text-center py-8 sm:py-16 px-4"
                   >
-                    <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <Search className="w-8 h-8 text-slate-400" />
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Search className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400" />
                     </div>
                     <p className="text-sm text-slate-600 font-medium mb-1">Tidak ada percakapan</p>
                     <p className="text-xs text-slate-400">Coba kata kunci lain atau buat chat baru</p>
@@ -522,13 +525,13 @@ const AIPage: React.FC = () => {
                             if (window.innerWidth < 1024) setIsSidebarOpen(false);
                           }
                         }}
-                        className={`w-full text-left p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                        className={`w-full text-left p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer ${
                           currentSessionId === session.id
                             ? 'bg-orange-500 text-white border-orange-500 shadow-lg'
                             : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300'
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start justify-between gap-2 sm:gap-3">
                           <div className="flex-1 min-w-0">
                             {editingSessionId === session.id ? (
                               <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -544,27 +547,27 @@ const AIPage: React.FC = () => {
                                       setEditingTitle('');
                                     }
                                   }}
-                                  className="flex-1 px-3 py-2 text-sm font-medium bg-white text-slate-900 border-2 border-orange-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                  className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 text-sm font-medium bg-white text-slate-900 border-2 border-orange-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
                                   autoFocus
                                 />
                                 <motion.button
                                   whileHover={{ scale: 1.1 }}
                                   whileTap={{ scale: 0.9 }}
                                   onClick={saveTitle}
-                                  className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                                  className="p-1.5 sm:p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
                                 >
-                                  <Check className="w-4 h-4" />
+                                  <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </motion.button>
                               </div>
                             ) : (
                               <>
-                                <div className="flex items-start justify-between mb-2">
-                                  <h3 className={`text-sm font-semibold truncate pr-2 ${
+                                <div className="flex items-start justify-between mb-1.5 sm:mb-2">
+                                  <h3 className={`text-xs sm:text-sm font-semibold truncate pr-2 ${
                                     currentSessionId === session.id ? 'text-white' : 'text-slate-800'
                                   }`}>
                                     {session.title}
                                   </h3>
-                                  <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
+                                  <span className={`text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full flex-shrink-0 ${
                                     currentSessionId === session.id 
                                       ? 'bg-white/20 text-orange-100' 
                                       : 'bg-slate-100 text-slate-600'
@@ -572,7 +575,7 @@ const AIPage: React.FC = () => {
                                     {session.messages.length} pesan
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs">
+                                <div className="flex items-center gap-1.5 sm:gap-2 text-xs">
                                   <Clock className={`w-3 h-3 flex-shrink-0 ${
                                     currentSessionId === session.id ? 'text-orange-100' : 'text-slate-400'
                                   }`} />
@@ -596,10 +599,10 @@ const AIPage: React.FC = () => {
                                 whileTap={{ scale: 0.9 }}
                                 type="button"
                                 onClick={(e) => startEditingTitle(session.id, session.title, e)}
-                                className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                                className="p-1 hover:bg-white/20 rounded-lg transition-colors"
                                 title="Edit nama"
                               >
-                                <Edit2 className="w-3.5 h-3.5" />
+                                <Edit2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                               </motion.button>
                               {chatSessions.length > 1 && (
                                 <motion.button
@@ -607,10 +610,10 @@ const AIPage: React.FC = () => {
                                   whileTap={{ scale: 0.9 }}
                                   type="button"
                                   onClick={(e) => deleteChat(session.id, e)}
-                                  className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                                  className="p-1 hover:bg-white/20 rounded-lg transition-colors"
                                   title="Hapus chat"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                 </motion.button>
                               )}
                             </motion.div>
@@ -624,13 +627,13 @@ const AIPage: React.FC = () => {
             </div>
 
             {/* Sidebar Footer */}
-            <div className="p-4 border-t border-slate-200 bg-slate-50">
+            <div className="p-3 sm:p-4 border-t border-slate-200 bg-slate-50">
               <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
                 <div className="w-8 h-8 bg-orange-500 rounded-xl flex items-center justify-center shadow-md">
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-semibold">Dina AI Assistant</p>
+                  <p className="font-semibold text-xs sm:text-sm">Dina AI Assistant</p>
                   <p className="text-xs text-slate-500">Powered by Gemini</p>
                 </div>
               </div>
@@ -640,37 +643,37 @@ const AIPage: React.FC = () => {
       </AnimatePresence>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div className="flex-1 flex flex-col bg-white min-w-0">
         {/* Header */}
         <motion.header
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white border-b border-slate-200 px-6 py-4 shadow-sm"
+          className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4 shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2.5 hover:bg-slate-100 rounded-xl transition-colors"
+                className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
               >
-                <Menu className="w-5 h-5 text-slate-700" />
+                <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700" />
               </motion.button>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <motion.div
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   className="relative"
                 >
-                  <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg border-2 border-white">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl overflow-hidden shadow-lg border-2 border-white">
                     <img src="/asset/Dina/ProfileDina.webp" alt="Dina" className="w-full h-full object-cover" />
                   </div>
                 </motion.div>
                 
                 <div>
-                  <h1 className="text-xl font-bold text-slate-900">Dina AI Assistant</h1>
-                  <p className="text-sm text-slate-500">Siap membantu UMKM Indonesia</p>
+                  <h1 className="text-lg sm:text-xl font-bold text-slate-900">Dina AI Assistant</h1>
+                  <p className="text-xs sm:text-sm text-slate-500">Siap membantu UMKM Indonesia</p>
                 </div>
               </div>
             </div>
@@ -680,11 +683,11 @@ const AIPage: React.FC = () => {
                 whileHover={{ scale: 1.02, x: -2 }}
                 whileTap={{ scale: 0.98 }}
                 href={isAuthed ? '/homepage' : '/'}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors"
+                className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors text-sm"
                 aria-label="Kembali ke beranda"
               >
-                <ChevronLeft className="w-4 h-4" />
-                <span className="text-sm">Kembali</span>
+                <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline">Kembali</span>
               </motion.a>
 
               {authReady && (
@@ -693,23 +696,23 @@ const AIPage: React.FC = () => {
                     whileHover={{ scale: 1.02, y: -1 }}
                     whileTap={{ scale: 0.98 }}
                     href="/login"
-                    className="shimmer-effect group relative bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] hover:from-[#ff8534] hover:to-[#ff6914] text-white h-11 items-center flex justify-center px-5 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-300 font-semibold text-sm gap-2 hover:scale-[1.02]"
+                    className="shimmer-effect group relative bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] hover:from-[#ff8534] hover:to-[#ff6914] text-white h-9 sm:h-11 items-center flex justify-center px-3 sm:px-5 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-300 font-semibold text-xs sm:text-sm gap-2 hover:scale-[1.02]"
                   >
-                    <LogIn size={18} className="transition-transform duration-300 group-hover:scale-110" />
-                    <span>Masuk</span>
+                    <LogIn size={16} className="sm:w-4 sm:h-4 transition-transform duration-300 group-hover:scale-110" />
+                    <span className="hidden xs:inline">Masuk</span>
                   </motion.a>
                 ) : (
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-col items-end leading-none">
-                      <span className="text-sm font-semibold text-slate-900 truncate max-w-[160px]">{displayName}</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="hidden sm:flex flex-col items-end leading-none">
+                      <span className="text-sm font-semibold text-slate-900 truncate max-w-[120px] lg:max-w-[160px]">{displayName}</span>
                       <span className="text-[11px] text-slate-500">Masuk</span>
                     </div>
-                    <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-white shadow">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden ring-2 ring-white shadow">
                       {currentUser?.photoURL ? (
                         <img src={currentUser.photoURL} alt="Profil" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-600">
-                          <User className="w-5 h-5" />
+                          <User className="w-3 h-3 sm:w-4 sm:h-4" />
                         </div>
                       )}
                     </div>
@@ -721,11 +724,11 @@ const AIPage: React.FC = () => {
         </motion.header>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto px-6 py-8 bg-slate-50 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 bg-slate-50 custom-scrollbar">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSessionId}
-              className="max-w-4xl mx-auto space-y-6"
+              className="max-w-4xl mx-auto space-y-4 sm:space-y-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -733,17 +736,17 @@ const AIPage: React.FC = () => {
             >
               {/* Empty State */}
               {messages.length === 0 && !isLoading && (
-                <div className="py-12 sm:py-20 text-center">
+                <div className="py-8 sm:py-12 md:py-20 text-center">
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2 }}
-                    className="w-24 h-24 mx-auto mb-6 bg-orange-500 rounded-3xl flex items-center justify-center shadow-2xl"
+                    className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto mb-4 sm:mb-6 bg-orange-500 rounded-3xl flex items-center justify-center shadow-2xl"
                   >
                     <img 
                       src="/asset/Dina/ProfileDina.webp" 
                       alt="Dina" 
-                      className="w-16 h-16 rounded-2xl object-cover"
+                      className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-2xl object-cover"
                     />
                   </motion.div>
                   
@@ -751,7 +754,7 @@ const AIPage: React.FC = () => {
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    className="text-4xl sm:text-5xl font-extrabold text-slate-900 mb-6"
+                    className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-slate-900 mb-4 sm:mb-6"
                   >
                     Hai! Saya Dina
                   </motion.h1>
@@ -760,7 +763,7 @@ const AIPage: React.FC = () => {
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.4 }}
-                    className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto"
+                    className="text-sm sm:text-base md:text-lg text-slate-600 mb-6 sm:mb-8 max-w-2xl mx-auto px-4"
                   >
                     Siap Menjadi Pengertian Untuk Anda!
                     dan merekomendasikan UMKM terdekat. Saya siap menjadi pengertian untuk Anda.
@@ -773,7 +776,7 @@ const AIPage: React.FC = () => {
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.7 }}
                       onSubmit={handleSubmit}
-                      className="mx-auto w-[92%] sm:w-[80%] max-w-sm md:max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
+                      className="mx-auto w-full max-w-sm sm:max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
                     >
                       <div className="p-1">
                         <input
@@ -781,20 +784,20 @@ const AIPage: React.FC = () => {
                           value={inputValue}
                           onChange={(e) => setInputValue(e.target.value)}
                           placeholder="Tanya Dina tentang produk UMKM..."
-                          className="w-full px-6 py-4 bg-transparent outline-none placeholder:text-slate-400 text-lg"
+                          className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-transparent outline-none placeholder:text-slate-400 text-base sm:text-lg"
                         />
                       </div>
-                      <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                      <div className="px-4 sm:px-6 py-3 sm:py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                        <div className="flex items-center gap-1 sm:gap-2">
                           <motion.button
                             type="button"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => fileInputRef.current?.click()}
-                            className="p-3 text-slate-600 hover:bg-white rounded-xl transition-colors border border-slate-200"
+                            className="p-2 sm:p-3 text-slate-600 hover:bg-white rounded-xl transition-colors border border-slate-200"
                             title="Upload gambar"
                           >
-                            <ImageIcon className="w-5 h-5" />
+                            <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                           </motion.button>
                           
                           {voiceSupported && (
@@ -806,14 +809,14 @@ const AIPage: React.FC = () => {
                               onMouseUp={stopRecording}
                               onTouchStart={startRecording}
                               onTouchEnd={stopRecording}
-                              className={`p-3 rounded-xl transition-colors border ${
+                              className={`p-2 sm:p-3 rounded-xl transition-colors border ${
                                 isRecording 
                                   ? 'bg-red-500 text-white border-red-500' 
                                   : 'text-slate-600 hover:bg-white border-slate-200'
                               }`}
                               title="Tekan untuk merekam"
                             >
-                              {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                              {isRecording ? <MicOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
                             </motion.button>
                           )}
                         </div>
@@ -823,10 +826,10 @@ const AIPage: React.FC = () => {
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           disabled={!inputValue.trim()}
-                          className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                          className="px-4 sm:px-6 py-2.5 sm:py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 text-sm sm:text-base"
                         >
-                          <Send className="w-4 h-4" />
-                          Kirim
+                          <Send className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="hidden xs:inline">Kirim</span>
                         </motion.button>
                       </div>
                     </motion.form>
@@ -835,11 +838,11 @@ const AIPage: React.FC = () => {
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.6 }}
-                      className="mx-auto w-[92%] sm:w-[80%] max-w-sm md:max-w-md"
+                      className="mx-auto w-full max-w-sm sm:max-w-md"
                     >
                       <a
                         href="/login"
-                        className="inline-flex items-center justify-center w-full px-6 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-semibold shadow-lg"
+                        className="inline-flex items-center justify-center w-full px-6 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-semibold shadow-lg text-sm sm:text-base"
                       >
                         Masuk untuk mulai chat
                       </a>
@@ -860,43 +863,43 @@ const AIPage: React.FC = () => {
                       duration: 0.3,
                       delay: index * 0.03
                     }}
-                    className={`flex gap-4 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex gap-3 sm:gap-4 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     {message.sender === 'dina' && (
                       <motion.div
                         whileHover={{ scale: 1.05, rotate: 5 }}
-                        className="flex-shrink-0 w-12 h-12 rounded-2xl overflow-hidden shadow-lg border-2 border-white"
+                        className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-2xl overflow-hidden shadow-lg border-2 border-white"
                       >
                         <img src="/asset/Dina/ProfileDina.webp" alt="Dina" className="w-full h-full object-cover" />
                       </motion.div>
                     )}
 
-                    <div className={`flex flex-col max-w-[80%] sm:max-w-[70%] ${message.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                    <div className={`flex flex-col max-w-[85%] xs:max-w-[80%] sm:max-w-[70%] ${message.sender === 'user' ? 'items-end' : 'items-start'}`}>
                       <motion.div
                         whileHover={{ scale: 1.01 }}
-                        className={`px-6 py-4 rounded-3xl shadow-lg ${
+                        className={`px-4 py-3 sm:px-6 sm:py-4 rounded-3xl shadow-lg ${
                           message.sender === 'user'
                             ? 'bg-orange-500 text-white'
                             : 'bg-white text-slate-800 border border-slate-200'
-                        } ${message.type === 'image' ? 'p-4' : ''}`}
+                        } ${message.type === 'image' ? 'p-3 sm:p-4' : ''}`}
                       >
                         {message.type === 'image' && message.imageData && (
                           <motion.div
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className="mb-3"
+                            className="mb-2 sm:mb-3"
                           >
                             <img 
                               src={message.imageData} 
                               alt="Uploaded" 
-                              className="max-w-sm rounded-2xl shadow-md border border-slate-200"
+                              className="w-full max-w-[200px] xs:max-w-xs sm:max-w-sm rounded-2xl shadow-md border border-slate-200"
                             />
                           </motion.div>
                         )}
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                        <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                       </motion.div>
                       
-                      <div className={`flex items-center gap-3 mt-3 px-2 ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+                      <div className={`flex items-center gap-2 sm:gap-3 mt-2 sm:mt-3 px-1 sm:px-2 ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
                         <span className="text-xs text-slate-500 font-medium">
                           {mounted ? message.timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '00:00'}
                         </span>
@@ -905,13 +908,13 @@ const AIPage: React.FC = () => {
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => isSpeaking ? stopSpeaking() : speakText(message.content)}
-                            className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
+                            className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-xl transition-colors"
                             title={isSpeaking ? 'Stop' : 'Dengarkan'}
                           >
                             {isSpeaking ? (
-                              <VolumeX className="w-4 h-4 text-slate-600" />
+                              <VolumeX className="w-3 h-3 sm:w-4 sm:h-4 text-slate-600" />
                             ) : (
-                              <Volume2 className="w-4 h-4 text-slate-500" />
+                              <Volume2 className="w-3 h-3 sm:w-4 sm:h-4 text-slate-500" />
                             )}
                           </motion.button>
                         )}
@@ -921,9 +924,9 @@ const AIPage: React.FC = () => {
                     {message.sender === 'user' && (
                       <motion.div
                         whileHover={{ scale: 1.05, rotate: -5 }}
-                        className="flex-shrink-0 w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg border-2 border-white"
+                        className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg border-2 border-white"
                       >
-                        <User className="w-6 h-6 text-white" />
+                        <User className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
                       </motion.div>
                     )}
                   </motion.div>
@@ -935,14 +938,14 @@ const AIPage: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex gap-4 justify-start"
+                  className="flex gap-3 sm:gap-4 justify-start"
                 >
-                  <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg border-2 border-white">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-2xl overflow-hidden shadow-lg border-2 border-white">
                     <img src="/asset/Dina/ProfileDina.webp" alt="Dina" className="w-full h-full object-cover" />
                   </div>
-                  <div className="bg-white px-6 py-4 rounded-3xl shadow-lg border border-slate-200">
-                    <div className="flex items-center gap-4">
-                      <div className="flex gap-1.5">
+                  <div className="bg-white px-4 py-3 sm:px-6 sm:py-4 rounded-3xl shadow-lg border border-slate-200">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="flex gap-1 sm:gap-1.5">
                         {[0, 1, 2].map((i) => (
                           <motion.div
                             key={i}
@@ -955,11 +958,11 @@ const AIPage: React.FC = () => {
                               repeat: Infinity,
                               delay: i * 0.2
                             }}
-                            className="w-2.5 h-2.5 bg-orange-500 rounded-full"
+                            className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-orange-500 rounded-full"
                           />
                         ))}
                       </div>
-                      <span className="text-sm text-slate-600 font-medium">Dina sedang mengetik...</span>
+                      <span className="text-xs sm:text-sm text-slate-600 font-medium">Dina sedang mengetik...</span>
                     </div>
                   </div>
                 </motion.div>
@@ -975,101 +978,102 @@ const AIPage: React.FC = () => {
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="border-t border-slate-200 bg-white px-6 py-6 shadow-lg"
+            className="border-t border-slate-200 bg-white px-3 sm:px-4 md:px-6 py-4 sm:py-6 shadow-lg"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}
           >
             <div className="max-w-4xl mx-auto">
               {selectedImage && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="mb-4 relative inline-block"
+                  className="mb-3 sm:mb-4 relative inline-block"
                 >
                   <img 
                     src={selectedImage} 
                     alt="Selected" 
-                    className="w-32 h-32 object-cover rounded-2xl shadow-lg border-2 border-slate-200" 
+                    className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-2xl shadow-lg border-2 border-slate-200" 
                   />
                   <motion.button
-                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setSelectedImage(null)}
-                    className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors"
+                    className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3 h-3 sm:w-4 sm:h-4" />
                   </motion.button>
                 </motion.div>
               )}
 
-              <form onSubmit={handleSubmit} className="flex items-end gap-3 w-[92%] sm:w-[80%] max-w-sm md:max-w-md mx-auto">
-                <div className="flex-1">
+              <form onSubmit={handleSubmit} className="flex items-end gap-2 sm:gap-3 w-full max-w-4xl mx-auto">
+                <div className="flex-1 min-w-0">
                   <div className="relative">
                     <input
                       type="text"
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       placeholder={mounted ? placeholders[Math.floor(Math.random() * placeholders.length)] : placeholders[0]}
-                      className="w-full px-6 py-4 bg-slate-100 border-2 border-transparent focus:border-orange-500 focus:bg-white rounded-2xl text-sm focus:outline-none transition-all placeholder:text-slate-400 shadow-sm"
+                      className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-slate-100 border-2 border-transparent focus:border-orange-500 focus:bg-white rounded-2xl text-sm focus:outline-none transition-all placeholder:text-slate-400 shadow-sm"
                     />
                     {interimText && (
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="absolute bottom-full mb-2 left-0 right-0 bg-white rounded-xl p-3 shadow-lg border border-slate-200"
+                        className="absolute bottom-full mb-2 left-0 right-0 bg-white rounded-xl p-2 sm:p-3 shadow-lg border border-slate-200"
                       >
                         <div className="flex items-center gap-2 text-xs text-slate-600">
-                          <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-orange-500 rounded-full animate-pulse" />
                           <span className="font-medium">Mendengarkan:</span>
-                          <span className="text-slate-700">{interimText}</span>
+                          <span className="text-slate-700 truncate">{interimText}</span>
                         </div>
                       </motion.div>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   {/* Image Upload */}
                   <motion.button
                     type="button"
-                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileHover={{ scale: 1.05, y: -1 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => fileInputRef.current?.click()}
-                    className="p-4 bg-slate-100 hover:bg-white text-slate-700 rounded-2xl transition-all shadow-sm border border-slate-200"
+                    className="p-2.5 sm:p-3 md:p-4 bg-slate-100 hover:bg-white text-slate-700 rounded-2xl transition-all shadow-sm border border-slate-200"
                     title="Upload Gambar"
                   >
-                    <ImageIcon className="w-5 h-5" />
+                    <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </motion.button>
 
                   {/* Voice Recording */}
                   {voiceSupported && (
                     <motion.button
                       type="button"
-                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileHover={{ scale: 1.05, y: -1 }}
                       whileTap={{ scale: 0.95 }}
                       onMouseDown={startRecording}
                       onMouseUp={stopRecording}
                       onTouchStart={startRecording}
                       onTouchEnd={stopRecording}
-                      className={`p-4 rounded-2xl transition-all shadow-sm border ${
+                      className={`p-2.5 sm:p-3 md:p-4 rounded-2xl transition-all shadow-sm border ${
                         isRecording 
                           ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' 
                           : 'bg-slate-100 hover:bg-white text-slate-700 border-slate-200'
                       }`}
                       title={isRecording ? 'Stop Recording' : 'Hold to Talk'}
                     >
-                      {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                      {isRecording ? <MicOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
                     </motion.button>
                   )}
 
                   {/* Send Button */}
                   <motion.button
                     type="submit"
-                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileHover={{ scale: 1.05, y: -1 }}
                     whileTap={{ scale: 0.95 }}
                     disabled={isLoading || (!inputValue.trim() && !selectedImage)}
-                    className="p-4 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="p-2.5 sm:p-3 md:p-4 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 sm:gap-2"
                     title="Kirim Pesan"
                   >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                   </motion.button>
 
                   <input
@@ -1086,7 +1090,7 @@ const AIPage: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="mt-3 text-xs text-red-500 flex items-center gap-2"
+                  className="mt-2 sm:mt-3 text-xs text-red-500 flex items-center gap-2"
                 >
                   <X className="w-3 h-3" />
                   {voiceError}
@@ -1097,10 +1101,10 @@ const AIPage: React.FC = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500"
+                className="mt-3 sm:mt-4 flex items-center justify-center gap-2 text-xs text-slate-500 text-center"
               >
-                <Zap className="w-4 h-4 text-orange-500" />
-                <span>Dina dapat membantu mencari produk UMKM dan memberikan tips bisnis</span>
+                <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500 flex-shrink-0" />
+                <span className="text-xs">Dina dapat membantu mencari produk UMKM dan memberikan tips bisnis</span>
               </motion.div>
             </div>
           </motion.div>
@@ -1110,7 +1114,7 @@ const AIPage: React.FC = () => {
       {/* Custom Scrollbar Styles */}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
+          width: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: #f1f5f9;
@@ -1122,6 +1126,12 @@ const AIPage: React.FC = () => {
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #94a3b8;
+        }
+        
+        @media (min-width: 640px) {
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+          }
         }
       `}</style>
     </div>

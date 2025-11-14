@@ -1,0 +1,72 @@
+---
+// Lazy loading wrapper for heavy components
+---
+
+<script>
+  // Intersection Observer for lazy loading components
+  function initLazyComponents() {
+    const lazyElements = document.querySelectorAll('[data-lazy-component]');
+    
+    if ('IntersectionObserver' in window) {
+      const lazyObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const element = entry.target;
+            const componentName = element.dataset.lazyComponent;
+            
+            // Load component dynamically
+            import(`../${componentName}`)
+              .then(module => {
+                // Component loaded successfully
+                element.classList.add('loaded');
+              })
+              .catch(err => {
+                console.warn(`Failed to load component: ${componentName}`, err);
+              });
+            
+            lazyObserver.unobserve(element);
+          }
+        });
+      }, {
+        rootMargin: '50px 0px',
+        threshold: 0.1
+      });
+      
+      lazyElements.forEach(el => lazyObserver.observe(el));
+    } else {
+      // Fallback for browsers without IntersectionObserver
+      lazyElements.forEach(el => {
+        const componentName = el.dataset.lazyComponent;
+        import(`../${componentName}`).catch(err => {
+          console.warn(`Failed to load component: ${componentName}`, err);
+        });
+      });
+    }
+  }
+  
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLazyComponents);
+  } else {
+    initLazyComponents();
+  }
+</script>
+
+<style>
+  [data-lazy-component] {
+    min-height: 200px;
+    background: linear-gradient(90deg, #f0f0f0 25%, transparent 37%, #f0f0f0 63%);
+    background-size: 400% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+  }
+  
+  [data-lazy-component].loaded {
+    background: none;
+    animation: none;
+  }
+  
+  @keyframes loading {
+    0% { background-position: 100% 50%; }
+    100% { background-position: -100% 50%; }
+  }
+</style>

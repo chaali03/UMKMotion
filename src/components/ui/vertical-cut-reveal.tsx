@@ -1,6 +1,6 @@
 import { forwardRef, useEffect } from 'react';
-import { motion, useAnimation } from 'motion/react';
-import type { Variants } from 'motion/react';
+import { motion, useAnimation } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 
 export interface VerticalCutRevealProps {
   children: React.ReactNode;
@@ -8,13 +8,15 @@ export interface VerticalCutRevealProps {
   delay?: number;
   duration?: number;
   yOffset?: number;
-  as?: keyof JSX.IntrinsicElements;
+  as?: React.ElementType;
 }
 
 const VerticalCutReveal = forwardRef<HTMLElement, VerticalCutRevealProps>(
   ({ children, className = '', delay = 0, duration = 0.6, yOffset = 20, as = 'div' }, ref) => {
     const controls = useAnimation();
-    const Component = motion[as] as React.ElementType;
+    const base: React.ElementType = as || 'div';
+    const Component: React.ElementType =
+      typeof base === 'string' ? (motion as any)[base] : motion(base as any);
 
     useEffect(() => {
       controls.start('visible');

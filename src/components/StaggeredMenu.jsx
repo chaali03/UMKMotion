@@ -1,6 +1,17 @@
-import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect as useReactLayoutEffect,
+  useRef,
+  useState
+} from 'react';
 import { gsap } from 'gsap';
 import './StaggeredMenu.css';
+
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' && typeof useReactLayoutEffect === 'function'
+    ? useReactLayoutEffect
+    : useEffect;
 
 export const StaggeredMenu = ({
   position = 'right',
@@ -40,7 +51,7 @@ export const StaggeredMenu = ({
   const busyRef = useRef(false);
   const itemEntranceTweenRef = useRef(null);
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const ctx = gsap.context(() => {
       const panel = panelRef.current;
       const preContainer = preLayersRef.current;
@@ -258,7 +269,7 @@ export const StaggeredMenu = ({
     [openMenuButtonColor, menuButtonColor, changeMenuColorOnOpen]
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (toggleBtnRef.current) {
       if (changeMenuColorOnOpen) {
         const targetColor = openRef.current ? openMenuButtonColor : menuButtonColor;

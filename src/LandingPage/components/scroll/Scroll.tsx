@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 
 const words = [
   "kuliner.",
@@ -55,44 +55,70 @@ export default function Scroll() {
     } catch {}
 
     const update = () => {
+      // Batch DOM reads first to prevent forced reflow
+      const measurements: Array<{
+        element: HTMLElement;
+        index: number;
+        rect: DOMRect;
+        mid: number;
+        distance: number;
+      }> = [];
+      const c = centerY();
+      
+      // Read all measurements first
       if (container && items.length) {
         const desired = Math.max(window.innerHeight * 1.2, items.length * (window.innerHeight * 0.12));
         const current = parseFloat(getComputedStyle(container).minHeight || '0');
-        if (!current || current < desired) container.style.minHeight = `${desired}px`;
+        if (!current || current < desired) {
+          container.style.minHeight = `${desired}px`;
+        }
       }
-      const c = centerY();
-      let bestIdx = 0;
-      let bestDist = Infinity;
+      
+      // Batch all getBoundingClientRect calls
       items.forEach((li, i) => {
         const r = li.getBoundingClientRect();
-        const m = r.top + r.height / 2;
-        const d = Math.abs(m - c);
-        if (d < bestDist) { bestDist = d; bestIdx = i; }
+        measurements.push({
+          element: li,
+          index: i,
+          rect: r,
+          mid: r.top + r.height / 2,
+          distance: Math.abs(r.top + r.height / 2 - c)
+        });
       });
+      
+      // Find best index without additional DOM reads
+      let bestIdx = 0;
+      let bestDist = Infinity;
+      measurements.forEach(({ distance, index }) => {
+        if (distance < bestDist) {
+          bestDist = distance;
+          bestIdx = index;
+        }
+      });
+      
       const lastIndex = items.length - 1;
       const activeIndex = Math.min(bestIdx, lastIndex);
-      // Smoothly highlight items based on distance from center
-      const normBase = Math.max(160, window.innerHeight * (isSmallScreen() ? 0.28 : 0.36)); // slightly tighter to light more items
-      items.forEach((li, idx) => {
-        const r = li.getBoundingClientRect();
-        const mid = r.top + r.height / 2;
-        const d = Math.abs(mid - c);
-        const n = Math.min(d / normBase, 1); // 0..1
-        const w = 1 - n; // weight closer to center
-        const opacity = 0.40 + 0.60 * w; // 0.40..1 — neighbors remain readable
-        const scale = 0.988 + 0.042 * w; // 0.988..1.03
-        const y = -8 * w; // subtle lift
-        const bright = 1 + 0.12 * w;
-        const blur = 2 * (1 - w); // very small blur off-center
-        li.style.opacity = opacity.toString();
-        li.style.filter = `brightness(${bright.toFixed(2)}) blur(${blur.toFixed(2)}px)`; // tiny blur off-center
-        li.style.transform = `translateY(${y}px) scale(${scale})`;
-        li.style.transition = 'transform 200ms cubic-bezier(.22,.85,.3,1), opacity 200ms linear, filter 200ms linear, text-shadow 200ms linear';
-        li.style.willChange = 'transform, opacity, filter';
-        // Active class toggle handled after loop
+      const normBase = Math.max(160, window.innerHeight * (isSmallScreen() ? 0.28 : 0.36));
+      
+      // Batch all DOM writes
+      requestAnimationFrame(() => {
+        measurements.forEach(({ element, index, distance }) => {
+          const n = Math.min(distance / normBase, 1);
+          const w = 1 - n;
+          const opacity = 0.40 + 0.60 * w;
+          const scale = 0.988 + 0.042 * w;
+          const y = -8 * w;
+          const bright = 1 + 0.12 * w;
+          const blur = 2 * (1 - w);
+          
+          element.style.opacity = opacity.toString();
+          element.style.filter = `brightness(${bright.toFixed(2)}) blur(${blur.toFixed(2)}px)`;
+          element.style.transform = `translateY(${y}px) scale(${scale})`;
+          element.style.transition = 'transform 200ms cubic-bezier(.22,.85,.3,1), opacity 200ms linear, filter 200ms linear';
+          element.style.willChange = 'transform, opacity, filter';
+          element.classList.toggle('is-active', index === activeIndex);
+        });
       });
-      // Mark active item for richer styling
-      items.forEach((li, i) => li.classList.toggle('is-active', i === activeIndex));
       // No dynamic word after 'Anda bisa' — left title remains static.
       if (titleEl && items[activeIndex]) {
         const ar = items[activeIndex].getBoundingClientRect();

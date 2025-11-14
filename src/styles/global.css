@@ -6,6 +6,12 @@
 /* Unified typography across the entire app */
 :root {
   --font-sans: ui-sans-serif, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  /* Brand palette */
+  --brand-blue: #001151;
+  --brand-orange: #FD5701;
+  --brand-orange-600: #e54f00;
+  --brand-orange-500: #fd6a2a;
+  --brand-blue-ink: rgba(0,17,81,0.85);
 }
 
 html, body, button, input, select, textarea, a {

@@ -36,8 +36,8 @@ export const generateSrcSet = (src: string, sizes: number[]): string => {
     .join(', ');
 };
 
-// Image component with optimization
-export const OptimizedImage: React.FC<{
+// Image optimization utilities
+export interface OptimizedImageProps {
   src: string;
   alt: string;
   width?: number;
@@ -45,31 +45,27 @@ export const OptimizedImage: React.FC<{
   className?: string;
   loading?: 'lazy' | 'eager';
   sizes?: string;
-}> = ({ 
-  src, 
-  alt, 
-  width, 
-  height, 
-  className = '', 
-  loading = 'lazy',
-  sizes = '100vw'
-}) => {
+}
+
+export const getOptimizedImageProps = (props: OptimizedImageProps) => {
+  const { src, alt, width, height, className = '', loading = 'lazy', sizes = '100vw' } = props;
   const optimizedSrc = getOptimizedImageUrl(src, { width, height });
   const srcSet = width ? generateSrcSet(src, [width * 0.5, width, width * 1.5, width * 2]) : undefined;
   
-  return (
-    <img
-      src={optimizedSrc}
-      srcSet={srcSet}
-      sizes={sizes}
-      alt={alt}
-      width={width}
-      height={height}
-      className={className}
-      loading={loading}
-      decoding="async"
-    />
-  );
+  return {
+    src: optimizedSrc,
+    srcSet,
+    sizes,
+    alt,
+    width,
+    height,
+    className,
+    loading,
+    style: { 
+      objectFit: 'cover' as const,
+      transition: 'opacity 0.3s ease'
+    }
+  };
 };
 
 // Preload critical images

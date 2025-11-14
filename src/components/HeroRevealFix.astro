@@ -1,0 +1,85 @@
+---
+// Hero reveal animation fix to prevent hydration mismatch
+---
+
+<script>
+  // Prevent hydration mismatch by ensuring consistent initial state
+  function initHeroReveal() {
+    // Remove any existing inline styles that cause hydration mismatch
+    const revealElements = document.querySelectorAll('[data-hero-reveal]');
+    revealElements.forEach(el => {
+      // Clear any inline styles
+      el.removeAttribute('style');
+      el.classList.remove('show');
+    });
+    
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const element = entry.target;
+            const delay = parseFloat(element.dataset.delay || '0') * 1000;
+            
+            setTimeout(() => {
+              element.classList.add('show');
+            }, delay);
+            
+            observer.unobserve(element);
+          }
+        });
+      }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      });
+      
+      revealElements.forEach(el => observer.observe(el));
+    });
+  }
+  
+  // Run immediately if DOM is ready, otherwise wait
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHeroReveal);
+  } else {
+    initHeroReveal();
+  }
+</script>
+
+<style>
+  /* Prevent hydration mismatch by using CSS-only animations */
+  [data-hero-reveal] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  
+  [data-hero-reveal].show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  /* Delay variations using CSS custom properties */
+  [data-hero-reveal][data-delay="0.02s"].show {
+    transition-delay: 0.02s;
+  }
+  
+  [data-hero-reveal][data-delay="0.04s"].show {
+    transition-delay: 0.04s;
+  }
+  
+  [data-hero-reveal][data-delay="0.08s"].show {
+    transition-delay: 0.08s;
+  }
+  
+  [data-hero-reveal][data-delay="0.12s"].show {
+    transition-delay: 0.12s;
+  }
+  
+  [data-hero-reveal][data-delay="0.16s"].show {
+    transition-delay: 0.16s;
+  }
+  
+  [data-hero-reveal][data-delay="0.24s"].show {
+    transition-delay: 0.24s;
+  }
+</style>

@@ -1,10 +1,10 @@
-import { type HTMLMotionProps, motion, useInView } from "motion/react"
+import { motion, useInView } from "framer-motion"
 import type React from "react"
-import type { Variants } from "motion/react"
+import type { Variants } from "framer-motion"
 
-type TimelineAs = keyof HTMLElementTagNameMap | React.ElementType
+type TimelineAs = keyof HTMLElementTagNameMap
 
-type TimelineContentProps<T extends keyof HTMLElementTagNameMap> = {
+type TimelineContentProps = {
   children?: React.ReactNode
   animationNum: number
   className?: string
@@ -12,9 +12,9 @@ type TimelineContentProps<T extends keyof HTMLElementTagNameMap> = {
   as?: TimelineAs
   customVariants?: Variants
   once?: boolean
-} & HTMLMotionProps<T>
+} & React.ComponentProps<typeof motion.div>
 
-export const TimelineContent = <T extends keyof HTMLElementTagNameMap = "div">({
+export const TimelineContent = ({
   children,
   animationNum,
   timelineRef,
@@ -23,7 +23,7 @@ export const TimelineContent = <T extends keyof HTMLElementTagNameMap = "div">({
   customVariants,
   once=false,
   ...props
-}: TimelineContentProps<T>) => {
+}: TimelineContentProps) => {
   const defaultSequenceVariants = {
     visible: (i: number) => ({
       filter: "blur(0px)",
@@ -49,9 +49,9 @@ export const TimelineContent = <T extends keyof HTMLElementTagNameMap = "div">({
   })
 
   const MotionComponent: React.ElementType =
-    typeof as === "string"
-      ? (motion as any)[as || "div"]
-      : as || motion.div
+    typeof as === "string" && as
+      ? (motion as any)[as]
+      : motion.div
 
   return (
     <MotionComponent

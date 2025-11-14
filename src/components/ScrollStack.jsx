@@ -1,5 +1,15 @@
-import React, { useRef, useEffect, useLayoutEffect, useCallback } from 'react';
+import React, {
+  useRef,
+  useEffect,
+  useLayoutEffect as useReactLayoutEffect,
+  useCallback
+} from 'react';
 import Lenis from 'lenis';
+
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' && typeof useReactLayoutEffect === 'function'
+    ? useReactLayoutEffect
+    : useEffect;
 
 const ScrollStack = ({
   children,
@@ -99,7 +109,7 @@ const ScrollStack = ({
     animationFrameRef.current = requestAnimationFrame(raf);
   }, [updateCardTransforms, useWindowScroll]);
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
 

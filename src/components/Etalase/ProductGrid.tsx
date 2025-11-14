@@ -23,50 +23,101 @@ const CACHE_KEY = 'etalase_products_v1';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 const SkeletonCard: React.FC = () => (
-  <div className="product-card" aria-busy>
-    <div className="product-image" style={{ background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: '60%', height: '60%', background: '#e2e8f0', borderRadius: 8, animation: 'pulse 1.5s ease-in-out infinite' }} />
+  <div className="product-card skeleton-card" aria-busy>
+    <div className="skeleton-image">
+      <div className="skeleton-shine" />
     </div>
     <div className="product-info">
-      <div style={{ height: 16, width: '90%', background: '#e2e8f0', borderRadius: 6, marginBottom: 8, animation: 'pulse 1.5s ease-in-out infinite' }} />
-      <div style={{ height: 20, width: '60%', background: '#e2e8f0', borderRadius: 6, marginBottom: 6, animation: 'pulse 1.5s ease-in-out infinite' }} />
-      <div style={{ height: 14, width: '40%', background: '#e2e8f0', borderRadius: 6, animation: 'pulse 1.5s ease-in-out infinite' }} />
+      <div className="skeleton-title" />
+      <div className="skeleton-price" />
+      <div className="skeleton-rating" />
     </div>
-    <style>{`
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-      }
-    `}</style>
   </div>
 );
 
-const ProductCard: React.FC<{ p: Product }> = ({ p }) => (
-  <div className="product-card">
-    <div className="product-image">
-      {p.discountPercent ? <span className="discount-badge">-{p.discountPercent}%</span> : null}
-      <img src={p.imageUrl || '/placeholder.webp'} alt={p.title} loading="lazy" />
-    </div>
-    <div className="product-info">
-      <h3 className="product-title" title={p.title}>{p.title}</h3>
-      <div className="price-section">
-        <span className="price">{currency(p.price)}</span>
-        {p.promoText ? <span className="promo-text">{p.promoText}</span> : null}
-      </div>
-      <div className="rating-section">
-        {typeof p.rating === 'number' ? (
-          <>
-            <span className="star">★</span> {p.rating.toFixed(1)}
-          </>
-        ) : (
-          <span className="star">★</span>
+const ProductCard: React.FC<{ p: Product }> = ({ p }) => {
+  const originalPrice = p.discountPercent ? Math.round(p.price / (1 - p.discountPercent / 100)) : null;
+  
+  return (
+    <div className="product-card">
+      <div className="product-image-container">
+        {p.discountPercent && (
+          <span className="discount-badge">
+            <span className="discount-text">-{p.discountPercent}%</span>
+          </span>
         )}
-        {typeof p.sold === 'number' ? <span className="sold"> • Terjual {p.sold}</span> : null}
+        {p.promoText && (
+          <span className="promo-badge">{p.promoText}</span>
+        )}
+        <div className="product-image">
+          <img src={p.imageUrl || '/placeholder.webp'} alt={p.title} loading="lazy" />
+        </div>
+        <button className="quick-view-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
       </div>
-      {p.storeName ? <div className="store-name">{p.storeName}</div> : null}
+      
+      <div className="product-info">
+        <h3 className="product-title" title={p.title}>{p.title}</h3>
+        
+        <div className="price-section">
+          {originalPrice && (
+            <span className="original-price">{currency(originalPrice)}</span>
+          )}
+          <span className="price">{currency(p.price)}</span>
+        </div>
+        
+        <div className="product-meta">
+          <div className="rating-section">
+            {typeof p.rating === 'number' && (
+              <>
+                <div className="stars">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className={`star ${i < Math.floor(p.rating!) ? 'filled' : ''}`}>
+                      ★
+                    </span>
+                  ))}
+                </div>
+                <span className="rating-text">{p.rating.toFixed(1)}</span>
+              </>
+            )}
+          </div>
+          
+          {typeof p.sold === 'number' && (
+            <span className="sold-count">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+              </svg>
+              {p.sold} terjual
+            </span>
+          )}
+        </div>
+        
+        {p.storeName && (
+          <div className="store-info">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span className="store-name">{p.storeName}</span>
+          </div>
+        )}
+      </div>
+      
+      <button className="add-to-cart-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="9" cy="21" r="1"/>
+          <circle cx="20" cy="21" r="1"/>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+        </svg>
+        <span>Tambah</span>
+      </button>
     </div>
-  </div>
-);
+  );
+};
 
 const ProductGrid: React.FC<{ category?: string; search?: string }>= ({ category, search }) => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -103,20 +154,14 @@ const ProductGrid: React.FC<{ category?: string; search?: string }>= ({ category
         }
 
         console.debug('[Etalase] fetching products from "products"…');
-        console.debug('[Etalase] Firebase config check:', {
-          hasDb: !!db,
-          projectId: (db as any)?._delegate?.settings?.projectId || 'unknown'
-        });
         
         // Try plain collection query first (no orderBy to avoid index requirement)
         let snap: any;
         try {
-          // Direct collection query without orderBy (most reliable)
           snap = await getDocs(collection(db, 'products'));
           console.debug('[Etalase] Plain collection query successful, docs:', snap.docs.length);
         } catch (e1: any) {
           console.error('[Etalase] Plain collection query failed:', e1);
-          // Try with orderBy as fallback (might need index)
           try {
             const q1 = query(collection(db, 'products'), orderBy('createdAt', 'desc'), limit(60));
             snap = await getDocs(q1);
@@ -129,102 +174,61 @@ const ProductGrid: React.FC<{ category?: string; search?: string }>= ({ category
               console.debug('[Etalase] Query with updatedAt successful, docs:', snap.docs.length);
             } catch (e3: any) {
               console.error('[Etalase] All query methods failed:', e3);
-              throw new Error(`Gagal mengambil produk dari Firebase: ${e3?.message || 'Unknown error'}. Pastikan collection "products" ada, Firestore rules mengizinkan read, dan Firebase config benar.`);
+              throw new Error(`Gagal mengambil produk dari Firebase: ${e3?.message || 'Unknown error'}`);
             }
           }
         }
         
-        if (!snap) {
-          throw new Error('Query tidak mengembalikan hasil. Pastikan collection "products" ada di Firestore.');
-        }
-        
-        if (!snap.docs || snap.docs.length === 0) {
-          console.warn('[Etalase] Collection "products" ada tapi kosong. Docs count:', snap.docs?.length || 0);
-          console.warn('[Etalase] Pastikan Firestore rules mengizinkan read. Cek Rules di Firebase Console.');
-          setError('Tidak ada produk ditemukan. Pastikan: 1) Produk sudah ditambahkan ke Firestore collection "products", 2) Firestore rules mengizinkan read.');
+        if (!snap || !snap.docs || snap.docs.length === 0) {
+          console.warn('[Etalase] Collection "products" ada tapi kosong.');
+          setError('Tidak ada produk ditemukan.');
           setLoading(false);
           return;
-        }
-        
-        console.debug('[Etalase] Successfully fetched', snap.docs.length, 'documents from Firestore');
-        
-        // Log first product structure for debugging
-        if (snap.docs.length > 0) {
-          const firstDoc = snap.docs[0];
-          const firstData = firstDoc.data();
-          console.debug('[Etalase] Sample product data structure:', {
-            id: firstDoc.id,
-            keys: Object.keys(firstData),
-            sample: {
-              title: firstData.deskripsi_produk || firstData.title || firstData.name || firstData.nama_produk || firstData.model_produk || firstData.product_title || 'N/A',
-              price: firstData.harga_produk ?? firstData.harga ?? firstData.price ?? firstData.product_price,
-              image: firstData.gambar_produk || (Array.isArray(firstData.galeri_gambar) && firstData.galeri_gambar[0]) || firstData.imageUrl || firstData.image || firstData.thumbnail || firstData.product_photo,
-            },
-            rawData: Object.fromEntries(Object.entries(firstData).slice(0, 10))
-          });
         }
         
         const list: Product[] = snap.docs.map((d: any) => {
           const data = d.data() as any;
           
-          // Map fields sesuai dengan struktur Firestore yang sebenarnya
-          // Dari Firestore: gambar_produk, harga_produk, deskripsi_produk, galeri_gambar, harga_asli, dll
           return {
             id: d.id,
-            title: data.deskripsi_produk || data.title || data.name || data.nama_produk || data.model_produk || data.product_title || data.product_name || `Produk ${d.id}`,
+            title: data.deskripsi_produk || data.title || data.name || data.nama_produk || `Produk ${d.id}`,
             price: ((): number => {
-              const v = data.harga_produk ?? data.harga ?? data.price ?? data.product_price ?? data.harga_asli;
+              const v = data.harga_produk ?? data.harga ?? data.price ?? 0;
               if (typeof v === 'number') return v;
               if (typeof v === 'string') {
-                // Remove currency symbols and parse
                 const cleaned = v.replace(/[^\d,.-]/g, '').replace(',', '.');
                 return Number(cleaned) || 0;
               }
               return 0;
             })(),
-            imageUrl: data.gambar_produk || (Array.isArray(data.galeri_gambar) && data.galeri_gambar[0]) || data.imageUrl || data.image || data.thumbnail || data.thumbnail_produk || data.product_photo || data.photo || '/placeholder.webp',
-            rating: ((): number | undefined => {
-              const v = data.rating ?? data.rating_bintang ?? data.product_star_rating;
-              return typeof v === 'number' ? v : undefined;
-            })(),
-            sold: typeof data.sold === 'number' ? data.sold : (typeof data.unit_terjual === 'number' ? data.unit_terjual : (typeof data.product_num_ratings === 'number' ? data.product_num_ratings : undefined)),
-            storeName: data.storeName || data.seller || data.toko || data.seller_name || undefined,
+            imageUrl: data.gambar_produk || (Array.isArray(data.galeri_gambar) && data.galeri_gambar[0]) || data.imageUrl || '/placeholder.webp',
+            rating: data.rating ?? data.rating_bintang,
+            sold: data.sold || data.unit_terjual,
+            storeName: data.storeName || data.seller || data.toko,
             discountPercent: ((): number | undefined => {
-              // Calculate discount from harga_asli and harga_produk
               if (data.harga_asli && data.harga_produk && data.harga_asli > data.harga_produk) {
                 const discount = ((data.harga_asli - data.harga_produk) / data.harga_asli) * 100;
                 return Math.round(discount);
               }
-              const v = data.discountPercent ?? data.persentase_diskon ?? data.discount;
-              return typeof v === 'number' ? v : (Number(v) || undefined);
+              return data.discountPercent ?? data.persentase_diskon;
             })(),
-            category: data.category || data.sub_kategori || data.product_category || data.bahan || undefined,
-            promoText: data.promoText || data.promo || undefined,
+            category: data.category || data.sub_kategori,
+            promoText: data.promoText || data.promo,
           } as Product;
         });
         
         if (!mounted) return;
 
-        console.debug('[Etalase] Mapped products count:', list.length);
-
-        if (list.length === 0) {
-          console.warn('[Etalase] Products mapped but list is empty. Check data structure.');
-          setError('Tidak ada produk ditemukan. Pastikan produk sudah ditambahkan ke Firestore collection "products".');
-          setProducts([]);
-        } else {
-          console.debug('[Etalase] Successfully loaded', list.length, 'products');
-          setProducts(list);
-          setError(null); // Clear any previous errors
-          // Save to cache for fast next view without reload effects
-          try {
-            sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), items: list }));
-          } catch {}
-        }
+        setProducts(list);
+        setError(null);
+        
+        try {
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), items: list }));
+        } catch {}
       } catch (e: any) {
         if (!mounted) return;
         console.error('[Etalase] load products error:', e);
-        const errorMsg = e?.message || 'Gagal memuat produk. Periksa konfigurasi Firebase dan pastikan collection "products" ada.';
-        setError(errorMsg);
+        setError(e?.message || 'Gagal memuat produk.');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -247,25 +251,19 @@ const ProductGrid: React.FC<{ category?: string; search?: string }>= ({ category
 
   if (error) {
     return (
-      <div style={{ 
-        padding: '2rem', 
-        textAlign: 'center',
-        background: '#fef2f2',
-        border: '1px solid #fecaca',
-        borderRadius: '12px',
-        margin: '1rem',
-        color: '#dc2626'
-      }}>
-        <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>⚠️ Error Memuat Produk</div>
-        <div style={{ fontSize: '0.875rem' }}>{error}</div>
-        <div style={{ fontSize: '0.75rem', color: '#991b1b', marginTop: '0.75rem' }}>
-          Periksa console browser untuk detail error. Pastikan:
-          <ul style={{ textAlign: 'left', marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
-            <li>Firebase config benar di .env</li>
-            <li>Collection "products" ada di Firestore</li>
-            <li>Firestore rules mengizinkan read</li>
-          </ul>
+      <div className="error-container">
+        <div className="error-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
         </div>
+        <h3>Oops! Ada Masalah</h3>
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()} className="retry-btn">
+          Coba Lagi
+        </button>
       </div>
     );
   }
@@ -273,210 +271,443 @@ const ProductGrid: React.FC<{ category?: string; search?: string }>= ({ category
   return (
     <>
       <style>{`
-        .product-list {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 16px;
-          padding: 16px;
-          max-width: 1400px;
-          margin: 0 auto;
-          font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        * {
+          box-sizing: border-box;
         }
 
-        @media (min-width: 769px) and (max-width: 1024px) {
-          .product-list {
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-          }
+        .product-list {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 24px;
+          padding: 32px 24px;
+          max-width: 1440px;
+          margin: 0 auto;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          background: linear-gradient(180deg, rgba(0,17,81,0.02), rgba(253,87,1,0.02));
+          min-height: 100vh;
         }
 
         @media (max-width: 768px) {
           .product-list {
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            padding: 12px;
+            gap: 16px;
+            padding: 20px 16px;
           }
         }
 
+        @media (max-width: 480px) {
+          .product-list {
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 20px;
+          }
+        }
+
+        /* Product Card */
         .product-card {
-          background: #fff;
-          border-radius: 12px;
+          background: white;
+          border-radius: 20px;
           overflow: hidden;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-          transition: all 0.25s ease;
-          cursor: pointer;
+          box-shadow: 
+            0 10px 40px rgba(0, 0, 0, 0.08),
+            0 2px 10px rgba(0, 0, 0, 0.06);
+          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           position: relative;
-          border: 1px solid #f0f0f0;
           display: flex;
           flex-direction: column;
           height: 100%;
-          min-height: 320px;
+          min-height: 420px;
+          transform: translateZ(0);
+          backface-visibility: hidden;
         }
 
         .product-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-          border-color: #e5e5e5;
+          transform: translateY(-8px) scale(1.02);
+          box-shadow: 
+            0 20px 60px rgba(0,17,81,0.12),
+            0 12px 24px rgba(253,87,1,0.08);
+        }
+
+        /* Image Container */
+        .product-image-container {
+          position: relative;
+          width: 100%;
+          height: 200px;
+          overflow: hidden;
+          background: linear-gradient(135deg, rgba(0,17,81,0.08) 0%, rgba(253,87,1,0.08) 100%);
         }
 
         .product-image {
           width: 100%;
-          height: 160px;
-          background: #f8f8f8;
-          overflow: hidden;
+          height: 100%;
           position: relative;
+          overflow: hidden;
         }
 
         .product-image img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: transform 0.3s ease;
+          transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
         .product-card:hover .product-image img {
-          transform: scale(1.04);
+          transform: scale(1.15);
         }
 
+        /* Badges */
         .discount-badge {
           position: absolute;
-          top: 8px;
-          left: 8px;
-          background: linear-gradient(135deg, #ff3b3b, #ff5e3a);
+          top: 16px;
+          left: 16px;
+          background: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-500) 100%);
           color: white;
-          font-weight: 900;
-          font-size: 0.70rem;
-          padding: 4px 10px 4px 8px;
-          border-radius: 6px 0 0 6px;
+          padding: 8px 14px;
+          border-radius: 100px;
           z-index: 10;
-          clip-path: polygon(
-            0% 0%,
-            85% 0%,
-            92% 20%,
-            100% 20%,
-            92% 40%,
-            100% 60%,
-            92% 80%,
-            100% 100%,
-            85% 100%,
-            0% 100%
-          );
-          box-shadow: 
-            0 2px 8px rgba(255, 59, 59, 0.4),
-            inset 0 1px 2px rgba(255, 255, 255, 0.3);
-          text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+          font-weight: 700;
+          font-size: 0.8rem;
+          box-shadow: 0 6px 18px rgba(253, 87, 1, 0.32);
+          animation: pulse 2s infinite;
         }
 
-        .product-card:hover .discount-badge {
-          transform: scale(1.08);
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
         }
 
+        .promo-badge {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          background: linear-gradient(135deg, var(--brand-blue) 0%, rgba(0,17,81,0.85) 100%);
+          color: white;
+          padding: 6px 12px;
+          border-radius: 8px;
+          z-index: 10;
+          font-weight: 600;
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          box-shadow: 0 4px 15px rgba(0, 17, 81, 0.22);
+        }
+
+        /* Quick View Button */
+        .quick-view-btn {
+          position: absolute;
+          bottom: 12px;
+          right: 12px;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(10px);
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          opacity: 0;
+          transform: scale(0.8);
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-card:hover .quick-view-btn {
+          opacity: 1;
+          transform: scale(1);
+        }
+
+        .quick-view-btn:hover {
+          background: white;
+          transform: scale(1.1);
+        }
+
+        /* Product Info */
         .product-info {
-          padding: 10px 12px 12px;
+          padding: 20px;
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 12px;
           flex-grow: 1;
-          justify-content: space-between;
         }
 
         .product-title {
-          font-size: 0.95rem;
+          font-size: 1rem;
           font-weight: 700;
-          color: #1a1a1a;
-          line-height: 1.3;
+          color: #1a202c;
+          line-height: 1.4;
           margin: 0;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
           text-overflow: ellipsis;
+          min-height: 2.8rem;
         }
 
+        /* Price Section */
         .price-section {
           display: flex;
-          flex-direction: column;
-          gap: 4px;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
         }
 
         .price {
-          font-size: 1rem;
+          font-size: 1.3rem;
           font-weight: 800;
-          color: #dc2626;
+          color: var(--brand-blue-ink);
         }
 
-        .promo-text {
-          font-size: 0.70rem;
-          color: #d97706;
-          font-weight: 600;
-          background: #fff7ed;
-          padding: 2px 6px;
-          border-radius: 4px;
-          border: 1px solid #fed7aa;
-          display: inline-block;
-          width: fit-content;
+        .original-price {
+          font-size: 0.95rem;
+          color: #a0aec0;
+          text-decoration: line-through;
+        }
+
+        /* Product Meta */
+        .product-meta {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
         }
 
         .rating-section {
           display: flex;
           align-items: center;
-          gap: 4px;
-          font-size: 0.75rem;
-          color: #525252;
+          gap: 6px;
+        }
+
+        .stars {
+          display: flex;
+          gap: 2px;
         }
 
         .star {
-          color: #f59e0b;
-          font-size: 0.9rem;
+          color: #e2e8f0;
+          font-size: 1rem;
+          transition: color 0.2s;
         }
 
-        .sold {
-          color: #6b7280;
-          font-size: 0.70rem;
+        .star.filled {
+          color: #fbbf24;
+          text-shadow: 0 2px 4px rgba(251, 191, 36, 0.3);
+        }
+
+        .rating-text {
+          font-size: 0.85rem;
+          color: #4a5568;
+          font-weight: 600;
+        }
+
+        .sold-count {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 0.75rem;
+          color: #718096;
+          background: #f7fafc;
+          padding: 4px 8px;
+          border-radius: 6px;
+        }
+
+        /* Store Info */
+        .store-info {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding-top: 12px;
+          border-top: 1px solid #e2e8f0;
+          margin-top: auto;
+        }
+
+        .store-info svg {
+          color: var(--brand-orange);
         }
 
         .store-name {
-          font-size: 0.70rem;
-          color: #10b981;
+          font-size: 0.85rem;
+          color: var(--brand-blue-ink);
           font-weight: 600;
-          margin-top: 4px;
         }
 
-        @media (max-width: 768px) {
-          .product-card {
-            min-height: 300px;
-          }
+        /* Add to Cart Button */
+        .add-to-cart-btn {
+          position: absolute;
+          bottom: -50px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-500) 100%);
+          color: white;
+          border: none;
+          padding: 12px 24px;
+          border-radius: 100px;
+          font-weight: 600;
+          font-size: 0.9rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.3s ease;
+          box-shadow: 0 6px 18px rgba(253, 87, 1, 0.32);
+        }
 
-          .product-image {
-            height: 140px;
-          }
+        .product-card:hover .add-to-cart-btn {
+          bottom: 20px;
+        }
 
-          .product-info {
-            padding: 8px 10px 10px;
-            gap: 4px;
-          }
+        .add-to-cart-btn:hover {
+          transform: translateX(-50%) scale(1.05);
+          box-shadow: 0 8px 24px rgba(253, 87, 1, 0.4);
+        }
 
-          .product-title {
-            font-size: 0.85rem;
-            line-height: 1.25;
-          }
+        .add-to-cart-btn:active {
+          transform: translateX(-50%) scale(0.98);
+        }
 
-          .price {
-            font-size: 0.95rem;
-          }
+        /* Skeleton Loading */
+        .skeleton-card {
+          background: white;
+          min-height: 420px;
+        }
 
-          .rating-section {
-            font-size: 0.70rem;
-          }
+        .skeleton-image {
+          width: 100%;
+          height: 200px;
+          background: linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          position: relative;
+          overflow: hidden;
+        }
+
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+
+        .skeleton-title,
+        .skeleton-price,
+        .skeleton-rating {
+          background: linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          border-radius: 6px;
+        }
+
+        .skeleton-title {
+          height: 20px;
+          width: 80%;
+          margin-bottom: 12px;
+        }
+
+        .skeleton-price {
+          height: 24px;
+          width: 50%;
+          margin-bottom: 12px;
+        }
+
+        .skeleton-rating {
+          height: 16px;
+          width: 40%;
+        }
+
+        /* Error Container */
+        .error-container {
+          grid-column: 1 / -1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 60px 20px;
+          text-align: center;
+          background: white;
+          border-radius: 20px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .error-icon {
+          color: #f56565;
+          margin-bottom: 20px;
+          animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-10px); }
+          75% { transform: translateX(10px); }
+        }
+
+        .error-container h3 {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: #2d3748;
+          margin-bottom: 10px;
+        }
+
+        .error-container p {
+          color: #718096;
+          margin-bottom: 24px;
+          max-width: 400px;
+        }
+
+        .retry-btn {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border: none;
+          padding: 12px 32px;
+          border-radius: 100px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .retry-btn:hover {
+          transform: scale(1.05);
+          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        /* Empty State */
+        .empty-state {
+          grid-column: 1 / -1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 80px 20px;
+          text-align: center;
+        }
+
+        .empty-state svg {
+          color: #cbd5e0;
+          margin-bottom: 24px;
+        }
+
+        .empty-state h3 {
+          font-size: 1.25rem;
+          color: #4a5568;
+          font-weight: 600;
         }
       `}</style>
+      
       <section>
         <div className="product-list">
           {loading
             ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
             : filtered.length > 0
               ? filtered.map((p) => <ProductCard key={p.id} p={p} />)
-              : <span style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#666' }}>Tidak ada produk</span>}
+              : (
+                <div className="empty-state">
+                  <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3>Tidak ada produk ditemukan</h3>
+                </div>
+              )}
         </div>
       </section>
     </>

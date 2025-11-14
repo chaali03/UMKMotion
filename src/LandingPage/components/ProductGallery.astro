@@ -1,10 +1,13 @@
 ---
 // Astro wrapper for ProductGallery component
-import ProductGallery from '../components/productgallery/ProductGallery.tsx';
+import ProductGalleryComponent from './productgallery/ProductGallery.tsx';
 ---
 
-<!-- GSAP Library Imports -->
-<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-
-<ProductGallery client:load />
+<div data-product-gallery>
+  <ProductGalleryComponent client:visible />
+  
+  <style>
+    /* minimal container to avoid layout shift */
+    [data-product-gallery] { display: block; width: 100%; }
+  </style>
+</div>

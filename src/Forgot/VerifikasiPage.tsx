@@ -818,7 +818,7 @@ export default function VerificationPage() {
                   whileHover={{ scale: 1.05, rotate: 2 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <img src="/logo.png" alt="Logo" />
+                  <img src="/logo.webp" alt="Logo" />
                 </motion.div>
 
                 <h2 className="form-title">
