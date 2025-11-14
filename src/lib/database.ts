@@ -160,5 +160,6 @@ export type Product = {
   jumlah_ulasan: number;
   komentar?: string[];
   foto_pembeli?: string[];
+  ulasan: string[],
 
 };

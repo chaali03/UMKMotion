@@ -1,8 +1,23 @@
 ---
-// src/pages/index.astro
+// src/pages/detail.astro
 import BuyComponent from '../components/ProductDetail/ProductDetail.js';
 import CommentSection from '../components/ProductDetail/CommentSection.tsx';
-import ProductRecommendations from 'src/components/ProductDetail/ProductRecommendations.tsx';
+import ProductRecommendations from '../components/ProductDetail/ProductRecommendations.tsx';
+
+// Ambil ASIN dari localStorage (paling reliable)
+const getAsin = () => {
+  if (typeof window === 'undefined') return 'unknown';
+  try {
+    const stored = localStorage.getItem('selectedProduct');
+    if (!stored) return 'unknown';
+    const parsed = JSON.parse(stored);
+    return parsed.ASIN || 'unknown';
+  } catch {
+    return 'unknown';
+  }
+};
+
+const asin = getAsin();
 ---
 
 <!DOCTYPE html>
@@ -10,17 +25,49 @@ import ProductRecommendations from 'src/components/ProductDetail/ProductRecommen
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Detail Produk</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <title>Detail Produk • Nusantara Rasa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      body { 
+        margin: 0; 
+        font-family: 'Inter', sans-serif; 
+        background: #f8fafc; 
+        padding-bottom: 100px;
+      }
+      #buying-page, #comment-section, #recommendations {
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 0 16px;
+      }
+    </style>
   </head>
   <body>
-    <BuyComponent client:load />
 
-
-    <!-- Mau nampilin data lokal komen user = false -->
-    <!-- gaMau nampilin data lokal komen user dan hapus semua data komen lokal user = true -->
-    <CommentSection client:load clearOnMount={true} />  
+    <!-- DETAIL PRODUK -->
+    <div id="buying-page">
+      <BuyComponent client:only="react" />
+    </div>
     
-    <ProductRecommendations client:load />
+
+    <!-- KOMENTAR -->
+    <div id="comment-section" style="margin-top: 48px;">
+    </div>
+
+    <!-- REKOMENDASI -->
+    <div id="recommendations" style="margin-top: 64px;">
+      <ProductRecommendations client:only="react" />
+    </div>
+
+    <!-- Script kecil buat kasih tahu CommentSection kalau ASIN berubah (opsional tapi bagus) -->
+    <script>
+      // Biar CommentSection selalu update kalau user ganti produk
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'selectedProduct') {
+          window.location.reload();
+        }
+      });
+    </script>
+
   </body>
 </html>

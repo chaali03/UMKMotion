@@ -339,7 +339,7 @@ export default function TokoDinamis() {
             </div>
             <div className="price-large">{p.product_price}</div>
             <p className="bonus-promo">{p.bonusText}</p>
-            <p className="store-name">Checkmark {p.toko}</p>
+            <p className="store-name">{p.toko}</p>
           </div>
           <div className="action-buttons">
             <button className="btn-buy" onClick={() => handleProductClick(p)}>

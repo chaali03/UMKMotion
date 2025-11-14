@@ -43,7 +43,27 @@ export async function seedProduk() {
             rating_bintang: 4.9,
             jumlah_ulasan: 320,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 22:00"
+            jam_operasional: "07:00 - 22:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "KULI-ID-002",
@@ -81,7 +101,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 250,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 22:00"
+            jam_operasional: "07:00 - 22:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "KULI-ID-003",
@@ -119,7 +159,27 @@ export async function seedProduk() {
             rating_bintang: 4.9,
             jumlah_ulasan: 410,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 22:00"
+            jam_operasional: "07:00 - 22:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "KULI-ID-004",
@@ -157,7 +217,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 260,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 22:00"
+            jam_operasional: "07:00 - 22:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "KULI-ID-005",
@@ -195,7 +275,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 188,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 22:00"
+            jam_operasional: "07:00 - 22:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         // Fashion
         {
@@ -236,7 +336,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 324,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "08:00 - 17:00"
+            jam_operasional: "08:00 - 17:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "FASH-002",
@@ -276,7 +396,27 @@ export async function seedProduk() {
             rating_bintang: 4.6,
             jumlah_ulasan: 215,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "08:00 - 17:00"
+            jam_operasional: "08:00 - 17:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "FASH-003",
@@ -316,7 +456,27 @@ export async function seedProduk() {
             rating_bintang: 4.7,
             jumlah_ulasan: 432,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "08:00 - 17:00"
+            jam_operasional: "08:00 - 17:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "FASH-004",
@@ -356,7 +516,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 368,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "08:00 - 17:00"
+            jam_operasional: "08:00 - 17:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "FASH-005",
@@ -396,7 +576,27 @@ export async function seedProduk() {
             rating_bintang: 4.6,
             jumlah_ulasan: 196,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "08:00 - 17:00"
+            jam_operasional: "08:00 - 17:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         // Kerajinan
         {
@@ -436,7 +636,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 480,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "09:00 - 21:00"
+            jam_operasional: "09:00 - 21:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "KERAJI-ID-002",
@@ -475,7 +695,27 @@ export async function seedProduk() {
             rating_bintang: 4.7,
             jumlah_ulasan: 560,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "09:00 - 21:00"
+            jam_operasional: "09:00 - 21:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "KERAJI-ID-003",
@@ -514,7 +754,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 340,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "09:00 - 21:00"
+            jam_operasional: "09:00 - 21:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "KERAJI-ID-004",
@@ -553,7 +813,27 @@ export async function seedProduk() {
             rating_bintang: 4.7,
             jumlah_ulasan: 410,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "09:00 - 21:00"
+            jam_operasional: "09:00 - 21:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "KERAJI-ID-005",
@@ -592,7 +872,27 @@ export async function seedProduk() {
             rating_bintang: 4.6,
             jumlah_ulasan: 620,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "09:00 - 21:00"
+            jam_operasional: "09:00 - 21:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         // Kesehatan
         {
@@ -630,7 +930,27 @@ export async function seedProduk() {
             rating_bintang: 4.9,
             jumlah_ulasan: 940,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 23:00"
+            jam_operasional: "07:00 - 23:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "KESEH-ID-002",
@@ -667,7 +987,27 @@ export async function seedProduk() {
             rating_bintang: 4.9,
             jumlah_ulasan: 230,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 23:00"
+            jam_operasional: "07:00 - 23:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "KESEH-ID-003",
@@ -704,7 +1044,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 1200,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 23:00"
+            jam_operasional: "07:00 - 23:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "KESEH-ID-004",
@@ -741,7 +1101,27 @@ export async function seedProduk() {
             rating_bintang: 4.9,
             jumlah_ulasan: 380,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 23:00"
+            jam_operasional: "07:00 - 23:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "KESEH-ID-005",
@@ -778,7 +1158,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 720,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 23:00"
+            jam_operasional: "07:00 - 23:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         // Pertanian
         {
@@ -817,7 +1217,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 890,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "07:00 - 18:00"
+            jam_operasional: "07:00 - 18:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "PERTA-ID-002",
@@ -855,7 +1275,27 @@ export async function seedProduk() {
             rating_bintang: 4.9,
             jumlah_ulasan: 1100,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "07:00 - 18:00"
+            jam_operasional: "07:00 - 18:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "PERTA-ID-003",
@@ -893,7 +1333,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 980,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "07:00 - 18:00"
+            jam_operasional: "07:00 - 18:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "PERTA-ID-004",
@@ -931,7 +1391,27 @@ export async function seedProduk() {
             rating_bintang: 4.7,
             jumlah_ulasan: 450,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "07:00 - 18:00"
+            jam_operasional: "07:00 - 18:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "PERTA-ID-005",
@@ -969,7 +1449,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 680,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "07:00 - 18:00"
+            jam_operasional: "07:00 - 18:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         //Elektronik
         {
@@ -1010,7 +1510,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 1250,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 22:00"
+            jam_operasional: "07:00 - 22:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "ELEC-002",
@@ -1049,7 +1569,27 @@ export async function seedProduk() {
             rating_bintang: 4.7,
             jumlah_ulasan: 970,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 22:00"
+            jam_operasional: "07:00 - 22:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "ELEC-003",
@@ -1088,7 +1628,27 @@ export async function seedProduk() {
             rating_bintang: 4.9,
             jumlah_ulasan: 840,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 22:00"
+            jam_operasional: "07:00 - 22:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "ELEC-004",
@@ -1127,7 +1687,27 @@ export async function seedProduk() {
             rating_bintang: 4.9,
             jumlah_ulasan: 5200,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 22:00"
+            jam_operasional: "07:00 - 22:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "ELEC-005",
@@ -1166,7 +1746,27 @@ export async function seedProduk() {
             rating_bintang: 4.9,
             jumlah_ulasan: 2110,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 22:00"
+            jam_operasional: "07:00 - 22:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         // Furnitur
         {
@@ -1207,7 +1807,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 540,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "07:00 - 19:00"
+            jam_operasional: "07:00 - 19:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "FURN-ID-002",
@@ -1246,7 +1866,27 @@ export async function seedProduk() {
             rating_bintang: 4.6,
             jumlah_ulasan: 310,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "07:00 - 19:00"
+            jam_operasional: "07:00 - 19:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "FURN-ID-003",
@@ -1286,7 +1926,27 @@ export async function seedProduk() {
             rating_bintang: 4.7,
             jumlah_ulasan: 270,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "07:00 - 19:00"
+            jam_operasional: "07:00 - 19:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "FURN-ID-004",
@@ -1326,7 +1986,27 @@ export async function seedProduk() {
             rating_bintang: 4.6,
             jumlah_ulasan: 190,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "07:00 - 19:00"
+            jam_operasional: "07:00 - 19:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "FURN-ID-005",
@@ -1365,7 +2045,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 310,
             hari_operasional: "Senin - Sabtu",
-            jam_operasional: "07:00 - 19:00"
+            jam_operasional: "07:00 - 19:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         // Edukasi
         {
@@ -1405,7 +2105,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 980,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 21:00"
+            jam_operasional: "07:00 - 21:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "EDU-ID-002",
@@ -1441,7 +2161,27 @@ export async function seedProduk() {
             rating_bintang: 4.7,
             jumlah_ulasan: 680,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 21:00"
+            jam_operasional: "07:00 - 21:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "EDU-ID-003",
@@ -1480,7 +2220,27 @@ export async function seedProduk() {
             rating_bintang: 4.8,
             jumlah_ulasan: 860,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 21:00"
+            jam_operasional: "07:00 - 21:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "EDU-ID-004",
@@ -1519,7 +2279,27 @@ export async function seedProduk() {
             rating_bintang: 4.7,
             jumlah_ulasan: 410,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 21:00"
+            jam_operasional: "07:00 - 21:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
         {
             ASIN: "EDU-ID-005",
@@ -1558,7 +2338,27 @@ export async function seedProduk() {
             rating_bintang: 4.7,
             jumlah_ulasan: 420,
             hari_operasional: "Senin - Minggu",
-            jam_operasional: "07:00 - 21:00"
+            jam_operasional: "07:00 - 21:00",
+            ulasan: [
+                {
+                    nama_pengulas: "Rina S.",
+                    rating: 5,
+                    tanggal: "2025-10-15",
+                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                },
+                {
+                    nama_pengulas: "Budi K.",
+                    rating: 4,
+                    tanggal: "2025-09-22",
+                    isi: "Enak, gurihnya terasa. Tapi kemasan agak bocor sedikit saat pengiriman."
+                },
+                {
+                    nama_pengulas: "Siti A.",
+                    rating: 5,
+                    tanggal: "2025-08-30",
+                    isi: "Sambal terenak yang pernah saya coba! Bikin makan jadi lahap, pasti repeat order."
+                }
+            ]
         },
     ];
     const productsWithUpload = products.map((p, idx) => {
