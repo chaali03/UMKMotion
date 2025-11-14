@@ -1,9 +1,20 @@
 "use client";
 
 import { cn } from "../../../lib/utils";
-import { AlignJustify, X, Home, Store, Building2, Users, Lightbulb, User, ShoppingCart, BookOpen, Info, LogIn, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Drawer } from "vaul";
+import { AlignJustify, X, Home, Store, Building2, Lightbulb, LogIn, Heart, ShoppingCart } from "lucide-react";
+import { useEffect, useState, lazy, Suspense } from "react";
+
+const MobileDrawer = lazy(() => import("./MobileDrawer"));
+
+// Visually hidden component for accessibility
+const VisuallyHidden = ({ children, ...props }: { children: React.ReactNode } & React.HTMLAttributes<HTMLSpanElement>) => (
+  <span 
+    className="sr-only" 
+    {...props}
+  >
+    {children}
+  </span>
+);
 
 interface HomeHeaderProps {
   localTheme: "light" | "dark";
@@ -11,7 +22,6 @@ interface HomeHeaderProps {
 }
 
 export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [pathname, setPathname] = useState("/");
@@ -86,6 +96,12 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
       label: "Konsultan", 
       icon: Lightbulb,
       description: "Konsultasi bisnis UMKM"
+    },
+    { 
+      href: "/checkout", 
+      label: "Checkout", 
+      icon: ShoppingCart,
+      description: "Selesaikan pembelian Anda"
     }
   ];
 
@@ -168,92 +184,16 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
           )}>
             {/* Mobile: Hamburger Menu */}
             {isMobile && (
-              <Drawer.Root direction="left" open={isOpen} onOpenChange={setIsOpen}>
-                <Drawer.Trigger className="group relative px-3.5 text-white h-11 grid place-content-center bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] hover:from-[#ff8534] hover:to-[#ff6914] rounded-xl transition-all duration-300 shadow-[0_4px_16px_rgba(255,122,26,0.3)] hover:shadow-[0_6px_24px_rgba(255,122,26,0.4)] hover:scale-[1.02]">
-                  <AlignJustify className="transition-transform duration-300 group-hover:scale-110" />
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </Drawer.Trigger>
-                <Drawer.Portal>
-                  <Drawer.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity duration-300" />
-                  <Drawer.Content
-                    className="left-3 top-3 bottom-3 fixed z-50 outline-none w-80 flex"
-                    style={{ "--initial-transform": "calc(100% + 12px)" } as React.CSSProperties}
-                  >
-                    <div className="dark:bg-gradient-to-br dark:from-neutral-950 dark:to-neutral-900 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 dark:border-neutral-800 p-5 h-full w-full grow flex flex-col rounded-2xl shadow-2xl">
-                      {/* Drawer Header */}
-                      <div className="w-full flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-neutral-800">
-                        <a href="/" className="flex items-center gap-2 pl-1 leading-none group">
-                          <img
-                            src="/LogoNavbar.webp"
-                            alt="UMKMotion"
-                            className="block h-16 w-auto max-h-16 object-contain shrink-0 select-none transition-transform duration-300 group-hover:scale-105"
-                            decoding="async"
-                            loading="eager"
-                            width="64"
-                            height="64"
-                          />
-                        </a>
-                        <button
-                          className="rounded-xl bg-gradient-to-r from-neutral-900 to-neutral-800 dark:from-neutral-800 dark:to-neutral-700 px-3.5 py-2.5 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                          onClick={() => setIsOpen(false)}
-                        >
-                          <X size={20} />
-                        </button>
-                      </div>
-
-                      {/* Navigation Items */}
-                      <nav className="flex-1 space-y-2 overflow-y-auto">
-                        {navItems.map((item) => {
-                          const active = item.href === pathname;
-                          return (
-                            <a
-                              key={item.href}
-                              href={item.href}
-                              className={cn(
-                                "group cursor-pointer select-none p-4 rounded-xl transition-all duration-300 flex items-start gap-3 relative overflow-hidden",
-                                active
-                                  ? "bg-gradient-to-r from-[#ff7a1a]/10 to-[#ff4d00]/10 dark:from-[#ff7a1a]/20 dark:to-[#ff4d00]/20 border-2 border-[#ff7a1a]/30 shadow-lg"
-                                  : "hover:bg-gray-100 dark:hover:bg-neutral-800 border-2 border-transparent hover:border-gray-200 dark:hover:border-neutral-700"
-                              )}
-                            >
-                              <div className={cn(
-                                "p-2.5 rounded-lg transition-all duration-300",
-                                active
-                                  ? "bg-gradient-to-br from-[#ff7a1a] to-[#ff4d00] text-white shadow-lg"
-                                  : "bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-gray-400 group-hover:bg-gray-200 dark:group-hover:bg-neutral-700"
-                              )}>
-                                <item.icon size={20} />
-                              </div>
-                              <div className="flex-1">
-                                <div className={cn(
-                                  "font-semibold text-base mb-0.5",
-                                  active ? "text-[#ff7a1a]" : "text-gray-900 dark:text-white"
-                                )}>
-                                  {item.label}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
-                                  {item.description}
-                                </div>
-                              </div>
-                            </a>
-                          );
-                        })}
-                      </nav>
-
-                      {/* Drawer Footer */}
-                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-neutral-800 space-y-2">
-                        <a
-                          href="/login"
-                          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
-                        >
-                          <LogIn size={18} />
-                          Masuk
-                        </a>
-                      </div>
-                    </div>
-                  </Drawer.Content>
-                </Drawer.Portal>
-              </Drawer.Root>
+              <Suspense fallback={
+                <button
+                  className="group relative px-3.5 text-white h-11 grid place-content-center bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] rounded-xl"
+                  aria-label="Buka menu"
+                >
+                  <AlignJustify />
+                </button>
+              }>
+                <MobileDrawer navItems={navItems} pathname={pathname} />
+              </Suspense>
             )}
 
             {/* Desktop Navigation */}
@@ -261,7 +201,7 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
               <div className="hidden md:grid md:grid-cols-[1fr_auto_1fr] md:items-center w-full gap-8">
                 {/* Logo */}
                 <div className="flex items-center gap-3 justify-start">
-                  <a href="/" className="flex items-center gap-2 leading-none group">
+                  <a href="/" data-astro-prefetch="false" className="flex items-center gap-2 leading-none group">
                     <img
                       src="/LogoNavbar.webp"
                       alt="UMKMotion"
@@ -283,6 +223,7 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                         <li key={item.href}>
                           <a
                             href={item.href}
+                            data-astro-prefetch="false"
                             style={{ transitionDelay: `${120 + i * 60}ms` }}
                             className={cn(
                               "nav-item-glow relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 text-sm font-semibold group",
@@ -312,8 +253,29 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                 {/* Right Actions */}
                 <div className="flex items-center gap-2.5 justify-end">
                   <nav className="flex items-center gap-2.5">
+                    {/* Favorite */}
+                    <a
+                      href="/favorites"
+                      data-astro-prefetch="false"
+                      aria-label="Favorit"
+                      title="Favorit"
+                      className="group relative h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 hover:text-[#ff7a1a] shadow-sm hover:shadow-md transition-all"
+                    >
+                      <Heart size={18} className="transition-transform duration-300 group-hover:scale-110" />
+                    </a>
+                    {/* Cart */}
+                    <a
+                      href="/cart"
+                      data-astro-prefetch="false"
+                      aria-label="Keranjang"
+                      title="Keranjang"
+                      className="group relative h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 hover:text-[#ff7a1a] shadow-sm hover:shadow-md transition-all"
+                    >
+                      <ShoppingCart size={18} className="transition-transform duration-300 group-hover:scale-110" />
+                    </a>
                     <a
                       href="/login"
+                      data-astro-prefetch="false"
                       className="shimmer-effect group relative bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] hover:from-[#ff8534] hover:to-[#ff6914] text-white h-11 items-center flex justify-center px-5 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-300 font-semibold text-sm gap-2 hover:scale-[1.02]"
                     >
                       <LogIn size={18} className="transition-transform duration-300 group-hover:scale-110" />
@@ -328,7 +290,26 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
             {isMobile && (
               <nav className="flex items-center gap-2">
                 <a
+                  href="/favorites"
+                  data-astro-prefetch="false"
+                  aria-label="Favorit"
+                  className="h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white text-gray-700"
+                  title="Favorit"
+                >
+                  <Heart size={18} />
+                </a>
+                <a
+                  href="/cart"
+                  data-astro-prefetch="false"
+                  aria-label="Keranjang"
+                  className="h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white text-gray-700"
+                  title="Keranjang"
+                >
+                  <ShoppingCart size={18} />
+                </a>
+                <a
                   href="/login"
+                  data-astro-prefetch="false"
                   className="bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] text-white h-11 items-center flex justify-center px-4 rounded-xl shadow-lg font-semibold text-sm"
                 >
                   Masuk

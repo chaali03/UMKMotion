@@ -133,7 +133,13 @@ export default function BackgroundCarousel() {
                   alt={slide.title}
                   className="carousel-image"
                   loading={index === 0 ? 'eager' : 'lazy'}
+                  fetchPriority={index === 0 ? 'high' : 'auto'}
+                  decoding="async"
+                  width={1200}
+                  height={800}
+                  sizes="100vw"
                 />
+
                 <div className="carousel-overlay"></div>
                 <div className="carousel-content">
                   <h1 className="carousel-title">{slide.title}</h1>

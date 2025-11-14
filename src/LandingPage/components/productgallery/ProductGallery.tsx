@@ -1,10 +1,10 @@
 "use client";
+import React, { type MouseEvent, useRef, useState } from "react";
 import { motion, useSpring } from "framer-motion";
-import { type MouseEvent, useRef, useState } from "react";
 import { 
   ArrowRight, Sparkles,
   Utensils, Wrench, Shirt, Palette,
-  HeartPulse, Sprout, Laptop, Armchair, Ellipsis
+  HeartPulse, Sprout, Laptop, Armchair, Ellipsis, GraduationCap
 } from "lucide-react";
 
 interface ProductCategory {
@@ -91,11 +91,20 @@ const categories: ProductCategory[] = [
     gradient: 'from-amber-500 to-orange-500'
   },
   {
+    icon: GraduationCap,
+    title: 'Edukasi',
+    count: '1,002',
+    img: '/asset/optimized/umkm/umkm5.webp',
+    id: '09',
+    color: '#3b82f6',
+    gradient: 'from-blue-500 to-indigo-500'
+  },
+  {
     icon: Ellipsis,
     title: 'Lainnya',
     count: '756',
     img: '/asset/optimized/umkm/umkm4.webp',
-    id: '9',
+    id: '10',
     color: '#64748b',
     gradient: 'from-gray-500 to-slate-500'
   }

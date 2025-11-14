@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { signOutUser } from "@/lib/auth";
-import { AlignJustify, X, Home, Store, Building2, Users, Lightbulb } from "lucide-react";
+import { AlignJustify, X, Home, Store, Building2, Users, Lightbulb, Heart, ShoppingCart } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Drawer } from "vaul";
@@ -391,8 +391,26 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                   </ul>
                 </nav>
 
-                {/* Right Actions - Profile Avatar with Dropdown */}
+                {/* Right Actions - Favorites, Cart, Profile */}
                 <div className="flex items-center gap-2.5 justify-end">
+                  {/* Favorite */}
+                  <a
+                    href="/favorites"
+                    aria-label="Favorit"
+                    title="Favorit"
+                    className="group relative h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 hover:text-[#ff7a1a] shadow-sm hover:shadow-md transition-all"
+                  >
+                    <Heart size={18} className="transition-transform duration-300 group-hover:scale-110" />
+                  </a>
+                  {/* Cart */}
+                  <a
+                    href="/cart"
+                    aria-label="Keranjang"
+                    title="Keranjang"
+                    className="group relative h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 hover:text-[#ff7a1a] shadow-sm hover:shadow-md transition-all"
+                  >
+                    <ShoppingCart size={18} className="transition-transform duration-300 group-hover:scale-110" />
+                  </a>
                   <div className="relative" ref={profileRef}>
                     <button
                       ref={profileBtnRef}
@@ -445,9 +463,25 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
               </div>
             )}
 
-            {/* Mobile Right Actions - Profile */}
+            {/* Mobile Right Actions - Favorites, Cart, Profile */}
             {isMobile && (
               <nav className="flex items-center gap-2">
+                <a
+                  href="/favorites"
+                  aria-label="Favorit"
+                  title="Favorit"
+                  className="h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white text-gray-700"
+                >
+                  <Heart size={18} />
+                </a>
+                <a
+                  href="/cart"
+                  aria-label="Keranjang"
+                  title="Keranjang"
+                  className="h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white text-gray-700"
+                >
+                  <ShoppingCart size={18} />
+                </a>
                 <a
                   href="/profile"
                   className="w-11 h-11 rounded-full bg-gradient-to-br from-[#ff7a1a] to-[#ff4d00] text-white font-semibold flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105"

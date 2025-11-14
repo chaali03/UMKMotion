@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,22 +19,38 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ top: 0, right: 0 });
+  const [isMounted, setIsMounted] = useState(false);
   const buttonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setIsMounted(true);
+    
     if ((showTooltip || isHovered) && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setTooltipPos({
-        top: rect.top - 78,
-        right: window.innerWidth - rect.right + 8
-      });
+      const updateTooltipPosition = () => {
+        if (buttonRef.current) {
+          const rect = buttonRef.current.getBoundingClientRect();
+          setTooltipPos({
+            top: rect.top - 78,
+            right: window.innerWidth - rect.right + 8
+          });
+        }
+      };
+      
+      updateTooltipPosition();
+      window.addEventListener('resize', updateTooltipPosition);
+      return () => window.removeEventListener('resize', updateTooltipPosition);
     }
   }, [showTooltip, isHovered]);
+
+  // Don't render anything during SSR to prevent hydration mismatch
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <>
       {/* Tooltip */}
-      {typeof document !== 'undefined' && createPortal(
+      {createPortal(
         <AnimatePresence>
           {(showTooltip || isHovered) && (
             <motion.div
@@ -70,21 +87,24 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
         document.body
       )}
 
-      <div ref={buttonRef} className="fixed bottom-6 right-6 z-50">
-
-      {/* Main Button */}
-      <motion.button
-        onClick={handleClick}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
-        whileHover={{ scale: 1.03, y: -4, boxShadow: '0 12px 30px rgba(37, 99, 235, 0.35)' }}
-        whileTap={{ scale: 0.98 }}
-        className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-2xl p-1 flex items-center justify-center group overflow-visible bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-        aria-label="Buka Dina AI"
-        role="button"
-        tabIndex={0}
-      >
+      <div ref={buttonRef} className="fixed bottom-6 right-6 z-[9999]">
+        {/* Main Button */}
+        <motion.button
+          onClick={handleClick}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
+          onHoverStart={() => setIsHovered(true)}
+          onHoverEnd={() => {
+            setIsHovered(false);
+            setShowTooltip(false);
+          }}
+          onFocus={() => setShowTooltip(true)}
+          onBlur={() => setShowTooltip(false)}
+          whileHover={{ scale: 1.03, y: -4, boxShadow: '0 12px 30px rgba(37, 99, 235, 0.35)' }}
+          whileTap={{ scale: 0.98 }}
+          className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-2xl p-1 flex items-center justify-center group overflow-visible bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+          aria-label="Buka Dina AI"
+          suppressHydrationWarning={true}
+        >
         {/* Decorative sparkles removed for fully transparent background */}
 
         {/* Main icon */}
@@ -94,7 +114,16 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           className="relative z-10"
         >
-          <img src="/asset/optimized/LogoDina-tiny.webp" alt="Dina AI" className="w-full h-full rounded-[14px] object-contain" width="96" height="96" loading="lazy" />
+          <img
+            src="/asset/optimized/LogoDina-tiny.webp"
+            alt="Dina AI"
+            className="w-full h-full rounded-[14px] object-contain"
+            width="80"
+            height="80"
+            sizes="(max-width: 640px) 64px, (max-width: 1024px) 80px, 96px"
+            fetchPriority="high"
+            decoding="async"
+          />
         </motion.div>
         
         {/* Ripple removed for clean image-only look */}
@@ -102,7 +131,7 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
       </div>
 
       {/* Floating particles */}
-      <div className="fixed bottom-6 right-6 z-50 pointer-events-none">
+      <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none">
       <AnimatePresence>
         {isHovered && (
           <>

@@ -265,8 +265,14 @@ const ConsultantHomePage: React.FC = () => {
             <div className="rounded-2xl overflow-hidden shadow-xl bg-white">
               <img
                 className="w-full h-72 object-cover"
-                src="https://images.unsplash.com/photo-1556745753-b2904692b3cd?w=1400&h=900&fit=crop&q=60"
+                src="https://images.unsplash.com/photo-1556745753-b2904692b3cd?w=1400&h=900&fit=crop&q=60&fm=webp&auto=format,compress"
                 alt="UMKM banner"
+                width={1400}
+                height={900}
+                sizes="(min-width: 1024px) 768px, 100vw"
+                loading="lazy"
+                decoding="async"
+                fetchPriority="low"
               />
               <div className="p-4 flex items-center justify-between">
                 <div>
@@ -323,7 +329,17 @@ const ConsultantHomePage: React.FC = () => {
               className="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col"
             >
               <div className="relative">
-                <img src={c.image} alt={c.name} className="w-full h-48 object-cover" />
+                <img 
+                  src={`${c.image}&fm=webp&auto=format,compress`} 
+                  alt={c.name} 
+                  className="w-full h-48 object-cover" 
+                  width={800}
+                  height={800}
+                  sizes="(min-width: 1024px) 400px, 100vw"
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
+                />
                 <div className="absolute left-3 top-3 bg-white/90 text-orange-600 font-semibold px-3 py-1 rounded-lg shadow">
                   {c.availability}
                 </div>
@@ -398,6 +414,94 @@ const ConsultantHomePage: React.FC = () => {
           </div>
         </div>
       </section>
+<<<<<<< HEAD:src/Consultanthomepage/ConsultantHomePage.tsx
+=======
+
+      {/* CHAT OVERLAY */}
+      {showChat && selectedConsultant && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/30"
+          role="dialog"
+          aria-modal="true"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 40, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 40, scale: 0.88 }}
+            transition={{ type: "spring", stiffness: 120, damping: 14 }}
+            className="w-full max-w-xs bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <div className="flex items-center gap-3">
+                <img
+                  src={`${selectedConsultant.image}&fm=webp&auto=format,compress`}
+                  alt={selectedConsultant.name}
+                  className="w-12  h-12 rounded-lg object-cover"
+                  width={48}
+                  height={48}
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
+                />
+                <div>
+                  <div className="font-bold">{selectedConsultant.name}</div>
+                  <div className="text-sm text-slate-500">{selectedConsultant.specialty}</div>
+                </div>
+              </div>
+              <button
+                onClick={closeChat}
+                className="p-2 rounded-lg hover:bg-slate-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div
+              ref={messagesEndRef}
+              className="p-4 flex-1 overflow-y-auto space-y-3 bg-gradient-to-b from-white to-orange-50"
+            >
+              {messages.map((m) => (
+                <div
+                  key={m.id}
+                  className={`max-w-[75%] px-3 py-2 rounded-lg ${
+                    m.sender === "user"
+                      ? "ml-auto bg-gradient-to-r from-orange-600 to-amber-500 text-white"
+                      : "bg-white border border-slate-100 text-slate-900"
+                  }`}
+                >
+                  <div className="text-sm">{m.text}</div>
+                  <div className="text-xs mt-1 text-slate-400 text-right">
+                    {m.timestamp.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div className="px-4 py-3 border-t flex items-center gap-3">
+              <input
+                value={inputMsg}
+                onChange={(e) => setInputMsg(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                placeholder="Ketik pesan..."
+                className="flex-1 rounded-2xl border border-slate-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200"
+              />
+              <button
+                onClick={sendMessage}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-4 py-2 rounded-2xl"
+              >
+                <Send size={16} />
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+>>>>>>> refs/remotes/origin/main:Home/Consultanthomepage/ConsultantHomePage.tsx
     </div>
   );
 };

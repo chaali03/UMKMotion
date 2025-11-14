@@ -33,11 +33,11 @@ export default function SellPromotion() {
         * { box-sizing: border-box; }
 
         .sell-promotion {
-          background: linear-gradient(135deg, #fff8f5 0%, #ffebe6 100%);
+          background: linear-gradient(135deg, #fff7f2 0%, #ffe9df 100%);
           padding: clamp(1.5rem, 4vw, 2rem) clamp(1.8rem, 5vw, 2.5rem);
           border-radius: 1.2rem;
           box-shadow: 
-            0 8px 25px rgba(243, 54, 54, 0.12),
+            0 8px 25px rgba(253, 87, 1, 0.12),
             0 2px 8px rgba(0, 0, 0, 0.05);
           margin: clamp(2rem, 5vw, 3rem) 0;
           display: flex;
@@ -50,7 +50,7 @@ export default function SellPromotion() {
           animation: slideUpFade 0.6s ease-out forwards;
           opacity: 0;
           transform: translateY(20px);
-          border: 1px solid rgba(255, 107, 107, 0.15);
+          border: 1px solid rgba(253, 87, 1, 0.18);
         }
 
         @keyframes slideUpFade {
@@ -64,7 +64,7 @@ export default function SellPromotion() {
         .sell-promotion:hover {
           transform: translateY(-6px);
           box-shadow: 
-            0 20px 40px rgba(243, 54, 54, 0.2),
+            0 20px 40px rgba(253, 87, 1, 0.2),
             0 8px 20px rgba(0, 0, 0, 0.1);
         }
 
@@ -90,7 +90,7 @@ export default function SellPromotion() {
           position: absolute;
           top: -10px;
           right: 20px;
-          background: linear-gradient(135deg, #ff6b6b, #f33636);
+          background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-500));
           color: white;
           font-size: 0.75rem;
           font-weight: 700;
@@ -99,7 +99,7 @@ export default function SellPromotion() {
           display: flex;
           align-items: center;
           gap: 6px;
-          box-shadow: 0 4px 12px rgba(243, 54, 54, 0.3);
+          box-shadow: 0 4px 12px rgba(253, 87, 1, 0.3);
           animation: pulse 2s infinite;
           z-index: 10;
         }
@@ -129,7 +129,7 @@ export default function SellPromotion() {
 
         .sell-text h3 {
           font-size: clamp(1.3rem, 4vw, 1.6rem);
-          color: #d32f2f;
+          color: var(--brand-blue-ink);
           margin: 0 0 0.5rem 0;
           font-weight: 800;
           line-height: 1.2;
@@ -141,7 +141,7 @@ export default function SellPromotion() {
         .inline-icon {
           width: clamp(1.4rem, 4vw, 1.8rem);
           height: clamp(1.4rem, 4vw, 1.8rem);
-          color: #ff6b6b;
+          color: var(--brand-orange);
         }
 
         .sell-text p {
@@ -153,12 +153,12 @@ export default function SellPromotion() {
         }
 
         .sell-text p strong {
-          color: #d32f2f;
+          color: var(--brand-orange);
         }
 
         /* Tombol CTA */
         .sell-cta {
-          background: linear-gradient(135deg, #f33636, #ff5252);
+          background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-500));
           color: white;
           padding: clamp(0.75rem, 2vw, 1rem) clamp(1.5rem, 3.5vw, 2rem);
           border: none;
@@ -171,7 +171,7 @@ export default function SellPromotion() {
           gap: 0.5rem;
           white-space: nowrap;
           transition: all 0.3s ease;
-          box-shadow: 0 6px 15px rgba(243, 54, 54, 0.3);
+          box-shadow: 0 6px 15px rgba(253, 87, 1, 0.3);
           position: relative;
           overflow: hidden;
           z-index: 2;
@@ -195,7 +195,7 @@ export default function SellPromotion() {
 
         .sell-cta:hover {
           transform: translateY(-3px) scale(1.03);
-          box-shadow: 0 12px 25px rgba(243, 54, 54, 0.4);
+          box-shadow: 0 12px 25px rgba(253, 87, 1, 0.4);
         }
 
         .cta-arrow {

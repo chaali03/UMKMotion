@@ -10,6 +10,20 @@ for = "/**/*.@(js|css|woff2|svg|webp|png|jpg|jpeg)"
   [headers.values]
   Cache-Control = "public, max-age=31536000, immutable"
 
+# Cache for fonts
+[[headers]]
+for = "/**/*.@(woff|woff2|ttf|eot)"
+  [headers.values]
+  Cache-Control = "public, max-age=31536000, immutable"
+  Access-Control-Allow-Origin = "*"
+
+# Cache for images with optimization
+[[headers]]
+for = "/umkm/*.webp"
+  [headers.values]
+  Cache-Control = "public, max-age=31536000, immutable"
+  Content-Type = "image/webp"
+
 # Compression settings
 [[headers]]
 for = "/*"
@@ -23,8 +37,7 @@ for = "/*"
 
 [build]
   command = "npm run build"
-  publish = "dist"
-  functions = "netlify/functions"
+
 
 # Ensure Node 18+ (Netlify default images already provide this)
 [build.environment]
@@ -36,8 +49,13 @@ for = "/*"
   [headers.values]
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "credentialless"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "interest-cohort=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https: data:; connect-src 'self' https: wss:; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    Content-Security-Policy-Report-Only = "default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https: data:; connect-src 'self' https:; upgrade-insecure-requests"
 
 # Redirects example (uncomment if needed)
 # [[redirects]]

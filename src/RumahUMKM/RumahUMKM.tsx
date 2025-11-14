@@ -15,17 +15,19 @@ import HomeHeader from '@/LandingPage/components/header/header';
 
 // Icons
 import { 
-  MapPin, Star, Navigation, Phone, Clock, 
-  ShoppingBag, X, ChevronRight, Filter, Search,
-  TrendingUp, Heart, Share2, MessageCircle, Loader,
-  Menu, ChevronLeft, ChevronDown, ChevronUp,
-  Compass, MapPinned, Route, Car, Footprints as Walk, Bike,
-  Info, Image as ImageIcon, ExternalLink, Copy,
-  Zap, Award, Users, Eye, ArrowLeft, Home,
-  CheckCircle, Check, AlertCircle, Circle, Store,
-  Maximize2, Minimize2, Layers, Grid3x3,
-  Building2, MapIcon, LayoutGrid, List
+  Star, Navigation, Phone, 
+  X, ChevronRight, Search,
+  Heart, Share2, Loader,
+  ChevronLeft,
+  Compass, Car, Footprints as Walk, Bike,
+  Image as ImageIcon, ExternalLink,
+  Users, ArrowLeft,
+  Circle,
+  MapPin, Clock, Copy,
+  Sparkles, Utensils, Wrench, Shirt, Palette, HeartPulse, Sprout, Laptop, Armchair, GraduationCap, ShoppingBag
 } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 // Types
 import type { UMKMLocation } from './types';
@@ -46,113 +48,34 @@ const MapLoading = () => (
   </div>
 );
 
-// Sample UMKM data
-const umkmData: UMKMLocation[] = [
-  {
-    id: "1",
-    name: "Warung Makan Bu Siti",
-    category: "Kuliner",
-    rating: 4.8,
-    reviews: 245,
-    distance: 0.5,
-    address: "Jl. Merdeka No. 123, Jakarta Pusat",
-    phone: "+62 812-3456-7890",
-    openHours: "08:00 - 22:00",
-    image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=300&fit=crop",
-    lat: -6.2088,
-    lng: 106.8456,
+// Firestore-loaded UMKM data
+const JAKARTA_CENTER: [number, number] = [-6.2, 106.816];
+const VALID_CATEGORIES = new Set(["Kuliner", "Fashion", "Kerajinan", "Teknologi"]);
+
+function mapStoreToUMKM(data: any, id: string): UMKMLocation {
+  const lat = typeof data.lat === 'number' ? data.lat : (typeof data.latitude === 'number' ? data.latitude : JAKARTA_CENTER[0]);
+  const lng = typeof data.lng === 'number' ? data.lng : (typeof data.longitude === 'number' ? data.longitude : JAKARTA_CENTER[1]);
+  const photos = [data.banner, data.image, data.profileImage].filter(Boolean);
+  const category = data.kategori || 'Kerajinan';
+  return {
+    id,
+    name: data.nama_toko || data.name || 'UMKM',
+    category: VALID_CATEGORIES.has(category) ? category : 'Kerajinan',
+    rating: typeof data.rating_toko === 'number' ? data.rating_toko : 4.8,
+    reviews: typeof data.jumlah_review === 'number' ? data.jumlah_review : 0,
+    distance: 0,
+    address: data.lokasi_toko || data.alamat || '',
+    phone: data.no_telp || data.phone || '',
+    openHours: data.jam_operasional || '08:00 - 21:00',
+    image: data.profileImage || data.image || photos[0] || '/LogoNavbar.webp',
+    lat, lng,
     verified: true,
-    description: "Warung makan tradisional dengan menu nusantara yang lezat dan harga terjangkau",
+    description: data.deskripsi_toko || data.deskripsi || 'UMKM lokal',
     isOpen: true,
-    placeId: undefined,
-    products: [
-      { id: "p1", name: "Nasi Goreng Spesial", price: 25000, image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=200&h=200&fit=crop", stock: 50 },
-      { id: "p2", name: "Ayam Bakar", price: 35000, image: "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=200&h=200&fit=crop", stock: 30 },
-      { id: "p3", name: "Soto Ayam", price: 20000, image: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=200&h=200&fit=crop", stock: 40 },
-    ],
-    photos: [
-      "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=300&fit=crop",
-      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
-      "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400&h=300&fit=crop",
-    ]
-  },
-  {
-    id: "2",
-    name: "Batik Nusantara",
-    category: "Fashion",
-    rating: 4.9,
-    reviews: 189,
-    distance: 1.2,
-    address: "Jl. Sudirman No. 45, Jakarta Selatan",
-    phone: "+62 813-9876-5432",
-    openHours: "09:00 - 21:00",
-    image: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=400&h=300&fit=crop",
-    lat: -6.2185,
-    lng: 106.8426,
-    verified: true,
-    description: "Koleksi batik modern dan tradisional berkualitas tinggi",
-    isOpen: true,
-    placeId: undefined,
-    products: [
-      { id: "p4", name: "Kemeja Batik Pria", price: 250000, image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=200&h=200&fit=crop", stock: 25 },
-      { id: "p5", name: "Dress Batik Wanita", price: 350000, image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=200&h=200&fit=crop", stock: 15 },
-    ],
-    photos: [
-      "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=400&h=300&fit=crop",
-    ]
-  },
-  {
-    id: "3",
-    name: "Kerajinan Kayu Jati",
-    category: "Kerajinan",
-    rating: 4.7,
-    reviews: 156,
-    distance: 2.1,
-    address: "Jl. Gatot Subroto No. 78, Jakarta Barat",
-    phone: "+62 821-5555-4444",
-    openHours: "08:00 - 18:00",
-    image: "https://images.unsplash.com/photo-1615529182904-14819c35db37?w=400&h=300&fit=crop",
-    lat: -6.2114,
-    lng: 106.8294,
-    verified: true,
-    description: "Kerajinan tangan dari kayu jati berkualitas dengan desain unik",
-    isOpen: false,
-    placeId: undefined,
-    products: [
-      { id: "p6", name: "Meja Kayu Jati", price: 1500000, image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200&h=200&fit=crop", stock: 10 },
-      { id: "p7", name: "Kursi Minimalis", price: 750000, image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=200&h=200&fit=crop", stock: 20 },
-    ],
-    photos: [
-      "https://images.unsplash.com/photo-1615529182904-14819c35db37?w=400&h=300&fit=crop",
-    ]
-  },
-  {
-    id: "4",
-    name: "Kopi Nusantara",
-    category: "Kuliner",
-    rating: 4.6,
-    reviews: 312,
-    distance: 0.8,
-    address: "Jl. Thamrin No. 12, Jakarta Pusat",
-    phone: "+62 822-7777-8888",
-    openHours: "07:00 - 23:00",
-    image: "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=400&h=300&fit=crop",
-    lat: -6.1944,
-    lng: 106.8229,
-    verified: true,
-    description: "Kedai kopi dengan biji kopi pilihan dari berbagai daerah Indonesia",
-    isOpen: true,
-    placeId: undefined,
-    products: [
-      { id: "p8", name: "Kopi Gayo Premium", price: 45000, image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=200&h=200&fit=crop", stock: 100 },
-      { id: "p9", name: "Kopi Toraja", price: 50000, image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200&h=200&fit=crop", stock: 80 },
-    ],
-    photos: [
-      "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=400&h=300&fit=crop",
-      "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=400&h=300&fit=crop",
-    ]
-  },
-];
+    products: [],
+    photos,
+  };
+}
 
 export default function RumahUMKM() {
   const [selectedUMKM, setSelectedUMKM] = useState<UMKMLocation | null>(null);
@@ -160,7 +83,7 @@ export default function RumahUMKM() {
   const INDONESIA_CENTER: [number, number] = [-2.5, 118.0];
   const [userLocation, setUserLocation] = useState<[number, number]>(INDONESIA_CENTER);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [verifiedOnly, setVerifiedOnly] = useState(false);
@@ -175,13 +98,65 @@ export default function RumahUMKM() {
   const [outsideHandleLeft, setOutsideHandleLeft] = useState<number>(0);
   const galleryTrackRef = useRef<HTMLDivElement | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [umkmList, setUmkmList] = useState<UMKMLocation[]>([]);
+  const [loadingStores, setLoadingStores] = useState<boolean>(true);
+  const [loadingProducts, setLoadingProducts] = useState<boolean>(false);
 
   const categories = [
-    { id: "Semua", icon: Store, color: "orange" },
-    { id: "Kuliner", icon: ShoppingBag, color: "red" },
-    { id: "Fashion", icon: Award, color: "pink" },
-    { id: "Kerajinan", icon: Zap, color: "blue" },
+    { id: 'all', label: 'Semua', icon: Sparkles, color: 'orange' },
+    { id: 'food', label: 'Kuliner', icon: Utensils, color: 'red' },
+    { id: 'service', label: 'Jasa', icon: Wrench, color: 'blue' },
+    { id: 'fashion', label: 'Fashion', icon: Shirt, color: 'pink' },
+    { id: 'craft', label: 'Kerajinan', icon: Palette, color: 'blue' },
+    { id: 'beauty', label: 'Kesehatan', icon: HeartPulse, color: 'teal' },
+    { id: 'agriculture', label: 'Pertanian', icon: Sprout, color: 'green' },
+    { id: 'electronics', label: 'Elektronik', icon: Laptop, color: 'cyan' },
+    { id: 'furniture', label: 'Furniture', icon: Armchair, color: 'amber' },
+    { id: 'education', label: 'Edukasi', icon: GraduationCap, color: 'indigo' },
   ];
+
+  const idToLabel: Record<string, string> = {
+    all: 'Semua',
+    food: 'Kuliner',
+    service: 'Jasa',
+    fashion: 'Fashion',
+    craft: 'Kerajinan',
+    beauty: 'Kesehatan',
+    agriculture: 'Pertanian',
+    electronics: 'Elektronik',
+    furniture: 'Furniture',
+    education: 'Edukasi',
+  };
+
+  // Load UMKM list from Firestore stores collection
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const snap = await getDocs(collection(db, 'stores'));
+        const items: UMKMLocation[] = snap.docs.map(d => mapStoreToUMKM(d.data(), d.id));
+        if (mounted) setUmkmList(items);
+      } catch (e) {
+        if (mounted) setUmkmList([]);
+      } finally {
+        if (mounted) setLoadingStores(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  // Distance helper
+  const haversine = (a: [number, number], b: [number, number]) => {
+    const toRad = (x: number) => (x * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(b[0] - a[0]);
+    const dLon = toRad(b[1] - a[1]);
+    const lat1 = toRad(a[0]);
+    const lat2 = toRad(b[0]);
+    const x = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+    return Math.round(R * c * 10) / 10;
+  };
 
   // Ensure client-side only
   useEffect(() => {
@@ -319,13 +294,28 @@ export default function RumahUMKM() {
   }, [selectedUMKM]);
 
   // Filter UMKM
-  const filteredUMKM = umkmData.filter((umkm) => {
+  const filteredUMKM = umkmList.map(u => ({
+    ...u,
+    distance: userLocation ? haversine(userLocation, [u.lat, u.lng]) : u.distance,
+  })).filter((umkm: UMKMLocation) => {
     const matchesSearch = umkm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          umkm.category.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "Semua" || umkm.category === selectedCategory;
+    const expectedLabel = idToLabel[selectedCategory] || 'Semua';
+    const matchesCategory = selectedCategory === 'all' || umkm.category === expectedLabel;
     const matchesVerified = !verifiedOnly || !!umkm.verified;
     return matchesSearch && matchesCategory && matchesVerified;
   });
+
+  const categoryCounts = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    umkmList.forEach((u) => {
+      const label = (u.category as string) || 'Semua';
+      map[label] = (map[label] || 0) + 1;
+    });
+    // Also compute 'Semua'
+    map['Semua'] = umkmList.length;
+    return map;
+  }, [umkmList]);
 
   const toggleFavorite = (id: string) => {
     setFavorites(prev => {
@@ -354,6 +344,82 @@ export default function RumahUMKM() {
     setViewMode('detail');
     setShowSidebar(true);
   };
+
+  // Fetch products for selected UMKM from Firestore
+  useEffect(() => {
+    const loadProducts = async (storeId: string) => {
+      setLoadingProducts(true);
+      try {
+        const q = query(collection(db, 'products'), where('storeId', '==', storeId));
+        const snap = await getDocs(q);
+        let docs = snap.docs;
+        // Fallback: if no products by storeId, try match by toko name
+        if (docs.length === 0 && selectedUMKM?.name) {
+          const q2 = query(collection(db, 'products'), where('toko', '==', selectedUMKM.name));
+          const snap2 = await getDocs(q2);
+          docs = snap2.docs;
+        }
+        const sanitize = (u?: string) => {
+          if (!u) return '';
+          let s = String(u).trim();
+          if (s.startsWith('http://')) s = 'https://' + s.slice(7);
+          try {
+            const url = new URL(s, window.location.origin);
+            // drop query to avoid hotlink protection params
+            return url.origin + url.pathname;
+          } catch {
+            return s;
+          }
+        };
+        const productsRaw = docs.map((d) => {
+          const x: any = d.data();
+          const gallery = Array.isArray(x.galeri_gambar) ? x.galeri_gambar : [];
+          const candidates = [x.thumbnail_produk, x.gambar_produk, gallery[0]].map(sanitize).filter(Boolean) as string[];
+          const image = candidates[0] || '/asset/placeholder/product.webp';
+          const altImage = candidates[1];
+          return {
+            id: d.id,
+            name: x.nama_produk || x.name || 'Produk',
+            price: typeof x.harga_produk === 'number' ? x.harga_produk : (parseInt(x.harga_produk) || 0),
+            image,
+            stock: typeof x.jumlah_unit === 'number' ? x.jumlah_unit : 0,
+            description: x.deskripsi_produk || '',
+            category: x.kategori || undefined,
+            discount: typeof x.persentase_diskon === 'number' ? x.persentase_diskon : undefined,
+            _altImage: altImage,
+          } as any;
+        });
+        // Deduplicate by normalized image URL; fallback to normalized name
+        const normUrl = (u?: string) => {
+          if (!u) return '';
+          let s = u.trim().toLowerCase();
+          s = s.replace(/^https?:\/\//, '');
+          const q = s.indexOf('?');
+          if (q !== -1) s = s.substring(0, q);
+          s = s.replace(/(_\d+x\d+|@\dx)\.(webp|jpg|jpeg|png)$/i, '.$2');
+          return s;
+        };
+        const normName = (t?: string) => (t || '').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+        const seen = new Set<string>();
+        const products = productsRaw.filter((p) => {
+          const keyUrl = normUrl(p.image);
+          const keyName = normName(p.name);
+          const key = keyUrl || `name:${keyName}`;
+          if (!key) return true;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        setSelectedUMKM((prev) => (prev ? { ...prev, products } : prev));
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+
+    if (selectedUMKM?.id) {
+      loadProducts(selectedUMKM.id);
+    }
+  }, [selectedUMKM?.id]);
 
   const handleStartNavigation = () => {
     setViewMode('directions');
@@ -390,6 +456,7 @@ export default function RumahUMKM() {
                     <motion.button
                       onClick={handleBackToList}
                       className="p-2 hover:bg-white/80 rounded-full transition-colors touch-manipulation"
+                      aria-label="Kembali ke daftar"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -409,6 +476,7 @@ export default function RumahUMKM() {
                   <motion.button
                     onClick={() => setShowSidebar(false)}
                     className="lg:hidden p-2 hover:bg-white/80 rounded-full touch-manipulation"
+                    aria-label="Tutup panel UMKM"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -416,28 +484,7 @@ export default function RumahUMKM() {
                   </motion.button>
                 </div>
 
-                {/* Category Chips */}
-                <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar -mx-1 px-1">
-                  {categories.map((cat) => {
-                    const Icon = cat.icon;
-                    return (
-                      <motion.button
-                        key={cat.id}
-                        onClick={() => setSelectedCategory(cat.id)}
-                        className={`flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full font-medium whitespace-nowrap transition-all text-sm md:text-base touch-manipulation ${
-                          selectedCategory === cat.id
-                            ? 'bg-gradient-to-r from-orange-600 to-orange-400 text-white shadow-lg shadow-orange-200'
-                            : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-                        }`}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Icon className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                        <span className="text-xs md:text-sm">{cat.id}</span>
-                      </motion.button>
-                    );
-                  })}
-                </div>
+                {/* Category Chips removed per request */}
               </div>
 
               {/* Content Area */}
@@ -466,6 +513,13 @@ export default function RumahUMKM() {
                               src={umkm.image} 
                               alt={umkm.name}
                               className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover ring-2 ring-orange-100"
+                              width={80}
+                              height={80}
+                              srcSet={`${umkm.image}&w=64&h=64 64w, ${umkm.image}&w=80&h=80 80w, ${umkm.image}&w=120&h=120 120w`}
+                              sizes="(max-width: 1024px) 64px, 80px"
+                              loading={index === 0 ? 'eager' : 'lazy'}
+                              fetchPriority={index === 0 ? 'high' : undefined as any}
+                              decoding="async"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).src = 'https://via.placeholder.com/80?text=No+Image';
                               }}
@@ -484,6 +538,7 @@ export default function RumahUMKM() {
                                   toggleFavorite(umkm.id);
                                 }}
                                 className="flex-shrink-0 touch-manipulation p-1"
+                                aria-label={favorites.has(umkm.id) ? 'Hapus dari favorit' : 'Tambah ke favorit'}
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                               >
@@ -542,9 +597,13 @@ export default function RumahUMKM() {
                         {slides.map((src, idx) => (
                           <img
                             key={idx}
-                            src={src}
+                            src={src.replace(/w=400&h=300/, 'w=600&h=300')}
                             alt={`${selectedUMKM.name} ${idx + 1}`}
                             className="h-full w-full min-w-full flex-none object-cover snap-center"
+                            loading={idx === 0 ? 'eager' : 'lazy'}
+                            decoding="async"
+                            width={600}
+                            height={300}
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600x300?text=No+Image';
                             }}
@@ -757,14 +816,27 @@ export default function RumahUMKM() {
                                 Produk ({selectedUMKM.products.length})
                               </h3>
                               <div className="grid grid-cols-2 gap-2 md:gap-3">
-                                {selectedUMKM.products.slice(0, 4).map((product) => (
+                                {selectedUMKM.products.slice(0, 4).map((product) => {
+                                  const placeholder = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="100%" height="100%" fill="%23f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-family="Arial" font-size="18">No Image</text></svg>';
+                                  const toProxy = (u?: string) => (u && /^https?:/i.test(u) ? `/api/proxy-image?url=${encodeURIComponent(u)}` : u);
+                                  const initialSrc = toProxy(product.image) || placeholder;
+                                  const altProxied = toProxy((product as any)?._altImage);
+                                  return (
                                   <div key={product.id} className="border-2 border-orange-100 rounded-xl overflow-hidden hover:shadow-lg hover:border-orange-300 transition-all touch-manipulation">
-                                    <img 
-                                      src={product.image} 
+                                    <img
+                                      src={initialSrc}
                                       alt={product.name}
-                                      className="w-full h-20 md:h-24 object-cover"
+                                      className="w-full h-20 md:h-24 object-cover bg-slate-50"
+                                      loading="lazy"
+                                      decoding="async"
+                                      referrerPolicy="no-referrer"
                                       onError={(e) => {
-                                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/200?text=No+Image';
+                                        const img = e.target as HTMLImageElement;
+                                        if (altProxied && img.src !== altProxied) {
+                                          img.src = altProxied;
+                                        } else {
+                                          img.src = placeholder;
+                                        }
                                       }}
                                     />
                                     <div className="p-2">
@@ -774,7 +846,7 @@ export default function RumahUMKM() {
                                       </p>
                                     </div>
                                   </div>
-                                ))}
+                                );})}
                               </div>
                               {selectedUMKM.products.length > 4 && (
                                 <button className="w-full mt-2 md:mt-3 py-2 bg-gradient-to-r from-orange-600 to-orange-400 text-white hover:shadow-md rounded-xl font-medium text-xs md:text-sm transition-all touch-manipulation">
@@ -951,7 +1023,8 @@ export default function RumahUMKM() {
           `fixed left-0 right-0 bottom-0 z-0 transition-all duration-300 ` +
           `top-[64px] md:top-[80px] lg:top-[96px]`
         }>
-          {isClient && (
+          {/* Defer map until user enables */}
+          {isClient && showMap ? (
             <MapboxComponent 
               center={userLocation}
               zoom={hasGeoPermission ? 13 : 5}
@@ -959,6 +1032,18 @@ export default function RumahUMKM() {
               selectedUMKM={selectedUMKM}
               onSelectUMKM={handleSelectUMKM}
             />
+          ) : (
+            <div className="absolute inset-0 grid place-items-center bg-white">
+              <div className="text-center space-y-3">
+                <p className="text-sm md:text-base text-slate-600">Peta belum dimuat untuk mempercepat loading.</p>
+                <button
+                  onClick={() => setShowMap(true)}
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white px-5 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl"
+                >
+                  Tampilkan Peta
+                </button>
+              </div>
+            </div>
           )}
 
           {/* Floating Controls */}
@@ -973,6 +1058,7 @@ export default function RumahUMKM() {
               className="p-3 md:p-3.5 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 touch-manipulation border-2 border-blue-200 hover:border-blue-300 group"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              aria-label="Arahkan ke lokasi saya"
               onClick={() => {
                 if (navigator.geolocation) {
                   navigator.geolocation.getCurrentPosition((position) => {

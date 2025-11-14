@@ -133,7 +133,7 @@ const Checkout: React.FC = () => {
   if (!checkoutItem) {
     return (
       <div style={{ textAlign: 'center', padding: '40px', fontFamily: 'Inter, sans-serif' }}>
-        <p>Memuat data checkout...</p>
+        <p>Memuat data Payment...</p>
       </div>
     );
   }
@@ -400,7 +400,7 @@ const Checkout: React.FC = () => {
       `}</style>
 
       <div className="fontInter">
-        <header className="pageHeader"><h1>Checkout</h1></header>
+        <header className="pageHeader"><h1>Payment</h1></header>
 
         <div className="mainWrapper">
           <div>

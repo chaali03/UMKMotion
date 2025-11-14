@@ -15,27 +15,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Etalase UMKM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="preload" as="image" href="/asset/optimized/umkm/umkm5.webp" imagesizes="100vw" />
   </head>
 
   <body>
     <div class="background">
 
     <section>
-      <BackgroundCarousel client:load />
+      <BackgroundCarousel client:visible />
     </section>
 
 
       <main>
         <section>
-          <Kategori client:load />
+          <Kategori client:visible />
         </section>
 
         <section>
-          <SellPromotion client:load />
+          <SellPromotion client:visible />
         </section>
 
         <section>
-          <FetchData client:load />
+          <FetchData client:visible />
         </section>
       </main>
     </div>
@@ -206,7 +210,7 @@
         }
         .etalase h1 {
           font-size: 2.4rem;
-          color: #f33636;
+          color: var(--brand-blue-ink);
           letter-spacing: 1.5px;
         }
 
@@ -218,7 +222,7 @@
         .header h1 {
           font-size: 1.8rem;
           font-weight: 600;
-          color: #222;
+          color: var(--brand-blue-ink);
           margin: 40px;
         }
 
@@ -251,7 +255,7 @@
         }
         .search-item button {
           padding: 12px 25px;
-          background: #f33636;
+          background: var(--brand-orange);
           color: #fff;
           border: none;
           border-radius: 8px;
@@ -260,7 +264,7 @@
           transition: .3s;
         }
         .search-item button:hover {
-          background: #d72c2c;
+          background: var(--brand-orange-600);
         }
 
         .search-input-wrapper {
@@ -285,11 +289,11 @@
           transition: .2s;
         }
         .search-input-wrapper input:focus {
-          border-color: #ff6b6b;
-          box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+          border-color: var(--brand-orange);
+          box-shadow: 0 0 0 2px rgba(253, 87, 1, 0.12);
         }
         .search-input-wrapper input:focus + .search-icon {
-          color: #ff6b6b;
+          color: var(--brand-orange);
         }
 
         /* ===== Filter ===== */
@@ -420,7 +424,7 @@
 
         .trending-section h2 {
           font-size: 1.6rem;
-          color: #f33636;
+          color: var(--brand-blue-ink);
           margin-block: 50px;
           font-weight: 600;
         }

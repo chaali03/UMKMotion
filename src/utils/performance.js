@@ -61,7 +61,7 @@ export function optimizeScrollListeners() {
 // Preload critical resources
 export function preloadCriticalResources() {
   const criticalResources = [
-    { href: '/logo.webp', as: 'image', type: 'image/webp' },
+    // Removed logo.webp to avoid unused preload warnings on pages that don't use it
     { href: '/LogoNavbar.webp', as: 'image', type: 'image/webp' },
   ];
   

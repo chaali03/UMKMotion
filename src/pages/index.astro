@@ -4,11 +4,12 @@ import Hero from "../LandingPage/components/Hero.astro";
 import Feature from "../LandingPage/components/Feature.astro";
 import Scroll from "../LandingPage/components/Scroll.astro";
 import SearchBar from "../LandingPage/components/SearchBar.astro";
-import ProductGallery from "../LandingPage/components/productgallery/ProductGallery.tsx";
-import Konten from "../LandingPage/components/konten/Konten.tsx";
-import Footer from "../LandingPage/components/footer/Footer.tsx";
+import ProductGallery from "../LandingPage/components/ProductGallery.astro";
+import Konten from "../LandingPage/components/Konten.astro";
+import Footer from "../LandingPage/components/Footer.astro";
 
 const title = "UMKMotion";
+export const prerender = true;
 ---
 
 <LandingPageLayout {title}>
@@ -87,10 +88,10 @@ const title = "UMKMotion";
   </div>
 
   <div class="reveal" data-reveal data-delay=".22s">
-    <SearchBar client:visible />
+    <SearchBar />
   </div>
   <div class="reveal" data-reveal data-delay=".26s">
-    <ProductGallery client:visible />
+    <ProductGallery />
   </div>
   
   <!-- Defer GSAP loading until ProductGallery is visible -->
@@ -122,11 +123,11 @@ const title = "UMKMotion";
   </script>
 
   <div class="reveal" data-reveal data-delay=".30s">
-    <Konten client:visible />
+    <Konten />
   </div>
 
   <div class="reveal" data-reveal data-delay=".34s">
-    <Footer client:visible />
+    <Footer />
   </div>
 
   <script>

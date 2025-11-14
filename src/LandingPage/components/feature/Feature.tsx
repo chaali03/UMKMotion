@@ -1,8 +1,8 @@
 "use client";
+import React, { useRef } from "react";
 import { TimelineContent } from "../../../components/ui/timeline-animation";
 import { ArrowRight, PencilLine, Sparkles, TrendingUp, Users, Zap } from "lucide-react";
-import { motion } from "motion/react";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import HoverTranslateTwo from "../../../components/ui/interactive-card-stack";
 
 const Feature1 = () => {
@@ -55,7 +55,11 @@ const Feature1 = () => {
   };
 
   return (
-    <section className="max-w-7xl mx-auto p-4 relative bg-white text-gray-900 dark:bg-white dark:text-gray-900 [color-scheme:light]" ref={featuresRef}>
+    <section
+      className="max-w-7xl mx-auto p-4 relative bg-white text-gray-900 dark:bg-white dark:text-gray-900 [color-scheme:light]"
+      ref={featuresRef}
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '1200px 1200px' } as React.CSSProperties}
+    >
       {/* Background Decoration */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
@@ -84,10 +88,11 @@ const Feature1 = () => {
       {/* Header Section */}
       <article className="max-w-5xl mx-auto py-12 text-center space-y-4 px-8">
         <TimelineContent
-          as={motion.div}
+          as="div"
           animationNum={0}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 mb-4"
         >
           <Sparkles className="w-4 h-4 text-purple-600" />
@@ -101,6 +106,7 @@ const Feature1 = () => {
           animationNum={0}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="md:text-6xl sm:text-5xl text-4xl font-bold bg-gradient-to-br from-gray-900 via-gray-800 to-gray-600 bg-clip-text text-transparent leading-tight"
         >
           Direktori UMKM <br />
@@ -112,6 +118,7 @@ const Feature1 = () => {
           animationNum={1}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="text-gray-600 sm:text-lg text-base sm:w-[70%] w-full mx-auto leading-relaxed"
         >
           Temukan ribuan UMKM terpercaya di seluruh Indonesia—dari kuliner, fashion, kerajinan tangan, hingga teknologi. Semua dalam satu platform yang mudah diakses.
@@ -125,6 +132,7 @@ const Feature1 = () => {
           animationNum={0}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="lg:col-span-5 sm:col-span-6 col-span-12 relative w-full h-[400px] rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-xl hover:shadow-2xl transition-all duration-500 group"
         >
           {/* Enhanced Grid Pattern */}
@@ -140,9 +148,9 @@ const Feature1 = () => {
               <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg">
                 <Zap className="w-5 h-5 text-white" />
               </div>
-              <h3 className="text-gray-900 text-3xl font-bold">
+              <h2 className="text-gray-900 text-3xl font-bold">
                 Kategori UMKM
-              </h3>
+              </h2>
             </div>
             <p className="text-gray-600 text-base leading-relaxed">
               Jelajahi berbagai kategori UMKM mulai dari kuliner, fashion, kerajinan, hingga teknologi dengan mudah.
@@ -156,6 +164,7 @@ const Feature1 = () => {
           animationNum={1}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="lg:col-span-3 sm:col-span-6 col-span-12 border flex flex-col justify-between rounded-2xl p-6 relative border-gray-200 bg-white shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden group"
         >
           {/* Enhanced Gradient Background */}
@@ -178,29 +187,41 @@ const Feature1 = () => {
             transition={{ delay: 1.8, duration: 0.6 }}
           >
             {[
-              "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200",
-              "https://images.unsplash.com/photo-1617171594279-3aa1f300a0f2?q=80&w=200",
-              "https://images.unsplash.com/photo-1659228135452-c4c7b5118047?q=80&w=200",
-            ].map((src, i) => (
-              <motion.div
-                key={i}
-                className="relative"
-                initial={{ scale: 0, rotate: 180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{
-                  delay: 2.0 + i * 0.2,
-                  duration: 0.5,
-                  type: "spring",
-                  stiffness: 200,
-                }}
-              >
-                <img
-                  src={src}
-                  alt={`User ${i + 1}`}
-                  className="rounded-2xl border-4 border-white h-16 w-16 object-cover shadow-lg ring-2 ring-purple-200"
-                />
-              </motion.div>
-            ))}
+              "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&h=150&q=80&fm=webp&fit=crop&auto=format,compress",
+              "https://images.unsplash.com/photo-1617171594279-3aa1f300a0f2?w=200&h=150&q=80&fm=webp&fit=crop&auto=format,compress",
+              "https://images.unsplash.com/photo-1659228135452-c4c7b5118047?w=200&h=150&q=80&fm=webp&fit=crop&auto=format,compress",
+            ].map((src, i) => {
+              const s48 = src.replace("w=200&h=150", "w=48&h=48");
+              const s64 = src.replace("w=200&h=150", "w=64&h=64");
+              const s96 = src.replace("w=200&h=150", "w=96&h=96");
+              const srcSet = `${s48} 48w, ${s64} 64w, ${s96} 96w`;
+              return (
+                <motion.div
+                  key={i}
+                  className="relative"
+                  initial={{ scale: 0, rotate: 180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{
+                    delay: 2.0 + i * 0.2,
+                    duration: 0.5,
+                    type: "spring",
+                    stiffness: 200,
+                  }}
+                >
+                  <img
+                    src={s64}
+                    srcSet={srcSet}
+                    sizes="(max-width: 640px) 48px, 64px"
+                    width={64}
+                    height={64}
+                    alt={`User ${i + 1}`}
+                    className="rounded-2xl border-4 border-white h-16 w-16 object-cover shadow-lg ring-2 ring-purple-200"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </motion.div>
+              );
+            })}
             <motion.div
               className="flex items-center justify-center rounded-2xl border-4 border-white h-16 w-16 bg-gradient-to-br from-purple-500 to-blue-500 shadow-lg ring-2 ring-purple-200"
               initial={{ scale: 0 }}
@@ -248,6 +269,7 @@ const Feature1 = () => {
           animationNum={2}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="lg:col-span-4 sm:col-span-6 col-span-12 border rounded-2xl p-6 group border-gray-200 bg-white shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
         >
           {/* Background Decoration */}
@@ -323,7 +345,7 @@ const Feature1 = () => {
                   className="p-2 bg-gray-100 rounded-xl group-hover:bg-gray-200 transition-colors"
                   whileHover={{ scale: 1.1, rotate: -10 }}
                 >
-                  <ArrowRight className="w-5 h-5 text-gray-700" />
+                  <ArrowRight className="w-5 h-5 text-gray-700" aria-label="Select plan" />
                 </motion.div>
               </motion.div>
             ))}
@@ -336,6 +358,7 @@ const Feature1 = () => {
           animationNum={3}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="lg:col-span-7 sm:col-span-6 col-span-12 relative border p-6 rounded-2xl overflow-hidden border-gray-200 bg-white shadow-xl hover:shadow-2xl transition-all duration-500 group"
         >
           {/* Background Decoration */}
@@ -346,9 +369,9 @@ const Feature1 = () => {
               <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl shadow-lg">
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-gray-900 text-3xl font-bold">
+              <h2 className="text-gray-900 text-3xl font-bold">
                 Statistik Pertumbuhan
-              </h3>
+              </h2>
             </div>
             <p className="mt-2 font-normal text-gray-600 text-base leading-relaxed ml-14">
               Pantau pertumbuhan UMKM di berbagai kategori dengan visualisasi data yang interaktif dan mudah dipahami.
@@ -564,6 +587,7 @@ const Feature1 = () => {
           animationNum={4}
           timelineRef={featuresRef}
           customVariants={revealVariants}
+          once={true}
           className="lg:col-span-5 sm:col-span-6 col-span-12 relative border p-6 rounded-2xl overflow-hidden border-gray-200 bg-white shadow-xl hover:shadow-2xl transition-all duration-500"
         >
           {/* Background Decoration */}
@@ -606,6 +630,7 @@ const Feature1 = () => {
                   transition={{ delay: 4.6, duration: 0.4, type: "spring" }}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
+                  aria-label="Adjust tone"
                   suppressHydrationWarning
                 >
                   <PencilLine className="h-3 w-3" />
@@ -637,6 +662,7 @@ const Feature1 = () => {
                 transition={{ delay: 5.2, duration: 0.4, type: "spring" }}
                 whileHover={{ scale: 1.1, rotate: -10 }}
                 whileTap={{ scale: 0.9 }}
+                aria-label="Kirim pesan"
                 suppressHydrationWarning
               >
                 <ArrowRight className="h-5 w-5" />
@@ -649,9 +675,9 @@ const Feature1 = () => {
               <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-gray-900 text-3xl font-bold">
+              <h2 className="text-gray-900 text-3xl font-bold">
                 Hubungi UMKM
-              </h3>
+              </h2>
             </div>
             <p className="mt-2 font-normal text-gray-600 text-base leading-relaxed ml-14">
               Terhubung langsung dengan pemilik UMKM melalui chat real-time untuk konsultasi atau pemesanan produk.

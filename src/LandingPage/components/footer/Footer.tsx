@@ -1,6 +1,6 @@
 "use client";
-import { useRef, useState, useEffect } from "react";
-import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import React, { useRef, useState, useEffect } from "react";
+import { motion, useInView } from "framer-motion";
 import { 
   ArrowUpRight, 
   ArrowUp, 
@@ -9,7 +9,6 @@ import {
   Twitter, 
   Youtube, 
   Mail, 
-  Shield, 
   BookOpenText, 
   MapPin,
   Store,
@@ -46,8 +45,9 @@ export default function Footer() {
   const [isMobile, setIsMobile] = useState(false);
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [serverMsg, setServerMsg] = useState<string>("");
   const inView = useInView(ref, { once: true, margin: "-10% 0px -10% 0px" });
-
 
   useEffect(() => {
     const checkMobile = () => {
@@ -87,18 +87,37 @@ export default function Footer() {
     }
   };
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
-    setTimeout(() => {
+    if (!email) return;
+    setIsSending(true);
+    setServerMsg("");
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.message || 'Gagal mengirim email');
+      }
+      setIsSubmitted(true);
+      setServerMsg('Voucher terkirim ke email kamu.');
       setEmail("");
-      setIsSubmitted(false);
-    }, 3000);
+    } catch (err: any) {
+      setServerMsg(err?.message || 'Gagal mengirim email. Coba lagi.');
+    } finally {
+      setIsSending(false);
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setServerMsg("");
+      }, 4000);
+    }
   };
 
   return (
     <footer ref={containerRef} className="relative bg-white overflow-visible">
-
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 lg:py-24">
         <motion.div 
           ref={ref}
@@ -151,7 +170,8 @@ export default function Footer() {
                     whileHover={!isMobile ? { y: -2, scale: 1.01 } : {}}
                     whileTap={{ scale: 0.95 }}
                     type="submit"
-                    className="group relative overflow-hidden rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-white shadow-lg shadow-orange-300/50 transition-all duration-300 hover:shadow-xl hover:shadow-orange-400/60"
+                    disabled={isSending}
+                    className={`group relative overflow-hidden rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-white shadow-lg shadow-orange-300/50 transition-all duration-300 hover:shadow-xl hover:shadow-orange-400/60 ${isSending ? 'opacity-80 cursor-not-allowed' : ''}`}
                     suppressHydrationWarning
                   >
                     <span className="relative flex items-center justify-center gap-1.5 sm:gap-2">
@@ -159,6 +179,11 @@ export default function Footer() {
                         <>
                           <CheckCircle2 className="h-4 w-4" />
                           <span>Terkirim!</span>
+                        </>
+                      ) : isSending ? (
+                        <>
+                          <Send className="h-4 w-4 animate-pulse" />
+                          <span>Mengirim...</span>
                         </>
                       ) : (
                         <>
@@ -170,14 +195,14 @@ export default function Footer() {
                   </motion.button>
                 </div>
               </form>
-              {isSubmitted && (
+              {(isSubmitted || serverMsg) && (
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-xs sm:text-sm text-green-600 flex items-center gap-1.5"
+                  className={`text-xs sm:text-sm ${isSubmitted ? 'text-green-600' : 'text-red-600'} flex items-center gap-1.5`}
                 >
                   <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Terima kasih! Cek email kamu untuk konfirmasi.
+                  {serverMsg || 'Terima kasih! Cek email kamu untuk konfirmasi.'}
                 </motion.p>
               )}
             </div>
@@ -244,7 +269,6 @@ export default function Footer() {
                       </motion.div>
                     </motion.a>
 
-                    {/* Simplified hover background */}
                     <motion.div 
                       className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 opacity-0 -z-10"
                       whileHover={{ opacity: 1 }}
@@ -287,26 +311,6 @@ export default function Footer() {
               </motion.span>
               {" "}in Indonesia
             </p>
-            <div className="flex items-center gap-3 sm:gap-4">
-              <motion.a 
-                href="/security"
-                whileHover={!isMobile ? { scale: 1.1, y: -2 } : {}}
-                whileTap={{ scale: 0.95 }}
-                className="group inline-flex items-center gap-1.5 text-slate-600 transition-colors hover:text-orange-600"
-              >
-                <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:scale-110" />
-                <span>Security</span>
-              </motion.a>
-              <motion.a 
-                href="/docs"
-                whileHover={!isMobile ? { scale: 1.1, y: -2 } : {}}
-                whileTap={{ scale: 0.95 }}
-                className="group inline-flex items-center gap-1.5 text-slate-600 transition-colors hover:text-blue-600"
-              >
-                <BookOpenText className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:scale-110" />
-                <span>Docs</span>
-              </motion.a>
-            </div>
           </div>
 
           {/* Scroll to top button */}
@@ -341,6 +345,12 @@ export default function Footer() {
           src="/asset/optimized/Footer/FooterImg.webp" 
           alt="UMKMotion Footer Banner"
           className="w-full h-auto"
+          width={1200}
+          height={225}
+          sizes="(min-width: 1024px) 924px, 100vw"
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
         />
       </div>
 
