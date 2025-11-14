@@ -1,10 +1,8 @@
-// ConsultantHomePage.tsx
+
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import {
   MessageCircle,
-  X,
-  Send,
   Store,
   Users,
   Award,
@@ -22,14 +20,6 @@ type Consultant = {
   price: string;
   image: string;
   availability: string;
-};
-
-type Message = {
-  id: number;
-  text: string;
-  sender: "user" | "consultant";
-  timestamp: Date;
-
 };
 
 const CONSULTANTS: Consultant[] = [
@@ -117,13 +107,9 @@ const features = [
 ];
 
 const ConsultantHomePage: React.FC = () => {
-  // chat state
+  const [showChatPage, setShowChatPage] = useState(false);
   const [selectedConsultant, setSelectedConsultant] = useState<Consultant | null>(null);
-  const [showChat, setShowChat] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputMsg, setInputMsg] = useState("");
   const heroRef = useRef<HTMLElement | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   // parallax: mouse position
   const mvX = useMotionValue(0);
@@ -142,69 +128,20 @@ const ConsultantHomePage: React.FC = () => {
     return () => window.removeEventListener("mousemove", onMove);
   }, [mvX, mvY]);
 
-  useEffect(() => {
-    if (!selectedConsultant) return;
-    // init greeting
-    setMessages([
-      {
-        id: 1,
-        text: `Halo! Saya ${selectedConsultant.name}, spesialis ${selectedConsultant.specialty}. Ceritakan singkat masalah usaha lu.`,
-        sender: "consultant",
-        timestamp: new Date(),
-      },
-    ]);
-  }, [selectedConsultant]);
-
-    useEffect(() => {
-    messagesEndRef.current?.scrollTo({ top: messagesEndRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
-
   const openChat = (c: Consultant) => {
     setSelectedConsultant(c);
-    setShowChat(true);
+    setShowChatPage(true);
   };
 
   const closeChat = () => {
-    setShowChat(false);
+    setShowChatPage(false);
     setSelectedConsultant(null);
-    setMessages([]);
-    setInputMsg("");
   };
 
-  const sendMessage = () => {
-    if (!inputMsg.trim()) return;
-    const newM: Message = {
-      id: messages.length + 1,
-      text: inputMsg.trim(),
-      sender: "user",
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, newM]);
-    setInputMsg("");
-
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: prev.length + 1,
-          text:
-            "Sip — terima kasih. Dari info itu kita bisa mulai bahas pricing & channel penjualan. Mau dijadwalkan sesi lanjutan?",
-          sender: "consultant",
-          timestamp: new Date(),
-        },
-      ]);
-    }, 800);
-  };
-
-  const handleContactSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
-    e.preventDefault();
-    // simple demo behaviour
-    const form = e.currentTarget;
-    const fd = new FormData(form);
-    const name = fd.get("name")?.toString() ?? "";
-    alert(`Terima kasih ${name || ""}! Tim UMKMotion akan menghubungi via email/WA.`);
-    form.reset();
-  };
+  // If chat page is shown, render the chat component
+  if (showChatPage && selectedConsultant) {
+    return <ConsultantChatPage consultant={selectedConsultant} onBack={closeChat} />;
+  }
 
   return (
     <div className="min-h-screen bg-white text-slate-900 antialiased">
@@ -283,7 +220,7 @@ const ConsultantHomePage: React.FC = () => {
             <div className="flex flex-wrap gap-3 mt-4">
               <button
                 onClick={() => {
-                  const el = document.getElementById("contact-form");
+                  const el = document.getElementById("consultants");
                   el?.scrollIntoView({ behavior: "smooth", block: "center" });
                 }}
                 className="inline-flex items-center gap-3 bg-gradient-to-r from-orange-600 to-amber-500 text-white font-semibold px-5 py-3 rounded-2xl shadow-lg hover:brightness-95 focus:outline-none focus:ring-4 focus:ring-orange-200"
@@ -461,86 +398,231 @@ const ConsultantHomePage: React.FC = () => {
           </div>
         </div>
       </section>
+    </div>
+  );
+};
 
-      {/* CHAT OVERLAY */}
-      {showChat && selectedConsultant && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/30"
-          role="dialog"
-          aria-modal="true"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 40, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 40, scale: 0.88 }}
-            transition={{ type: "spring", stiffness: 120, damping: 14 }}
-            className="w-full max-w-xs bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <div className="flex items-center gap-3">
-                <img
-                  src={selectedConsultant.image}
-                  alt={selectedConsultant.name}
-                  className="w-12  h-12 rounded-lg object-cover"
-                />
-                <div>
-                  <div className="font-bold">{selectedConsultant.name}</div>
-                  <div className="text-sm text-slate-500">{selectedConsultant.specialty}</div>
-                </div>
-              </div>
-              <button
-                onClick={closeChat}
-                className="p-2 rounded-lg hover:bg-slate-100"
-              >
-                <X size={18} />
-              </button>
-            </div>
+// ===== CHAT PAGE COMPONENT =====
+type Message = {
+  id: number;
+  text: string;
+  sender: "user" | "consultant";
+  timestamp: Date;
+};
 
-            {/* Messages */}
-            <div
-              ref={messagesEndRef}
-              className="p-4 flex-1 overflow-y-auto space-y-3 bg-gradient-to-b from-white to-orange-50"
+type ConsultantChatPageProps = {
+  consultant: Consultant;
+  onBack: () => void;
+};
+
+const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onBack }) => {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 1,
+      text: `Halo! Saya ${consultant.name}, spesialis ${consultant.specialty}. Ceritakan singkat masalah usaha Anda.`,
+      sender: "consultant",
+      timestamp: new Date(Date.now() - 120000),
+    },
+  ]);
+
+  const [inputMsg, setInputMsg] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = () => {
+    if (!inputMsg.trim()) return;
+
+    const newM: Message = {
+      id: messages.length + 1,
+      text: inputMsg.trim(),
+      sender: "user",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, newM]);
+    setInputMsg("");
+    setIsTyping(true);
+
+    setTimeout(() => {
+      setIsTyping(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          text: "Terima kasih sudah berbagi. Dari informasi ini, saya bisa membantu analisis lebih lanjut. Apakah Anda ingin kita fokus ke strategi pricing dulu atau ekspansi pasar?",
+          sender: "consultant",
+          timestamp: new Date(),
+        },
+      ]);
+    }, 1500);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white flex flex-col">
+      {/* Header */}
+      <motion.header
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="bg-white border-b border-orange-100 shadow-sm sticky top-0 z-10"
+      >
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBack}
+              className="p-2 rounded-lg hover:bg-orange-50 transition-colors"
+              aria-label="Kembali"
             >
-              {messages.map((m) => (
+              <ArrowRight size={20} className="text-slate-700 rotate-180" />
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <img
+                  src={consultant.image}
+                  alt={consultant.name}
+                  className="w-12 h-12 rounded-full object-cover ring-2 ring-orange-200"
+                />
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full ring-2 ring-white" />
+              </div>
+
+              <div>
+                <h1 className="font-bold text-slate-900">{consultant.name}</h1>
+                <p className="text-xs text-slate-500">{consultant.specialty}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.header>
+
+      {/* Chat Messages */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+          {/* Date divider */}
+          <div className="flex items-center justify-center">
+            <div className="bg-white px-4 py-1 rounded-full text-xs text-slate-500 shadow-sm border border-orange-100">
+              Hari ini
+            </div>
+          </div>
+
+          {/* Messages */}
+          {messages.map((m, idx) => (
+            <motion.div
+              key={m.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 }}
+              className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-[70%] sm:max-w-md ${
+                  m.sender === "user"
+                    ? "bg-gradient-to-r from-orange-600 to-amber-500 text-white rounded-2xl rounded-tr-sm"
+                    : "bg-white text-slate-900 rounded-2xl rounded-tl-sm shadow-sm border border-orange-100"
+                } px-4 py-3`}
+              >
+                <p className="text-sm leading-relaxed">{m.text}</p>
                 <div
-                  key={m.id}
-                  className={`max-w-[75%] px-3 py-2 rounded-lg ${
-                    m.sender === "user"
-                      ? "ml-auto bg-gradient-to-r from-orange-600 to-amber-500 text-white"
-                      : "bg-white border border-slate-100 text-slate-900"
+                  className={`text-xs mt-1 ${
+                    m.sender === "user" ? "text-orange-100" : "text-slate-400"
                   }`}
                 >
-                  <div className="text-sm">{m.text}</div>
-                  <div className="text-xs mt-1 text-slate-400 text-right">
-                    {m.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
+                  {m.timestamp.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </div>
-              ))}
-            </div>
+              </div>
+            </motion.div>
+          ))}
 
-            {/* Input */}
-            <div className="px-4 py-3 border-t flex items-center gap-3">
-              <input
+          {/* Typing indicator */}
+          {isTyping && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex justify-start"
+            >
+              <div className="bg-white rounded-2xl rounded-tl-sm shadow-sm border border-orange-100 px-4 py-3">
+                <div className="flex gap-1">
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
+                    className="w-2 h-2 bg-slate-400 rounded-full"
+                  />
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
+                    className="w-2 h-2 bg-slate-400 rounded-full"
+                  />
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
+                    className="w-2 h-2 bg-slate-400 rounded-full"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+      </main>
+
+      {/* Input Area */}
+      <motion.footer
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="bg-white border-t border-orange-100 shadow-lg sticky bottom-0"
+      >
+        <div className="max-w-5xl mx-auto px-4 py-4">
+          <div className="flex items-end gap-3">
+            <div className="flex-1 relative">
+              <textarea
                 value={inputMsg}
                 onChange={(e) => setInputMsg(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Ketik pesan..."
-                className="flex-1 rounded-2xl border border-slate-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+                placeholder="Ketik pesan Anda..."
+                rows={1}
+                className="w-full resize-none rounded-2xl border border-orange-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent bg-orange-50/30"
+                style={{ minHeight: "48px", maxHeight: "120px" }}
               />
-              <button
-                onClick={sendMessage}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-4 py-2 rounded-2xl"
-              >
-                <Send size={16} />
-              </button>
             </div>
-          </motion.div>
+
+            <button
+              onClick={sendMessage}
+              disabled={!inputMsg.trim()}
+              className="p-3 rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 text-white hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
+              aria-label="Kirim pesan"
+            >
+              <MessageCircle size={20} />
+            </button>
+          </div>
+
+          {/* Quick replies */}
+          <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+            {["Tentang pricing", "Strategi marketing", "Ekspansi bisnis"].map(
+              (reply, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setInputMsg(reply)}
+                  className="flex-shrink-0 px-4 py-2 rounded-full bg-white border border-orange-200 text-sm text-slate-700 hover:bg-orange-50 hover:border-orange-300 transition-colors"
+                >
+                  {reply}
+                </button>
+              )
+            )}
+          </div>
         </div>
-      )}
+      </motion.footer>
     </div>
   );
 };
