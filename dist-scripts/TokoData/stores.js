@@ -3,24 +3,55 @@ import { upsertStoresByName, deleteAllStores, listStoresWithWIB, listStores, del
 // debug info
 console.log('[SEED] Script seeding dijalankan!');
 console.log('[SEED] Waktu sekarang (WIB):', new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }));
-// === DATA TOKO (8 TOKO LENGKAP) - LOKASI DEPOK & JAKARTA ===
+// Helper: generate random date in last 6 months
+const randomDate = (daysAgo) => {
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(Math.random() * daysAgo));
+    return date.toISOString();
+};
+// === DATA TOKO (8 TOKO + 3 ULASAN PER TOKO) ===
 export const stores = [
     {
         nama_toko: "Nusantara Rasa",
         image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&auto=format&fit=crop&q=60",
         banner: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1920&auto=format&fit=crop&q=60",
         kategori: "Makanan & Minuman",
-        deskripsi_toko: "Nusantara Rasa menyediakan berbagai produk makanan dan minuman khas Nusantara dengan kualitas terbaik. Kami berkomitmen menghadirkan cita rasa autentik Indonesia untuk keluarga Indonesia.",
-        lokasi_toko: "Jl. Margonda Raya No.358, Kemiri Muka, Kec. Beji, Kota Depok, Jawa Barat 16423",
-        no_telp: "+62 21 7720 5678",
+        deskripsi_toko: "Nusantara Rasa menyediakan berbagai produk makanan and minuman khas Nusantara dengan kualitas terbaik. Kami berkomitmen menghadirkan cita rasa autentik Indonesia untuk keluarga Indonesia.",
+        lokasi_toko: "Jl. Raya Darmo Permai III No.17, Pradahkalindungan, Kec. Dukuhpakis, Kota Surabaya, Jawa Timur 60226",
+        no_telp: "+62 31 5678 9012",
         email: "hello@nusantararasa.id",
         profileImage: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&auto=format&fit=crop&q=60",
         jam_operasional: "07:00 - 22:00",
         hari_operasional: "Senin - Minggu",
         rating_toko: 5.0,
-        jumlah_review: 200,
+        jumlah_review: 203,
         maps_link: "https://maps.app.goo.gl/8vN9vL3kP9bZfG8J7",
-        social: { instagram: "nusantararasa.id", whatsapp: "+622177205678" },
+        fasilitas: ["Parkir", "Toilet", "WiFi", "Ruang Tunggu", "Mushola"],
+        metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank"],
+        social: { instagram: "nusantararasa.id", whatsapp: "+623156789012" },
+        reviews: [
+            {
+                nama: "Siti Nurhaliza",
+                rating: 5,
+                ulasan: "Rendangnya enak banget! Bumbunya pas, dagingnya empuk, dan porsinya banyak. Cocok buat oleh-oleh keluarga di Jakarta.",
+                tanggal: randomDate(30),
+                avatar: "https://i.pravatar.cc/150?img=1"
+            },
+            {
+                nama: "Budi Santoso",
+                rating: 5,
+                ulasan: "Pelayanan ramah, kemasan rapi, dan pengiriman cepat. Sambal ijo-nya bikin nagih!",
+                tanggal: randomDate(15),
+                avatar: "https://i.pravatar.cc/150?img=2"
+            },
+            {
+                nama: "Rina Wijaya",
+                rating: 5,
+                ulasan: "Sudah langganan 2 tahun. Kue kering lebarannya selalu habis duluan. Recomended!",
+                tanggal: randomDate(60),
+                avatar: "https://i.pravatar.cc/150?img=3"
+            }
+        ]
     },
     {
         nama_toko: "Kain Nusantara",
@@ -35,26 +66,76 @@ export const stores = [
         jam_operasional: "08:00 - 17:00",
         hari_operasional: "Senin - Sabtu",
         rating_toko: 4.9,
-        jumlah_review: 89,
+        jumlah_review: 92,
         maps_link: "https://maps.app.goo.gl/3kL9mP7vX2fZ9k8J6",
-        social: { instagram: "kainnusantara", facebook: "KainNusantaraDepok" },
+        fasilitas: ["Parkir", "Ruang Fitting", "Konsultasi Motif", "Workshop Batik"],
+        metode_pembayaran: ["Cash", "Transfer Bank", "E-Wallet", "QRIS", "Credit Card"],
+        social: { instagram: "kainnusantara", facebook: "KainNusantaraPekalongan" },
+        reviews: [
+            {
+                nama: "Dewi Lestari",
+                rating: 5,
+                ulasan: "Batik tulis motif parang-nya detail banget! Warna tidak luntur setelah dicuci. Worth the price!",
+                tanggal: randomDate(20),
+                avatar: "https://i.pravatar.cc/150?img=4"
+            },
+            {
+                nama: "Ahmad Fauzi",
+                rating: 4,
+                ulasan: "Pelayanan baik, tapi pengiriman agak lama karena antre. Kualitas kain oke!",
+                tanggal: randomDate(45),
+                avatar: "https://i.pravatar.cc/150?img=5"
+            },
+            {
+                nama: "Laras Sari",
+                rating: 5,
+                ulasan: "Ikut workshop batik, seru! Pulang bawa kain cantik buatan sendiri. Recommended!",
+                tanggal: randomDate(70),
+                avatar: "https://i.pravatar.cc/150?img=6"
+            }
+        ]
     },
     {
         nama_toko: "Karya Nusantara",
-        image: "https://images.unsplash.com/photo-1582639590011-f5a8416d1101?w=1200&auto=format&fit=crop&q=60",
-        banner: "https://images.unsplash.com/photo-1582639590011-f5a8416d1101?w=1920&auto=format&fit=crop&q=60",
+        image: "https://klik-online.com/wp-content/uploads/2023/12/DUTA.jpg",
+        banner: "https://klik-online.com/wp-content/uploads/2023/12/DUTA.jpg",
         kategori: "Kerajinan Tangan",
         deskripsi_toko: "Galeri dan toko kerajinan tangan Indonesia. Karya Nusantara menghadirkan berbagai produk kerajinan berkualitas seperti anyaman, ukiran kayu, keramik, dan suvenir khas Nusantara yang dibuat oleh pengrajin lokal terpilih.",
         lokasi_toko: "Jl. Raya Sawangan No.123, Pancoran Mas, Kec. Pancoran Mas, Kota Depok, Jawa Barat 16436",
         no_telp: "+62 21 7564 8901",
         email: "hello@karyanusantara.id",
-        profileImage: "https://images.unsplash.com/photo-1582639590011-f5a8416d1101?w=400&auto=format&fit=crop&q=60",
+        profileImage: "https://klik-online.com/wp-content/uploads/2023/12/DUTA.jpg",
         jam_operasional: "09:00 - 21:00",
         hari_operasional: "Senin - Minggu",
         rating_toko: 4.9,
-        jumlah_review: 156,
+        jumlah_review: 159,
         maps_link: "https://maps.app.goo.gl/9vX8kL3mP7vZfG8J7",
-        social: { instagram: "karyanusantara", whatsapp: "+622175648901" },
+        fasilitas: ["Parkir", "Galeri Pameran", "Workshop", "Café"],
+        metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank"],
+        social: { instagram: "karyanusantara", whatsapp: "+622748901234" },
+        reviews: [
+            {
+                nama: "Agus Pratama",
+                rating: 5,
+                ulasan: "Ukiran kayu wayang-nya indah banget! Cocok buat dekorasi rumah. Pengrajinnya ramah.",
+                tanggal: randomDate(25),
+                avatar: "https://i.pravatar.cc/150?img=7"
+            },
+            {
+                nama: "Intan Permata",
+                rating: 5,
+                ulasan: "Beli tas anyaman rotan, ringan dan kuat. Sering dipuji temen kantor!",
+                tanggal: randomDate(40),
+                avatar: "https://i.pravatar.cc/150?img=8"
+            },
+            {
+                nama: "Joko Widodo",
+                rating: 4,
+                ulasan: "Harga sedikit mahal, tapi worth it dengan kualitas dan keunikan produknya.",
+                tanggal: randomDate(80),
+                avatar: "https://i.pravatar.cc/150?img=9"
+            }
+        ]
     },
     {
         nama_toko: "Apotek Sehat Nusantara",
@@ -69,9 +150,34 @@ export const stores = [
         jam_operasional: "00:00 - 23:59",
         hari_operasional: "Senin - Minggu (24 Jam)",
         rating_toko: 4.9,
-        jumlah_review: 203,
+        jumlah_review: 206,
         maps_link: "https://maps.app.goo.gl/2mK9vL3kP7bZfG8J7",
-        social: { whatsapp: "+622175456789" },
+        fasilitas: ["Parkir", "Konsultasi Dokter", "Drive Thru", "Apotek 24 Jam"],
+        metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank", "BPJS"],
+        social: { whatsapp: "+622184567890" },
+        reviews: [
+            {
+                nama: "dr. Maya Sari",
+                rating: 5,
+                ulasan: "Apoteker ramah dan jelasin obat dengan detail. Drive-thru sangat membantu saat hujan.",
+                tanggal: randomDate(10),
+                avatar: "https://i.pravatar.cc/150?img=10"
+            },
+            {
+                nama: "Hendra Kusuma",
+                rating: 5,
+                ulasan: "Obat langka tersedia! Langsung dapat malam hari. Terima kasih pelayanannya.",
+                tanggal: randomDate(35),
+                avatar: "https://i.pravatar.cc/150?img=11"
+            },
+            {
+                nama: "Siti Aisyah",
+                rating: 4,
+                ulasan: "Harga kompetitif, tapi antrean kadang panjang di akhir pekan.",
+                tanggal: randomDate(55),
+                avatar: "https://i.pravatar.cc/150?img=12"
+            }
+        ]
     },
     {
         nama_toko: "Tani Makmur Indonesia",
@@ -86,9 +192,32 @@ export const stores = [
         jam_operasional: "07:00 - 18:00",
         hari_operasional: "Senin - Sabtu",
         rating_toko: 4.9,
-        jumlah_review: 97,
+        jumlah_review: 100,
         maps_link: "https://maps.app.goo.gl/5vN9vL3kP9bZfG8J7",
         social: { instagram: "tanimakmur", facebook: "TaniMakmurIndonesia" },
+        reviews: [
+            {
+                nama: "Pak Slamet",
+                rating: 5,
+                ulasan: "Bibit cabai unggul, hasil panen melimpah! Pupuk organiknya juga bagus buat tanah.",
+                tanggal: randomDate(18),
+                avatar: "https://i.pravatar.cc/150?img=13"
+            },
+            {
+                nama: "Rudi Hartono",
+                rating: 5,
+                ulasan: "Karyawan ngerti banget soal urban farming. Beli pot dan media tanam, sekarang balkon hijau!",
+                tanggal: randomDate(50),
+                avatar: "https://i.pravatar.cc/150?img=14"
+            },
+            {
+                nama: "Bu Tini",
+                rating: 4,
+                ulasan: "Harga pupuk naik sedikit, tapi kualitas tetap terjaga. Tetap langganan.",
+                tanggal: randomDate(75),
+                avatar: "https://i.pravatar.cc/150?img=15"
+            }
+        ]
     },
     {
         nama_toko: "Gadget Nusantara",
@@ -103,9 +232,34 @@ export const stores = [
         jam_operasional: "10:00 - 22:00",
         hari_operasional: "Senin - Minggu",
         rating_toko: 4.9,
-        jumlah_review: 312,
+        jumlah_review: 315,
         maps_link: "https://maps.app.goo.gl/7kL9mP7vX2fZ9k8J6",
-        social: { instagram: "gadgetnusantara", facebook: "GadgetNusantaraOfficial", whatsapp: "+622129346789" },
+        fasilitas: ["Service Center", "Demo Produk", "Trade-in", "Cicilan 0%"],
+        metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank", "Cicilan 0%"],
+        social: { instagram: "gadgetnusantara", facebook: "GadgetNusantaraOfficial", whatsapp: "+622167890123" },
+        reviews: [
+            {
+                nama: "Fajar Nugroho",
+                rating: 5,
+                ulasan: "Beli iPhone 2nd, kondisi 99%, garansi resmi, cicilan 0%. Pelayanan top!",
+                tanggal: randomDate(12),
+                avatar: "https://i.pravatar.cc/150?img=16"
+            },
+            {
+                nama: "Nadia Putri",
+                rating: 5,
+                ulasan: "Trade-in laptop lama, dapat potongan besar. Proses cepat, staf ramah.",
+                tanggal: randomDate(38),
+                avatar: "https://i.pravatar.cc/150?img=17"
+            },
+            {
+                nama: "Dika Pratama",
+                rating: 4,
+                ulasan: "Antrean panjang saat promo, tapi worth it dengan diskonnya.",
+                tanggal: randomDate(65),
+                avatar: "https://i.pravatar.cc/150?img=18"
+            }
+        ]
     },
     {
         nama_toko: "Mebel Nusantara",
@@ -120,9 +274,34 @@ export const stores = [
         jam_operasional: "08:00 - 19:00",
         hari_operasional: "Senin - Sabtu",
         rating_toko: 4.9,
-        jumlah_review: 145,
-        maps_link: "https://maps.app.goo.gl/4kL9mP7vX2fZ9k8J6",
-        social: { instagram: "mebelnusantara", whatsapp: "+622175323456" },
+        jumlah_review: 148,
+        maps_link: "https://maps.app.goo.gl/4kL9mP7vX2OOM9k8J6",
+        fasilitas: ["Showroom", "Custom Order", "Pengiriman", "Garansi Kayu"],
+        metode_pembayaran: ["Cash", "Transfer Bank", "Credit Card", "Cicilan", "DP System"],
+        social: { instagram: "mebelnusantara", whatsapp: "+622913456789" },
+        reviews: [
+            {
+                nama: "Ibu Ratna",
+                rating: 5,
+                ulasan: "Meja makan jati ukir, kokoh dan indah. Pengiriman tepat waktu, pemasangan rapi.",
+                tanggal: randomDate(22),
+                avatar: "https://i.pravatar.cc/150?img=19"
+            },
+            {
+                nama: "Bapak Hadi",
+                rating: 5,
+                ulasan: "Custom lemari 3 pintu, sesuai desain. Finishing halus, kayu solid.",
+                tanggal: randomDate(48),
+                avatar: "https://i.pravatar.cc/150?img=20"
+            },
+            {
+                nama: "Siska",
+                rating: 4,
+                ulasan: "Harga premium, tapi kualitas sepadan. Proses DP dan cicilan jelas.",
+                tanggal: randomDate(70),
+                avatar: "https://i.pravatar.cc/150?img=21"
+            }
+        ]
     },
     {
         nama_toko: "Cendekia Press",
@@ -137,9 +316,32 @@ export const stores = [
         jam_operasional: "08:00 - 21:00",
         hari_operasional: "Senin - Minggu",
         rating_toko: 4.9,
-        jumlah_review: 178,
+        jumlah_review: 181,
         maps_link: "https://maps.app.goo.gl/6vX8kL3mP7vZfG8J7",
         social: { instagram: "cendekiapress", facebook: "CendekiaPress" },
+        reviews: [
+            {
+                nama: "Adi Saputra",
+                rating: 5,
+                ulasan: "Buku referensi skripsi lengkap, harga mahasiswa. Cetak tesis cepat dan rapi!",
+                tanggal: randomDate(14),
+                avatar: "https://i.pravatar.cc/150?img=22"
+            },
+            {
+                nama: "Lina Marlina",
+                rating: 5,
+                ulasan: "Café baca nyaman, buku novel up to date. Sering nongkrong sambil baca.",
+                tanggal: randomDate(42),
+                avatar: "https://i.pravatar.cc/150?img=23"
+            },
+            {
+                nama: "Rudi Hermawan",
+                rating: 4,
+                ulasan: "Fotokopi murah, tapi antre saat akhir semester. Tetap recommended.",
+                tanggal: randomDate(68),
+                avatar: "https://i.pravatar.cc/150?img=24"
+            }
+        ]
     },
 ];
 // normalisasi nama
@@ -147,18 +349,15 @@ const normalize = (s) => s.trim().toLowerCase();
 //hapus update insert
 async function syncAndSeed() {
     console.log('[SYNC] Mulai sync penuh...');
-    // Ambil semua dari Firestore
     const dbStores = await listStores();
     const dbNames = new Set(dbStores.map(s => normalize(s.data.nama_toko)));
     const seedNames = new Set(stores.map(s => normalize(s.nama_toko)));
-    // Hapus toko yang tidak ada di seed
     for (const store of dbStores) {
         if (!seedNames.has(normalize(store.data.nama_toko))) {
             console.log(`[DELETE] Hapus: ${store.data.nama_toko}`);
             await deleteStoreByName(store.data.nama_toko);
         }
     }
-    // Upsert toko dari seed
     console.log('[UPSERT] Update/insert toko...');
     const items = stores.map(s => ({ ...s }));
     return await upsertStoresByName(items);
