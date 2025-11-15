@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { db, auth } from "@/lib/firebase";
 import { collection, getDocs, query, where, limit, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
-import { ShoppingCart, Heart, Star, ChevronLeft, ChevronRight, Store, Shield, Truck, ArrowLeft, Check, Minus, Plus } from "lucide-react";
+import { ShoppingCart, Star, ChevronLeft, ChevronRight, Store, Shield, Truck, ArrowLeft, Check, Minus, Plus } from "lucide-react";
+import { trackProductView } from "@/lib/activity-tracker";
 
 // === TIPE DATA ===
 interface FirebaseProduct {
@@ -221,6 +222,19 @@ export default function BuyingPage() {
       setDisplayProduct(mapToDisplay(rawProduct));
       setLoadingDetail(false);
 
+      // Track product view
+      try {
+        await trackProductView({
+          ASIN: rawProduct.ASIN || 'unknown',
+          nama_produk: rawProduct.nama_produk || 'Produk Tanpa Nama',
+          gambar_produk: rawProduct.thumbnail_produk || rawProduct.gambar_produk,
+          kategori: rawProduct.kategori,
+          toko: rawProduct.toko
+        });
+      } catch (e) {
+        console.warn('Gagal track product view:', e);
+      }
+
       try {
         const u = auth?.currentUser;
         if (u && rawProduct?.ASIN) {
@@ -294,7 +308,7 @@ export default function BuyingPage() {
     try {
       localStorage.setItem("selectedProduct", JSON.stringify({ ASIN: item.asin }));
     } catch {}
-    window.location.href = `/BuyingPage?asin=${encodeURIComponent(item.asin)}`;
+    window.location.href = `/buying?asin=${encodeURIComponent(item.asin)}`;
   };
 
   const renderStars = (rating?: number) => {
@@ -730,6 +744,35 @@ export default function BuyingPage() {
           font-weight: 600;
         }
 
+        .product-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin: 16px 0;
+        }
+
+        .product-tag {
+          background: #f3f4f6;
+          color: #374151;
+          padding: 6px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 500;
+          border: 1px solid #d1d5db;
+        }
+
+        .product-tag.category {
+          background: #fef3c7;
+          color: #92400e;
+          border-color: #fcd34d;
+        }
+
+        .product-tag.brand {
+          background: #dbeafe;
+          color: #1e40af;
+          border-color: #93c5fd;
+        }
+
         .description-section {
           background: #f8fafc;
           padding: 16px;
@@ -772,20 +815,20 @@ export default function BuyingPage() {
         }
 
         .variant-option {
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          padding: 12px 16px;
+          border: 2px solid #e5e7eb;
+          border-radius: 10px;
+          padding: 14px 16px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          transition: all 0.2s;
+          transition: border-color 0.15s, background-color 0.15s;
           background: white;
         }
 
         .variant-option.selected {
           border-color: #10b981;
-          background: #f0fdf4;
+          background: #ecfdf5;
         }
 
         .variant-info {
@@ -881,8 +924,8 @@ export default function BuyingPage() {
 
         .btn-buy, .btn-cart {
           flex: 1;
-          padding: 16px 20px;
-          border-radius: 8px;
+          padding: 14px 20px;
+          border-radius: 10px;
           font-weight: 600;
           font-size: 16px;
           cursor: pointer;
@@ -898,12 +941,41 @@ export default function BuyingPage() {
         .btn-buy {
           background: #dc2626;
           color: white;
+          transition: background-color 0.2s;
+        }
+
+        .btn-buy:hover {
+          background: #b91c1c;
         }
 
         .btn-cart {
           background: white;
           color: #166534;
           border: 1px solid #166534;
+          transition: background-color 0.2s;
+        }
+
+        .btn-cart:hover {
+          background: #f0fdf4;
+        }
+
+        .btn-buy:active,
+        .btn-cart:active,
+        .carousel-nav:active,
+        .quantity-btn:active,
+        .dot:active,
+        .variant-option:active,
+        button:active {
+          transform: none;
+        }
+
+        button {
+          -webkit-tap-highlight-color: transparent;
+          outline: none;
+        }
+
+        button:focus {
+          outline: none;
         }
 
         .features-grid {
@@ -945,20 +1017,20 @@ export default function BuyingPage() {
         }
 
         .store-avatar {
-          width: 60px;
-          height: 60px;
-          border-radius: 8px;
+          width: 80px;
+          height: 80px;
+          border-radius: 12px;
           overflow: hidden;
           flex-shrink: 0;
-          background: #10b981;
+          background: #f3f4f6;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: white;
-          font-size: 24px;
+          color: #6b7280;
+          font-size: 28px;
           font-weight: 700;
           text-transform: uppercase;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          border: 1px solid #e5e7eb;
         }
 
         .store-avatar img {
@@ -972,37 +1044,37 @@ export default function BuyingPage() {
         }
 
         .store-info h3 {
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 600;
-          margin: 0 0 8px 0;
-          color: #0f172a;
+          margin: 0 0 4px 0;
+          color: #1f2937;
         }
 
         .store-badge {
-          background: #ecfdf5;
-          color: #166534;
-          padding: 4px 12px;
-          border-radius: 6px;
-          font-size: 12px;
+          background: #f3f4f6;
+          color: #374151;
+          padding: 4px 10px;
+          border-radius: 4px;
+          font-size: 11px;
           font-weight: 600;
-          border: 1px solid #a7f3d0;
+          border: 1px solid #d1d5db;
           text-transform: uppercase;
           display: inline-block;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
         }
 
         .store-status {
           display: flex;
           align-items: center;
-          gap: 6px;
-          font-size: 14px;
-          color: #10b981;
-          font-weight: 500;
+          gap: 4px;
+          font-size: 13px;
+          color: #6b7280;
+          font-weight: 400;
         }
 
         .status-dot {
-          width: 6px;
-          height: 6px;
+          width: 4px;
+          height: 4px;
           background: #10b981;
           border-radius: 50%;
         }
@@ -1011,16 +1083,20 @@ export default function BuyingPage() {
           background: #10b981;
           color: white;
           border: none;
-          padding: 12px 20px;
+          padding: 10px 16px;
           border-radius: 8px;
           font-weight: 600;
-          font-size: 14px;
+          font-size: 13px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
-          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+          gap: 6px;
+          transition: background-color 0.2s;
+        }
+
+        .visit-store-btn:hover {
+          background: #059669;
         }
 
         .store-stats {
@@ -1210,13 +1286,6 @@ export default function BuyingPage() {
             <div className="details-section">
               <div className="product-header">
                 <h1 className="product-title">{displayProduct.product_title}</h1>
-                <button 
-                  className={`favorite-button ${isFavorite ? 'active' : ''}`}
-                  onClick={toggleFavorite}
-                  disabled={favLoading}
-                >
-                  <Heart size={20} fill={isFavorite ? "currentColor" : "none"} />
-                </button>
               </div>
 
               <div className="rating-section">
@@ -1246,7 +1315,7 @@ export default function BuyingPage() {
               {/* Variant Selection */}
               {displayProduct.varian && displayProduct.varian.length > 0 && (
                 <div className="variant-section">
-                  <div className="variant-label">Pilih Varian:</div>
+                  <div className="variant-label">Pilih Varian ({displayProduct.varian.length}):</div>
                   <div className="variant-options">
                     {displayProduct.varian.map((variant) => (
                       <div 
@@ -1256,8 +1325,10 @@ export default function BuyingPage() {
                       >
                         <div className="variant-info">
                           <div className="variant-name">{variant.nama}</div>
-                          <div className="variant-price">{formatRupiah(variant.harga)}</div>
-                          <div className="variant-stock">Stok: {variant.stok}</div>
+                          <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
+                            <div className="variant-price">{formatRupiah(variant.harga)}</div>
+                            <div className="variant-stock">Stok: {variant.stok}</div>
+                          </div>
                         </div>
                         <div className="variant-check">
                           <Check size={18} />
@@ -1306,16 +1377,7 @@ export default function BuyingPage() {
                 </div>
               </div>
 
-              <div className="features-grid">
-                <div className="feature-item">
-                  <Shield size={18} className="feature-icon" />
-                  <span>Garansi 100% Original</span>
-                </div>
-                <div className="feature-item">
-                  <Truck size={18} className="feature-icon" />
-                  <span>Gratis Ongkir</span>
-                </div>
-              </div>
+
 
               <div className="action-buttons">
                 <button className="btn-buy" onClick={handleBuyNow}>
@@ -1323,7 +1385,6 @@ export default function BuyingPage() {
                   Beli Sekarang
                 </button>
                 <button className="btn-cart" onClick={handleAddToCart}>
-                  <Heart size={18} />
                   Tambah Keranjang
                 </button>
               </div>
@@ -1343,7 +1404,7 @@ export default function BuyingPage() {
                 )}
               </div>
               <div className="store-info">
-                <div className="store-badge">TOKO RESMI</div>
+
                 <h3>{storeData.nama_toko}</h3>
                 <div className="store-status">
                   <span className="status-dot"></span>
@@ -1366,14 +1427,14 @@ export default function BuyingPage() {
               </div>
               <div className="stat-item">
                 <div className="stat-value">
-                  <span>📦</span>
+                  <span></span>
                   {storeData.jumlah_review || '500'}+
                 </div>
                 <div className="stat-label">Total Review</div>
               </div>
               <div className="stat-item">
                 <div className="stat-value">
-                  <span>✓</span>
+                  <span></span>
                   98%
                 </div>
                 <div className="stat-label">Tingkat Respons</div>
@@ -1389,7 +1450,6 @@ export default function BuyingPage() {
             Beli
           </button>
           <button className="btn-cart" onClick={handleAddToCart}>
-            <Heart size={16} />
             Keranjang
           </button>
         </div>

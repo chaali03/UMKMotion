@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { trackConsultantChat } from "@/lib/activity-tracker";
 
 // --- TYPES AND DATA ---
 type Consultant = {
@@ -1158,7 +1159,7 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!inputMsg.trim()) return;
 
     const newM: Message = {
@@ -1171,6 +1172,19 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
     setMessages((prev) => [...prev, newM]);
     setInputMsg("");
     setIsTyping(true);
+
+    // Track consultant chat
+    try {
+      console.log('Tracking consultant chat:', { id: consultant.id, name: consultant.name });
+      await trackConsultantChat({
+        id: consultant.id,
+        name: consultant.name,
+        avatar: consultant.image
+      });
+      console.log('Consultant chat tracked successfully');
+    } catch (e) {
+      console.warn('Failed to track consultant chat:', e);
+    }
 
     setTimeout(() => {
       setIsTyping(false);
@@ -1402,7 +1416,7 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
             </div>
 
             <button
-              onClick={sendMessage}
+              onClick={() => sendMessage()}
               disabled={!inputMsg.trim()}
               className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-r from-orange-600 to-amber-500 text-white hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md flex-shrink-0"
               aria-label="Kirim pesan"

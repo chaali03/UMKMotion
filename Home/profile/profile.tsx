@@ -27,6 +27,7 @@ interface UserProfileData {
   nickname?: string;
   fullName?: string;
   bio?: string;
+  address?: string;
   photoURL?: string;
   email?: string | null;
   twoFactorEnabled?: boolean;
@@ -148,70 +149,38 @@ export default function ProfilePage() {
         };
         localStorage.setItem("selectedProduct", JSON.stringify(productData));
         
-        // Redirect ke BuyingPage (lebih reliable daripada /product/${asin})
-        window.location.href = '/BuyingPage';
+        // Redirect ke buying page (route yang benar)
+        window.location.href = '/buying';
         return; 
       } 
       
-      // UMKM visit - prioritize storeId, then try to find by store name
+      // UMKM visit - always redirect to toko page
       if (a.type === 'visit' || a.storeId || a.store || a.storeName) {
-        if (a.storeId) {
-          // Direct access using storeId - set window.UMKM_ID untuk UMKMDetailPage
-          if (typeof window !== 'undefined') {
-            (window as any).UMKM_ID = a.storeId;
-          }
-          window.location.href = `/umkm/${a.storeId}`;
-          return;
-        }
+        const storeName = a.store || a.storeName || 'UMKM';
         
-        // Try to find store by name from Firestore
-        if (a.store || a.storeName) {
-          try {
-            const storeName = a.store || a.storeName;
-            const storeQuery = query(
-              collection(db, 'stores'),
-              where('nama_toko', '==', storeName)
-            );
-            const storeSnap = await getDocs(storeQuery);
-            
-            if (!storeSnap.empty) {
-              const storeDoc = storeSnap.docs[0];
-              const storeId = storeDoc.id;
-              // Set window.UMKM_ID untuk UMKMDetailPage
-              if (typeof window !== 'undefined') {
-                (window as any).UMKM_ID = storeId;
-              }
-              window.location.href = `/umkm/${storeId}`;
-              return;
-            }
-            
-            // Fallback: try toko page with store name
-            const productData = { toko: storeName };
-            localStorage.setItem("selectedProduct", JSON.stringify(productData));
-            window.location.href = '/toko';
-            return;
-          } catch (error) {
-            console.error('Error finding store:', error);
-            // Fallback to toko page
-            if (a.store || a.storeName) {
-              const productData = { toko: a.store || a.storeName };
-              localStorage.setItem("selectedProduct", JSON.stringify(productData));
-            }
-            window.location.href = '/toko';
-            return;
-          }
-        }
+        // Simpan data UMKM lengkap ke localStorage untuk Toko.tsx
+        const productData = { 
+          toko: storeName,
+          nama_produk: a.storeName || storeName,
+          image: a.image,
+          description: a.description,
+          address: a.address,
+          phone: a.phone,
+          rating: a.rating,
+          reviewCount: a.reviewCount
+        };
+        localStorage.setItem("selectedProduct", JSON.stringify(productData));
         
-        // Final fallback
+        // Redirect ke toko page
         window.location.href = '/toko';
         return;
       }
       
-      // Consultant chat
+      // Consultant chat - redirect to ConsultantHome
       if ((a.type === 'consult_chat' || a.type === 'consult_chat_message') && a.consultantId) {
         const consultantId = typeof a.consultantId === 'number' ? a.consultantId : parseInt(String(a.consultantId));
         if (!isNaN(consultantId) && consultantId > 0) {
-          window.location.href = `/ConsultantChat?consultant=${consultantId}`;
+          window.location.href = `/ConsultantPage?consultant=${consultantId}`;
           return;
         }
       }
@@ -368,10 +337,10 @@ export default function ProfilePage() {
                 }
                 return false;
               }
-              // For consultant chat - match by consultantId
+              // For consultant chat - don't deduplicate, keep all entries
               if ((activity.type === 'consult_chat' || activity.type === 'consult_chat_message') && 
                   (a.type === 'consult_chat' || a.type === 'consult_chat_message')) {
-                return a.consultantId === activity.consultantId;
+                return false; // Don't deduplicate consultant chats
               }
               // Otherwise match by ID
               return a.id === activity.id;
@@ -1162,8 +1131,8 @@ export default function ProfilePage() {
           boxShadow: isSidebarOpen ? '0 0 50px rgba(0,0,0,0.1)' : '0 0 20px rgba(0,0,0,0.05)'
         }}
       >
-        {/* Logo Section - POSISI LEBIH KE BAWAH dengan pt-12 */}
-        <div className="flex items-center justify-center h-32 pt-12 pb-6 border-b border-gray-100 px-4 flex-shrink-0">
+        {/* Logo Section */}
+        <div className="flex items-center justify-center h-24 pt-6 pb-4 border-b border-gray-100 px-4 flex-shrink-0">
           <AnimatePresence mode="wait">
             {isSidebarOpen ? (
               <motion.img
@@ -1199,7 +1168,7 @@ export default function ProfilePage() {
           </AnimatePresence>
         </div>
 
-        {/* Profile Mini Card - MARGIN TOP LEBIH BESAR mt-8 */}
+        {/* Profile Mini Card - MARGIN TOP LEBIH BESAR mt-2 */}
         <AnimatePresence>
           {isSidebarOpen && (
             <motion.div
@@ -1211,7 +1180,7 @@ export default function ProfilePage() {
                 stiffness: 300,
                 damping: 25
               }}
-              className="px-4 py-5 border-b border-gray-100 overflow-hidden mt-8"
+              className="px-4 py-3 border-b border-gray-100 overflow-hidden mt-2"
             >
               <motion.div 
                 className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-orange-50 to-red-50 border border-orange-100"
@@ -1234,8 +1203,8 @@ export default function ProfilePage() {
           )}
         </AnimatePresence>
 
-        {/* Navigation - PADDING TOP LEBIH BESAR pt-16 dan mt-12 */}
-        <nav className="flex-1 overflow-y-auto pt-16 pb-6 px-3 mt-12">
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto pt-4 pb-6 px-3 mt-4">
           <AnimatePresence>
             {isSidebarOpen && (
               <motion.div
@@ -1408,7 +1377,7 @@ export default function ProfilePage() {
             damping: 20
           }}
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="fixed top-4 left-4 z-[60] lg:hidden w-14 h-14 bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 text-white rounded-2xl shadow-2xl flex items-center justify-center"
+          className="fixed top-4 right-4 z-40 lg:hidden w-14 h-14 bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 text-white rounded-2xl shadow-2xl flex items-center justify-center"
           whileHover={{
             scale: 1.1,
             rotate: 5,
@@ -1679,6 +1648,15 @@ export default function ProfilePage() {
                             </div>
                           </div>
                           <div className="mb-4">
+                            <label className="block text-sm text-gray-600 font-medium mb-2">Alamat</label>
+                            <textarea 
+                              value={profileData.address || ""}
+                              onChange={(e) => setProfileData({...profileData, address: e.target.value})}
+                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent min-h-[80px] resize-y transition-all"
+                              placeholder="Masukkan alamat lengkap Anda..."
+                            />
+                          </div>
+                          <div className="mb-4">
                             <label className="block text-sm text-gray-600 font-medium mb-2">Email</label>
                             <input 
                               type="email" 
@@ -1718,6 +1696,10 @@ export default function ProfilePage() {
                           <div>
                             <div className="text-sm text-gray-600 font-medium mb-1">Nama Lengkap</div>
                             <div className="text-sm text-gray-900 font-medium">{profileData.fullName || '-'}</div>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <div className="text-sm text-gray-600 font-medium mb-1">Alamat</div>
+                            <div className="text-sm text-gray-900 font-medium whitespace-pre-wrap">{profileData.address || '-'}</div>
                           </div>
                           <div className="sm:col-span-2">
                             <div className="text-sm text-gray-600 font-medium mb-1">Email</div>
@@ -2353,25 +2335,7 @@ export default function ProfilePage() {
                       <div className="bg-white rounded-xl p-12 text-center shadow-lg border border-gray-200">
                         <History size={64} className="mx-auto text-gray-300 mb-4" />
                         <h3 className="text-xl font-bold text-gray-700 mb-2">Belum ada aktivitas</h3>
-                        <p className="text-gray-500 mb-6">Mulai jelajahi produk, kunjungi UMKM, atau chat dengan konsultan</p>
-                        <div className="flex gap-4 justify-center">
-                          <motion.a
-                            href="/etalase"
-                            className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            Jelajahi Produk
-                          </motion.a>
-                          <motion.a
-                            href="/toko"
-                            className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            Kunjungi UMKM
-                          </motion.a>
-                        </div>
+                        <p className="text-gray-500">Mulai jelajahi produk, kunjungi UMKM, atau chat dengan konsultan</p>
                       </div>
                     );
                   }
@@ -3063,6 +3027,97 @@ export default function ProfilePage() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* TOTP Setup Modal */}
+      <AnimatePresence>
+        {showTOTPSetup && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100"
+            >
+              <div className="text-center mb-4">
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 300, delay: 0.1 }}
+                >
+                  <Lock className="w-14 h-14 mx-auto text-slate-800 mb-3" />
+                </motion.div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Aktifkan TOTP 2FA</h3>
+                <p className="text-sm text-gray-600">Scan QR atau masukkan secret key di aplikasi Authenticator.</p>
+              </div>
+
+              <div className="space-y-4">
+                {totpQRCode && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="flex justify-center p-4 bg-slate-50 rounded-xl border-2 border-slate-200"
+                  >
+                    <img src={totpQRCode} alt="QR Code" className="w-56 h-56 rounded-lg shadow-lg" />
+                  </motion.div>
+                )}
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="bg-gradient-to-br from-slate-50 to-gray-100 border-2 border-slate-200 rounded-xl p-4"
+                >
+                  <p className="text-sm text-gray-600 font-bold mb-2">Secret Key:</p>
+                  <div className="bg-white border border-slate-300 rounded-lg p-3 font-mono text-sm text-center break-all select-all cursor-pointer hover:bg-slate-50 transition shadow-inner">
+                    {totpSecret}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">Salin dan masukkan ke aplikasi Authenticator Anda</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <label className="block text-sm text-gray-600 font-bold mb-2">Kode 6 digit</label>
+                  <input
+                    type="text"
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0,6))}
+                    placeholder="123456"
+                    maxLength={6}
+                    className="w-full px-4 py-4 border-2 border-gray-300 rounded-xl text-center text-2xl font-mono tracking-widest focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all shadow-inner"
+                  />
+                </motion.div>
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex gap-3 pt-2"
+                >
+                  <motion.button
+                    onClick={() => setShowTOTPSetup(false)}
+                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Batal
+                  </motion.button>
+                  <motion.button
+                    onClick={verifyTOTPSetup}
+                    disabled={totpCode.length !== 6}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-xl font-bold hover:from-slate-900 hover:to-black disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Verifikasi
+                  </motion.button>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

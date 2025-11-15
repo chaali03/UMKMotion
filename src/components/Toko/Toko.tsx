@@ -4,6 +4,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { followStore, unfollowStore, isFollowingStore, getFollowerCount } from "@/lib/follow";
 import { onAuthStateChanged } from "firebase/auth";
+import { trackUMKMVisit } from "@/lib/activity-tracker";
 
 // === TIPE DATA ===
 interface Review {
@@ -196,6 +197,24 @@ export default function TokoDinamis() {
         const storeDoc = storeSnap.docs[0];
         storeData = { ...storeData, ...storeDoc.data() } as StoreData;
         setStoreId(storeDoc.id);
+        
+        // Track UMKM visit
+        try {
+          await trackUMKMVisit({
+            id: storeDoc.id,
+            nama_toko: storeData.nama_toko,
+            image: storeData.image || storeData.banner || storeData.profileImage,
+            profileImage: storeData.profileImage || storeData.image || storeData.banner,
+            kategori: storeData.kategori,
+            description: storeData.deskripsi_toko,
+            address: storeData.lokasi_toko,
+            phone: storeData.no_telp,
+            rating: storeData.rating_toko,
+            reviewCount: storeData.jumlah_review
+          }, auth?.currentUser?.uid || null);
+        } catch (e) {
+          console.warn('Failed to track UMKM visit:', e);
+        }
       }
       setStore(storeData);
       setAllReviews(storeData.reviews || []);

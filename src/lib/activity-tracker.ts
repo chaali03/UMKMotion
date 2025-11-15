@@ -15,6 +15,12 @@ export interface Activity {
   consultantId?: number;
   consultantName?: string;
   createdAt?: Date;
+  // UMKM additional fields
+  description?: string;
+  address?: string;
+  phone?: string;
+  rating?: number;
+  reviewCount?: number;
 }
 
 // Track product view
@@ -81,6 +87,11 @@ export async function trackUMKMVisit(store: {
   image?: string;
   profileImage?: string;
   kategori?: string;
+  description?: string;
+  address?: string;
+  phone?: string;
+  rating?: number;
+  reviewCount?: number;
 }, userId?: string | null) {
   try {
     const uid = userId || (auth?.currentUser?.uid);
@@ -107,7 +118,13 @@ export async function trackUMKMVisit(store: {
       storeId: store.id,
       category: store.kategori,
       image: store.image || store.profileImage,
-      createdAt: new Date()
+      createdAt: new Date(),
+      // Tambahan data untuk UMKM
+      description: store.description,
+      address: store.address,
+      phone: store.phone,
+      rating: store.rating,
+      reviewCount: store.reviewCount
     };
 
     saveActivityToLocal(activity);
@@ -135,6 +152,8 @@ export async function trackConsultantChat(consultant: {
 }, userId?: string | null) {
   try {
     const uid = userId || (auth?.currentUser?.uid);
+    console.log('trackConsultantChat called:', { consultantId: consultant.id, uid });
+    
     if (!uid) {
       const activity: Activity = {
         type: 'consult_chat',
@@ -144,6 +163,7 @@ export async function trackConsultantChat(consultant: {
         image: consultant.avatar,
         createdAt: new Date()
       };
+      console.log('Saving to localStorage (no user):', activity);
       saveActivityToLocal(activity);
       return;
     }
@@ -157,6 +177,7 @@ export async function trackConsultantChat(consultant: {
       createdAt: new Date()
     };
 
+    console.log('Saving consultant chat activity:', activity);
     saveActivityToLocal(activity);
 
     if (db && uid) {
@@ -165,6 +186,7 @@ export async function trackConsultantChat(consultant: {
           ...activity,
           createdAt: serverTimestamp()
         });
+        console.log('Consultant chat saved to Firestore');
       } catch (e) {
         console.warn('Failed to save activity to Firestore:', e);
       }

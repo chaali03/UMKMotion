@@ -143,7 +143,12 @@ export default function UMKMDetailPage() {
           nama_toko: umkmData.name,
           image: umkmData.images?.[0],
           profileImage: umkmData.images?.[0],
-          kategori: umkmData.category
+          kategori: umkmData.category,
+          description: umkmData.description,
+          address: umkmData.address,
+          phone: umkmData.phone,
+          rating: umkmData.rating,
+          reviewCount: umkmData.reviewCount
         }, currentUser?.uid || null);
       } catch (e) {
         // swallow errors

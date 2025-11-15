@@ -211,17 +211,21 @@ export default function ConsultantBookingPage() {
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="text-orange-600" />
               <h3 className="font-bold">Pilih Tanggal</h3>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-            <DayPicker
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              disabled={{ before: addDays(new Date(), 1) }}
-              weekStartsOn={1}
-              className="rounded-xl"
-            />
+            </div>
+            
+            <div className="mb-6">
+              <DayPicker
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                disabled={{ before: addDays(new Date(), 1) }}
+                weekStartsOn={1}
+                className="rounded-xl"
+              />
+            </div>
 
             {/* Timeslots */}
+            <div className="mt-6">
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="text-orange-600" />
                 <h3 className="font-bold">Pilih Jam</h3>
