@@ -2617,6 +2617,75 @@ export async function seedProduk() {
         const likes = 30 + ((idx * 97) % 970); // 30..999
         const interactions = 120 + ((idx * 53) % 3800); // 120..3919
 
+        // Ulasan dinamis 10+ per produk dengan variasi nilai
+        const namaSample = [
+            "Aulia", "Budi", "Citra", "Dimas", "Eka", "Fajar", "Gita", "Hadi", "Indah", "Joko",
+            "Kirana", "Lukman", "Maya", "Nadia", "Oki", "Putri", "Rizky", "Sari", "Tio", "Yuni"
+        ];
+        const komentarKategori: Record<string, string[]> = {
+            "Kuliner": [
+                "Rasanya mantap, bumbunya meresap.",
+                "Porsinya pas, cocok untuk lauk harian.",
+                "Kemasan rapi, sampai dalam keadaan baik.",
+                "Pedasnya pas, bikin nagih!",
+                "Aromanya wangi, kualitas terjaga.",
+            ],
+            "Fashion": [
+                "Jahitannya rapi, bahan nyaman dipakai.",
+                "Modelnya elegan, cocok untuk acara formal.",
+                "Ukuran pas sesuai chart.",
+                "Warna sesuai foto, tidak luntur.",
+                "Kualitas premium dengan harga bersahabat.",
+            ],
+            "Kerajinan": [
+                "Detail kerajinannya halus dan rapi.",
+                "Cocok untuk dekorasi rumah, kesan hangat.",
+                "Material kuat dan finishing bagus.",
+                "Desain unik, worth it.",
+                "Sesuai ekspektasi, pengemasan aman.",
+            ],
+            "Kesehatan": [
+                "Efektif, cocok untuk kebutuhan harian.",
+                "Expired masih lama, aman dipakai.",
+                "Kualitas terjamin, original.",
+                "Bermanfaat dan harganya terjangkau.",
+                "Pengiriman cepat, barang aman.",
+            ],
+            "Pendidikan": [
+                "Kontennya membantu belajar anak.",
+                "Cetakannya jelas dan warna menarik.",
+                "Materi mudah dipahami.",
+                "Sangat direkomendasikan untuk latihan.",
+                "Packaging rapi dan aman.",
+            ],
+        };
+
+        const pilihKomentar = (kategori: string, i: number) => {
+            const list = komentarKategori[kategori] || ["Bagus dan bermanfaat."];
+            return list[i % list.length];
+        };
+
+        const buatUlasan = (produkKategori: string) => {
+            const arr: any[] = [];
+            const baseDate = new Date("2025-11-10T00:00:00Z");
+            const total = 12; // 10+ ulasan
+            for (let i = 0; i < total; i++) {
+                const nama = namaSample[(idx * 7 + i) % namaSample.length];
+                const rating = 3 + ((idx + i) % 3) + (i % 2 === 0 ? 0.5 : 0); // 3..5 dengan variasi 0.5
+                const tgl = new Date(baseDate);
+                tgl.setDate(baseDate.getDate() - (idx + i));
+                arr.push({
+                    id: `${p.ASIN}-R${i + 1}`,
+                    nama,
+                    rating: Number(rating.toFixed(1)),
+                    komentar: pilihKomentar(produkKategori, i),
+                    tanggal: tgl.toISOString().slice(0, 10),
+                    helpful: (i * 13 + idx * 5) % 57,
+                });
+            }
+            return arr;
+        };
+
         return {
             ...rest,
             harga_asli,
@@ -2629,6 +2698,8 @@ export async function seedProduk() {
             favorites: likes,
             hearts: likes,
             interactions,
+            // 10+ ulasan per produk, beragam
+            ulasan: buatUlasan(rest.kategori || "Umum"),
         };
     });
     await uploadProducts(productsWithUpload);

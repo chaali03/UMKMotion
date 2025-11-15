@@ -16,6 +16,8 @@ export type Product = {
   rating_bintang?: number;
   unit_terjual?: number;
   toko?: string;
+  discountPercent?: number;
+  bonusText?: string;
 };
 
 export default function ProductLainnya() {
@@ -35,12 +37,12 @@ export default function ProductLainnya() {
     return bonus[Math.floor(Math.random() * bonus.length)];
   };
 
-  const hitungDiskon = (p: Product): number | null => {
+  const hitungDiskon = (p: Product): number | undefined => {
     if (p.persentase_diskon) return p.persentase_diskon;
     if (p.harga_asli && p.harga_asli > p.harga_produk) {
       return Math.round(((p.harga_asli - p.harga_produk) / p.harga_asli) * 100);
     }
-    return null;
+    return undefined;
   };
 
   useEffect(() => {
@@ -73,9 +75,8 @@ export default function ProductLainnya() {
   }, []);
 
   const pilihProduk = (item: Product) => {
-    localStorage.setItem("selectedProduct", JSON.stringify(item));
-    window.scrollTo(0, 0);
-    window.location.reload();
+    try { localStorage.setItem("selectedProduct", JSON.stringify(item)); } catch {}
+    window.location.href = '/buying';
   };
 
   if (loading) {
@@ -87,37 +88,33 @@ export default function ProductLainnya() {
   return (
     <>
       <style jsx>{`
-        .discount-badge {
-          position: absolute;
-          top: 10px;
-          left: -6px;
-          background: linear-gradient(135deg, #ff3b30, #ff6b35);
-          color: white;
-          font-weight: 900;
-          font-size: 13px;
-          padding: 6px 12px 6px 16px;
-          border-radius: 0 20px 20px 0;
-          box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4);
-          z-index: 20;
-          animation: pulse 2s infinite;
+        .product-card {
+          background: linear-gradient(145deg, #ffffff 0%, #fefefe 100%);
+          border-radius: 12px;
+          overflow: visible;
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          cursor: pointer;
+          position: relative;
+          border: 1px solid rgba(226, 232, 240, 0.6);
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          min-height: 240px;
+          box-shadow: none;
+          backdrop-filter: blur(20px);
+          will-change: transform;
+          margin: 3px;
         }
-        .discount-badge::after {
-          content: '';
-          position: absolute;
-          left: 0;
-          bottom: -8px;
-          width: 0;
-          height: 0;
-          border-left: 8px solid #c41e1e;
-          border-top: 8px solid transparent;
-        }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
-        .card:hover img {
-          transform: scale(1.08);
-        }
+        .product-card:hover { transform: translateY(-5px) scale(1.02); border-color: rgba(253,87,1,0.5); background: linear-gradient(145deg, #ffffff 0%, #fcfcfc 100%); z-index: 10; }
+        .product-image { width: 100%; height: 110px; background: linear-gradient(135deg, rgba(234,88,12,0.10) 0%, rgba(251,146,60,0.08) 50%, rgba(253,186,116,0.06) 100%); overflow: hidden; position: relative; border-radius: 10px; margin: 6px; width: calc(100% - 12px); }
+        .product-image img { width: 100%; height: 100%; object-fit: cover; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); filter: brightness(1); }
+        .product-card:hover .product-image img { transform: scale(1.08) rotate(1deg); filter: brightness(1.05); }
+        .discount-chip { position: absolute; top: 6px; left: 6px; display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; color: white; background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%); border: 1px solid rgba(255,255,255,0.2); }
+        .product-info { padding: 8px; display: flex; flex-direction: column; gap: 6px; flex-grow: 1; background: linear-gradient(180deg, transparent 0%, rgba(248,250,252,0.3) 100%); }
+        .product-title { font-size: 0.75rem; font-weight: 700; color: #0f172a; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 1.8rem; letter-spacing: -0.02em; }
+        .price-large { font-size: 0.85rem; font-weight: 800; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .old-price { text-decoration: line-through; color: #94a3b8; font-weight: 500; font-size: 0.7rem; opacity: 0.8; }
+        .rating-sold { display: flex; justify-content: space-between; align-items: center; gap: 4px; font-size: 0.65rem; color: #334155; }
       `}</style>
 
       <div className="mt-20 px-4 max-w-7xl mx-auto">
@@ -130,63 +127,28 @@ export default function ProductLainnya() {
             const diskon = item.discountPercent;
 
             return (
-              <div
-                key={item.ASIN}
-                onClick={() => pilihProduk(item)}
-                className="relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100"
-              >
-                {/* Gambar + Diskon */}
-                <div className=" aspect-video bg-gray-50 overflow-hidden">
-                  <img
-                    src={item.thumbnail_produk || item.gambar_produk || "/placeholder.jpg"}
-                    alt={item.nama_produk}
-                    className="w-full h-full object-cover transition-transform duration-500"
-                    loading="lazy"
-                  />
-
-                  {/* DISKON BADGE KEREN */}
+              <div key={item.ASIN} onClick={() => pilihProduk(item)} className="product-card">
+                <div className="product-image">
+                  <img src={item.thumbnail_produk || item.gambar_produk || "/placeholder.jpg"} alt={item.nama_produk} loading="lazy" />
                   {diskon && (
-                    <div className="discount-badge">
-                      -{diskon}%
-                    </div>
+                    <div className="discount-chip">-{diskon}%</div>
                   )}
                 </div>
-
-                {/* Info */}
-                <div className="p-4 space-y-2">
-                  <h3 className="font-semibold text-gray-800 line-clamp-2 text-sm leading-tight">
-                    {item.nama_produk}
-                  </h3>
-
-                  {/* Harga */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold text-red-600">
-                      {rupiah(item.harga_produk)}
-                    </span>
+                <div className="product-info">
+                  <h3 className="product-title">{item.nama_produk}</h3>
+                  <div>
+                    <div className="price-large">{rupiah(item.harga_produk)}</div>
                     {diskon && item.harga_asli && (
-                      <span className="text-xs text-gray-400 line-through">
-                        {rupiah(item.harga_asli)}
-                      </span>
+                      <span className="old-price">{rupiah(item.harga_asli)}</span>
                     )}
                   </div>
-
-                  {/* Rating & Terjual */}
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <span className="text-yellow-500">★</span>
-                      {item.rating_bintang || "-"}
-                    </span>
-                    <span>
-                      {item.unit_terjual
-                        ? `${(item.unit_terjual / 1000).toFixed(1)}K+ terjual`
-                        : "Baru"}
-                    </span>
+                  <div className="rating-sold">
+                    <span>★ {item.rating_bintang ?? '-'}</span>
+                    <span>{item.unit_terjual ? `${(item.unit_terjual / 1000).toFixed(1)}K+ terjual` : 'Baru'}</span>
                   </div>
-
-                  {/* Bonus */}
-                  <div className="text-xs font-medium text-amber-700 bg-amber-50 px-3 py-1 rounded-full w-fit">
-                    {item.bonusText}
-                  </div>
+                  {item.bonusText && (
+                    <div className="text-xs font-medium text-amber-700 bg-amber-50 px-3 py-1 rounded-full w-fit">{item.bonusText}</div>
+                  )}
                 </div>
               </div>
             );

@@ -63,6 +63,40 @@ const Index = () => {
     return () => window.removeEventListener("resize", updateBlocks);
   }, [activeDivs]);
 
+  // Move reveal logic to React to avoid DOM mutations before hydration
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const els = Array.from(document.querySelectorAll('[data-hero-reveal]')) as HTMLElement[];
+    if (!els.length) return;
+    const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const show = (el: HTMLElement) => {
+      const d = el.getAttribute('data-delay') || '0s';
+      el.style.transitionDelay = d;
+      el.classList.add('show');
+    };
+
+    if (prefersReduced) {
+      els.forEach((n) => n.classList.add('show'));
+      return;
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            show(e.target as HTMLElement);
+            io.unobserve(e.target as Element);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.15 }
+    );
+    els.forEach((n) => io.observe(n));
+
+    return () => io.disconnect();
+  }, []);
+
   const words = ["UMKM ", "Kuliner ", "Fashion ", "Kerajinan ", "Teknologi "];
 
   return (
@@ -318,24 +352,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Enhanced intersection observer script */}
-      <script dangerouslySetInnerHTML={{__html:`
-        (function(){
-          var els = Array.prototype.slice.call(document.querySelectorAll('[data-hero-reveal]'));
-          if(!els.length) return;
-          var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          function show(el){
-            var d = el.getAttribute('data-delay') || '0s';
-            el.style.transitionDelay = d;
-            el.classList.add('show');
-          }
-          if(prefersReduced){ els.forEach(function(n){ n.classList.add('show'); }); return; }
-          var io = new IntersectionObserver(function(entries){
-            entries.forEach(function(e){ if(e.isIntersecting){ show(e.target); io.unobserve(e.target); } });
-          }, { rootMargin: '0px 0px -8% 0px', threshold: 0.15 });
-          els.forEach(function(n){ io.observe(n); });
-        })();
-      `}}/>
+      {/* Intersection observer logic moved to React useEffect to prevent hydration mismatches */}
     </div>
   );
 };

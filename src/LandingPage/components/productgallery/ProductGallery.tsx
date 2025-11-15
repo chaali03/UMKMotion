@@ -149,6 +149,31 @@ export default function ProductGallery() {
     setHoveredIndex(opacity > 0 ? index : null);
   };
 
+  const mapTitleToKey = (title: string): string => {
+    const t = title.toLowerCase();
+    if (t.includes('kuliner')) return 'food';
+    if (t.includes('jasa')) return 'service';
+    if (t.includes('fashion')) return 'fashion';
+
+    if (t.includes('kriya') || t.includes('kerajinan')) return 'craft';
+    if (t.includes('kesehatan') || t.includes('kecantikan')) return 'beauty';
+    if (t.includes('pertanian') || t.includes('perkebunan')) return 'agriculture';
+    if (t.includes('komputer') || t.includes('elektronik')) return 'electronics';
+    if (t.includes('furniture')) return 'furniture';
+    if (t.includes('edukasi')) return 'education';
+    // Others fallback to all
+    return 'all';
+  };
+
+  const handleCategoryClick = (item: ProductCategory) => {
+    try {
+      const key = mapTitleToKey(item.title);
+      localStorage.setItem('currentStoreCategory', key);
+    } catch {}
+    const key = mapTitleToKey(item.title);
+    window.location.href = `/etalase?cat=${encodeURIComponent(key)}`;
+  };
+
   return (
     <section className="product-section">
       <style>{`
@@ -787,6 +812,7 @@ export default function ProductGallery() {
             onMouseEnter={() => handleImageInteraction(item, 1, index)}
             onMouseMove={() => handleImageInteraction(item, 1, index)}
             onMouseLeave={() => handleImageInteraction(item, 0, index)}
+            onClick={() => handleCategoryClick(item)}
           >
             <motion.span 
               className="category-id"

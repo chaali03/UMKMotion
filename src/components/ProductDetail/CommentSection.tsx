@@ -220,11 +220,11 @@ export default function CommentSection() {
             <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl">Belum ada ulasan yang sesuai</div>
           ) : (
             filteredList.map((u, i) => (
-              <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition relative group">
+        <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 transition relative">
                 {u.isDummy && (
-                  <button onClick={() => hapusDummy(u.dummyId!)} className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-700 text-sm font-medium">
-                    Hapus
-                  </button>
+          <button onClick={() => hapusDummy(u.dummyId!)} className="absolute top-4 right-4 text-red-600 hover:text-red-700 text-sm font-medium">
+            Hapus
+          </button>
                 )}
                 <div className="flex gap-4">
                   <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-white shadow">

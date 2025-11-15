@@ -98,7 +98,7 @@ function AnimatedSection({ children, className = "" }: { children: React.ReactNo
   );
 }
 
-export default function Harga() {
+export default function Harga({ hideFooter = false }: { hideFooter?: boolean }) {
   const [isYearly, setIsYearly] = useState(false);
 
   return (
@@ -303,28 +303,30 @@ export default function Harga() {
         </motion.div>
 
         {/* Footer Note - Compact */}
-        <AnimatedSection className="text-center mt-6 md:mt-8">
-          <div className="inline-flex flex-wrap items-center justify-center gap-3 text-xs text-gray-600 bg-white rounded-xl px-3 py-2 border border-gray-200 shadow-sm ring-1 ring-orange-100/70">
-            <span className="flex items-center gap-1">
-              <Check className="h-3 w-3 text-green-500" />
-              Free trial 14 hari
-            </span>
-            <span className="text-orange-400">•</span>
-            <span className="flex items-center gap-1">
-              <Check className="h-3 w-3 text-green-500" />
-              No credit card
-            </span>
-            <span className="text-orange-400">•</span>
-            <span className="flex items-center gap-1">
-              <Check className="h-3 w-3 text-green-500" />
-              Cancel anytime
-            </span>
-          </div>
-          
-          <p className="text-xs text-gray-500 mt-3 max-w-xl mx-auto">
-            Semua paket termasuk update fitur gratis. Harga dalam USD.
-          </p>
-        </AnimatedSection>
+        {!hideFooter && (
+          <AnimatedSection className="text-center mt-6 md:mt-8">
+            <div className="inline-flex flex-wrap items-center justify-center gap-3 text-xs text-gray-600 bg-white rounded-xl px-3 py-2 border border-gray-200 shadow-sm ring-1 ring-orange-100/70">
+              <span className="flex items-center gap-1">
+                <Check className="h-3 w-3 text-green-500" />
+                Free trial 14 hari
+              </span>
+              <span className="text-orange-400">•</span>
+              <span className="flex items-center gap-1">
+                <Check className="h-3 w-3 text-green-500" />
+                No credit card
+              </span>
+              <span className="text-orange-400">•</span>
+              <span className="flex items-center gap-1">
+                <Check className="h-3 w-3 text-green-500" />
+                Cancel anytime
+              </span>
+            </div>
+            
+            <p className="text-xs text-gray-500 mt-3 max-w-xl mx-auto">
+              Semua paket termasuk update fitur gratis. Harga dalam USD.
+            </p>
+          </AnimatedSection>
+        )}
       </div>
     </section>
   );

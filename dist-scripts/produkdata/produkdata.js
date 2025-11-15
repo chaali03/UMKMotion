@@ -2609,6 +2609,82 @@ export async function seedProduk() {
         // Nilai favorit/likes dan interaksi deterministik per index
         const likes = 30 + ((idx * 97) % 970); // 30..999
         const interactions = 120 + ((idx * 53) % 3800); // 120..3919
+        // Ulasan dinamis 10+ per produk dengan variasi nilai
+        const namaSample = [
+            "Aulia", "Budi", "Citra", "Dimas", "Eka", "Fajar", "Gita", "Hadi", "Indah", "Joko",
+            "Kirana", "Lukman", "Maya", "Nadia", "Oki", "Putri", "Rizky", "Sari", "Tio", "Yuni"
+        ];
+        const komentarKategori = {
+            "Kuliner": [
+                "Rasanya mantap, bumbunya meresap.",
+                "Porsinya pas, cocok untuk lauk harian.",
+                "Kemasan rapi, sampai dalam keadaan baik.",
+                "Pedasnya pas, bikin nagih!",
+                "Aromanya wangi, kualitas terjaga.",
+            ],
+            "Fashion": [
+                "Jahitannya rapi, bahan nyaman dipakai.",
+                "Modelnya elegan, cocok untuk acara formal.",
+                "Ukuran pas sesuai chart.",
+                "Warna sesuai foto, tidak luntur.",
+                "Kualitas premium dengan harga bersahabat.",
+            ],
+            "Kerajinan": [
+                "Detail kerajinannya halus dan rapi.",
+                "Cocok untuk dekorasi rumah, kesan hangat.",
+                "Material kuat dan finishing bagus.",
+                "Desain unik, worth it.",
+                "Sesuai ekspektasi, pengemasan aman.",
+            ],
+            "Kesehatan": [
+                "Efektif, cocok untuk kebutuhan harian.",
+                "Expired masih lama, aman dipakai.",
+                "Kualitas terjamin, original.",
+                "Bermanfaat dan harganya terjangkau.",
+                "Pengiriman cepat, barang aman.",
+            ],
+            "Pendidikan": [
+                "Kontennya membantu belajar anak.",
+                "Cetakannya jelas dan warna menarik.",
+                "Materi mudah dipahami.",
+                "Sangat direkomendasikan untuk latihan.",
+                "Packaging rapi dan aman.",
+            ],
+        };
+        const pilihKomentar = (kategori, i) => {
+            const list = komentarKategori[kategori] || ["Bagus dan bermanfaat."];
+            return list[i % list.length];
+        };
+        const buatUlasan = (produkKategori) => {
+            const arr = [];
+            const baseDate = new Date("2025-11-10T00:00:00Z");
+            const total = 12; // 10+ ulasan
+            for (let i = 0; i < total; i++) {
+                const nama = namaSample[(idx * 7 + i) % namaSample.length];
+                const rating = 3 + ((idx + i) % 3) + (i % 2 === 0 ? 0.5 : 0); // 3..5 dengan variasi 0.5
+                const tgl = new Date(baseDate);
+                tgl.setDate(baseDate.getDate() - (idx + i));
+                arr.push({
+                    id: `${p.ASIN}-R${i + 1}`,
+                    nama,
+                    rating: Number(rating.toFixed(1)),
+                    komentar: pilihKomentar(produkKategori, i),
+                    tanggal: tgl.toISOString().slice(0, 10),
+                    helpful: (i * 13 + idx * 5) % 57,
+                });
+            }
+            return arr;
+        };
+        const avgRating = (list) => {
+            if (!list.length)
+                return 0;
+            const sum = list.reduce((acc, r) => acc + (typeof r.rating === 'number' ? r.rating : 0), 0);
+            return Number((sum / list.length).toFixed(1));
+        };
+        const reviews = buatUlasan(rest.kategori || "Umum");
+        const unitTerjual = typeof rest.unit_terjual === 'number'
+            ? rest.unit_terjual
+            : (300 + ((idx * 41) % 1700)); // bervariasi per produk
         return {
             ...rest,
             harga_asli,
@@ -2621,6 +2697,11 @@ export async function seedProduk() {
             favorites: likes,
             hearts: likes,
             interactions,
+            // 10+ ulasan per produk, beragam
+            ulasan: reviews,
+            jumlah_ulasan: reviews.length,
+            unit_terjual: unitTerjual,
+            rating_bintang: typeof rest.rating_bintang === 'number' ? rest.rating_bintang : avgRating(reviews),
         };
     });
     await uploadProducts(productsWithUpload);

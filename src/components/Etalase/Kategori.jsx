@@ -10,6 +10,26 @@ export default function Kategori({ selectedCategory: parentCategory, setSelected
   const sectionRef = useRef(null);
   const searchInputRef = useRef(null);
 
+  // Sinkronkan kategori awal dengan URL & localStorage (klik dari landing)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlCat = params.get("cat");
+
+      let initialCat = "all";
+      if (urlCat) {
+        initialCat = urlCat;
+      } else {
+        const stored = localStorage.getItem("currentStoreCategory");
+        if (stored) initialCat = stored;
+      }
+
+      setLocalCategory(initialCat);
+      if (setParentCategory) setParentCategory(initialCat);
+      window.dispatchEvent(new CustomEvent("categoryChange", { detail: initialCat }));
+    } catch {}
+  }, [setParentCategory]);
+
   const categories = [
     { 
       id: "all", 

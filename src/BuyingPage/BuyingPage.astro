@@ -1,8 +1,12 @@
 ---
 // src/pages/detail.astro
-import BuyComponent from '../components/ProductDetail/ProductDetail.js';
+// @ts-ignore - TS in .astro sometimes fails to resolve React TSX modules via relative paths
+import BuyComponent from '../components/ProductDetail/ProductDetail.tsx';
+// @ts-ignore
 import CommentSection from '../components/ProductDetail/CommentSection.tsx';
+// @ts-ignore
 import ProductRecommendations from '../components/ProductDetail/ProductRecommendations.tsx';
+// @ts-ignore
 import AnotherProduct from '../components/ProductDetail/AnotherProduct.tsx'
 
 // Ambil ASIN dari localStorage (paling reliable)

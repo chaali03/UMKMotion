@@ -132,10 +132,24 @@ export default function UMKMDetailPage() {
 
   // Auto-log a visit each time page is opened (once per mount per store)
   useEffect(() => {
-    if (!currentUser || !umkmData) return;
-    if (autoVisitLoggedRef.current) return;
-    autoVisitLoggedRef.current = true;
-    handleVisit();
+    const logVisit = async () => {
+      if (autoVisitLoggedRef.current || !umkmData) return;
+      autoVisitLoggedRef.current = true;
+      
+      try {
+        const { trackUMKMVisit } = await import('@/lib/activity-tracker');
+        await trackUMKMVisit({
+          id: umkmData.id,
+          nama_toko: umkmData.name,
+          image: umkmData.images?.[0],
+          profileImage: umkmData.images?.[0],
+          kategori: umkmData.category
+        }, currentUser?.uid || null);
+      } catch (e) {
+        // swallow errors
+      }
+    };
+    logVisit();
   }, [currentUser, umkmData]);
 
   const showToastMessage = (message: string) => {
@@ -168,20 +182,17 @@ export default function UMKMDetailPage() {
   };
 
   const handleVisit = async () => {
-    if (!currentUser || !umkmData) return;
+    if (!umkmData) return;
 
     try {
-      const activityRef = doc(db, "users", currentUser.uid, "activities", `visit_${Date.now()}`);
-      await setDoc(activityRef, {
-        type: "visit",
-        title: `Kunjungi ${umkmData.name}`,
-        store: umkmData.name,
-        storeId: umkmData.id,
-        umkmName: umkmData.name,
-        category: umkmData.category,
-        createdAt: serverTimestamp()
-      });
-      
+      const { trackUMKMVisit } = await import('@/lib/activity-tracker');
+      await trackUMKMVisit({
+        id: umkmData.id,
+        nama_toko: umkmData.name,
+        image: umkmData.images?.[0],
+        profileImage: umkmData.images?.[0],
+        kategori: umkmData.category
+      }, currentUser?.uid || null);
       showToastMessage("Kunjungan berhasil dicatat! 🎉");
     } catch (error) {
       console.error("Error logging visit:", error);

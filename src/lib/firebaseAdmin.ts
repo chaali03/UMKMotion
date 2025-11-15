@@ -37,3 +37,9 @@ export function getAdminApp() {
 export function getAdminAuth() {
   return getAdminApp().auth();
 }
+
+export function getAdminFirestore() {
+  // Initialize Firestore from the same Admin app
+  const app = getAdminApp();
+  return (require('firebase-admin')).firestore(app);
+}

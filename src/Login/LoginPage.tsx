@@ -3,7 +3,8 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Sparkles, MapPin, BarChart3, Megaphone, CheckCircle2, XCircle, AlertCircle, Loader2, UserX, ShieldAlert } from "lucide-react";
 import { signInWithEmail, signInWithGoogle, checkEmailExistsStrict } from "../lib/auth";
-import { auth } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -19,6 +20,9 @@ export default function LoginPage() {
     message: string;
     icon?: React.ReactNode;
   } | null>(null);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 
   const slides = [
     {
@@ -97,6 +101,52 @@ export default function LoginPage() {
     }
   };
 
+  const createSessionCookie = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const idToken = await user.getIdToken(false);
+      await fetch('/api/session-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ idToken })
+      });
+    } catch (e) {
+      // ignore: session cookie creation failure will be surfaced by next requests
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      if (otpCode.length !== 6) return;
+      setIsVerifyingOtp(true);
+      const idToken = await user.getIdToken(false);
+      const resp = await fetch('/api/verify-totp-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ idToken, otp: otpCode })
+      });
+      if (resp.ok) {
+        setShowOtpModal(false);
+        setOtpCode("");
+        const redirectTo = await processPendingAction();
+        showNotification("success", "✅ 2FA Berhasil", redirectTo ? "Melanjutkan aksi Anda..." : "Verifikasi sukses. Mengalihkan ke Homepage...");
+        setTimeout(() => { window.location.href = redirectTo || "/homepage"; }, 600);
+      } else {
+        const data = await resp.json().catch(() => ({ error: 'Verifikasi gagal' }));
+        showNotification("error", "Verifikasi 2FA Gagal", data.error || "Kode OTP tidak valid atau kedaluwarsa. Coba lagi.");
+      }
+    } catch (e) {
+      showNotification("error", "Kesalahan Jaringan", "Tidak dapat memverifikasi OTP. Periksa koneksi Anda dan coba lagi.");
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -130,6 +180,19 @@ export default function LoginPage() {
 
     try {
       await signInWithEmail(emailNorm, password);
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const userData = userDoc.exists() ? userDoc.data() : {} as any;
+          if (userData?.twoFactorEnabled) {
+            setShowOtpModal(true);
+            return; // wait for OTP verification
+          } else {
+            await createSessionCookie();
+          }
+        } catch (e) {}
+      }
       const redirectTo = await processPendingAction();
       showNotification(
         "success", 
@@ -263,6 +326,19 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithGoogle();
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const userData = userDoc.exists() ? userDoc.data() : {} as any;
+          if (userData?.twoFactorEnabled) {
+            setShowOtpModal(true);
+            return; // wait for OTP verification
+          } else {
+            await createSessionCookie();
+          }
+        } catch (e) {}
+      }
       const redirectTo = await processPendingAction();
       showNotification(
         "success", 
@@ -462,6 +538,49 @@ export default function LoginPage() {
           display: flex;
           flex-direction: column;
           justify-content: center;
+        }
+
+        /* OTP Modal Styles */
+        .otp-modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .otp-modal {
+          background: white;
+          border-radius: 16px;
+          padding: 1.25rem 1.5rem;
+          width: 100%;
+          max-width: 420px;
+          box-shadow: 0 20px 30px rgba(0,0,0,0.12);
+          text-align: center;
+        }
+        .otp-code-input {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          border: 1px solid #e5e7eb;
+          border-radius: 10px;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+          font-size: 1.25rem;
+          letter-spacing: 0.35em;
+          text-align: center;
+          outline: none;
+        }
+        .otp-modal-actions {
+          display: flex;
+          gap: 0.5rem;
+          margin-top: 0.75rem;
+        }
+        .btn-secondary {
+          padding: 0.6rem 0.9rem;
+          border-radius: 10px;
+          background: #f3f4f6;
+          color: #374151;
+          font-weight: 600;
         }
 
         .form-header {
@@ -1077,6 +1196,35 @@ export default function LoginPage() {
           </p>
         </div>
       </motion.div>
+
+      {showOtpModal && (
+        <div className="otp-modal-overlay">
+          <div className="otp-modal">
+            <div style={{ marginBottom: '0.25rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111827' }}>Verifikasi 2FA</h3>
+              <p style={{ fontSize: '0.85rem', color: '#6b7280' }}>Masukkan kode dari aplikasi Authenticator untuk melanjutkan.</p>
+            </div>
+            <input
+              className="otp-code-input"
+              type="text"
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0,6))}
+              placeholder="123456"
+              maxLength={6}
+            />
+            <div className="otp-modal-actions">
+              <button type="button" className="btn-secondary" onClick={() => { setShowOtpModal(false); setOtpCode(''); }}>Batal</button>
+              <button type="button" className="btn btn-primary" disabled={isVerifyingOtp || otpCode.length !== 6} onClick={handleVerifyOtp}>
+                {isVerifyingOtp ? (
+                  <div className="spinner" />
+                ) : (
+                  <>Verifikasi <ArrowRight size={18} /></>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
