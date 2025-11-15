@@ -1,20 +1,19 @@
-'use client';
+// src/components/ProductDetail/ProductRecommendations.tsx
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 
-// Tipe produk sama kayak di FetchData
 export type Product = {
   ASIN: string;
   nama_produk: string;
-  merek_produk: string;
+  merek_produk?: string;
   kategori: string;
   harga_produk: number;
-  gambar_produk: string;
-  thumbnail_produk: string;
-  toko: string;
-  deskripsi_produk: string;
+  gambar_produk?: string;
+  thumbnail_produk?: string;
+  toko?: string;
   rating_bintang?: number | null;
   unit_terjual?: number | null;
   persentase_diskon?: number | null;
@@ -24,256 +23,224 @@ export type Product = {
   product_price?: string;
 };
 
-interface ProductRecommendationsProps {
-  currentCategory: string;
-  currentASIN: string;
-  onProductClick: (product: Product) => void;
-}
-
-export default function ProductRecommendations({
-  currentCategory,
-  currentASIN,
-  onProductClick,
-}: ProductRecommendationsProps) {
+export default function ProductRecommendations() {
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentProduct, setCurrentProduct] = useState<any>(null);
 
-  // Format IDR
-  const formatToIDR = (harga: number) => {
-    return "Rp " + harga.toLocaleString("id-ID");
-  };
+  useEffect(() => {
+    const loadCurrentProduct = () => {
+      try {
+        const stored = localStorage.getItem("selectedProduct");
+        if (stored) setCurrentProduct(JSON.parse(stored));
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-  // Render bintang
+    loadCurrentProduct();
+    window.addEventListener("storage", loadCurrentProduct);
+    return () => window.removeEventListener("storage", loadCurrentProduct);
+  }, []);
+
+  const formatToIDR = (harga: number) => "Rp " + harga.toLocaleString("id-ID");
+
   const renderStars = (rating: number | null | undefined) => {
-    if (!rating || rating === 0) return "☆☆☆☆☆";
-    const full = Math.min(5, Math.max(0, Math.round(rating)));
+    if (!rating) return "☆☆☆☆☆";
+    const full = Math.min(5, Math.floor(rating));
     return "★★★★★".substring(0, full) + "☆☆☆☆☆".substring(0, 5 - full);
   };
 
-  // Hitung diskon
-  const getDiscount = (product: Product) => {
-    if (product.persentase_diskon != null && product.persentase_diskon > 0) {
-      return `${product.persentase_diskon}%`;
+  const getDiscount = (p: Product) => {
+    if (p.persentase_diskon) return `${p.persentase_diskon}%`;
+    if (p.harga_asli && p.harga_asli > p.harga_produk) {
+      const disc = Math.round(((p.harga_asli - p.harga_produk) / p.harga_asli) * 100);
+      return `${disc}%`;
     }
-    if (product.harga_asli && product.harga_asli > product.harga_produk) {
-      const diskon = Math.round(((product.harga_asli - product.harga_produk) / product.harga_asli) * 100);
-      return `${diskon}%`;
-    }
-    return "0%";
+    return null;
   };
 
-  // Generate bonus text
-  const generateBonusText = () => {
-    const bonuses = ["Gratis Ongkir", "+Hadiah Gratis", "Cashback 10%", "Diskon Ekstra"];
+  const generateBonus = () => {
+    const bonuses = ["Gratis Ongkir", "Hadiah Gratis", "Cashback 10%", "Beli 1 Gratis 1", "Bonus Member"];
     return bonuses[Math.floor(Math.random() * bonuses.length)];
   };
 
-  // Fetch rekomendasi
   useEffect(() => {
-    const fetchRecommendations = async () => {
-      if (!db || !currentCategory || !currentASIN) {
-        setLoading(false);
-        return;
-      }
+    if (!currentProduct?.kategori || !currentProduct?.ASIN || !db) {
+      setLoading(false);
+      return;
+    }
 
+    const fetchRecs = async () => {
       setLoading(true);
       try {
         const q = query(
           collection(db, "products"),
-          where("kategori", "==", currentCategory)
+          where("kategori", "==", currentProduct.kategori)
         );
 
-        const snapshot = await getDocs(q);
-        const products: Product[] = snapshot.docs
-          .map(doc => ({ ...doc.data(), ASIN: doc.id } as Product))
-          .filter(p => p.ASIN !== currentASIN);
+        const snap = await getDocs(q);
+        let products = snap.docs
+          .map((doc) => ({ ...doc.data(), ASIN: doc.id } as Product))
+          .filter((p) => p.ASIN !== currentProduct.ASIN);
 
-        // Transform & enrich data
-        const enriched = products.map(p => ({
+        products = products.map((p) => ({
           ...p,
-          bonusText: generateBonusText(),
+          bonusText: generateBonus(),
           discount: getDiscount(p),
           product_price: formatToIDR(p.harga_produk),
         }));
 
-        // Acak & ambil 6
-        const shuffled = enriched.sort(() => 0.5 - Math.random()).slice(0, 6);
-        setRecommendations(shuffled);
+        const selected = products.sort(() => 0.5 - Math.random()).slice(0, 6);
+        setRecommendations(selected);
       } catch (err) {
-        console.error("Gagal fetch rekomendasi:", err);
+        console.error("Error fetch rekomendasi:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRecommendations();
-  }, [currentCategory, currentASIN]);
+    fetchRecs();
+  }, [currentProduct?.kategori, currentProduct?.ASIN]);
+
+  const handleClick = (item: Product) => {
+    localStorage.setItem("selectedProduct", JSON.stringify(item));
+    window.scrollTo(0, 0);
+    window.location.reload();
+  };
 
   if (loading) {
-    return (
-      <div className="recommendation-container">
-        <h2 className="section-title">Memuat rekomendasi...</h2>
-        <p style={{ textAlign: "center", color: "#666", padding: "20px 0" }}>
-          Sedang mencari produk serupa...
-        </p>
-      </div>
-    );
+    return <div className=" py-16 text-gray-500">Mencari produk serupa...</div>;
   }
 
-  if (recommendations.length === 0) {
-    return (
-      <div className="recommendation-container">
-        <h2 className="section-title">PRODUK LAIN DARI KATEGORI INI</h2>
-        <p style={{ textAlign: "center", color: "#666", padding: "20px 0" }}>
-          Belum ada produk lain di kategori ini.
-        </p>
-      </div>
-    );
-  }
+  if (recommendations.length === 0) return null;
 
   return (
     <>
       <style>{`
-        .recommendation-container {
-          max-width: 1200px;
-          margin: 0 auto 60px;
-          background: white;
-          border-radius: 16px;
-          padding: 24px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
         .section-title {
-          font-size: 18px;
-          font-weight: 700;
-          margin: 0 0 16px;
-          color: #1a1a1a;
+          font-size: 22px;
+          font-weight: 800;
+          margin: 0 0 28px;
+          color: #0f172a;
+          text-align: left !important;  /* FIX: supaya ga center */
         }
-        .recommendation-grid {
+        .rec-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-          gap: 16px;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 20px;
+          max-width: 1200px;
+          margin: 0 auto;
         }
-        .rec-card {
-          border: 1px solid #eee;
-          border-radius: 12px;
+        .card {
+          background: white;
+          border-radius: 18px;
           overflow: hidden;
-          transition: all 0.2s ease;
-          background: #fff;
+          box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+          transition: all 0.3s ease;
           cursor: pointer;
+          position: relative;
         }
-        .rec-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-          border-color: #10b981;
+        .card:hover {
+          transform: translateY(-10px);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
-        .rec-image {
-          width: 100%;
-          height: 160px;
+        .img-wrap {
+          position: relative;
+          height: 200px;
           overflow: hidden;
-          background: #f8f8f8;
         }
-        .rec-image img {
+        .img-wrap img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: transform 0.3s ease;
+          transition: transform 0.4s ease;
         }
-        .rec-card:hover .rec-image img {
-          transform: scale(1.05);
+        .card:hover .img-wrap img {
+          transform: scale(1.1);
         }
-        .rec-info {
-          padding: 12px;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
+        .discount {
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          background: #ef4444;
+          color: white;
+          font-size: 12px;
+          font-weight: 800;
+          padding: 6px 10px;
+          border-radius: 12px;
+          z-index: 10;
         }
-        .rec-title {
-          font-size: 13px;
+        .info {
+          padding: 16px;
+        }
+        .name {
+          font-size: 15px;
           font-weight: 600;
-          color: #1a1a1a;
+          color: #1e293b;
           line-height: 1.4;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
+          margin-bottom: 8px;
         }
-        .rec-price {
-          font-size: 15px;
+        .price {
+          font-size: 17px;
           font-weight: 800;
           color: #dc2626;
         }
-        .rec-rating {
+        .meta {
           font-size: 12px;
-          color: #f59e0b;
-          display: flex;
-          align-items: center;
-          gap: 4px;
+          color: #64748b;
+          margin-top: 6px;
         }
-        .rec-category {
+        .bonus {
+          background: linear-gradient(135deg, #fbbf24, #f59e0b);
+          color: white;
           font-size: 11px;
-          color: #10b981;
-          font-weight: 600;
-          margin-top: 2px;
+          font-weight: 700;
+          padding: 4px 10px;
+          border-radius: 8px;
+          display: inline-block;
+          margin-top: 8px;
         }
         @media (max-width: 768px) {
-          .recommendation-grid {
+          .rec-grid {
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            gap: 16px;
           }
-          .rec-image {
-            height: 130px;
-          }
-          .rec-info {
-            padding: 10px;
-          }
-          .rec-title {
-            font-size: 12px;
-          }
-          .rec-price {
-            font-size: 14px;
-          }
+          .img-wrap { height: 160px; }
         }
       `}</style>
 
-      <div className="recommendation-container">
-        <h2 className="section-title">PRODUK LAIN DARI KATEGORI INI</h2>
-        <div className="recommendation-grid">
-          {recommendations.map((item) => {
-            const shortTitle = item.nama_produk.length > 50
-              ? item.nama_produk.slice(0, 47) + "..."
-              : item.nama_produk;
+      <div style={{ marginTop: "60px", padding: "0 16px" }}>
+        <h2 className="section-title">Produk Lain Dari Kategori Ini</h2>
 
-            const rating = renderStars(item.rating_bintang);
-            const sold = item.unit_terjual != null
-              ? `${(item.unit_terjual / 1000).toFixed(1)}K terjual`
-              : "0 terjual";
+        <div className="rec-grid">
+          {recommendations.map((item) => (
+            <div key={item.ASIN} className="card" onClick={() => handleClick(item)}>
+              <div className="img-wrap">
+                <img
+                  src={item.thumbnail_produk || item.gambar_produk || "/placeholder.jpg"}
+                  alt={item.nama_produk}
+                  loading="lazy"
+                />
 
-            return (
-              <div
-                key={item.ASIN}
-                className="rec-card"
-                onClick={() => onProductClick(item)}
-              >
-                <div className="rec-image">
-                  <img
-                    src={item.thumbnail_produk || item.gambar_produk}
-                    alt={shortTitle}
-                    loading="lazy"
-                  />
-                </div>
-                <div className="rec-info">
-                  <h3 className="rec-title">{shortTitle}</h3>
-                  <div className="rec-price">
-                    {item.product_price || formatToIDR(item.harga_produk)}
-                  </div>
-                  <div className="rec-rating">
-                    ★ {rating} • {sold}
-                  </div>
-                  <div className="rec-category">{item.kategori}</div>
-                </div>
+                {item.discount && <div className="discount">{item.discount} ON</div>}
               </div>
-            );
-          })}
+
+              <div className="info">
+                <div className="name">{item.nama_produk}</div>
+                <div className="price">{item.product_price}</div>
+                <div className="meta">
+                  ★ {renderStars(item.rating_bintang)} •{" "}
+                  {item.unit_terjual ? `${(item.unit_terjual / 1000).toFixed(1)}K terjual` : "Baru"}
+                </div>
+                {item.bonusText && <div className="bonus">{item.bonusText}</div>}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </>

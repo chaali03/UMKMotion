@@ -124,7 +124,7 @@ export type Product = {
   dimensi_produk?: string;
   bahan?: string;
   warna?: string;
-  varian_produk?: string;
+  varian_produk?: [];
   negara_asal?: string;
   spesifikasi?: string;
 
@@ -160,5 +160,6 @@ export type Product = {
   jumlah_ulasan: number;
   komentar?: string[];
   foto_pembeli?: string[];
+  ulasan: string[],
 
 };
