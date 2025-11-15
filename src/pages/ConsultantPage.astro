@@ -1,13 +1,12 @@
 ---
-import ConsultantPage from '../../Home/Consultanthomepage/ConsultantHomePage.tsx';
-import NavbarHome from '../../Home/NavbarHome/NavbarHome.tsx';
 import LandingPageLayout from "../layouts/LandingPageLayout.astro";
+import ConsultantHomePage from "../../Home/Consultanthomepage/ConsultantHomePage";
+import NavbarHome from "../../Home/NavbarHome/NavbarHome";
 ---
 
-<LandingPageLayout>
+<LandingPageLayout title="Konsultasi UMKM - UMKMotion">
   <NavbarHome client:load />
   <main class="min-h-screen pt-20">
-    <ConsultantPage client:load />
+    <ConsultantHomePage client:load />
   </main>
 </LandingPageLayout>
-  

@@ -1,552 +1,410 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Calendar,
-  Clock,
-  MapPin,
-  Video,
-  Phone,
-  CheckCircle,
-  ArrowLeft,
-  ArrowRight,
-  X,
-  User,
-  Mail,
-  MessageSquare,
-  CreditCard,
-  Shield,
-} from "lucide-react";
+import React, { useMemo, useState, useEffect } from "react";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
+import { format, addDays, addMinutes, isBefore, isAfter, setHours, setMinutes } from "date-fns";
+import { Clock, Calendar, Video, MessageCircle, CheckCircle2, MapPin, Star, Globe, Timer, Check, ChevronRight, ArrowLeft } from "lucide-react";
 
-type TimeSlot = {
-  time: string;
-  available: boolean;
-};
+type MeetingType = "chat" | "zoom";
 
-type BookingFormData = {
+type ConsultantSummary = {
+  id: number;
   name: string;
-  email: string;
-  phone: string;
-  date: string;
-  time: string;
-  consultationType: "online" | "offline";
-  topic: string;
-  notes: string;
+  specialty: string;
+  rating?: number;
+  price?: string;
+  location?: string;
+  avatar?: string;
 };
 
-const ConsultantBookingPage: React.FC = () => {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [selectedDate, setSelectedDate] = useState<string>("");
-  const [formData, setFormData] = useState<BookingFormData>({
-    name: "",
-    email: "",
-    phone: "",
-    date: "",
-    time: "",
-    consultationType: "online",
-    topic: "",
-    notes: "",
-  });
+const SAMPLE_CONSULTANTS: ConsultantSummary[] = [
+  {
+    id: 1,
+    name: "Dr. Budi Santoso",
+    specialty: "Manajemen Keuangan UMKM",
+    rating: 4.9,
+    price: "Rp 150.000/sesi",
+    location: "Jakarta",
+    avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&q=60",
+  },
+  {
+    id: 2,
+    name: "Siti Nurhaliza",
+    specialty: "Digital Marketing & Branding",
+    rating: 4.8,
+    price: "Rp 120.000/sesi",
+    location: "Bandung",
+    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&q=60",
+  },
+];
 
-  // Get consultant ID from URL
-  const consultantId = typeof window !== "undefined" 
-    ? new URLSearchParams(window.location.search).get("consultant") 
-    : null;
+function useQueryParam(name: string) {
+  const [value, setValue] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setValue(params.get(name));
+    }
+  }, [name]);
+  return value;
+}
 
-  // Generate available dates (next 30 days)
-  const availableDates = Array.from({ length: 30 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() + i + 1);
-    return date.toISOString().split("T")[0];
-  });
+export default function ConsultantBookingPage() {
+  const consultantParam = useQueryParam("consultant");
+  const consultant = useMemo(() => {
+    const id = consultantParam ? Number(consultantParam) : NaN;
+    return SAMPLE_CONSULTANTS.find((c) => c.id === id) ?? SAMPLE_CONSULTANTS[0];
+  }, [consultantParam]);
 
-  // Time slots
-  const timeSlots: TimeSlot[] = [
-    { time: "09:00", available: true },
-    { time: "10:00", available: true },
-    { time: "11:00", available: false },
-    { time: "13:00", available: true },
-    { time: "14:00", available: true },
-    { time: "15:00", available: true },
-    { time: "16:00", available: false },
-    { time: "17:00", available: true },
-  ];
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(addDays(new Date(), 1));
+  const [selectedTime, setSelectedTime] = useState<Date | undefined>();
+  const [meetingType, setMeetingType] = useState<MeetingType>("zoom");
+  const [duration, setDuration] = useState<number>(60);
+  const [timezone, setTimezone] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta");
+  const [notes, setNotes] = useState<string>("");
+  const [voucher, setVoucher] = useState<string>("");
+  const [voucherApplied, setVoucherApplied] = useState<boolean>(false);
+  const [confirming, setConfirming] = useState<boolean>(false);
+  const [confirmed, setConfirmed] = useState<boolean>(false);
 
-  const handleNext = () => {
-    if (step < 3) setStep((step + 1) as 1 | 2 | 3);
+  const timeslots = useMemo(() => {
+    if (!selectedDate) return [] as Date[];
+    const start = setHours(setMinutes(selectedDate, 0), 9);
+    const end = setHours(setMinutes(selectedDate, 0), 17);
+    const slots: Date[] = [];
+    let cursor = start;
+    while (!isAfter(cursor, end)) {
+      slots.push(cursor);
+      cursor = addMinutes(cursor, 30);
+    }
+    return slots;
+  }, [selectedDate]);
+
+  const canConfirm = selectedDate && selectedTime && meetingType && !confirming;
+
+  // Pricing computation
+  const basePrice = useMemo(() => {
+    const raw = consultant?.price ? consultant.price.replace(/\D/g, "") : "0";
+    const val = Number(raw) || 0;
+    return val;
+  }, [consultant]);
+  const typeMultiplier = meetingType === "chat" ? 0.7 : 1.2;
+  const durationMultiplier = duration <= 30 ? 0.6 : duration <= 60 ? 1.0 : 1.6;
+  const subtotal = Math.round(basePrice * typeMultiplier * durationMultiplier);
+  const discount = voucherApplied ? Math.round(subtotal * 0.15) : 0;
+  const total = Math.max(subtotal - discount, 0);
+
+  const applyVoucher = () => {
+    const code = voucher.trim().toUpperCase();
+    if (code === "UMKMHEBAT" || code === "PROMO15") setVoucherApplied(true);
+    else setVoucherApplied(false);
   };
 
-  const handleBack = () => {
-    if (step > 1) setStep((step - 1) as 1 | 2 | 3);
+  const handleConfirm = async () => {
+    if (!canConfirm) return;
+    setConfirming(true);
+    // Simulasi pemrosesan booking (mis. panggil API / pembayaran)
+    await new Promise((r) => setTimeout(r, 1200));
+    setConfirming(false);
+    setConfirmed(true);
+    // Arahkan ke halaman chat dengan consultant id
+    if (typeof window !== "undefined") {
+      const id = consultant?.id ?? 0;
+      window.location.href = `/ConsultantChat?consultant=${id}`;
+    }
   };
 
-  const handleSubmit = () => {
-    // In a real app, submit to backend
-    console.log("Booking submitted:", formData);
-    alert("Booking berhasil! Anda akan menerima konfirmasi via email.");
-    window.location.href = "/consultant";
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("id-ID", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
+  // ICS calendar link
+  const calendarICS = useMemo(() => {
+    if (!selectedDate || !selectedTime) return "";
+    const start = new Date(selectedTime);
+    const end = new Date(start.getTime() + duration * 60000);
+    const dt = (d: Date) =>
+      `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}T${String(d.getUTCHours()).padStart(2, "0")}${String(d.getUTCMinutes()).padStart(2, "0")}${String(d.getUTCSeconds()).padStart(2, "0")}Z`;
+    const ics = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//UMKMotion//Consultation//EN",
+      "BEGIN:VEVENT",
+      `UID:${Date.now()}@umkmotion`,
+      `DTSTAMP:${dt(new Date())}`,
+      `DTSTART:${dt(start)}`,
+      `DTEND:${dt(end)}`,
+      `SUMMARY:Konsultasi dengan ${consultant?.name ?? "Konsultan"}`,
+      `DESCRIPTION:Tipe: ${meetingType.toUpperCase()} | Durasi: ${duration} menit | Zona: ${timezone}`,
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\n");
+    return `data:text/calendar;charset=utf8,${encodeURIComponent(ics)}`;
+  }, [selectedDate, selectedTime, duration, meetingType, timezone, consultant]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50/30 via-white to-amber-50/20 text-slate-900">
+      {/* Enhanced Background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-gradient-to-br from-orange-300/20 to-amber-300/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/3 left-1/3 w-48 h-48 bg-gradient-to-br from-blue-300/15 to-purple-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+      
+      <div className="w-full px-4 py-6 sm:px-6 lg:px-8">
+        {/* Back row */}
+        <div className="mb-4">
           <button
-            onClick={() => window.history.back()}
-            className="inline-flex items-center gap-2 text-slate-600 hover:text-orange-600 mb-4 transition-colors"
+            onClick={() => (typeof window !== 'undefined' ? window.history.back() : null)}
+            className="inline-flex items-center gap-2 text-slate-700 hover:text-orange-700 text-sm"
+            aria-label="Kembali"
           >
-            <ArrowLeft size={20} />
-            Kembali
+            <ArrowLeft size={16} /> Kembali
           </button>
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">
-            Booking Konsultasi
-          </h1>
-          <p className="text-slate-600">
-            Pilih waktu yang sesuai untuk sesi konsultasi Anda
-          </p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {[1, 2, 3].map((s) => (
-              <React.Fragment key={s}>
-                <div className="flex items-center">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-                      step >= s
-                        ? "bg-gradient-to-r from-orange-600 to-amber-500 text-white shadow-lg"
-                        : "bg-slate-200 text-slate-500"
-                    }`}
-                  >
-                    {step > s ? <CheckCircle size={20} /> : s}
-                  </div>
-                  <div className="ml-2 hidden sm:block">
-                    <div
-                      className={`text-sm font-semibold ${
-                        step >= s ? "text-slate-900" : "text-slate-400"
-                      }`}
-                    >
-                      {s === 1 ? "Waktu" : s === 2 ? "Detail" : "Konfirmasi"}
-                    </div>
-                  </div>
+        <div className="mb-6 text-center px-2">
+          <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight tracking-tight bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-clip-text text-transparent break-words">
+            Booking Konsultan Pilihan Anda
+          </h1>
+        </div>
+
+        {/* Consultant Summary - Simple */}
+        <div className="rounded-2xl border border-orange-100 bg-white p-4 flex items-center gap-4 mb-8">
+          {consultant?.avatar && (
+            <img src={consultant.avatar} alt={consultant.name} className="w-16 h-16 rounded-xl object-cover" />
+          )}
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold">{consultant?.name}</h2>
+              {typeof consultant?.rating === "number" && (
+                <span className="inline-flex items-center gap-1 text-amber-600 text-sm font-semibold">
+                  <Star size={14} className="fill-amber-500" />
+                  {consultant.rating}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-slate-600">{consultant?.specialty}</p>
+            {consultant?.location && (
+              <p className="text-xs text-slate-500 mt-1">{consultant.location}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Progress Stepper */}
+        <div className="flex justify-center mb-8">
+          <div className="flex items-center gap-4">
+            {[
+              { label: "Jadwal", icon: Calendar, done: !!(selectedDate && selectedTime) },
+              { label: "Detail", icon: Clock, done: !!meetingType },
+              { label: "Konfirmasi", icon: CheckCircle2, done: confirmed },
+            ].map((step, i) => (
+              <div key={i} className="flex items-center">
+                <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${step.done ? "bg-orange-600 text-white" : "bg-white border border-slate-200 text-slate-600"}`}>
+                  <step.icon size={18} />
+                  <span className="font-semibold text-sm">{step.label}</span>
+                  {step.done && <Check size={16} />}
                 </div>
-                {s < 3 && (
-                  <div
-                    className={`flex-1 h-1 mx-4 rounded ${
-                      step > s ? "bg-orange-500" : "bg-slate-200"
-                    }`}
-                  />
-                )}
-              </React.Fragment>
+                {i < 2 && <div className="w-8 h-0.5 mx-2 bg-slate-200" />}
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Form Steps */}
-        <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-8">
-          <AnimatePresence mode="wait">
-            {/* Step 1: Date & Time Selection */}
-            {step === 1 && (
-              <motion.div
-                key="step1"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
-              >
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                    Pilih Tanggal & Waktu
-                  </h2>
-                  <p className="text-slate-600">
-                    Pilih tanggal dan waktu yang sesuai untuk konsultasi
-                  </p>
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Calendar Section */}
+          <section className="lg:col-span-2 rounded-2xl bg-white border border-slate-200 shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Calendar className="text-orange-600" />
+              <h3 className="font-bold">Pilih Tanggal</h3>
+            </div>
+            <DayPicker
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              disabled={{ before: addDays(new Date(), 1) }}
+              weekStartsOn={1}
+              className="rounded-xl"
+            />
 
-                {/* Consultation Type */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3">
-                    Tipe Konsultasi
-                  </label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      onClick={() =>
-                        setFormData({ ...formData, consultationType: "online" })
-                      }
-                      className={`p-4 rounded-2xl border-2 transition-all ${
-                        formData.consultationType === "online"
-                          ? "border-orange-500 bg-orange-50"
-                          : "border-slate-200 hover:border-orange-200"
-                      }`}
-                    >
-                      <Video
-                        size={24}
-                        className={`mx-auto mb-2 ${
-                          formData.consultationType === "online"
-                            ? "text-orange-600"
-                            : "text-slate-400"
-                        }`}
-                      />
-                      <div className="font-semibold text-slate-900">Online</div>
-                      <div className="text-xs text-slate-500">Video Call</div>
-                    </button>
-                    <button
-                      onClick={() =>
-                        setFormData({ ...formData, consultationType: "offline" })
-                      }
-                      className={`p-4 rounded-2xl border-2 transition-all ${
-                        formData.consultationType === "offline"
-                          ? "border-orange-500 bg-orange-50"
-                          : "border-slate-200 hover:border-orange-200"
-                      }`}
-                    >
-                      <MapPin
-                        size={24}
-                        className={`mx-auto mb-2 ${
-                          formData.consultationType === "offline"
-                            ? "text-orange-600"
-                            : "text-slate-400"
-                        }`}
-                      />
-                      <div className="font-semibold text-slate-900">Offline</div>
-                      <div className="text-xs text-slate-500">Bertemu Langsung</div>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Date Selection */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3">
-                    Pilih Tanggal
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3 max-h-64 overflow-y-auto">
-                    {availableDates.map((date) => (
-                      <button
-                        key={date}
-                        onClick={() => {
-                          setSelectedDate(date);
-                          setFormData({ ...formData, date });
-                        }}
-                        className={`p-3 rounded-xl border-2 transition-all text-sm ${
-                          selectedDate === date
-                            ? "border-orange-500 bg-orange-50 text-orange-700 font-semibold"
-                            : "border-slate-200 hover:border-orange-200"
-                        }`}
-                      >
-                        <div className="text-xs text-slate-500 mb-1">
-                          {new Date(date).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "short",
-                          })}
-                        </div>
-                        <div className="font-semibold">
-                          {new Date(date).toLocaleDateString("id-ID", {
-                            weekday: "short",
-                          })}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Time Selection */}
+            {/* Timeslots */}
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="text-orange-600" />
+                <h3 className="font-bold">Pilih Jam</h3>
                 {selectedDate && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <label className="block text-sm font-semibold text-slate-700 mb-3">
-                      Pilih Waktu
-                    </label>
-                    <div className="grid grid-cols-4 sm:grid-cols-4 gap-3">
-                      {timeSlots.map((slot) => (
-                        <button
-                          key={slot.time}
-                          onClick={() =>
-                            setFormData({ ...formData, time: slot.time })
-                          }
-                          disabled={!slot.available}
-                          className={`p-3 rounded-xl border-2 transition-all text-sm ${
-                            formData.time === slot.time
-                              ? "border-orange-500 bg-orange-50 text-orange-700 font-semibold"
-                              : slot.available
-                              ? "border-slate-200 hover:border-orange-200"
-                              : "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
-                          }`}
-                        >
-                          <Clock size={16} className="mx-auto mb-1" />
-                          {slot.time}
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
+                  <span className="text-xs text-slate-500">{format(selectedDate, "EEEE, dd MMM yyyy")}</span>
                 )}
-
-                <div className="flex justify-end pt-4">
-                  <button
-                    onClick={handleNext}
-                    disabled={!formData.date || !formData.time}
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-6 py-3 rounded-2xl font-semibold hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
-                  >
-                    Lanjutkan
-                    <ArrowRight size={20} />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 2: Personal Details */}
-            {step === 2 && (
-              <motion.div
-                key="step2"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
-              >
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                    Informasi Kontak
-                  </h2>
-                  <p className="text-slate-600">
-                    Lengkapi data diri Anda untuk konfirmasi booking
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Nama Lengkap
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
-                        placeholder="Masukkan nama lengkap"
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Email
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                        placeholder="email@example.com"
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      No. Telepon
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) =>
-                          setFormData({ ...formData, phone: e.target.value })
-                        }
-                        placeholder="08xx xxxx xxxx"
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Topik Konsultasi
-                    </label>
-                    <div className="relative">
-                      <MessageSquare className="absolute left-4 top-4 text-slate-400 w-5 h-5" />
-                      <textarea
-                        value={formData.topic}
-                        onChange={(e) =>
-                          setFormData({ ...formData, topic: e.target.value })
-                        }
-                        placeholder="Jelaskan topik atau masalah yang ingin dikonsultasikan..."
-                        rows={4}
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent resize-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Catatan Tambahan (Opsional)
-                    </label>
-                    <textarea
-                      value={formData.notes}
-                      onChange={(e) =>
-                        setFormData({ ...formData, notes: e.target.value })
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 md:max-h-48 overflow-y-auto pr-1">
+                {timeslots.map((t, idx) => {
+                  const label = format(t, "HH:mm");
+                  const active = selectedTime && format(selectedTime, "HH:mm") === label;
+                  const disabled = isBefore(t, new Date());
+                  return (
+                    <button
+                      key={idx}
+                      disabled={disabled}
+                      onClick={() => setSelectedTime(t)}
+                      className={
+                        "px-3 py-2 text-xs sm:text-sm rounded-xl border transition min-w-[72px] sm:min-w-0 " +
+                        (active
+                          ? "border-orange-600 bg-orange-50 text-orange-700"
+                          : "border-slate-200 hover:border-orange-300") +
+                        (disabled ? " opacity-50 cursor-not-allowed" : "")
                       }
-                      placeholder="Tambahkan catatan atau pertanyaan khusus..."
-                      rows={3}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent resize-none"
-                    />
-                  </div>
-                </div>
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-                <div className="flex justify-between pt-4">
-                  <button
-                    onClick={handleBack}
-                    className="inline-flex items-center gap-2 border-2 border-slate-200 text-slate-700 px-6 py-3 rounded-2xl font-semibold hover:bg-slate-50 transition-colors"
-                  >
-                    <ArrowLeft size={20} />
-                    Kembali
-                  </button>
-                  <button
-                    onClick={handleNext}
-                    disabled={!formData.name || !formData.email || !formData.phone}
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-6 py-3 rounded-2xl font-semibold hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
-                  >
-                    Lanjutkan
-                    <ArrowRight size={20} />
-                  </button>
+            {/* Meeting type - Chat and Zoom only */}
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-bold">Tipe Pertemuan</h3>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => setMeetingType("chat")}
+                  className={
+                    "inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm " +
+                    (meetingType === "chat" ? "border-orange-600 bg-orange-50 text-orange-700" : "border-slate-200 hover:border-orange-300")
+                  }
+                >
+                  <MessageCircle size={16} /> Chat
+                </button>
+                <button
+                  onClick={() => setMeetingType("zoom")}
+                  className={
+                    "inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm " +
+                    (meetingType === "zoom" ? "border-orange-600 bg-orange-50 text-orange-700" : "border-slate-200 hover:border-orange-300")
+                  }
+                >
+                  <Video size={16} /> Zoom Meeting
+                </button>
+              </div>
+            </div>
+
+            {/* Duration & Timezone */}
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold mb-2 inline-flex items-center gap-2"><Timer size={16} /> Durasi</label>
+                <div className="flex gap-2">
+                  {[30, 60, 90].map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => setDuration(d)}
+                      className={`px-4 py-2 rounded-xl border text-sm ${duration === d ? "border-orange-600 bg-orange-50 text-orange-700" : "border-slate-200 hover:border-orange-300"}`}
+                    >
+                      {d} menit
+                    </button>
+                  ))}
                 </div>
-              </motion.div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-2 inline-flex items-center gap-2"><Globe size={16} /> Zona Waktu</label>
+                <select
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2"
+                >
+                  {["Asia/Jakarta","Asia/Makassar","Asia/Pontianak","Asia/Jayapura","Asia/Singapore","Asia/Bangkok","UTC"].map((tz) => (
+                    <option key={tz} value={tz}>{tz}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="mt-6">
+              <label className="block text-sm font-bold mb-2">Catatan (opsional)</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={4}
+                placeholder="Ceritakan singkat masalah usaha Anda, target, dan konteks."
+                className="w-full rounded-xl border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-orange-200"
+              />
+            </div>
+
+            {/* Voucher removed as requested */}
+          </section>
+
+          {/* Summary & Confirmation */}
+          <aside className="lg:col-span-1 rounded-2xl bg-white border border-slate-200 shadow-sm p-4 h-fit sticky top-8">
+            <h3 className="text-lg font-bold text-slate-900 mb-3">Ringkasan</h3>
+            
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl">
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Calendar size={16} className="text-orange-500" />
+                  <span>Tanggal</span>
+                </div>
+                <span className="font-bold text-slate-900">{selectedDate ? format(selectedDate, "dd MMM yyyy") : "-"}</span>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl">
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Clock size={16} className="text-orange-500" />
+                  <span>Waktu</span>
+                </div>
+                <span className="font-bold text-slate-900">{selectedTime ? format(selectedTime, "HH:mm") : "-"}</span>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl">
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Video size={16} className="text-orange-500" />
+                  <span>Tipe</span>
+                </div>
+                <span className="font-bold text-slate-900 capitalize">{meetingType}</span>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl">
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Timer size={16} className="text-orange-500" />
+                  <span>Durasi</span>
+                </div>
+                <span className="font-bold text-slate-900">{duration} menit</span>
+              </div>
+            </div>
+
+            {/* Price Summary removed as requested */}
+
+            <button
+              disabled={!canConfirm}
+              onClick={handleConfirm}
+              className={`w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-6 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all ${
+                canConfirm ? "hover:scale-105 hover:brightness-95" : "opacity-50 cursor-not-allowed"
+              }`}
+            >
+              {confirming ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                  Memproses...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={20} />
+                  Booking Sekarang
+                </>
+              )}
+            </button>
+
+            {confirmed && (
+              <div className="mt-4 p-3 rounded-xl border border-slate-200 bg-slate-50">
+                <p className="text-sm font-semibold text-slate-800 mb-1">Booking Berhasil</p>
+                <p className="text-xs text-slate-600 mb-2">Mengalihkan ke halaman chat...</p>
+                {calendarICS && (
+                  <a 
+                    href={calendarICS} 
+                    download={`konsultasi-${consultant?.id}.ics`} 
+                    className="inline-flex items-center gap-2 text-xs text-orange-700 hover:text-orange-800 font-medium"
+                  >
+                    <Calendar size={12} /> Tambahkan ke Kalender
+                  </a>
+                )}
+              </div>
             )}
-
-            {/* Step 3: Confirmation */}
-            {step === 3 && (
-              <motion.div
-                key="step3"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
-              >
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                    Konfirmasi Booking
-                  </h2>
-                  <p className="text-slate-600">
-                    Periksa kembali detail booking Anda
-                  </p>
-                </div>
-
-                {/* Booking Summary */}
-                <div className="bg-orange-50 rounded-2xl p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
-                        <Calendar className="text-white w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-slate-900">
-                          {formatDate(formData.date)}
-                        </div>
-                        <div className="text-sm text-slate-600 flex items-center gap-1">
-                          <Clock size={14} />
-                          {formData.time} WIB
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm text-slate-600">Tipe</div>
-                      <div className="font-semibold text-slate-900 capitalize">
-                        {formData.consultationType === "online" ? (
-                          <span className="flex items-center gap-1">
-                            <Video size={16} />
-                            Online
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1">
-                            <MapPin size={16} />
-                            Offline
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-orange-200 pt-4 space-y-3">
-                    <div>
-                      <div className="text-sm text-slate-600 mb-1">Nama</div>
-                      <div className="font-semibold text-slate-900">{formData.name}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-slate-600 mb-1">Email</div>
-                      <div className="font-semibold text-slate-900">{formData.email}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-slate-600 mb-1">Telepon</div>
-                      <div className="font-semibold text-slate-900">{formData.phone}</div>
-                    </div>
-                    {formData.topic && (
-                      <div>
-                        <div className="text-sm text-slate-600 mb-1">Topik</div>
-                        <div className="font-semibold text-slate-900">{formData.topic}</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Payment Info */}
-                <div className="bg-slate-50 rounded-2xl p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="text-slate-600 w-5 h-5" />
-                      <span className="font-semibold text-slate-900">Biaya Konsultasi</span>
-                    </div>
-                    <div className="text-2xl font-bold text-orange-600">Rp 150.000</div>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <Shield size={14} />
-                    <span>Pembayaran aman dan terenkripsi</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between pt-4">
-                  <button
-                    onClick={handleBack}
-                    className="inline-flex items-center gap-2 border-2 border-slate-200 text-slate-700 px-6 py-3 rounded-2xl font-semibold hover:bg-slate-50 transition-colors"
-                  >
-                    <ArrowLeft size={20} />
-                    Kembali
-                  </button>
-                  <button
-                    onClick={handleSubmit}
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-6 py-3 rounded-2xl font-semibold hover:brightness-95 transition-all shadow-lg hover:shadow-xl"
-                  >
-                    <CheckCircle size={20} />
-                    Konfirmasi Booking
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          </aside>
         </div>
       </div>
     </div>
   );
-};
-
-export default ConsultantBookingPage;
-
+}
