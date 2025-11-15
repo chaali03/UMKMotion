@@ -136,7 +136,7 @@ function FetchData() {
     try {
       localStorage.setItem('selectedProduct', JSON.stringify(product));
     } catch {}
-    window.location.href = `/product/${product.ASIN}`;
+    window.location.href = '/buying';
   };
 
   const showToast = (type: 'cart' | 'favorite', title: string, message: string) => {

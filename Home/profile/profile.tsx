@@ -6,12 +6,13 @@ import { onAuthStateChanged, updateProfile, sendPasswordResetEmail, signOut } fr
 import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getUserBadges, getUserGamificationStats } from "../../src/lib/gamification";
+import Harga from "../Pricing/harga";
 
 import {
   Camera, Loader2, LogOut, Save, User, Mail, Phone, FileText, Trophy,
   Award, Star, Zap, CheckCircle, History, DollarSign, Store, CreditCard,
   Edit2, X, Shield, ShieldCheck, ShieldAlert, Lock, Smartphone, AlertTriangle,
-  CheckCircle2, Clock, Key, Eye, EyeOff, Menu, ChevronLeft, ChevronRight
+  CheckCircle2, Clock, Key, Eye, EyeOff, Menu, ChevronLeft, ChevronRight, ArrowLeft
 } from "lucide-react";
 
 // Interfaces
@@ -43,7 +44,6 @@ interface UserBadge {
   fromMission?: string;
 }
 
-// Security Tip Interface
 interface SecurityTip {
   icon: any;
   color: string;
@@ -82,34 +82,8 @@ export default function ProfilePage() {
   const [totpQRCode, setTotpQRCode] = useState<string>("");
   const [totpCode, setTotpCode] = useState<string>("");
   const [isSettingUpTOTP, setIsSettingUpTOTP] = useState(false);
-  // History State
-  const [activities, setActivities] = useState<Array<{ id: string; type: string; title?: string; store?: string | null; storeId?: string | null; productASIN?: string | null; category?: string | null; image?: string | null; consultantId?: number | null; consultantName?: string | null; createdAt?: Date | null }>>([]);
+  const [activities, setActivities] = useState<Array<{ id: string; type: string; title?: string; store?: string | null; storeId?: string | null; productASIN?: string | null; productName?: string | null; category?: string | null; image?: string | null; consultantId?: number | null; consultantName?: string | null; createdAt?: Date | null }>>([]);
   const [historyTab, setHistoryTab] = useState<'all' | 'product' | 'visit' | 'consultation'>('all');
-
-  // Open activity destination
-  const openActivity = (a: any) => {
-    try {
-      // Product detail
-      if ((a.type === 'product_view' || a.productASIN) && a.productASIN) {
-        window.location.href = `/product/${a.productASIN}`;
-        return;
-      }
-      // Visit UMKM
-      if (a.type === 'visit') {
-        if (a.storeId) {
-          window.location.href = `/umkm/${a.storeId}`;
-        } else {
-          window.location.href = '/toko';
-        }
-        return;
-      }
-      // Consultant chat
-      if ((a.type === 'consult_chat' || a.type === 'consult_chat_message') && a.consultantId) {
-        window.location.href = `/ConsultantChat?consultant=${a.consultantId}`;
-        return;
-      }
-    } catch {}
-  };
   
   // Sidebar State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -151,6 +125,28 @@ export default function ProfilePage() {
     },
   ];
 
+  // Open activity destination
+  const openActivity = (a: any) => {
+    try {
+      if ((a.type === 'product_view' || a.productASIN) && a.productASIN) {
+        window.location.href = `/product/${a.productASIN}`;
+        return;
+      }
+      if (a.type === 'visit') {
+        if (a.storeId) {
+          window.location.href = `/umkm/${a.storeId}`;
+        } else {
+          window.location.href = '/toko';
+        }
+        return;
+      }
+      if ((a.type === 'consult_chat' || a.type === 'consult_chat_message') && a.consultantId) {
+        window.location.href = `/ConsultantChat?consultant=${a.consultantId}`;
+        return;
+      }
+    } catch {}
+  };
+
   // Responsive Sidebar Handler
   useEffect(() => {
     const handleResize = () => {
@@ -177,14 +173,8 @@ export default function ProfilePage() {
       }
 
       setCurrentUser(user);
-      
-      // User can always edit their own profile if authenticated via Firebase
-      // Session cookie is optional for additional security, but not required
       setCanEdit(true);
       
-      // Try to establish server session cookie (optional, for additional security)
-      // This is non-blocking - errors are silently ignored
-      // Using IIFE to prevent unhandled promise rejection warnings
       (async () => {
         try {
           const idToken = await user.getIdToken(false);
@@ -194,16 +184,8 @@ export default function ProfilePage() {
             credentials: 'include',
             body: JSON.stringify({ idToken })
           });
-          // Silently ignore errors - session is optional, user can still edit via Firebase Auth
-          // No need to log or handle errors as this is non-critical
-        } catch (e) {
-          // Silently ignore - session is optional, not required for profile editing
-          // Errors are expected if Firebase Admin SDK is not configured
-        }
-      })().catch(() => {
-        // Catch any unhandled promise rejections silently
-        // This is non-critical functionality
-      });
+        } catch (e) {}
+      })().catch(() => {});
 
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const userData = userDoc.exists() ? userDoc.data() : {};
@@ -229,30 +211,51 @@ export default function ProfilePage() {
       setBadges(badgesData);
       setGamificationStats(statsData);
       
-      // Load recent activities for History UI
       try {
-        const q = query(collection(db, 'users', user.uid, 'activities'), orderBy('createdAt', 'desc'), limit(50));
-        const snap = await getDocs(q);
-        const acts = snap.docs.map(d => {
-          const data: any = d.data();
-          const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : null;
-          return {
-            id: d.id,
-            type: data.type || 'other',
-            title: data.title || '',
-            store: data.store || null,
-            storeId: data.storeId || null,
-            productASIN: data.productASIN || null,
-            category: data.category || null,
-            image: data.image || null,
-            consultantId: data.consultantId || null,
-            consultantName: data.consultantName || null,
-            createdAt
-          };
-        });
+        let acts: any[] = [];
+        
+        if (db) {
+          try {
+            const q = query(collection(db, 'users', user.uid, 'activities'), orderBy('createdAt', 'desc'), limit(50));
+            const snap = await getDocs(q);
+            acts = snap.docs.map(d => {
+              const data: any = d.data();
+              const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : null;
+              return {
+                id: d.id,
+                type: data.type || 'other',
+                title: data.title || '',
+                store: data.store || null,
+                storeId: data.storeId || null,
+                productASIN: data.productASIN || null,
+                productName: data.productName || null,
+                category: data.category || null,
+                image: data.image || null,
+                consultantId: data.consultantId || null,
+                consultantName: data.consultantName || null,
+                createdAt
+              };
+            });
+          } catch (firestoreError) {
+            console.warn('Firestore activities fetch failed, using localStorage:', firestoreError);
+          }
+        }
+        
+        if (acts.length === 0) {
+          try {
+            const localActivities = JSON.parse(localStorage.getItem('user_activities') || '[]');
+            acts = localActivities.map((a: any) => ({
+              ...a,
+              createdAt: a.createdAt ? new Date(a.createdAt) : new Date()
+            })).slice(0, 50);
+          } catch (localError) {
+            console.warn('Failed to load activities from localStorage:', localError);
+          }
+        }
+        
         setActivities(acts);
       } catch (e) {
-        // Non-blocking; leave activities empty if fetch fails
+        console.warn('Failed to load activities:', e);
       }
       setLoading(false);
     });
@@ -292,7 +295,15 @@ export default function ProfilePage() {
       };
       const secret = generateBase32Secret(32);
       setTotpSecret(secret);
-      setTotpQRCode('');
+      try {
+        const issuer = encodeURIComponent('UMKMotion');
+        const account = encodeURIComponent(currentUser.email || currentUser.uid || 'user');
+        const otpAuthUrl = `otpauth://totp/${issuer}:${account}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
+        const qrUrl = `https://chart.googleapis.com/chart?chs=220x220&cht=qr&chl=${encodeURIComponent(otpAuthUrl)}`;
+        setTotpQRCode(qrUrl);
+      } catch {
+        setTotpQRCode('');
+      }
       setTotpCode("");
       setShowTOTPSetup(true);
     } catch (e) {
@@ -422,10 +433,8 @@ export default function ProfilePage() {
       const updatedData = { ...profileData, photoURL };
       const newSecurityScore = calculateSecurityScore(updatedData);
 
-      // Get ID token for fallback authentication
       const idToken = await currentUser.getIdToken(false);
       
-      // Update Firestore via API
       const updateResp = await fetch('/api/profile-update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -435,7 +444,7 @@ export default function ProfilePage() {
           fullName: updatedData.fullName,
           bio: updatedData.bio,
           photoURL: photoURL,
-          idToken: idToken // Include ID token as fallback if session cookie fails
+          idToken: idToken
         })
       });
 
@@ -444,7 +453,6 @@ export default function ProfilePage() {
         throw new Error(errorData.error || errorData.details || 'Failed to update profile');
       }
 
-      // Update Firebase Auth profile
       await updateProfile(currentUser, {
         displayName: updatedData.nickname || updatedData.fullName,
         photoURL
@@ -561,39 +569,75 @@ export default function ProfilePage() {
         )}
       </AnimatePresence>
 
+      {/* Desktop Toggle (fixed) */}
+      {!isMobile && (
+        <motion.button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          aria-label={isSidebarOpen ? 'Tutup Menu' : 'Buka Menu'}
+          className="hidden lg:flex fixed top-24 z-[60] w-12 h-12 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white border border-white/30"
+          style={{ left: isSidebarOpen ? 340 : 12 }}
+          animate={{ left: isSidebarOpen ? 340 : 12 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+        >
+          <div className="relative w-full h-full grid place-items-center">
+            <motion.span
+              key={isSidebarOpen ? 'chev-left-fixed' : 'chev-right-fixed'}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="absolute inset-0 grid place-items-center"
+            >
+              {isSidebarOpen ? <ChevronLeft size={22} /> : <ChevronRight size={22} />}
+            </motion.span>
+          </div>
+        </motion.button>
+      )}
+
+      {/* Mobile/Tablet Menu Toggle Button */}
+      <AnimatePresence>
+        {(isMobile || window.innerWidth < 1024) && (
+          <motion.button
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="fixed top-4 left-4 z-50 lg:hidden w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+            aria-label="Toggle Menu"
+          >
+            <motion.div
+              animate={{ rotate: isSidebarOpen ? 90 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+            </motion.div>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
       <motion.aside
         initial={false}
         animate={{
-          width: isMobile ? (isSidebarOpen ? '280px' : '0px') : (isSidebarOpen ? '280px' : '0px'),
+          width: isMobile ? (isSidebarOpen ? '320px' : '0px') : (isSidebarOpen ? '340px' : '0px'),
           x: isMobile && !isSidebarOpen ? '-100%' : '0%'
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         className="fixed lg:sticky top-0 h-screen bg-white shadow-2xl flex flex-col z-50 overflow-visible min-w-0"
       >
-        {/* Logo (using image to avoid overlap) */}
-        <div className={`flex items-center transition-all duration-300 ${isSidebarOpen ? 'p-4' : 'p-4 lg:px-4 lg:justify-center'}`}>
+        {/* Logo */}
+        <div className={`flex items-center transition-all duration-300 ${isSidebarOpen ? 'pl-4 pr-4 py-5' : 'pl-3 pr-3 py-5 lg:pl-4'}`}>
           <img
             src="/LogoNavbar.webp"
             alt="UMKMotion"
-            className={isSidebarOpen ? 'h-8 w-auto' : 'h-8 w-8'}
+            className={`${isSidebarOpen ? 'h-10 w-auto' : 'h-10 w-10'} -ml-1`}
           />
         </div>
 
-        {/* Toggle Button (Desktop Only) */}
-        {!isMobile && (
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 bg-orange-500 text-white rounded-full items-center justify-center hover:bg-orange-600 transition-colors shadow-lg z-50"
-          >
-            {isSidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-          </button>
-        )}
-
         {/* Navigation */}
-        <nav className={`flex-1 space-y-1 overflow-y-auto transition-all duration-300 ${isSidebarOpen ? 'px-3' : 'px-2'}`}>
-          <div className={`text-xs text-gray-500 uppercase font-semibold mb-2 transition-all ${isSidebarOpen ? 'px-3' : 'text-center px-0'}`}>
-            {isSidebarOpen ? 'Menu' : '•'}
+        <nav className={`flex-1 space-y-2 overflow-y-auto transition-all duration-300 ${isSidebarOpen ? 'px-4' : 'px-2'}`}>
+          <div className={`text-xs text-gray-500 uppercase font-semibold mb-3 transition-all ${isSidebarOpen ? 'px-3' : 'text-center px-0'}`}>
+            {isSidebarOpen ? 'Navigasi' : '•'}
           </div>
           
           {[
@@ -608,14 +652,14 @@ export default function ProfilePage() {
                 setActiveMenu(item.menu as any);
                 if (isMobile) setIsSidebarOpen(false);
               }}
-              className={`w-full flex items-center gap-2 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+              className={`w-full flex items-center gap-3 py-3 rounded-xl font-semibold transition-all duration-200 ${
                 activeMenu === item.menu 
-                  ? 'bg-orange-50 text-orange-500 shadow-sm' 
-                  : 'text-gray-700 hover:bg-gray-50'
-              } ${isSidebarOpen ? 'px-3' : 'px-0 justify-center'}`}
+                  ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg scale-105' 
+                  : 'text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 hover:text-orange-600'
+              } ${isSidebarOpen ? 'px-4' : 'px-0 justify-center'}`}
               title={!isSidebarOpen ? item.label : ''}
             >
-              <item.icon size={18} className="flex-shrink-0" />
+              <item.icon size={20} className="flex-shrink-0" />
               <AnimatePresence>
                 {isSidebarOpen && (
                   <motion.span
@@ -632,15 +676,15 @@ export default function ProfilePage() {
           ))}
         </nav>
 
-        {/* Logout Button - Enhanced */}
-        <div className={`border-t border-gray-200 transition-all duration-300 ${isSidebarOpen ? 'p-4' : 'p-3'}`}>
+        {/* Logout Button */}
+        <div className={`border-t border-gray-200 transition-all duration-300 ${isSidebarOpen ? 'p-5' : 'p-4'}`}>
           <button
             onClick={handleSignOut}
-            className={`group w-full flex items-center gap-3 p-2.5 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-all ${isSidebarOpen ? 'px-4' : 'px-2 justify-center'}`}
+            className={`group w-full flex items-center gap-3 p-3 rounded-xl font-semibold text-red-600 hover:bg-red-50 transition-all hover:shadow-lg ${isSidebarOpen ? 'px-4' : 'px-2 justify-center'}`}
             title={!isSidebarOpen ? 'Keluar' : ''}
           >
             <div className="relative">
-              <LogOut size={20} className="flex-shrink-0" />
+              <LogOut size={22} className="flex-shrink-0" />
               {!isSidebarOpen && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">
                   !
@@ -648,54 +692,45 @@ export default function ProfilePage() {
               )}
             </div>
             {isSidebarOpen && (
-              <motion.span
+              <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                className="whitespace-nowrap text-sm font-semibold"
+                className="flex-1 text-left"
               >
-                Keluar Akun
-              </motion.span>
+                <div className="text-sm font-bold">Keluar Akun</div>
+                <div className="text-xs text-red-500">Akhiri sesi Anda</div>
+              </motion.div>
             )}
           </button>
-          {isSidebarOpen && (
-            <p className="mt-1 text-xs text-gray-500 px-1">
-              Klik untuk mengakhiri sesi
-            </p>
-          )}
         </div>
       </motion.aside>
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto min-w-0">
-        {/* Mobile Overlay */}
-        <AnimatePresence>
-          {isMobile && isSidebarOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsSidebarOpen(false)}
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            />
-          )}
-        </AnimatePresence>
-        <div className="p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
+        <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
           {/* Header */}
-          <header className="mb-4 sm:mb-6">
+          <header className="mb-4 sm:mb-6 lg:mb-8">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                {/* Mobile Menu Button hidden to avoid overlap with navbar logo */}
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                {/* Back Button */}
+                <button
+                  onClick={() => window.history.back()}
+                  className="p-2 sm:p-2.5 bg-white text-orange-600 hover:bg-orange-50 rounded-xl shadow-sm border border-orange-100 transition-all active:scale-95 hover:shadow-md"
+                  aria-label="Kembali"
+                >
+                  <ArrowLeft size={20} />
+                </button>
                 
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
                     {activeMenu === 'profile' && 'Profil Saya'}
                     {activeMenu === 'history' && 'Riwayat'}
                     {activeMenu === 'store' && 'Toko Saya'}
                     {activeMenu === 'pricing' && 'Pricing'}
                   </h1>
                   {activeMenu === 'profile' && (
-                    <p className="text-slate-600 mt-0.5 text-xs sm:text-sm line-clamp-1">
+                    <p className="text-slate-600 mt-0.5 text-sm sm:text-base line-clamp-1">
                       Kelola informasi profil dan lihat pencapaian Anda
                     </p>
                   )}
@@ -712,7 +747,7 @@ export default function ProfilePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 text-white mb-4 sm:mb-6 relative overflow-hidden shadow-2xl"
+                className="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 text-white mb-4 sm:mb-6 lg:mb-8 relative overflow-hidden shadow-2xl"
               >
                 {/* Decorative elements */}
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20"></div>
@@ -724,13 +759,13 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2">
                       {getSecurityLevel(securityScore).icon}
                       <div>
-                        <h3 className="text-base sm:text-lg font-bold">Keamanan Akun</h3>
-                        <p className="text-slate-300 text-xs">Tingkatkan keamanan untuk perlindungan maksimal</p>
+                        <h3 className="text-base sm:text-lg lg:text-xl font-bold">Keamanan Akun</h3>
+                        <p className="text-xs sm:text-sm text-gray-300 break-words">Tingkatkan keamanan untuk perlindungan maksimal</p>
                       </div>
                     </div>
                     <div className="text-left sm:text-right">
-                      <div className="text-xl sm:text-2xl font-bold">{securityScore}%</div>
-                      <div className={`text-xs font-medium ${getSecurityLevel(securityScore).color}`}>
+                      <div className="text-2xl sm:text-3xl lg:text-4xl font-bold">{securityScore}%</div>
+                      <div className={`text-xs sm:text-sm font-medium ${getSecurityLevel(securityScore).color}`}>
                         {getSecurityLevel(securityScore).level}
                       </div>
                     </div>
@@ -738,54 +773,54 @@ export default function ProfilePage() {
                   
                   {/* Progress Bar */}
                   <div className="mb-3 sm:mb-4">
-                    <div className="w-full bg-slate-700 rounded-full h-2">
+                    <div className="w-full bg-slate-700 rounded-full h-2.5">
                       <div 
-                        className={`h-2 rounded-full transition-all duration-1000 ${
+                        className={`h-2.5 rounded-full transition-all duration-1000 ${
                           securityScore >= 90 ? 'bg-gradient-to-r from-green-500 to-green-400' :
                           securityScore >= 70 ? 'bg-gradient-to-r from-blue-500 to-blue-400' :
                           securityScore >= 50 ? 'bg-gradient-to-r from-yellow-500 to-yellow-400' :
                           'bg-gradient-to-r from-red-500 to-red-400'
                         }`}
                         style={{ width: `${securityScore}%` }}
-                      ></div>
+                      />
                     </div>
                   </div>
 
                   {/* Security Features Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-                    <div className="text-center p-2.5 sm:p-3 bg-white/5 rounded-lg backdrop-blur-sm">
+                    <div className="text-center p-2.5 sm:p-3 lg:p-4 bg-white/5 rounded-lg backdrop-blur-sm">
                       <div className="flex justify-center mb-1">
                         {profileData.email ? 
-                          <CheckCircle2 className="w-4 h-4 text-green-400" /> : 
-                          <AlertTriangle className="w-4 h-4 text-red-400" />
+                          <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" /> : 
+                          <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-red-400" />
                         }
                       </div>
-                      <div className="text-xs font-medium">Email</div>
-                      <div className="text-[10px] text-slate-300 mt-0.5 sm:mt-1">
+                      <div className="text-sm sm:text-base font-medium">Email</div>
+                      <div className="text-xs sm:text-sm text-gray-300 break-words">
                         {profileData.email ? 'Terverifikasi' : 'Belum ada'}
                       </div>
                     </div>
-                    <div className="text-center p-2.5 sm:p-3 bg-white/5 rounded-lg backdrop-blur-sm">
+                    <div className="text-center p-2.5 sm:p-3 lg:p-4 bg-white/5 rounded-lg backdrop-blur-sm">
                       <div className="flex justify-center mb-1">
                         {profileData.twoFactorEnabled ? 
-                          <CheckCircle2 className="w-4 h-4 text-green-400" /> : 
-                          <AlertTriangle className="w-4 h-4 text-red-400" />
+                          <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" /> : 
+                          <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-red-400" />
                         }
                       </div>
-                      <div className="text-xs font-medium">2FA</div>
-                      <div className="text-[10px] text-slate-300 mt-0.5 sm:mt-1">
+                      <div className="text-sm sm:text-base font-medium">2FA</div>
+                      <div className="text-xs sm:text-sm text-gray-300 break-words">
                         {profileData.twoFactorEnabled ? 'Aktif' : 'Nonaktif'}
                       </div>
                     </div>
-                    <div className="text-center p-2.5 sm:p-3 bg-white/5 rounded-lg backdrop-blur-sm">
+                    <div className="text-center p-2.5 sm:p-3 lg:p-4 bg-white/5 rounded-lg backdrop-blur-sm">
                       <div className="flex justify-center mb-1">
                         {(profileData.fullName && profileData.bio) ? 
-                          <CheckCircle2 className="w-4 h-4 text-green-400" /> : 
-                          <AlertTriangle className="w-4 h-4 text-red-400" />
+                          <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" /> : 
+                          <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-red-400" />
                         }
                       </div>
-                      <div className="text-xs font-medium">Profil</div>
-                      <div className="text-[10px] text-slate-300 mt-0.5 sm:mt-1">
+                      <div className="text-sm sm:text-base font-medium">Profil</div>
+                      <div className="text-xs sm:text-sm text-gray-300 break-words">
                         {(profileData.fullName && profileData.bio) ? 'Lengkap' : 'Belum lengkap'}
                       </div>
                     </div>
@@ -794,7 +829,7 @@ export default function ProfilePage() {
               </motion.div>
 
               {/* Tabs */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 bg-white rounded-xl p-2 mb-4 shadow-lg border border-gray-100">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 bg-white rounded-xl p-2 mb-4 sm:mb-6 shadow-lg border border-gray-100">
                 {[
                   { id: 'profile', label: 'Profil', shortLabel: 'Profil', icon: User, color: 'from-orange-500 to-pink-500' },
                   { id: 'security', label: 'Keamanan', shortLabel: 'Keamanan', icon: Shield, color: 'from-blue-500 to-indigo-500' },
@@ -803,13 +838,13 @@ export default function ProfilePage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg font-semibold text-xs transition-all duration-300 ${
+                    className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300 ${
                       activeTab === tab.id
                         ? `bg-gradient-to-r ${tab.color} text-white shadow-lg transform scale-105`
                         : "text-slate-600 hover:text-slate-900 hover:bg-gray-50"
                     }`}
                   >
-                    <tab.icon className="w-4 h-4 flex-shrink-0" />
+                    <tab.icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                     <span className="hidden sm:inline truncate">{tab.label}</span>
                     <span className="sm:hidden truncate">{tab.shortLabel}</span>
                   </button>
@@ -822,15 +857,15 @@ export default function ProfilePage() {
                   key="profile"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4"
+                  className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6"
                 >
                   {/* Left Column */}
-                  <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+                  <div className="lg:col-span-2 space-y-3 sm:space-y-4 lg:space-y-6">
                     {/* Photo Section */}
-                    <div className="bg-white rounded-xl p-3 sm:p-4 shadow-xl border border-gray-100">
-                      <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 shadow-xl border border-gray-100">
+                      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
                         <div className="relative">
-                          <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-white text-lg sm:text-xl font-bold shadow-lg border-4 border-white ${getAvatarColor(displayName)}`}>
+                          <div className={`w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-full flex items-center justify-center text-white text-xl sm:text-2xl font-bold shadow-lg border-4 border-white ${getAvatarColor(displayName)}`}>
                             {previewImage || profileData.photoURL ? (
                               <img src={previewImage || profileData.photoURL} alt="Profile" className="w-full h-full rounded-full object-cover" />
                             ) : (
@@ -840,14 +875,14 @@ export default function ProfilePage() {
                           <button
                             onClick={() => canEdit && fileInputRef.current?.click()}
                             disabled={!canEdit}
-                            className={`absolute bottom-0 right-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-white flex items-center justify-center transition ${canEdit ? 'bg-orange-500 cursor-pointer hover:bg-orange-600 active:scale-95' : 'bg-gray-300 cursor-not-allowed'}`}
+                            className={`absolute bottom-0 right-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white flex items-center justify-center transition ${canEdit ? 'bg-orange-500 cursor-pointer hover:bg-orange-600 active:scale-95' : 'bg-gray-300 cursor-not-allowed'}`}
                           >
-                            <Camera size={12} className="text-white" />
+                            <Camera size={14} className="text-white" />
                           </button>
                         </div>
                         <div className="flex-1 text-center sm:text-left">
-                          <div className="text-sm font-semibold text-gray-900 mb-1">Upload foto baru</div>
-                          <div className="text-xs text-gray-500 leading-relaxed">
+                          <div className="text-sm sm:text-base font-semibold text-gray-900 mb-1">Upload foto baru</div>
+                          <div className="text-xs sm:text-sm text-gray-500 leading-relaxed">
                             Minimal 800×800 px. Format JPG atau PNG.
                           </div>
                         </div>
@@ -856,96 +891,96 @@ export default function ProfilePage() {
                     </div>
                     
                     {/* Personal Info */}
-                    <div className="bg-white rounded-xl p-3 sm:p-4 shadow-xl border border-gray-100">
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-base font-bold text-gray-900">Informasi Pribadi</h3>
+                    <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 shadow-xl border border-gray-100">
+                      <div className="flex justify-between items-center mb-3 sm:mb-4">
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900">Informasi Pribadi</h3>
                         <button 
                           onClick={() => canEdit && setIsEditingPersonal(!isEditingPersonal)}
                           disabled={!canEdit}
-                          className={`flex items-center gap-1 font-semibold text-xs px-2 py-1.5 rounded-lg transition active:scale-95 ${canEdit ? 'text-orange-500 hover:bg-orange-50' : 'text-gray-400 cursor-not-allowed bg-gray-50'}`}
+                          className={`flex items-center gap-1 sm:gap-2 font-semibold text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition active:scale-95 ${canEdit ? 'text-orange-500 hover:bg-orange-50' : 'text-gray-400 cursor-not-allowed bg-gray-50'}`}
                         >
-                          <Edit2 size={14} />
+                          <Edit2 size={16} />
                           <span className="hidden sm:inline">Edit</span>
                         </button>
                       </div>
 
                       {isEditingPersonal ? (
                         <>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                             <div>
-                              <label className="block text-xs text-gray-600 font-medium mb-2">Nama Panggilan</label>
+                              <label className="block text-xs sm:text-sm text-gray-600 font-medium mb-2">Nama Panggilan</label>
                               <input 
                                 type="text" 
                                 value={profileData.nickname || ""}
                                 onChange={(e) => setProfileData({...profileData, nickname: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs text-gray-600 font-medium mb-2">Nama Lengkap</label>
+                              <label className="block text-xs sm:text-sm text-gray-600 font-medium mb-2">Nama Lengkap</label>
                               <input 
                                 type="text" 
                                 value={profileData.fullName || ""}
                                 onChange={(e) => setProfileData({...profileData, fullName: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                               />
                             </div>
                           </div>
-                          <div className="mb-3">
-                            <label className="block text-xs text-gray-600 font-medium mb-2">Email</label>
+                          <div className="mb-3 sm:mb-4">
+                            <label className="block text-xs sm:text-sm text-gray-600 font-medium mb-2">Email</label>
                             <input 
                               type="email" 
                               value={profileData.email || ""}
                               disabled
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs bg-gray-50 text-gray-500"
+                              className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-gray-50 text-gray-500"
                             />
                           </div>
                           <div className="flex flex-col sm:flex-row justify-end gap-2">
                             <button 
                               onClick={() => setIsEditingPersonal(false)}
-                              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold text-xs hover:bg-gray-200 transition active:scale-95"
+                              className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold text-xs sm:text-sm hover:bg-gray-200 transition active:scale-95"
                             >
-                              <X size={14} />
+                              <X size={16} />
                               Batal
                             </button>
                             <button 
                               onClick={() => { handleSave(); setIsEditingPersonal(false); }}
                               disabled={saving || !canEdit}
-                              className="flex items-center justify-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold text-xs hover:bg-orange-600 transition disabled:opacity-50 active:scale-95"
+                              className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 bg-orange-500 text-white rounded-lg font-semibold text-xs sm:text-sm hover:bg-orange-600 transition disabled:opacity-50 active:scale-95"
                             >
-                              {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save size={14} />}
+                              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={16} />}
                               Simpan
                             </button>
                           </div>
                         </>
                       ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                           <div>
-                            <div className="text-xs text-gray-600 font-medium mb-1">Nama Panggilan</div>
-                            <div className="text-xs text-gray-900 font-medium">{profileData.nickname || '-'}</div>
+                            <div className="text-xs sm:text-sm text-gray-600 font-medium mb-1">Nama Panggilan</div>
+                            <div className="text-xs sm:text-sm text-gray-900 font-medium">{profileData.nickname || '-'}</div>
                           </div>
                           <div>
-                            <div className="text-xs text-gray-600 font-medium mb-1">Nama Lengkap</div>
-                            <div className="text-xs text-gray-900 font-medium">{profileData.fullName || '-'}</div>
+                            <div className="text-xs sm:text-sm text-gray-600 font-medium mb-1">Nama Lengkap</div>
+                            <div className="text-xs sm:text-sm text-gray-900 font-medium">{profileData.fullName || '-'}</div>
                           </div>
                           <div className="sm:col-span-2">
-                            <div className="text-xs text-gray-600 font-medium mb-1">Email</div>
-                            <div className="text-xs text-gray-900 font-medium break-all">{profileData.email || '-'}</div>
+                            <div className="text-xs sm:text-sm text-gray-600 font-medium mb-1">Email</div>
+                            <div className="text-xs sm:text-sm text-gray-900 font-medium break-all">{profileData.email || '-'}</div>
                           </div>
                         </div>
                       )}
                     </div>
 
                     {/* Bio Section */}
-                    <div className="bg-white rounded-xl p-3 sm:p-4 shadow-xl border border-gray-100">
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-base font-bold text-gray-900">Deskripsi</h3>
+                    <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 shadow-xl border border-gray-100">
+                      <div className="flex justify-between items-center mb-3 sm:mb-4">
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900">Deskripsi</h3>
                         <button 
                           onClick={() => canEdit && setIsEditingBio(!isEditingBio)}
                           disabled={!canEdit}
-                          className={`flex items-center gap-1 font-semibold text-xs px-2 py-1.5 rounded-lg transition active:scale-95 ${canEdit ? 'text-orange-500 hover:bg-orange-50' : 'text-gray-400 cursor-not-allowed bg-gray-50'}`}
+                          className={`flex items-center gap-1 sm:gap-2 font-semibold text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition active:scale-95 ${canEdit ? 'text-orange-500 hover:bg-orange-50' : 'text-gray-400 cursor-not-allowed bg-gray-50'}`}
                         >
-                          <Edit2 size={14} />
+                          <Edit2 size={16} />
                           <span className="hidden sm:inline">Edit</span>
                         </button>
                       </div>
@@ -955,29 +990,29 @@ export default function ProfilePage() {
                           <textarea 
                             value={profileData.bio || ""}
                             onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-orange-500 focus:border-transparent min-h-[80px] resize-y"
+                            className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent min-h-[100px] resize-y"
                             placeholder="Ceritakan tentang diri Anda..."
                           />
-                          <div className="flex flex-col sm:flex-row justify-end gap-2 mt-3">
+                          <div className="flex flex-col sm:flex-row justify-end gap-2 mt-3 sm:mt-4">
                             <button 
                               onClick={() => setIsEditingBio(false)}
-                              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold text-xs hover:bg-gray-200 transition active:scale-95"
+                              className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold text-xs sm:text-sm hover:bg-gray-200 transition active:scale-95"
                             >
-                              <X size={14} />
+                              <X size={16} />
                               Batal
                             </button>
                             <button 
                               onClick={() => { handleSave(); setIsEditingBio(false); }}
                               disabled={saving || !canEdit}
-                              className="flex items-center justify-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold text-xs hover:bg-orange-600 transition disabled:opacity-50 active:scale-95"
+                              className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 bg-orange-500 text-white rounded-lg font-semibold text-xs sm:text-sm hover:bg-orange-600 transition disabled:opacity-50 active:scale-95"
                             >
-                              {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save size={14} />}
+                              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={16} />}
                               Simpan
                             </button>
                           </div>
                         </>
                       ) : (
-                        <p className="text-gray-700 leading-relaxed text-xs">
+                        <p className="text-gray-700 leading-relaxed text-xs sm:text-sm">
                           {profileData.bio || 'Belum ada deskripsi. Klik Edit untuk menambahkan.'}
                         </p>
                       )}
@@ -985,25 +1020,25 @@ export default function ProfilePage() {
                   </div>
 
                   {/* Right Column */}
-                  <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-3 sm:space-y-4 lg:space-y-6">
                     {/* Security Recommendations */}
-                    <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-3 sm:p-4 shadow-xl border border-orange-100">
-                      <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <ShieldAlert className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                    <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-3 sm:p-4 lg:p-5 shadow-xl border border-orange-100">
+                      <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+                        <ShieldAlert className="w-5 h-5 text-orange-500 flex-shrink-0" />
                         <span>Rekomendasi Keamanan</span>
                       </h3>
-                      <div className="space-y-2">
+                      <div className="space-y-2 sm:space-y-3">
                         {getSecurityRecommendations(profileData).length === 0 ? (
-                          <div className="text-center py-3">
-                            <ShieldCheck className="w-8 h-8 mx-auto text-green-500 mb-2" />
-                            <p className="text-green-600 font-medium text-sm">Akun Anda sudah aman!</p>
-                            <p className="text-xs text-gray-500">Semua fitur keamanan telah diaktifkan</p>
+                          <div className="text-center py-3 sm:py-4">
+                            <ShieldCheck className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-green-500 mb-2" />
+                            <p className="text-green-600 font-medium text-sm sm:text-base">Akun Anda sudah aman!</p>
+                            <p className="text-xs sm:text-sm text-gray-500">Semua fitur keamanan telah diaktifkan</p>
                           </div>
                         ) : (
                           getSecurityRecommendations(profileData).map((rec, index) => (
-                            <div key={index} className="flex items-start gap-2 p-2 bg-orange-50 rounded-lg border border-orange-100">
-                              <AlertTriangle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                              <p className="text-xs font-medium text-gray-900">{rec}</p>
+                            <div key={index} className="flex items-start gap-2 p-2 sm:p-3 bg-orange-50 rounded-lg border border-orange-100">
+                              <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500 mt-0.5 flex-shrink-0" />
+                              <p className="text-xs sm:text-sm font-medium text-gray-900">{rec}</p>
                             </div>
                           ))
                         )}
@@ -1011,32 +1046,32 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Quick Actions */}
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 sm:p-4 shadow-xl border border-green-100">
-                      <h3 className="text-base font-bold text-gray-900 mb-3">Aksi Cepat</h3>
-                      <div className="space-y-2">
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 sm:p-4 lg:p-5 shadow-xl border border-green-100">
+                      <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Aksi Cepat</h3>
+                      <div className="space-y-2 sm:space-y-3">
                         {!profileData.twoFactorEnabled && (
                           <button
                             onClick={startTOTPSetup}
                             disabled={isSettingUpTOTP}
-                            className="w-full flex items-center gap-2 p-2 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50 active:scale-95"
+                            className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50 active:scale-95"
                           >
-                            <Lock className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <Lock className="w-5 h-5 text-green-600 flex-shrink-0" />
                             <div className="text-left flex-1">
-                              <div className="text-xs font-medium text-green-900">Aktifkan 2FA</div>
-                              <div className="text-[10px] text-green-600">Tingkatkan keamanan +40%</div>
+                              <div className="text-xs sm:text-sm font-medium text-green-900">Aktifkan 2FA</div>
+                              <div className="text-[10px] sm:text-xs text-green-600">Tingkatkan keamanan +40%</div>
                             </div>
-                            {isSettingUpTOTP && <Loader2 className="w-3 h-3 animate-spin text-green-600 flex-shrink-0" />}
+                            {isSettingUpTOTP && <Loader2 className="w-4 h-4 animate-spin text-green-600 flex-shrink-0" />}
                           </button>
                         )}
                         
                         <button
                           onClick={handleResetPassword}
-                          className="w-full flex items-center gap-2 p-2 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors active:scale-95"
+                          className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors active:scale-95"
                         >
-                          <Key className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                          <Key className="w-5 h-5 text-gray-600 flex-shrink-0" />
                           <div className="text-left flex-1">
-                            <div className="text-xs font-medium text-gray-900">Reset Password</div>
-                            <div className="text-[10px] text-gray-600">Perbarui kata sandi Anda</div>
+                            <div className="text-xs sm:text-sm font-medium text-gray-900">Reset Password</div>
+                            <div className="text-[10px] sm:text-xs text-gray-600">Perbarui kata sandi Anda</div>
                           </div>
                         </button>
                       </div>
@@ -1051,36 +1086,36 @@ export default function ProfilePage() {
                   key="security"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="space-y-3 sm:space-y-4"
+                  className="space-y-3 sm:space-y-4 lg:space-y-6"
                 >
                   {/* Security Settings */}
-                  <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-slate-200">
-                    <h3 className="text-base font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                      <Shield className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                  <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm border border-slate-200">
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
+                      <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
                       <span>Pengaturan Keamanan</span>
                     </h3>
                     
-                    <div className="space-y-3">
+                    <div className="space-y-3 sm:space-y-4">
                       {/* 2FA */}
-                      <div className="border border-gray-200 rounded-lg p-3">
+                      <div className="border border-gray-200 rounded-lg p-3 sm:p-4">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
                           <div className="flex items-start gap-2 flex-1 min-w-0">
-                            <Lock className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <Lock className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm text-gray-900">Autentikasi Dua Faktor (2FA)</h4>
-                              <p className="text-xs text-gray-600 break-words">Lapisan keamanan tambahan dengan Aplikasi Authenticator.</p>
+                              <h4 className="font-medium text-sm sm:text-base text-gray-900">Autentikasi Dua Faktor (2FA)</h4>
+                              <p className="text-xs sm:text-sm text-gray-600 break-words">Lapisan keamanan tambahan dengan Aplikasi Authenticator.</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 w-full sm:w-auto flex-shrink-0">
                             {profileData.twoFactorEnabled ? (
-                              <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
-                                <CheckCircle2 className="w-3 h-3" />
+                              <span className="flex items-center gap-1 text-green-600 text-xs sm:text-sm font-medium">
+                                <CheckCircle2 className="w-4 h-4" />
                                 Aktif
                               </span>
                             ) : (
                               <button
                                 onClick={startTOTPSetup}
-                                className="w-full sm:w-auto bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-slate-900 transition active:scale-95"
+                                className="w-full sm:w-auto bg-slate-800 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-900 transition active:scale-95"
                                 disabled={isSettingUpTOTP}
                               >
                                 {isSettingUpTOTP ? 'Menyiapkan…' : 'Aktifkan TOTP'}
@@ -1091,13 +1126,13 @@ export default function ProfilePage() {
                       </div>
 
                       {/* Password */}
-                      <div className="border border-gray-200 rounded-lg p-3">
+                      <div className="border border-gray-200 rounded-lg p-3 sm:p-4">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
                           <div className="flex items-start gap-2 flex-1 min-w-0">
-                            <Key className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                            <Key className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm text-gray-900">Kata Sandi</h4>
-                              <p className="text-xs text-gray-600 break-words">
+                              <h4 className="font-medium text-sm sm:text-base text-gray-900">Kata Sandi</h4>
+                              <p className="text-xs sm:text-sm text-gray-600 break-words">
                                 {profileData.lastPasswordChange 
                                   ? `Terakhir diubah ${Math.floor((Date.now() - profileData.lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24))} hari lalu`
                                   : 'Belum pernah diubah'
@@ -1107,7 +1142,7 @@ export default function ProfilePage() {
                           </div>
                           <button
                             onClick={handleResetPassword}
-                            className="w-full sm:w-auto bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-purple-700 transition active:scale-95 flex-shrink-0"
+                            className="w-full sm:w-auto bg-purple-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-purple-700 transition active:scale-95 flex-shrink-0"
                           >
                             Reset
                           </button>
@@ -1117,19 +1152,19 @@ export default function ProfilePage() {
                   </div>
 
                   {/* Security Tips */}
-                  <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-slate-200">
-                    <h3 className="text-base font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                      <ShieldCheck className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm border border-slate-200">
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 flex-shrink-0" />
                       <span>Tips Keamanan</span>
                     </h3>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-2 sm:space-y-3">
                       {securityTips.map((tip, idx) => (
-                        <div key={idx} className={`flex items-start gap-2 p-3 ${tip.bgColor} rounded-lg`}>
-                          <tip.icon className={`w-4 h-4 ${tip.textColor} mt-0.5 flex-shrink-0`} />
+                        <div key={idx} className={`flex items-start gap-2 sm:gap-3 p-3 sm:p-4 ${tip.bgColor} rounded-lg`}>
+                          <tip.icon className={`w-5 h-5 ${tip.textColor} mt-0.5 flex-shrink-0`} />
                           <div className="flex-1 min-w-0">
-                            <h4 className={`font-medium ${tip.textColor.replace('600', '900')} mb-0.5 text-xs`}>{tip.title}</h4>
-                            <p className={`text-[10px] ${tip.textColor.replace('600', '700')} break-words`}>{tip.desc}</p>
+                            <h4 className={`font-medium ${tip.textColor.replace('600', '900')} mb-0.5 text-xs sm:text-sm`}>{tip.title}</h4>
+                            <p className={`text-[10px] sm:text-xs ${tip.textColor.replace('600', '700')} break-words`}>{tip.desc}</p>
                           </div>
                         </div>
                       ))}
@@ -1144,23 +1179,23 @@ export default function ProfilePage() {
                   key="badges"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="space-y-3 sm:space-y-4"
+                  className="space-y-3 sm:space-y-4 lg:space-y-6"
                 >
                   {/* Earned Badges */}
-                  <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-slate-200">
-                    <h3 className="text-base font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                      <Trophy className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                  <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm border border-slate-200">
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
+                      <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 flex-shrink-0" />
                       <span>Badge yang Diperoleh ({userBadges.length})</span>
                     </h3>
                     
                     {userBadges.length === 0 ? (
-                      <div className="text-center py-6 text-slate-500">
-                        <Award className="w-10 h-10 mx-auto mb-2 text-slate-300" />
-                        <p className="text-sm">Belum ada badge yang diperoleh</p>
-                        <p className="text-xs">Selesaikan misi untuk mendapatkan badge!</p>
+                      <div className="text-center py-6 sm:py-8 text-slate-500">
+                        <Award className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3 text-slate-300" />
+                        <p className="text-sm sm:text-base">Belum ada badge yang diperoleh</p>
+                        <p className="text-xs sm:text-sm">Selesaikan misi untuk mendapatkan badge!</p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
                         {userBadges.map((userBadge) => {
                           const badge = getBadgeData(userBadge.badgeId);
                           if (!badge) return null;
@@ -1168,22 +1203,22 @@ export default function ProfilePage() {
                           return (
                             <div
                               key={userBadge.badgeId}
-                              className={`relative p-3 rounded-xl border-2 text-center transition-all duration-300 hover:scale-105 active:scale-100 ${getRarityColor(badge.rarity)}`}
+                              className={`relative p-3 sm:p-4 rounded-xl border-2 text-center transition-all duration-300 hover:scale-105 active:scale-100 ${getRarityColor(badge.rarity)}`}
                             >
-                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                                <CheckCircle className="w-2.5 h-2.5 text-white" />
+                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
+                                <CheckCircle className="w-3 h-3 text-white" />
                               </div>
                               
-                              <div className="text-2xl mb-1">{badge.icon}</div>
-                              <h4 className="font-semibold text-slate-900 text-xs mb-0.5 line-clamp-1">{badge.name}</h4>
-                              <p className="text-[10px] text-slate-600 mb-1 line-clamp-2">{badge.description}</p>
+                              <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">{badge.icon}</div>
+                              <h4 className="font-semibold text-slate-900 text-xs sm:text-sm mb-0.5 line-clamp-1">{badge.name}</h4>
+                              <p className="text-[10px] sm:text-xs text-slate-600 mb-1 line-clamp-2">{badge.description}</p>
                               
-                              <div className="flex items-center justify-center gap-0.5 text-[10px] text-slate-500 mb-1">
-                                <Zap className="w-2.5 h-2.5 text-yellow-500" />
+                              <div className="flex items-center justify-center gap-0.5 text-[10px] sm:text-xs text-slate-500 mb-1">
+                                <Zap className="w-3 h-3 text-yellow-500" />
                                 <span>{badge.points} poin</span>
                               </div>
                               
-                              <div className="text-[10px] text-green-600">
+                              <div className="text-[10px] sm:text-xs text-green-600">
                                 {userBadge.earnedAt.toLocaleDateString()}
                               </div>
                             </div>
@@ -1194,33 +1229,33 @@ export default function ProfilePage() {
                   </div>
 
                   {/* All Available Badges */}
-                  <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-slate-200">
-                    <h3 className="text-base font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                      <Star className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                  <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm border border-slate-200">
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
+                      <Star className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400 flex-shrink-0" />
                       <span>Semua Badge Tersedia ({badges.length})</span>
                     </h3>
                     
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
                       {badges.map((badge) => {
                         const isEarned = userBadges.some(ub => ub.badgeId === badge.id);
                         
                         return (
                           <div
                             key={badge.id}
-                            className={`relative p-3 rounded-xl border-2 text-center transition-all duration-300 ${isEarned ? `${getRarityColor(badge.rarity)} shadow-lg` : "border-slate-200 opacity-60 hover:opacity-80"}`}
+                            className={`relative p-3 sm:p-4 rounded-xl border-2 text-center transition-all duration-300 ${isEarned ? `${getRarityColor(badge.rarity)} shadow-lg` : "border-slate-200 opacity-60 hover:opacity-80"}`}
                           >
                             {isEarned && (
-                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                                <CheckCircle className="w-2.5 h-2.5 text-white" />
+                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                                <CheckCircle className="w-3 h-3 text-white" />
                               </div>
                             )}
                             
-                            <div className="text-2xl mb-1">{badge.icon}</div>
-                            <h4 className="font-semibold text-slate-900 text-xs mb-0.5 line-clamp-1">{badge.name}</h4>
-                            <p className="text-[10px] text-slate-600 mb-1 line-clamp-2">{badge.description}</p>
+                            <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">{badge.icon}</div>
+                            <h4 className="font-semibold text-slate-900 text-xs sm:text-sm mb-0.5 line-clamp-1">{badge.name}</h4>
+                            <p className="text-[10px] sm:text-xs text-slate-600 mb-1 line-clamp-2">{badge.description}</p>
                             
-                            <div className="flex items-center justify-center gap-0.5 text-[10px] text-slate-500">
-                              <Zap className="w-2.5 h-2.5 text-yellow-500" />
+                            <div className="flex items-center justify-center gap-0.5 text-[10px] sm:text-xs text-slate-500">
+                              <Zap className="w-3 h-3 text-yellow-500" />
                               <span>{badge.points} poin</span>
                             </div>
                           </div>
@@ -1235,106 +1270,246 @@ export default function ProfilePage() {
 
           {/* History Menu */}
           {activeMenu === 'history' && (
-            <div className="space-y-4">
+            <div className="space-y-4 sm:space-y-6">
               {/* History Header */}
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <History className="w-5 h-5 text-slate-700" />
-                    <h3 className="text-base font-semibold text-slate-900">Riwayat Aktivitas</h3>
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-4 sm:p-6 shadow-sm border border-orange-100">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg">
+                      <History className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-900">Riwayat Aktivitas</h3>
+                      <p className="text-xs sm:text-sm text-slate-600">Lihat semua aktivitas Anda di UMKMotion</p>
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-500">{activities.length} aktivitas</div>
+                  <div className="text-right">
+                    <div className="text-2xl sm:text-3xl font-bold text-orange-600">{activities.length}</div>
+                    <div className="text-xs text-slate-600">aktivitas</div>
+                  </div>
                 </div>
-                <div className="mt-3 flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {[
-                    { id: 'all', label: 'Semua' },
-                    { id: 'product', label: 'Produk' },
-                    { id: 'visit', label: 'Kunjungan UMKM' },
-                    { id: 'consultation', label: 'Konsultasi' },
-                  ].map(t => (
-                    <button
-                      key={t.id}
-                      onClick={() => setHistoryTab(t.id as any)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${historyTab === t.id ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'}`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
+                    { id: 'all', label: 'Semua', icon: History, color: 'slate' },
+                    { id: 'product', label: 'Produk Dilihat', icon: FileText, color: 'blue' },
+                    { id: 'visit', label: 'UMKM Dikunjungi', icon: Store, color: 'orange' },
+                    { id: 'consultation', label: 'Konsultasi', icon: Phone, color: 'purple' },
+                  ].map(t => {
+                    const Icon = t.icon;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setHistoryTab(t.id as any)}
+                        className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold border-2 transition-all ${
+                          historyTab === t.id 
+                            ? (t.color === 'slate' ? 'bg-slate-600 text-white border-slate-600' :
+                               t.color === 'blue' ? 'bg-blue-600 text-white border-blue-600' :
+                               t.color === 'orange' ? 'bg-orange-600 text-white border-orange-600' :
+                               'bg-purple-600 text-white border-purple-600') + ' shadow-lg transform scale-105'
+                            : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50' + (
+                              t.color === 'orange' ? ' hover:border-orange-400 hover:bg-orange-50' :
+                              t.color === 'purple' ? ' hover:border-purple-400 hover:bg-purple-50' :
+                              t.color === 'blue' ? ' hover:border-blue-400 hover:bg-blue-50' :
+                              ''
+                            )
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span className="hidden sm:inline">{t.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Activity List */}
-              <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-slate-200">
+              <div className="space-y-3">
                 {activities.length === 0 ? (
-                  <div className="text-center py-10 text-slate-500">
-                    <History className="w-10 h-10 mx-auto mb-2 text-slate-300" />
-                    <p className="text-sm">Belum ada aktivitas yang tercatat</p>
-                    <p className="text-xs">Jelajahi produk dan layanan untuk mengisi riwayat Anda</p>
+                  <div className="bg-white rounded-2xl p-8 sm:p-12 shadow-sm border border-slate-200 text-center">
+                    <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <History className="w-10 h-10 text-slate-400" />
+                    </div>
+                    <h4 className="text-base sm:text-lg font-bold text-slate-900 mb-2">Belum Ada Aktivitas</h4>
+                    <p className="text-sm text-slate-600 mb-6">Jelajahi produk, kunjungi UMKM, atau chat dengan konsultan untuk mengisi riwayat Anda</p>
+                    <div className="flex flex-wrap justify-center gap-3">
+                      <a href="/etalase" className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold text-sm hover:bg-orange-600 transition">
+                        Jelajahi Produk
+                      </a>
+                      <a href="/rumah-umkm" className="px-4 py-2 bg-white border-2 border-orange-500 text-orange-500 rounded-lg font-semibold text-sm hover:bg-orange-50 transition">
+                        Kunjungi UMKM
+                      </a>
+                      <a href="/ConsultantPage" className="px-4 py-2 bg-white border-2 border-purple-500 text-purple-500 rounded-lg font-semibold text-sm hover:bg-purple-50 transition">
+                        Chat Konsultan
+                      </a>
+                    </div>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {activities
-                      .filter(a => {
-                        if (historyTab === 'all') return true;
-                        if (historyTab === 'product') return a.type === 'product_view' || a.type === 'purchase' || a.type === 'review' || !!a.productASIN;
-                        if (historyTab === 'visit') return a.type === 'visit';
-                        if (historyTab === 'consultation') return a.type === 'consult_chat' || a.type === 'consult_chat_message';
-                        return true;
-                      })
-                      .map(a => (
-                        <div
-                          key={a.id}
+                  activities
+                    .filter(a => {
+                      if (historyTab === 'all') return true;
+                      if (historyTab === 'product') return a.type === 'product_view' || a.type === 'purchase' || a.type === 'review' || !!a.productASIN;
+                      if (historyTab === 'visit') return a.type === 'visit';
+                      if (historyTab === 'consultation') return a.type === 'consult_chat' || a.type === 'consult_chat_message';
+                      return true;
+                    })
+                    .map((a, idx) => {
+                      const getActivityIcon = () => {
+                        if (a.type === 'visit') return Store;
+                        if (a.type.startsWith('consult_')) return Phone;
+                        return FileText;
+                      };
+                      const getActivityColor = () => {
+                        if (a.type === 'visit') return 'orange';
+                        if (a.type.startsWith('consult_')) return 'purple';
+                        return 'blue';
+                      };
+                      const getActivityTitle = () => {
+                        if (a.title) return a.title;
+                        if (a.type === 'visit') return `Kunjungi ${a.store || 'UMKM'}`;
+                        if (a.type.startsWith('consult_')) return `Konsultasi dengan ${a.consultantName || 'Konsultan'}`;
+                        if (a.productASIN) return a.productName || 'Produk Dilihat';
+                        return 'Aktivitas';
+                      };
+                      const formatTime = (date: Date | null | undefined) => {
+                        if (!date) return 'Baru saja';
+                        const now = new Date();
+                        const diff = now.getTime() - date.getTime();
+                        const minutes = Math.floor(diff / 60000);
+                        const hours = Math.floor(diff / 3600000);
+                        const days = Math.floor(diff / 86400000);
+                        if (minutes < 1) return 'Baru saja';
+                        if (minutes < 60) return `${minutes} menit lalu`;
+                        if (hours < 24) return `${hours} jam lalu`;
+                        if (days < 7) return `${days} hari lalu`;
+                        return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                      };
+                      
+                      const Icon = getActivityIcon();
+                      const color = getActivityColor();
+                      
+                      const getColorClasses = () => {
+                        if (color === 'orange') {
+                          return {
+                            bgGradient: 'from-orange-100 to-orange-200',
+                            border: 'border-orange-300',
+                            icon: 'text-orange-600',
+                            badge: 'bg-orange-500',
+                            button: 'from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700'
+                          };
+                        } else if (color === 'purple') {
+                          return {
+                            bgGradient: 'from-purple-100 to-purple-200',
+                            border: 'border-purple-300',
+                            icon: 'text-purple-600',
+                            badge: 'bg-purple-500',
+                            button: 'from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700'
+                          };
+                        } else {
+                          return {
+                            bgGradient: 'from-blue-100 to-blue-200',
+                            border: 'border-blue-300',
+                            icon: 'text-blue-600',
+                            badge: 'bg-blue-500',
+                            button: 'from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
+                          };
+                        }
+                      };
+                      
+                      const colorClasses = getColorClasses();
+                      
+                      return (
+                        <motion.div
+                          key={a.id || idx}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05 }}
                           onClick={() => openActivity(a)}
-                          className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"
+                          className="group bg-white rounded-xl p-3 sm:p-4 shadow-sm border-2 border-slate-200 hover:border-orange-300 hover:shadow-lg cursor-pointer transition-all duration-300"
                         >
-                          {a.type === 'visit' ? (
-                            <Store className="w-5 h-5 text-orange-600 flex-shrink-0" />
-                          ) : a.type.startsWith('consult_') ? (
-                            <Phone className="w-5 h-5 text-purple-600 flex-shrink-0" />
-                          ) : (
-                            <FileText className="w-5 h-5 text-slate-600 flex-shrink-0" />
-                          )}
-                          {a.image && (
-                            <img src={a.image} alt="" className="w-10 h-10 rounded-lg object-cover border border-slate-200" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold text-slate-900 truncate">{a.title || (
-                              a.type === 'visit' ? `Kunjungi ${a.store || 'UMKM'}` :
-                              a.type.startsWith('consult_') ? `Konsultasi dengan ${a.consultantName || 'Konsultan'}` :
-                              'Aktivitas'
-                            )}</div>
-                            <div className="text-xs text-slate-600 truncate">
-                              {a.category ? <span className="mr-1">Kategori: {a.category}</span> : null}
-                              {a.store ? <span className="mr-1">Toko: {a.store}</span> : null}
-                              {a.productASIN ? <span>ASIN: {a.productASIN}</span> : null}
+                          <div className="flex items-start gap-3 sm:gap-4">
+                            {/* Icon & Image */}
+                            <div className="relative flex-shrink-0">
+                              {a.image ? (
+                                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 border-slate-200 group-hover:border-orange-300 transition">
+                                  <img 
+                                    src={a.image} 
+                                    alt="" 
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).style.display = 'none';
+                                    }}
+                                  />
+                                </div>
+                              ) : (
+                                <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br ${colorClasses.bgGradient} flex items-center justify-center border-2 ${colorClasses.border} group-hover:scale-110 transition-transform duration-300`}>
+                                  <Icon className={`w-7 h-7 sm:w-8 sm:h-8 ${colorClasses.icon}`} />
+                                </div>
+                              )}
+                              <div className={`absolute -top-1 -right-1 w-6 h-6 ${colorClasses.badge} rounded-full flex items-center justify-center border-2 border-white shadow-lg`}>
+                                <Icon className="w-3 h-3 text-white" />
+                              </div>
+                            </div>
+                            
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm sm:text-base font-bold text-slate-900 mb-1 group-hover:text-orange-600 transition line-clamp-2">
+                                {getActivityTitle()}
+                              </h4>
+                              <div className="flex flex-wrap items-center gap-2 mb-2">
+                                {a.category && (
+                                  <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded-md text-[10px] sm:text-xs font-medium">
+                                    {a.category}
+                                  </span>
+                                )}
+                                {a.store && (
+                                  <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-md text-[10px] sm:text-xs font-medium flex items-center gap-1">
+                                    <Store className="w-3 h-3" />
+                                    {a.store}
+                                  </span>
+                                )}
+                                {a.consultantName && (
+                                  <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-[10px] sm:text-xs font-medium flex items-center gap-1">
+                                    <Phone className="w-3 h-3" />
+                                    {a.consultantName}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-slate-500 flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {formatTime(a.createdAt)}
+                                </span>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); openActivity(a); }}
+                                  className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg bg-gradient-to-r ${colorClasses.button} text-white text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-1`}
+                                >
+                                  Buka
+                                  <ChevronRight className="w-3 h-3" />
+                                </button>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <div className="text-[10px] text-slate-500 whitespace-nowrap">
-                              {a.createdAt ? a.createdAt.toLocaleString() : 'Baru saja'}
-                            </div>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); openActivity(a); }}
-                              className="px-2 py-1 rounded-md bg-slate-900 text-white text-[10px] hover:bg-slate-800"
-                            >
-                              Buka
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
+                        </motion.div>
+                      );
+                    })
                 )}
               </div>
             </div>
           )}
 
-          {/* Other Menus (store, pricing) */}
-          {activeMenu !== 'profile' && activeMenu !== 'history' && (
-            <div className="bg-white rounded-xl shadow-sm p-6 text-center">
-              {activeMenu === 'store' && <Store size={32} className="mx-auto text-gray-300 mb-3" />}
-              {activeMenu === 'pricing' && <CreditCard size={32} className="mx-auto text-gray-300 mb-3" />}
-              <h3 className="text-lg font-bold text-gray-900 mb-2 capitalize">{activeMenu} Coming Soon</h3>
-              <p className="text-sm text-gray-600">Halaman {activeMenu} akan segera hadir.</p>
+          {/* Pricing */}
+          {activeMenu === 'pricing' && (
+            <div className="-mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8">
+              <Harga hideFooter />
+            </div>
+          )}
+
+          {/* Store (placeholder) */}
+          {activeMenu === 'store' && (
+            <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8 text-center">
+              <Store size={40} className="mx-auto text-gray-300 mb-3" />
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 capitalize">store Coming Soon</h3>
+              <p className="text-sm text-gray-600">Halaman store akan segera hadir.</p>
             </div>
           )}
         </div>
@@ -1348,44 +1523,50 @@ export default function ProfilePage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-xl p-4 w-full max-w-sm max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
             >
               <div className="text-center mb-4">
-                <Lock className="w-10 h-10 mx-auto text-slate-800 mb-2" />
-                <h3 className="text-lg font-bold text-gray-900 mb-1">Aktifkan TOTP 2FA</h3>
-                <p className="text-xs text-gray-600">Masukkan secret key di aplikasi Authenticator, lalu masukkan kode 6 digit.</p>
+                <Lock className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-slate-800 mb-2" />
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">Aktifkan TOTP 2FA</h3>
+                <p className="text-xs sm:text-sm text-gray-600">Scan QR atau masukkan secret key di aplikasi Authenticator.</p>
               </div>
 
-              <div className="space-y-3">
-                <div className="bg-slate-50 border-2 border-slate-200 rounded-lg p-3">
-                  <p className="text-xs text-gray-600 font-medium mb-2">Secret Key:</p>
-                  <div className="bg-white border border-slate-300 rounded p-2 font-mono text-xs text-center break-all select-all cursor-pointer hover:bg-slate-100 transition">
+              <div className="space-y-3 sm:space-y-4">
+                {totpQRCode && (
+                  <div className="flex flex-col items-center gap-2">
+                    <img src={totpQRCode} alt="QR Code" className="w-48 h-48 sm:w-56 sm:h-56 rounded-xl border border-slate-200" />
+                    <p className="text-xs text-gray-500">Gunakan Google Authenticator / Authy</p>
+                  </div>
+                )}
+                <div className="bg-slate-50 border-2 border-slate-200 rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-gray-600 font-medium mb-2">Secret Key:</p>
+                  <div className="bg-white border border-slate-300 rounded p-2 sm:p-3 font-mono text-xs sm:text-sm text-center break-all select-all cursor-pointer hover:bg-slate-100 transition">
                     {totpSecret}
                   </div>
-                  <p className="text-[10px] text-gray-500 mt-2">Salin dan masukkan ke aplikasi Authenticator Anda</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500 mt-2">Salin dan masukkan ke aplikasi Authenticator Anda</p>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-600 font-medium mb-2">Kode 6 digit</label>
+                  <label className="block text-xs sm:text-sm text-gray-600 font-medium mb-2">Kode 6 digit</label>
                   <input
                     type="text"
                     value={totpCode}
                     onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0,6))}
                     placeholder="123456"
                     maxLength={6}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center text-base font-mono tracking-widest focus:ring-2 focus:ring-slate-800 focus:border-transparent"
+                    className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-lg text-center text-lg sm:text-xl font-mono tracking-widest focus:ring-2 focus:ring-slate-800 focus:border-transparent"
                   />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => setShowTOTPSetup(false)}
-                    className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors active:scale-95"
+                    className="flex-1 px-4 py-2 sm:py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors active:scale-95"
                   >
                     Batal
                   </button>
                   <button
                     onClick={verifyTOTPSetup}
                     disabled={totpCode.length !== 6}
-                    className="flex-1 px-4 py-2 bg-slate-800 text-white rounded-lg font-medium text-sm hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition active:scale-95"
+                    className="flex-1 px-4 py-2 sm:py-2.5 bg-slate-800 text-white rounded-lg font-medium text-sm hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition active:scale-95"
                   >
                     Verifikasi
                   </button>
@@ -1404,17 +1585,17 @@ export default function ProfilePage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-xl p-4 w-full max-w-sm"
+              className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-sm"
             >
               <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle2 className="w-6 h-6 text-green-600" />
+                <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8 text-green-600" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">{modalTitle}</h3>
-                <p className="text-xs text-gray-600 mb-4">{modalMessage}</p>
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">{modalTitle}</h3>
+                <p className="text-xs sm:text-sm text-gray-600 mb-4">{modalMessage}</p>
                 <button
                   onClick={() => setShowSuccessModal(false)}
-                  className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium text-sm hover:bg-green-700 transition-colors active:scale-95"
+                  className="w-full bg-green-600 text-white py-2 sm:py-2.5 px-4 rounded-lg font-medium text-sm hover:bg-green-700 transition-colors active:scale-95"
                 >
                   OK
                 </button>
@@ -1432,17 +1613,17 @@ export default function ProfilePage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-xl p-4 w-full max-w-sm"
+              className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-sm"
             >
               <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-3 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-7 h-7 sm:w-8 sm:h-8 text-red-600" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">{modalTitle}</h3>
-                <p className="text-xs text-gray-600 mb-4">{modalMessage}</p>
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">{modalTitle}</h3>
+                <p className="text-xs sm:text-sm text-gray-600 mb-4">{modalMessage}</p>
                 <button
                   onClick={() => setShowErrorModal(false)}
-                  className="w-full bg-red-600 text-white py-2 px-4 rounded-lg font-medium text-sm hover:bg-red-700 transition-colors active:scale-95"
+                  className="w-full bg-red-600 text-white py-2 sm:py-2.5 px-4 rounded-lg font-medium text-sm hover:bg-red-700 transition-colors active:scale-95"
                 >
                   OK
                 </button>

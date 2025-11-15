@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import {
@@ -33,6 +34,8 @@ import {
   BarChart3,
   PieChart,
 } from "lucide-react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 // --- TYPES AND DATA ---
 type Consultant = {
@@ -60,6 +63,23 @@ type Consultant = {
     completion: number;
   };
 };
+
+type Message = {
+  id: number;
+  text: string;
+  sender: "user" | "consultant";
+  timestamp: Date;
+  attachments?: Array<{
+    type: "image" | "file";
+    url: string;
+    name: string;
+  }>;
+};
+
+interface ConsultantChatPageProps {
+  consultant: Consultant;
+  onBack: () => void;
+}
 
 const CONSULTANTS: Consultant[] = [
   {
@@ -270,7 +290,26 @@ const ConsultantHomePage: React.FC = () => {
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"rating" | "experience">("rating");
   const [showFilters, setShowFilters] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [toasts, setToasts] = useState<Array<{id: string, type: 'favorite' | 'share', title: string, message: string}>>([]);
   const heroRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
+    });
+    return () => unsub();
+  }, []);
+
+  const showToast = (type: 'favorite' | 'share', title: string, message: string) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const newToast = { id, type, title, message };
+    setToasts(prev => [...prev, newToast]);
+
+    setTimeout(() => {
+      setToasts(prev => prev.filter(toast => toast.id !== id));
+    }, 3000);
+  };
 
   // Parallax
   const mvX = useMotionValue(0);
@@ -312,6 +351,69 @@ const ConsultantHomePage: React.FC = () => {
     setSelectedConsultant(null);
   };
 
+  // Favorite functions
+  const isConsultantFavorited = (consultantId: number): boolean => {
+    if (typeof window === 'undefined') return false;
+    const favorites = JSON.parse(localStorage.getItem("consultantFavorites") || "[]");
+    return favorites.some((c: Consultant) => c.id === consultantId);
+  };
+
+  const handleAddToFavorites = (e: React.MouseEvent, consultant: Consultant) => {
+    e.stopPropagation();
+    if (!isLoggedIn) {
+      try {
+        const pending = {
+          type: 'consultant_favorites' as const,
+          consultant,
+          returnUrl: window.location.href,
+          createdAt: Date.now(),
+        };
+        localStorage.setItem('pendingAction', JSON.stringify(pending));
+      } catch {}
+      window.location.href = "/login";
+      return;
+    }
+
+    let favorites = JSON.parse(localStorage.getItem("consultantFavorites") || "[]");
+    const existing = favorites.find((c: Consultant) => c.id === consultant.id);
+
+    if (existing) {
+      favorites = favorites.filter((c: Consultant) => c.id !== consultant.id);
+      showToast('favorite', 'Dihapus dari Favorit', consultant.name);
+    } else {
+      favorites.push({ ...consultant, favoriteType: 'consultant', dateAdded: new Date().toISOString() });
+      showToast('favorite', 'Ditambahkan ke Favorit!', consultant.name);
+    }
+
+    localStorage.setItem("consultantFavorites", JSON.stringify(favorites));
+    
+    window.dispatchEvent(new CustomEvent('favoritesUpdated', {
+      detail: { type: 'consultant_favorites', count: favorites.length }
+    }));
+  };
+
+  const handleShare = (e: React.MouseEvent, consultant: Consultant) => {
+    e.stopPropagation();
+    const shareUrl = `${window.location.origin}/ConsultantPage?consultant=${consultant.id}`;
+    const shareText = `Lihat konsultan ${consultant.name} - ${consultant.specialty} di UMKMotion`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: consultant.name,
+        text: shareText,
+        url: shareUrl,
+      }).catch(() => {
+        // Fallback jika user cancel
+      });
+    } else {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        showToast('share', 'Link disalin!', 'Link konsultan berhasil disalin ke clipboard');
+      }).catch(() => {
+        showToast('share', 'Gagal menyalin', 'Silakan salin link secara manual');
+      });
+    }
+  };
+
   // Filter and sort
   const filteredConsultants = CONSULTANTS.filter((c) => {
     const matchesSearch =
@@ -334,7 +436,39 @@ const ConsultantHomePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50/30 via-white to-amber-50/20 text-slate-900 antialiased">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50/30 via-white to-amber-50/20 text-slate-900 antialiased relative">
+      {/* Toast Notifications */}
+      <div className="fixed top-20 right-4 z-[100] space-y-2">
+        <AnimatePresence>
+          {toasts.map((toast) => (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
+              className={`bg-white rounded-lg shadow-lg p-4 min-w-[280px] border-l-4 ${
+                toast.type === 'favorite' ? 'border-red-500' : 'border-blue-500'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-full ${
+                  toast.type === 'favorite' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'
+                }`}>
+                  {toast.type === 'favorite' ? (
+                    <Heart size={20} className={toast.message.includes('Ditambahkan') ? 'fill-current' : ''} />
+                  ) : (
+                    <Share2 size={20} />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-slate-900">{toast.title}</div>
+                  <div className="text-sm text-slate-600">{toast.message}</div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
       {/* HERO */}
       <header ref={heroRef} className="relative overflow-hidden py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-12">
         {/* Background orbs */}
@@ -595,6 +729,30 @@ const ConsultantHomePage: React.FC = () => {
                     {c.membership}
                   </div>
                 </div>
+                {/* Favorite & Share buttons */}
+                <div className="absolute top-1 right-1 flex gap-1">
+                  <button
+                    onClick={(e) => handleAddToFavorites(e, c)}
+                    className={`p-1 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white transition-all ${
+                      isConsultantFavorited(c.id) ? 'text-red-500' : 'text-slate-600'
+                    }`}
+                    aria-label="Tambah ke favorit"
+                    title={isConsultantFavorited(c.id) ? 'Hapus dari favorit' : 'Tambah ke favorit'}
+                  >
+                    <Heart 
+                      size={10} 
+                      className={isConsultantFavorited(c.id) ? 'fill-current' : ''} 
+                    />
+                  </button>
+                  <button
+                    onClick={(e) => handleShare(e, c)}
+                    className="p-1 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white text-slate-600 transition-all"
+                    aria-label="Bagikan"
+                    title="Bagikan konsultan"
+                  >
+                    <Share2 size={10} />
+                  </button>
+                </div>
               </div>
 
               {/* Content - Super compact */}
@@ -797,11 +955,24 @@ const ConsultantHomePage: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        <button className="p-1 rounded-lg hover:bg-orange-50 transition-colors">
-                          <Heart size={14} className="text-slate-600" />
+                        <button 
+                          onClick={(e) => handleAddToFavorites(e, selectedConsultant)}
+                          className={`p-2 rounded-lg hover:bg-orange-50 transition-colors ${
+                            isConsultantFavorited(selectedConsultant.id) ? 'bg-red-50' : ''
+                          }`}
+                          title={isConsultantFavorited(selectedConsultant.id) ? 'Hapus dari favorit' : 'Tambah ke favorit'}
+                        >
+                          <Heart 
+                            size={16} 
+                            className={isConsultantFavorited(selectedConsultant.id) ? 'text-red-500 fill-current' : 'text-slate-600'} 
+                          />
                         </button>
-                        <button className="p-1 rounded-lg hover:bg-orange-50 transition-colors">
-                          <Share2 size={14} className="text-slate-600" />
+                        <button 
+                          onClick={(e) => handleShare(e, selectedConsultant)}
+                          className="p-2 rounded-lg hover:bg-orange-50 transition-colors"
+                          title="Bagikan konsultan"
+                        >
+                          <Share2 size={16} className="text-slate-600" />
                         </button>
                       </div>
                     </div>
@@ -1104,7 +1275,7 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
                 >
                   {m.attachments && m.attachments.length > 0 && (
                     <div className="mb-1.5 space-y-1.5">
-                      {m.attachments.map((att, attIdx) => (
+                      {m.attachments.map((att: { type: "image" | "file"; url: string; name: string }, attIdx: number) => (
                         <div key={attIdx} className="rounded-lg overflow-hidden">
                           {att.type === "image" ? (
                             <img src={att.url} alt={att.name} className="max-w-full h-auto rounded-lg" />

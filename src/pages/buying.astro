@@ -1,0 +1,20 @@
+---
+import BuyingPageComponent from "../BuyingPage/BuyingPage.astro";
+import NavbarHome from "../../Home/NavbarHome/NavbarHome.tsx";
+import LandingPageLayout from "../layouts/LandingPageLayout.astro";
+---
+
+<LandingPageLayout title="Detail Produk" description="Halaman detail produk">
+  <NavbarHome client:load />
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <button
+      onclick="window.location.href='/etalase'"
+      aria-label="Kembali"
+      class="mb-4 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white text-orange-600 border border-orange-100 shadow-sm hover:bg-orange-50 transition"
+    >
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:linear-gradient(135deg,#fd5701,#f97316);color:white;font-weight:700;">←</span>
+      <span>Kembali</span>
+    </button>
+    <BuyingPageComponent />
+  </main>
+</LandingPageLayout>

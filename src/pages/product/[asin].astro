@@ -10,6 +10,25 @@ const { asin } = Astro.params;
 
 <LandingPageLayout title={`Detail Produk - UMKMotion`} description="Detail produk lengkap dengan variant, rating, dan ulasan">
   <NavbarHome client:load />
+  <script>
+    // Redirect semua /product/:asin ke /BuyingPage agar konsisten
+    (function() {
+      try {
+        const asin = window.PRODUCT_ASIN || (typeof Astro !== 'undefined' && Astro?.params?.asin);
+        if (asin) {
+          // Seed minimal data untuk BuyingPage (hanya ASIN cukup, detail akan diambil kembali)
+          const existing = localStorage.getItem('selectedProduct');
+          let payload = { ASIN: asin };
+          try {
+            const parsed = existing ? JSON.parse(existing) : null;
+            if (parsed && typeof parsed === 'object') payload = { ...parsed, ASIN: asin };
+          } catch {}
+          localStorage.setItem('selectedProduct', JSON.stringify(payload));
+        }
+      } catch {}
+      window.location.replace('/BuyingPage');
+    })();
+  </script>
   <script define:vars={{
     FIREBASE_API_KEY: import.meta.env.PUBLIC_FIREBASE_API_KEY || import.meta.env.FIREBASE_API_KEY,
     FIREBASE_AUTH_DOMAIN: import.meta.env.PUBLIC_FIREBASE_AUTH_DOMAIN || import.meta.env.FIREBASE_AUTH_DOMAIN,
@@ -32,39 +51,6 @@ const { asin } = Astro.params;
     window.PRODUCT_ASIN = productASIN;
   </script>
 
-  <main class="min-h-screen bg-gradient-to-br from-orange-50 via-white to-sky-50">
-    <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-      <div class="mb-6">
-        <nav class="text-sm text-slate-600">
-          <a href="/" class="hover:text-slate-900">Beranda</a>
-          <span class="mx-2">/</span>
-          <a href="/etalase" class="hover:text-slate-900">Produk</a>
-          <span class="mx-2">/</span>
-          <span class="text-slate-900 font-semibold">Detail</span>
-        </nav>
-        <h1 class="mt-3 text-2xl sm:text-3xl font-bold text-slate-900">Detail Produk</h1>
-        <p class="text-slate-600 mt-1">Informasi lengkap, foto, varian, ulasan, dan rekomendasi.</p>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <ProductDetailPage client:load />
-      </div>
-
-      <section class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="p-4 bg-white border border-slate-200 rounded-xl">
-          <div class="font-semibold text-slate-900">Pengiriman Cepat</div>
-          <div class="text-sm text-slate-600">Tersedia opsi ekspedisi terpercaya dengan pelacakan.</div>
-        </div>
-        <div class="p-4 bg-white border border-slate-200 rounded-xl">
-          <div class="font-semibold text-slate-900">Garansi & Retur</div>
-          <div class="text-sm text-slate-600">Dukungan retur sesuai kebijakan toko dan platform.</div>
-        </div>
-        <div class="p-4 bg-white border border-slate-200 rounded-xl">
-          <div class="font-semibold text-slate-900">Pembayaran Aman</div>
-          <div class="text-sm text-slate-600">Transaksi terenkripsi, verifikasi OTP untuk keamanan ekstra.</div>
-        </div>
-      </section>
-    </section>
-  </main>
+  <!-- Redirect page: tidak perlu render konten -->
 </LandingPageLayout>
 

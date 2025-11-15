@@ -5,8 +5,8 @@ import NavbarHome from "../../Home/NavbarHome/NavbarHome";
 ---
 
 <LandingPageLayout title="Konsultasi UMKM - UMKMotion">
-  <NavbarHome client:load />
+  <NavbarHome client:only="react" />
   <main class="min-h-screen pt-20">
-    <ConsultantHomePage client:load />
+    <ConsultantHomePage client:only="react" />
   </main>
 </LandingPageLayout>

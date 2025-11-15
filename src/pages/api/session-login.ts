@@ -130,11 +130,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         console.warn('Invalid or expired token:', error.message);
         return new Response(
           JSON.stringify({ 
-            error: 'Authentication failed',
+            success: false,
+            warning: 'Authentication failed',
             details: 'Your session has expired. Please refresh the page and try again.'
           }), 
           { 
-            status: 401,
+            status: 200,
             headers: { 'Content-Type': 'application/json' }
           }
         );
@@ -144,11 +145,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       console.error('Session creation failed:', error);
       return new Response(
         JSON.stringify({ 
-          error: 'Authentication failed',
+          success: false,
+          warning: 'Authentication failed',
           details: error.message || 'Failed to create session'
         }), 
         { 
-          status: 401,
+          status: 200,
           headers: { 'Content-Type': 'application/json' }
         }
       );

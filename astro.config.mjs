@@ -88,11 +88,16 @@ export default defineConfig({
         'vaul',
         // Ensure Motion (Framer Motion v12 package) is pre-bundled
         'motion',
-        'motion/react'
+        'motion/react',
+        // Add problematic dependencies
+        'lucide-react',
+        'framer-motion',
+        'react-loader-spinner'
       ],
       // Force re-optimize on dev startup to invalidate any stale cache
       force: true,
-      // Let Vite decide when to re-optimize to avoid frequent invalidations
+      // Exclude problematic deps from optimization if needed
+      exclude: [],
     },
     // Ensure SSR bundles vaul instead of treating it as external
     ssr: {

@@ -54,20 +54,23 @@ export default function ConsultantChatPage() {
 
   // Log chat session start once per view if user is authenticated
   useEffect(() => {
-    const user = auth.currentUser;
-    if (user && consultant && !hasLoggedSessionRef.current) {
-      const activityId = `consult_chat_${consultant.id}_${Date.now()}`;
-      setDoc(doc(db, 'users', user.uid, 'activities', activityId), {
-        type: 'consult_chat',
-        title: `Mulai chat dengan ${consultant.name}`,
-        consultantId: consultant.id,
-        consultantName: consultant.name,
-        specialty: consultant.specialty,
-        image: consultant.avatar || null,
-        createdAt: serverTimestamp()
-      }).catch(() => {});
-      hasLoggedSessionRef.current = true;
-    }
+    const logChat = async () => {
+      if (hasLoggedSessionRef.current || !consultant) return;
+      const user = auth.currentUser;
+      
+      try {
+        const { trackConsultantChat } = await import('@/lib/activity-tracker');
+        await trackConsultantChat({
+          id: consultant.id,
+          name: consultant.name,
+          avatar: consultant.avatar
+        }, user?.uid || null);
+        hasLoggedSessionRef.current = true;
+      } catch (e) {
+        // swallow errors
+      }
+    };
+    logChat();
   }, [consultant]);
 
   const sendMessage = () => {
@@ -77,18 +80,8 @@ export default function ConsultantChatPage() {
     setMessages((prev) => [...prev, m]);
     setInput("");
     setIsTyping(true);
-    // Optionally log first user message as engagement
-    const user = auth.currentUser;
-    if (user) {
-      const activityId = `consult_chat_msg_${consultant.id}_${Date.now()}`;
-      setDoc(doc(db, 'users', user.uid, 'activities', activityId), {
-        type: 'consult_chat_message',
-        title: `Kirim pesan ke ${consultant.name}`,
-        consultantId: consultant.id,
-        consultantName: consultant.name,
-        createdAt: serverTimestamp()
-      }).catch(() => {});
-    }
+    // Optionally log first user message as engagement (only once per session)
+    // This is already tracked in the initial chat session, so we skip it here
     // Simulasi balasan konsultan
     setTimeout(() => {
       setMessages((prev) => [

@@ -594,7 +594,7 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
       </main>
       <!-- Floating AI Button -->
       { !isAIPage && (
-        <FloatingAIButton client:load />
+        <FloatingAIButton client:only="react" />
       ) }
     </div>
   </body>

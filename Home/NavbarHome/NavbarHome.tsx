@@ -8,7 +8,7 @@ import { createPortal } from "react-dom";
 import { Drawer } from "vaul";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 // ==================== TYPES ====================
@@ -21,6 +21,7 @@ interface User {
   displayName?: string | null;
   email?: string | null;
   nickname?: string;
+  photoURL?: string | null;
 }
 
 interface NavItem {
@@ -71,19 +72,29 @@ const NAVBAR_STYLES = `
 
   @keyframes badge-bounce {
     0% { transform: scale(0.3); opacity: 0; }
-    50% { transform: scale(1.2); }
+    50% { transform: scale(1.15); }
     100% { transform: scale(1); opacity: 1; }
   }
 
   @keyframes badge-pulse {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    50% { transform: scale(1.08); }
   }
 
   @keyframes icon-shake {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-2px); }
     75% { transform: translateX(2px); }
+  }
+
+  @keyframes badge-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(255, 122, 26, 0.4), 0 2px 8px rgba(0, 0, 0, 0.15); }
+    50% { box-shadow: 0 0 16px rgba(255, 122, 26, 0.6), 0 4px 12px rgba(0, 0, 0, 0.2); }
+  }
+
+  @keyframes badge-heart-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(236, 72, 153, 0.4), 0 2px 8px rgba(0, 0, 0, 0.15); }
+    50% { box-shadow: 0 0 16px rgba(236, 72, 153, 0.6), 0 4px 12px rgba(0, 0, 0, 0.2); }
   }
 
   .shimmer-effect {
@@ -138,27 +149,55 @@ const NAVBAR_STYLES = `
 
   .cart-badge, .favorites-badge {
     position: absolute;
-    top: -6px;
-    right: -6px;
-    min-width: 18px;
-    height: 18px;
-    border-radius: 9px;
+    top: -8px;
+    right: -8px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 10px;
+    font-weight: 800;
     color: white;
-    border: 2px solid white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border: 2.5px solid white;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .cart-badge {
-    background: linear-gradient(135deg, #f97316, #ea580c);
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #ff6b35 100%);
   }
 
   .favorites-badge {
-    background: linear-gradient(135deg, #ec4899, #db2777);
+    background: linear-gradient(135deg, #ec4899 0%, #db2777 50%, #f472b6 100%);
+  }
+
+  .badge-animate.cart-badge {
+    animation: badge-bounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55), badge-glow 2s ease-in-out infinite;
+  }
+
+  .badge-animate.favorites-badge {
+    animation: badge-bounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55), badge-heart-glow 2s ease-in-out infinite;
+  }
+
+  /* Badge Large Numbers */
+  .badge-large {
+    min-width: 24px;
+    height: 22px;
+    font-size: 9.5px;
+    padding: 0 7px;
+    border-radius: 11px;
+  }
+
+  .badge-xlarge {
+    min-width: 28px;
+    height: 24px;
+    font-size: 9px;
+    padding: 0 8px;
+    border-radius: 12px;
   }
 
   .map-fullscreen-active header {
@@ -169,10 +208,17 @@ const NAVBAR_STYLES = `
 // ==================== UTILITY FUNCTIONS ====================
 const getInitials = (name: string | null | undefined): string => {
   if (!name) return 'U';
-  const words = name.trim().split(/\s+/);
+  
+  const cleanName = name.trim();
+  if (cleanName.length === 0) return 'U';
+  
+  const words = cleanName.split(/\s+/).filter(word => word.length > 0);
+  
+  if (words.length === 0) return 'U';
   if (words.length === 1) {
-    return words[0].substring(0, 2).toUpperCase();
+    return cleanName.substring(0, 2).toUpperCase();
   }
+  
   return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 };
 
@@ -183,6 +229,24 @@ const getAvatarColor = (name: string | null | undefined): string => {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+};
+
+// Format badge number dengan K notation
+const formatBadgeNumber = (count: number): string => {
+  if (count === 0) return '0';
+  if (count < 100) return count.toString();
+  if (count < 1000) return count.toString();
+  if (count < 10000) return `${(count / 1000).toFixed(1)}K`.replace('.0K', 'K');
+  if (count < 100000) return `${Math.floor(count / 1000)}K`;
+  if (count < 1000000) return `${Math.floor(count / 1000)}K`;
+  return `${(count / 1000000).toFixed(1)}M`.replace('.0M', 'M');
+};
+
+// Get badge size class based on count
+const getBadgeSizeClass = (count: number): string => {
+  if (count >= 10000) return 'badge-xlarge';
+  if (count >= 1000) return 'badge-large';
+  return '';
 };
 
 // ==================== SUB COMPONENTS ====================
@@ -197,35 +261,64 @@ const Badge = ({
 }) => {
   if (count === 0) return null;
   
+  const formattedCount = formatBadgeNumber(count);
+  const sizeClass = getBadgeSizeClass(count);
+  
   return (
-    <span className={`${type}-badge ${animate ? 'badge-animate' : ''}`}>
-      {count > 99 ? '99+' : count}
+    <span 
+      className={cn(
+        `${type}-badge`,
+        sizeClass,
+        animate && 'badge-animate'
+      )}
+      title={count >= 1000 ? `${count.toLocaleString('id-ID')} item` : undefined}
+    >
+      {formattedCount}
     </span>
   );
 };
 
 const ProfileAvatar = ({ 
-  initial, 
-  color, 
+  user,
   onClick, 
   className = "" 
 }: { 
-  initial: string; 
-  color: string; 
+  user: User | null;
   onClick?: () => void; 
   className?: string 
-}) => (
-  <button
-    onClick={onClick}
-    className={cn(
-      "w-11 h-11 rounded-full text-white font-semibold flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105",
-      color,
-      className
-    )}
-  >
-    {initial}
-  </button>
-);
+}) => {
+  const getDisplayName = (): string => {
+    if (!user) return 'User';
+    
+    if (user.nickname && user.nickname.trim()) {
+      return user.nickname.trim();
+    }
+    if (user.displayName && user.displayName.trim()) {
+      return user.displayName.trim();
+    }
+    if (user.email) {
+      return user.email.split('@')[0];
+    }
+    return 'User';
+  };
+
+  const displayName = getDisplayName();
+  const initials = getInitials(displayName);
+  const avatarColor = getAvatarColor(displayName);
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "w-11 h-11 rounded-full text-white font-semibold flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105",
+        avatarColor,
+        className
+      )}
+    >
+      {initials}
+    </button>
+  );
+};
 
 const LogoutConfirmModal = ({ 
   show, 
@@ -239,20 +332,20 @@ const LogoutConfirmModal = ({
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-2xl w-[90vw] sm:w-[420px] p-5">
+    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-[90vw] sm:w-[420px] p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-2">Konfirmasi Logout</h3>
-        <p className="text-sm text-gray-600 mb-4">Anda yakin ingin keluar dari akun ini?</p>
-        <div className="flex items-center justify-end gap-2">
+        <p className="text-sm text-gray-600 mb-5">Anda yakin ingin keluar dari akun ini?</p>
+        <div className="flex items-center justify-end gap-3">
           <button
             onClick={onClose}
-            className="h-10 px-4 rounded-xl font-semibold text-sm border-2 border-gray-200 hover:border-gray-300 bg-white text-gray-700 transition-all"
+            className="h-11 px-5 rounded-xl font-semibold text-sm border-2 border-gray-200 hover:border-gray-300 bg-white text-gray-700 transition-all hover:bg-gray-50"
           >
             Batal
           </button>
           <button
             onClick={onConfirm}
-            className="h-10 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] text-white shadow-lg hover:shadow-xl transition-all"
+            className="h-11 px-5 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
           >
             Keluar
           </button>
@@ -282,8 +375,8 @@ const IconButton = ({
   <a
     id={id}
     href={href}
-    aria-label={label}
-    title={label}
+    aria-label={`${label}${count > 0 ? ` (${count} item)` : ''}`}
+    title={`${label}${count > 0 ? ` - ${count.toLocaleString('id-ID')} item` : ''}`}
     className="group relative h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 hover:text-[#ff7a1a] shadow-sm hover:shadow-md transition-all"
   >
     <Icon size={18} className={cn(
@@ -300,43 +393,91 @@ const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-          const userData = userDoc.exists() ? userDoc.data() : {};
-
-          // Get nickname with proper fallback, ensuring it's not empty
-          const getNickname = () => {
-            if (userData.nickname && userData.nickname.trim()) return userData.nickname.trim();
-            if (userData.fullName && userData.fullName.trim()) return userData.fullName.trim();
-            if (currentUser.displayName && currentUser.displayName.trim()) return currentUser.displayName.trim();
-            if (currentUser.email) return currentUser.email.split('@')[0];
-            return 'User';
-          };
-
+        const cachedNick = (typeof window !== 'undefined' && localStorage.getItem('user_nickname')) || '';
+        if (cachedNick && (!user || user.nickname !== cachedNick)) {
           setUser({
             displayName: currentUser.displayName,
             email: currentUser.email,
-            nickname: getNickname()
-          });
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          // Fallback when Firestore fetch fails
-          const fallbackNickname = currentUser.displayName?.trim() || currentUser.email?.split('@')[0] || 'User';
-          setUser({
-            displayName: currentUser.displayName,
-            email: currentUser.email,
-            nickname: fallbackNickname
+            nickname: cachedNick,
+            photoURL: currentUser.photoURL,
           });
         }
+
+        const userRef = doc(db, 'users', currentUser.uid);
+        const unsubscribeSnap = onSnapshot(userRef, {
+          next: (snap) => {
+            const data: any = snap.exists() ? snap.data() : {};
+
+            const preferred = [
+              data?.nickname,
+              data?.nickName,
+              data?.username,
+              data?.userName,
+              data?.fullName,
+              data?.name,
+              currentUser.displayName,
+              currentUser.email ? currentUser.email.split('@')[0] : undefined,
+            ].find((v) => typeof v === 'string' && v.trim().length > 0) as string | undefined;
+
+            const nickname = (preferred || 'User').trim();
+
+            try { localStorage.setItem('user_nickname', nickname); } catch {}
+
+            setUser({
+              displayName: currentUser.displayName,
+              email: currentUser.email,
+              nickname,
+              photoURL: currentUser.photoURL,
+            });
+            setLoading(false);
+          },
+          error: async (err) => {
+            console.error('onSnapshot user error:', err);
+            try {
+              const snapOnce = await getDoc(userRef);
+              const dataOnce: any = snapOnce.exists() ? snapOnce.data() : {};
+              const preferred = [
+                dataOnce?.nickname,
+                dataOnce?.nickName,
+                dataOnce?.username,
+                dataOnce?.userName,
+                dataOnce?.fullName,
+                dataOnce?.name,
+                currentUser.displayName,
+                currentUser.email ? currentUser.email.split('@')[0] : undefined,
+              ].find((v) => typeof v === 'string' && v.trim().length > 0) as string | undefined;
+              const nickname = (preferred || 'User').trim();
+              try { localStorage.setItem('user_nickname', nickname); } catch {}
+              setUser({
+                displayName: currentUser.displayName,
+                email: currentUser.email,
+                nickname,
+                photoURL: currentUser.photoURL,
+              });
+            } catch (e) {
+              const fallbackNickname = currentUser.displayName?.trim() || currentUser.email?.split('@')[0] || 'User';
+              setUser({
+                displayName: currentUser.displayName,
+                email: currentUser.email,
+                nickname: fallbackNickname,
+                photoURL: currentUser.photoURL,
+              });
+            } finally {
+              setLoading(false);
+            }
+          }
+        });
+
+        return () => unsubscribeSnap();
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
 
   return { user, loading };
@@ -430,113 +571,125 @@ const MobileDrawer = ({
   isOpen, 
   setIsOpen, 
   pathname, 
-  userInitial, 
-  avatarColor, 
+  user,
   loading, 
   onLogout 
 }: {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   pathname: string;
-  userInitial: string;
-  avatarColor: string;
+  user: User | null;
   loading: boolean;
   onLogout: () => void;
-}) => (
-  <Drawer.Root direction="left" open={isOpen} onOpenChange={setIsOpen}>
-    <Drawer.Trigger className="group relative px-3.5 text-white h-11 grid place-content-center bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] hover:from-[#ff8534] hover:to-[#ff6914] rounded-xl transition-all duration-300 shadow-[0_4px_16px_rgba(255,122,26,0.3)] hover:shadow-[0_6px_24px_rgba(255,122,26,0.4)] hover:scale-[1.02]">
-      <AlignJustify className="transition-transform duration-300 group-hover:scale-110" />
-      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-    </Drawer.Trigger>
-    
-    <Drawer.Portal>
-      <Drawer.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity duration-300" />
-      <Drawer.Content
-        className="left-3 top-3 bottom-3 fixed z-50 outline-none w-80 flex"
-        style={{ "--initial-transform": "calc(100% + 12px)" } as React.CSSProperties}
-      >
-        <div className="dark:bg-gradient-to-br dark:from-neutral-950 dark:to-neutral-900 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 dark:border-neutral-800 p-5 h-full w-full grow flex flex-col rounded-2xl shadow-2xl">
-          {/* Header */}
-          <div className="w-full flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-neutral-800">
-            <a href="/homepage" className="flex items-center gap-2 pl-1 leading-none group">
-              <img
-                src="/LogoNavbar.webp"
-                alt="UMKMotion"
-                className="block h-16 w-auto max-h-16 object-contain shrink-0 select-none transition-transform duration-300 group-hover:scale-105"
-                decoding="async"
-                loading="eager"
-              />
-            </a>
-            <button
-              className="rounded-xl bg-gradient-to-r from-neutral-900 to-neutral-800 dark:from-neutral-800 dark:to-neutral-700 px-3.5 py-2.5 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-              onClick={() => setIsOpen(false)}
-            >
-              <X size={20} />
-            </button>
-          </div>
+}) => {
+  const getDisplayName = (): string => {
+    if (!user) return 'User';
+    if (user.nickname && user.nickname.trim()) return user.nickname.trim();
+    if (user.displayName && user.displayName.trim()) return user.displayName.trim();
+    if (user.email) return user.email.split('@')[0];
+    return 'User';
+  };
 
-          {/* Navigation */}
-          <nav className="flex-1 space-y-2 overflow-y-auto">
-            {NAV_ITEMS.map((item) => {
-              const active = item.href === pathname;
-              return (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "group cursor-pointer select-none p-4 rounded-xl transition-all duration-300 flex items-start gap-3 relative overflow-hidden",
-                    active
-                      ? "bg-gradient-to-r from-[#ff7a1a]/10 to-[#ff4d00]/10 dark:from-[#ff7a1a]/20 dark:to-[#ff4d00]/20 border-2 border-[#ff7a1a]/30 shadow-lg"
-                      : "hover:bg-gray-100 dark:hover:bg-neutral-800 border-2 border-transparent hover:border-gray-200 dark:hover:border-neutral-700"
-                  )}
-                >
-                  <div className={cn(
-                    "p-2.5 rounded-lg transition-all duration-300",
-                    active
-                      ? "bg-gradient-to-br from-[#ff7a1a] to-[#ff4d00] text-white shadow-lg"
-                      : "bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-gray-400 group-hover:bg-gray-200 dark:group-hover:bg-neutral-700"
-                  )}>
-                    <item.icon size={20} />
-                  </div>
-                  <div className="flex-1">
+  const displayName = getDisplayName();
+  const initials = getInitials(displayName);
+  const avatarColor = getAvatarColor(displayName);
+
+  return (
+    <Drawer.Root direction="left" open={isOpen} onOpenChange={setIsOpen}>
+      <Drawer.Trigger className="group relative px-3.5 text-white h-11 grid place-content-center bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] hover:from-[#ff8534] hover:to-[#ff6914] rounded-xl transition-all duration-300 shadow-[0_4px_16px_rgba(255,122,26,0.3)] hover:shadow-[0_6px_24px_rgba(255,122,26,0.4)] hover:scale-[1.02]">
+        <AlignJustify className="transition-transform duration-300 group-hover:scale-110" />
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      </Drawer.Trigger>
+      
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity duration-300" />
+        <Drawer.Content
+          className="left-3 top-3 bottom-3 fixed z-50 outline-none w-80 flex"
+          style={{ "--initial-transform": "calc(100% + 12px)" } as React.CSSProperties}
+        >
+          <div className="dark:bg-gradient-to-br dark:from-neutral-950 dark:to-neutral-900 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 dark:border-neutral-800 p-5 h-full w-full grow flex flex-col rounded-2xl shadow-2xl">
+            {/* Header */}
+            <div className="w-full flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-neutral-800">
+              <a href="/homepage" className="flex items-center gap-2 pl-1 leading-none group">
+                <img
+                  src="/LogoNavbar.webp"
+                  alt="UMKMotion"
+                  className="block h-16 w-auto max-h-16 object-contain shrink-0 select-none transition-transform duration-300 group-hover:scale-105"
+                  decoding="async"
+                  loading="eager"
+                />
+              </a>
+              <button
+                className="rounded-xl bg-gradient-to-r from-neutral-900 to-neutral-800 dark:from-neutral-800 dark:to-neutral-700 px-3.5 py-2.5 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                onClick={() => setIsOpen(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 space-y-2 overflow-y-auto">
+              {NAV_ITEMS.map((item) => {
+                const active = item.href === pathname;
+                return (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "group cursor-pointer select-none p-4 rounded-xl transition-all duration-300 flex items-start gap-3 relative overflow-hidden",
+                      active
+                        ? "bg-gradient-to-r from-[#ff7a1a]/10 to-[#ff4d00]/10 dark:from-[#ff7a1a]/20 dark:to-[#ff4d00]/20 border-2 border-[#ff7a1a]/30 shadow-lg"
+                        : "hover:bg-gray-100 dark:hover:bg-neutral-800 border-2 border-transparent hover:border-gray-200 dark:hover:border-neutral-700"
+                    )}
+                  >
                     <div className={cn(
-                      "font-semibold text-base mb-0.5",
-                      active ? "text-[#ff7a1a]" : "text-gray-900 dark:text-white"
+                      "p-2.5 rounded-lg transition-all duration-300",
+                      active
+                        ? "bg-gradient-to-br from-[#ff7a1a] to-[#ff4d00] text-white shadow-lg"
+                        : "bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-gray-400 group-hover:bg-gray-200 dark:group-hover:bg-neutral-700"
                     )}>
-                      {item.label}
+                      <item.icon size={20} />
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {item.description}
+                    <div className="flex-1">
+                      <div className={cn(
+                        "font-semibold text-base mb-0.5",
+                        active ? "text-[#ff7a1a]" : "text-gray-900 dark:text-white"
+                      )}>
+                        {item.label}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {item.description}
+                      </div>
                     </div>
-                  </div>
-                </a>
-              );
-            })}
-          </nav>
+                  </a>
+                );
+              })}
+            </nav>
 
-          {/* Footer */}
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-neutral-800 space-y-2">
-            <a
-              href="/profile"
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
-            >
-              <span className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold", avatarColor)}>
-                {loading ? '...' : userInitial}
-              </span>
-              Profil Saya
-            </a>
-            <button
-              onClick={onLogout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border-2 border-gray-200 hover:border-gray-300 bg-white text-gray-700 transition-all duration-300"
-            >
-              Keluar
-            </button>
+            {/* Footer */}
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-neutral-800 space-y-2">
+              <a
+                href="/profile"
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#ff7a1a] to-[#ff4d00] text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+              >
+                <span className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold", avatarColor)}>
+                  {loading ? '...' : initials}
+                </span>
+                Profil Saya
+              </a>
+              <button
+                onClick={onLogout}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border-2 border-gray-200 hover:border-gray-300 bg-white text-gray-700 transition-all duration-300"
+              >
+                Keluar
+              </button>
+            </div>
           </div>
-        </div>
-      </Drawer.Content>
-    </Drawer.Portal>
-  </Drawer.Root>
-);
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
+  );
+};
 
 // ==================== DESKTOP NAV ====================
 const DesktopNavigation = ({ pathname }: { pathname: string }) => (
@@ -582,8 +735,7 @@ const ProfileMenu = ({
   show, 
   menuTop, 
   menuPortalRef, 
-  userInitial, 
-  avatarColor, 
+  user,
   loading, 
   onClose, 
   onLogout 
@@ -591,12 +743,22 @@ const ProfileMenu = ({
   show: boolean;
   menuTop: number;
   menuPortalRef: React.RefObject<HTMLDivElement | null>;
-  userInitial: string;
-  avatarColor: string;
+  user: User | null;
   loading: boolean;
   onClose: () => void;
   onLogout: () => void;
 }) => {
+  const getDisplayName = (): string => {
+    if (!user) return 'User';
+    if (user.nickname && user.nickname.trim()) return user.nickname.trim();
+    if (user.displayName && user.displayName.trim()) return user.displayName.trim();
+    if (user.email) return user.email.split('@')[0];
+    return 'User';
+  };
+
+  const displayName = getDisplayName();
+  const initials = getInitials(displayName);
+  const avatarColor = getAvatarColor(displayName);
 
   if (!show || typeof document === 'undefined') return null;
 
@@ -618,7 +780,7 @@ const ProfileMenu = ({
         onClick={onClose}
       >
         <span className={cn("w-6 h-6 rounded-full text-white flex items-center justify-center text-xs font-semibold", avatarColor)}>
-          {loading ? '...' : userInitial}
+          {loading ? '...' : initials}
         </span>
         <span>Profil Saya</span>
       </a>
@@ -659,22 +821,6 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
   const { user, loading } = useAuth();
   const scrolled = useScrollPosition();
   const { cartCount, favoritesCount, animateCart, animateFavorites } = useCartAndFavorites();
-
-  // Derived values
-  // Use nickname with proper fallback chain to avoid showing "PE" (from "Pengguna")
-  const getNicknameForAvatar = (): string => {
-    if (!user) return 'User';
-    // Check if nickname exists and is not empty
-    if (user.nickname && user.nickname.trim()) {
-      return user.nickname.trim();
-    }
-    // Fallback chain: fullName -> displayName -> email prefix -> 'User'
-    return user.displayName || user.email?.split('@')[0] || 'User';
-  };
-  
-  const nicknameOnly = getNicknameForAvatar();
-  const userInitial = getInitials(nicknameOnly);
-  const avatarColor = getAvatarColor(nicknameOnly);
 
   // Effects
   useEffect(() => {
@@ -736,7 +882,6 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
     ? "opacity-100 translate-y-0 scale-100"
     : "opacity-0 -translate-y-3 scale-95";
 
-
   return (
     <>
       <style>{NAVBAR_STYLES}</style>
@@ -762,8 +907,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                   isOpen={isOpen}
                   setIsOpen={setIsOpen}
                   pathname={pathname}
-                  userInitial={userInitial}
-                  avatarColor={avatarColor}
+                  user={user}
                   loading={loading}
                   onLogout={() => setShowConfirm(true)}
                 />
@@ -787,7 +931,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                     id="nav-cart-btn-mobile"
                   />
                   <a href="/profile">
-                    <ProfileAvatar initial={userInitial} color={avatarColor} />
+                    <ProfileAvatar user={user} />
                   </a>
                 </nav>
               </>
@@ -834,8 +978,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                   />
                   <div className="relative" ref={profileRef}>
                     <ProfileAvatar
-                      initial={userInitial}
-                      color={avatarColor}
+                      user={user}
                       onClick={() => setShowProfileMenu((v) => !v)}
                       className="ring-2 ring-white cursor-pointer"
                     />
@@ -843,8 +986,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                       show={showProfileMenu}
                       menuTop={menuTop}
                       menuPortalRef={menuPortalRef}
-                      userInitial={userInitial}
-                      avatarColor={avatarColor}
+                      user={user}
                       loading={loading}
                       onClose={() => setShowProfileMenu(false)}
                       onLogout={() => setShowConfirm(true)}
