@@ -505,12 +505,32 @@ const useCartAndFavorites = () => {
   const [animateCart, setAnimateCart] = useState(false);
   const [animateFavorites, setAnimateFavorites] = useState(false);
 
+  const aggregateFavoritesCount = () => {
+    try {
+      const favGeneric = JSON.parse(localStorage.getItem('favorites') || '[]');
+      const favConsultants = JSON.parse(localStorage.getItem('consultantFavorites') || '[]');
+      // Normalisasi favoriteType agar konsisten
+      const normConsultants = favConsultants.map((c: any) => ({ ...c, favoriteType: c.favoriteType || 'consultant' }));
+      const merged = [...favGeneric, ...normConsultants];
+      // Dedup berdasarkan kombinasi favoriteType:id
+      const unique = new Set<string>();
+      for (const item of merged) {
+        const type = item.favoriteType || 'unknown';
+        const id = item.id ?? item.consultantId ?? item.productId ?? `${type}-${Math.random()}`;
+        unique.add(`${type}:${String(id)}`);
+      }
+      return unique.size;
+    } catch (error) {
+      console.error('Error aggregating favorites:', error);
+      return 0;
+    }
+  };
+
   const loadCounts = () => {
     try {
       const cartData = JSON.parse(localStorage.getItem('cart') || '[]');
-      const favoritesData = JSON.parse(localStorage.getItem('favorites') || '[]');
       setCartCount(cartData.length);
-      setFavoritesCount(favoritesData.length);
+      setFavoritesCount(aggregateFavoritesCount());
     } catch (error) {
       console.error('Error loading counts:', error);
     }
@@ -542,8 +562,9 @@ const useCartAndFavorites = () => {
         setCartCount(e.detail.count);
         setAnimateCart(true);
         setTimeout(() => setAnimateCart(false), 600);
-      } else if (e.detail.type === 'favorites') {
-        setFavoritesCount(e.detail.count);
+      } else if (e.detail.type === 'favorites' || e.detail.type === 'consultant_favorites') {
+        // Selalu hitung ulang aggregate agar konsisten lintas sumber favorit
+        setFavoritesCount(aggregateFavoritesCount());
         setAnimateFavorites(true);
         setTimeout(() => setAnimateFavorites(false), 600);
       }

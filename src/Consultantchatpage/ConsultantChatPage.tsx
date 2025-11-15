@@ -1,6 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { auth, db } from "@/lib/firebase";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { format } from "date-fns";
 import { ArrowLeft, MoreVertical, Phone, Video, Paperclip, Smile, Send, Star, Clock } from "lucide-react";
 
@@ -46,31 +44,16 @@ export default function ConsultantChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const hasLoggedSessionRef = useRef<boolean>(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Log chat session start once per view if user is authenticated
+  // Saat konsultant berubah (misalnya dari query param), tambahkan sapaan terbaru
   useEffect(() => {
-    const logChat = async () => {
-      if (hasLoggedSessionRef.current || !consultant) return;
-      const user = auth.currentUser;
-      
-      try {
-        const { trackConsultantChat } = await import('@/lib/activity-tracker');
-        await trackConsultantChat({
-          id: consultant.id,
-          name: consultant.name,
-          avatar: consultant.avatar
-        }, user?.uid || null);
-        hasLoggedSessionRef.current = true;
-      } catch (e) {
-        // swallow errors
-      }
-    };
-    logChat();
+    setMessages([
+      { id: Date.now(), text: `Halo! Saya ${consultant.name}. Ceritakan singkat tantangan usaha Anda.`, sender: "consultant", timestamp: new Date() },
+    ]);
   }, [consultant]);
 
   const sendMessage = () => {
@@ -80,15 +63,15 @@ export default function ConsultantChatPage() {
     setMessages((prev) => [...prev, m]);
     setInput("");
     setIsTyping(true);
-    // Optionally log first user message as engagement (only once per session)
-    // This is already tracked in the initial chat session, so we skip it here
-    // Simulasi balasan konsultan
     setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now() + 1, text: "Terima kasih, saya tangkap konteksnya. Kita bisa mulai dari analisis arus kas dan channel pemasaran.", sender: "consultant", timestamp: new Date() },
-      ]);
       setIsTyping(false);
+      const reply: Message = {
+        id: Date.now() + 1,
+        text: `Terima kasih! ${consultant.name} akan meninjau pesan Anda dan memberi saran praktis.`,
+        sender: "consultant",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, reply]);
     }, 1200);
   };
 

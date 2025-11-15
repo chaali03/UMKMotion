@@ -133,9 +133,6 @@ function FetchData() {
   };
 
   const handleProductClick = (product: Product) => {
-    try {
-      localStorage.setItem('selectedProduct', JSON.stringify(product));
-    } catch {}
     window.location.href = '/buying';
   };
 
@@ -726,7 +723,7 @@ function FetchData() {
           font-weight: 800;
           display: flex;
           align-items: center;
-          justify-center;
+          justify-content: center;
           gap: 4px;
           cursor: pointer;
           transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1355,7 +1352,7 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
     
     let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
     const existing = favorites.find((p: Product) => p.ASIN === product.ASIN);
-    const delta = existing ? -1 : 1;
+    const delta = existing ? -1 : 1; // -1 jika hapus, +1 jika tambah
     
     if (existing) {
       favorites = favorites.filter((p: Product) => p.ASIN !== product.ASIN);
@@ -1372,10 +1369,12 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
       detail: { type: 'favorites', count: favorites.length }
     }));
 
+    // Update count di Firestore
     try {
       const { updateProductFavorites } = await import('../../lib/favorites');
       await updateProductFavorites(product.ASIN, delta);
       
+      // Update tampilan lokal langsung
       if (product.likes !== undefined) {
         product.likes = Math.max(0, product.likes + delta);
       }
@@ -1479,19 +1478,16 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
                 </svg>
                 <span>{typeof product.likes === 'number' ? product.likes : 0}</span>
               </div>
-              {sold && (
-                <div
-                  className="sold"
-                  title="Terjual"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#475569', fontSize: '0.55rem', fontWeight: 700 }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M3 3h18v4H3z" />
-                    <path d="M3 7h18l-3 12H6L3 7z" />
-                  </svg>
-                  <span>{sold}</span>
-                </div>
-              )}
+              <div
+                className="reviews"
+                title="Ulasan"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#10b981', fontSize: '0.55rem', fontWeight: 600 }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+                </svg>
+                <span>{Array.isArray(product.ulasan) ? product.ulasan.length : 0}</span>
+              </div>
             </div>
           </div>
           

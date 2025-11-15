@@ -222,7 +222,6 @@ export default function ConsultantBookingPage() {
             />
 
             {/* Timeslots */}
-                        "px-3 py-2 text-sm rounded-xl border transition " +
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="text-orange-600" />
                 <h3 className="font-bold">Pilih Jam</h3>

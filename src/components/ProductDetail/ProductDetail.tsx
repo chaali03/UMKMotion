@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, limit } from "firebase/firestore";
+import { collection, getDocs, query, where, limit, doc, getDoc } from "firebase/firestore";
+import { ShoppingCart } from "lucide-react";
 
 // === TIPE PRODUK ===
 interface FirebaseProduct {
@@ -62,168 +63,23 @@ interface DisplayProduct {
   specifications?: Array<{ name: string; value: string }>;
   discount?: string;
   store?: FirebaseStore | null;
+  product_sold?: string;
 }
 
 // === DATA TOKO ASLI (DARI SEED) ===
-const REAL_STORES: Record<string, FirebaseStore> = {
-  "nusantararasa": {
-    nama_toko: "Nusantara Rasa",
-    image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&auto=format&fit=crop&q=60",
-    banner: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1920&auto=format&fit=crop&q=60",
-    kategori: "Makanan & Minuman",
-    deskripsi_toko: "Nusantara Rasa menyediakan berbagai produk makanan dan minuman khas Nusantara dengan kualitas terbaik. Kami berkomitmen menghadirkan cita rasa autentik Indonesia untuk keluarga Indonesia.",
-    lokasi_toko: "Jl. Raya Darmo Permai III No.17, Pradahkalindungan, Kec. Dukuhpakis, Kota Surabaya, Jawa Timur 60226",
-    no_telp: "+62 31 5678 9012",
-    email: "hello@nusantararasa.id",
-    profileImage: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&auto=format&fit=crop&q=60",
-    jam_operasional: "07:00 - 22:00",
-    hari_operasional: "Senin - Minggu",
-    rating_toko: 5.0,
-    jumlah_review: 200,
-    maps_link: "https://maps.app.goo.gl/8vN9vL3kP9bZfG8J7",
-    fasilitas: ["Parkir", "Toilet", "WiFi", "Ruang Tunggu", "Mushola"],
-    metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank"],
-    social: { instagram: "nusantararasa.id", whatsapp: "+623156789012" },
-  },
-  "kainnusantara": {
-    nama_toko: "Kain Nusantara",
-    image: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=1200&auto=format&fit=crop&q=60",
-    banner: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=1920&auto=format&fit=crop&q=60",
-    kategori: "Fashion & Tekstil",
-    deskripsi_toko: "Pusat kain batik dan tekstil tradisional Indonesia. Kain Nusantara menawarkan berbagai koleksi batik tulis, batik cap, dan kain tenun dari berbagai daerah di Indonesia dengan motif dan kualitas terbaik.",
-    lokasi_toko: "Jl. Kauman No.25, Kauman, Kec. Pekalongan Timur, Kota Pekalongan, Jawa Tengah 51122",
-    no_telp: "+62 285 4321 567",
-    email: "hello@kainnusantara.id",
-    profileImage: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=400&auto=format&fit=crop&q=60",
-    jam_operasional: "08:00 - 17:00",
-    hari_operasional: "Senin - Sabtu",
-    rating_toko: 4.9,
-    jumlah_review: 89,
-    maps_link: "https://maps.app.goo.gl/3kL9mP7vX2fZ9k8J6",
-    fasilitas: ["Parkir", "Ruang Fitting", "Konsultasi Motif", "Workshop Batik"],
-    metode_pembayaran: ["Cash", "Transfer Bank", "E-Wallet", "QRIS", "Credit Card"],
-    social: { instagram: "kainnusantara", facebook: "KainNusantaraPekalongan" },
-  },
-  "karyanusantara": {
-    nama_toko: "Karya Nusantara",
-    image: "https://images.unsplash.com/photo-1582639590011-f5a8416d1101?w=1200&auto=format&fit=crop&q=60",
-    banner: "https://images.unsplash.com/photo-1582639590011-f5a8416d1101?w=1920&auto=format&fit=crop&q=60",
-    kategori: "Kerajinan Tangan",
-    deskripsi_toko: "Galeri dan toko kerajinan tangan Indonesia. Karya Nusantara menghadirkan berbagai produk kerajinan berkualitas seperti anyaman, ukiran kayu, keramik, dan suvenir khas Nusantara yang dibuat oleh pengrajin lokal terpilih.",
-    lokasi_toko: "Jl. Imogiri Timur No.123, Giwangan, Kec. Umbulharjo, Kota Yogyakarta, Daerah Istimewa Yogyakarta 55163",
-    no_telp: "+62 274 8901 234",
-    email: "hello@karyanusantara.id",
-    profileImage: "https://klik-online.com/wp-content/uploads/2023/12/DUTA.jpg",
-    jam_operasional: "09:00 - 21:00",
-    hari_operasional: "Senin - Minggu",
-    rating_toko: 4.9,
-    jumlah_review: 156,
-    maps_link: "https://maps.app.goo.gl/9vX8kL3mP7vZfG8J7",
-    fasilitas: ["Parkir", "Galeri Pameran", "Workshop", "Café"],
-    metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank"],
-    social: { instagram: "karyanusantara", whatsapp: "+622748901234" },
-  },
-  "apoteksehatnusantara": {
-    nama_toko: "Apotek Sehat Nusantara",
-    image: "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=1200&auto=format&fit=crop&q=60",
-    banner: "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=1920&auto=format&fit=crop&q=60",
-    kategori: "Kesehatan",
-    deskripsi_toko: "Apotek terpercaya dengan pelayanan farmasi profesional 24 jam. Menyediakan obat-obatan, vitamin, suplemen, alat kesehatan, dan produk kesehatan lainnya dengan harga terjangkau dan kualitas terjamin.",
-    lokasi_toko: "Jl. Raya Pondok Gede No.27, Jatimakmur, Kec. Pondok Gede, Kota Bekasi, Jawa Barat 17413",
-    no_telp: "+62 21 8456 7890",
-    email: "support@apoteksehatnusantara.id",
-    profileImage: "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=400&auto=format&fit=crop&q=60",
-    jam_operasional: "07:00 - 23:00",
-    hari_operasional: "Senin - Minggu",
-    rating_toko: 4.9,
-    jumlah_review: 203,
-    maps_link: "https://maps.app.goo.gl/2mK9vL3kP7bZfG8J7",
-    fasilitas: ["Parkir", "Konsultasi Dokter", "Drive Thru", "Apotek 24 Jam"],
-    metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank", "BPJS"],
-    social: { whatsapp: "+622184567890" },
-  },
-  "tanimakmurindonesia": {
-    nama_toko: "Tani Makmur Indonesia",
-    image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=1200&auto=format&fit=crop&q=60",
-    banner: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=1920&auto=format&fit=crop&q=60",
-    kategori: "Pertanian",
-    deskripsi_toko: "Toko pertanian terlengkap yang menyediakan bibit unggul, pupuk organik dan anorganik, pestisida, alat pertanian modern, dan perlengkapan berkebun. Melayani petani dan penggemar urban farming dengan konsultasi gratis.",
-    lokasi_toko: "Jl. Raya Tlogomas No.56, Lowokwaru, Kec. Lowokwaru, Kota Malang, Jawa Timur 65144",
-    no_telp: "+62 341 5678 901",
-    email: "support@tanimakmur.id",
-    profileImage: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400&auto=format&fit=crop&q=60",
-    jam_operasional: "07:00 - 18:00",
-    hari_operasional: "Senin - Sabtu",
-    rating_toko: 4.9,
-    jumlah_review: 97,
-    maps_link: "https://maps.app.goo.gl/5vN9vL3kP9bZfG8J7",
-    fasilitas: ["Parkir Luas", "Konsultasi Gratis", "Demo Alat", "Gudang Pupuk"],
-    metode_pembayaran: ["Cash", "Transfer Bank", "E-Wallet", "QRIS", "Kredit Pertanian"],
-    social: { instagram: "tanimakmur", facebook: "TaniMakmurIndonesia" },
-  },
-  "gadgetnusantara": {
-    nama_toko: "Gadget Nusantara",
-    image: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1200&auto=format&fit=crop&q=60",
-    banner: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1920&auto=format&fit=crop&q=60",
-    kategori: "Elektronik",
-    deskripsi_toko: "Official store gadget dan elektronik terlengkap. Menyediakan smartphone, laptop, tablet, smartwatch, accessories, dan berbagai produk teknologi terkini dari brand ternama dengan garansi resmi dan harga kompetitif.",
-    lokasi_toko: "Jl. Pluit Karang Ayu No.B1, Pluit, Kec. Penjaringan, Kota Jakarta Utara, Daerah Khusus Ibukota Jakarta 14450",
-    no_telp: "+62 21 6789 0123",
-    email: "support@gadgetnusantara.id",
-    profileImage: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&auto=format&fit=crop&q=60",
-    jam_operasional: "07:00 - 22:00",
-    hari_operasional: "Senin - Minggu",
-    rating_toko: 4.9,
-    jumlah_review: 312,
-    maps_link: "https://maps.app.goo.gl/7kL9mP7vX2fZ9k8J6",
-    fasilitas: ["Service Center", "Demo Produk", "Trade-in", "Cicilan 0%"],
-    metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank", "Cicilan 0%"],
-    social: { instagram: "gadgetnusantara", facebook: "GadgetNusantaraOfficial", whatsapp: "+622167890123" },
-  },
-  "mebelnusantara": {
-    nama_toko: "Mebel Nusantara",
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200&auto=format&fit=crop&q=60",
-    banner: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1920&auto=format&fit=crop&q=60",
-    kategori: "Furniture",
-    deskripsi_toko: "Produsen dan penjual furniture berkualitas tinggi khas Jepara. Mebel Nusantara menawarkan berbagai produk furniture kayu jati seperti kursi, meja, lemari, tempat tidur, dan custom furniture dengan ukiran detail dan finishing premium.",
-    lokasi_toko: "Jl. Raya Tahunan Jepara No.88, Tahunan, Kec. Tahunan, Kabupaten Jepara, Jawa Tengah 59425",
-    no_telp: "+62 291 3456 789",
-    email: "support@mebelnusantara.id",
-    profileImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&auto=format&fit=crop&q=60",
-    jam_operasional: "07:00 - 19:00",
-    hari_operasional: "Senin - Sabtu",
-    rating_toko: 4.9,
-    jumlah_review: 145,
-    maps_link: "https://maps.app.goo.gl/4kL9mP7vX2fZ9k8J6",
-    fasilitas: ["Showroom", "Custom Order", "Pengiriman", "Garansi Kayu"],
-    metode_pembayaran: ["Cash", "Transfer Bank", "Credit Card", "Cicilan", "DP System"],
-    social: { instagram: "mebelnusantara", whatsapp: "+622913456789" },
-  },
-  "cendekiapress": {
-    nama_toko: "Cendekia Press",
-    image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1200&auto=format&fit=crop&q=60",
-    banner: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&auto=format&fit=crop&q=60",
-    kategori: "Buku & Percetakan",
-    deskripsi_toko: "Penerbit dan toko buku terpercaya yang menyediakan berbagai koleksi buku pelajaran, buku referensi, novel, komik, dan alat tulis. Juga melayani jasa percetakan untuk buku, majalah, brosur, dan berbagai kebutuhan cetak lainnya.",
-    lokasi_toko: "Jl. Kaliurang KM 5,2 No.27, Condongcatur, Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281",
-    no_telp: "+62 274 5678 123",
-    email: "hello@cendekiapress.id",
-    profileImage: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&auto=format&fit=crop&q=60",
-    jam_operasional: "07:00 - 21:00",
-    hari_operasional: "Senin - Minggu",
-    rating_toko: 4.9,
-    jumlah_review: 178,
-    maps_link: "https://maps.app.goo.gl/6vX8kL3mP7vZfG8J7",
-    fasilitas: ["Toko Buku", "Percetakan", "Fotokopi", "Café Baca"],
-    metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank"],
-    social: { instagram: "cendekiapress", facebook: "CendekiaPress" },
-  },
-};
 
 // === UTILS ===
-const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '');
+// Dummy store seed removed. Store data is fetched directly from Firestore.
 
 const formatRupiah = (num?: number) => num ? `Rp ${num.toLocaleString("id-ID")}` : "Rp 0";
+
+const formatSold = (sold?: number) => {
+  if (!sold || sold <= 0) return "Baru";
+  if (sold < 1000) return `${sold.toLocaleString('id-ID')} terjual`;
+  const k = (sold / 1000);
+  const text = k >= 10 ? Math.floor(k).toString() : k.toFixed(1).replace('.0', '');
+  return `${text}K terjual`;
+};
 
 const categoryMap: Record<string, string> = {
   "Makanan & Minuman": "food",
@@ -310,7 +166,8 @@ export default function BuyingPage() {
       product_price: formatRupiah(p.harga_produk),
       product_original_price: p.harga_asli ? formatRupiah(p.harga_asli) : undefined,
       product_star_rating: p.rating_bintang ? p.rating_bintang.toFixed(1) : undefined,
-      product_num_ratings: p.unit_terjual ? Math.floor(p.unit_terjual / 100).toString() : undefined,
+      product_num_ratings: undefined,
+      product_sold: formatSold(p.unit_terjual),
       seller_name: p.toko || "Toko Tidak Diketahui",
       seller_logo: storeData?.profileImage || "",
       asin: p.ASIN || "unknown",
@@ -339,17 +196,37 @@ export default function BuyingPage() {
     const loadAllData = async () => {
       if (typeof window === "undefined") return;
 
-      const stored = localStorage.getItem("selectedProduct");
-      let rawProduct: FirebaseProduct;
-
-      if (!stored) {
-        rawProduct = fallbackFirebase;
-      } else {
-        try {
-          rawProduct = JSON.parse(stored);
-        } catch {
-          rawProduct = fallbackFirebase;
+      let rawProduct: FirebaseProduct | null = null;
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const asinParam = params.get("asin");
+        if (db && asinParam) {
+          const snap = await getDoc(doc(db, "products", asinParam));
+          if (snap.exists()) {
+            const data = snap.data() as FirebaseProduct;
+            rawProduct = { ...data, ASIN: asinParam };
+          }
         }
+      } catch (err) {
+        console.error("Gagal ambil produk dari Firestore:", err);
+      }
+
+      if (!rawProduct) {
+        // Fallback jika tidak ada param atau dokumen tidak ada
+        try {
+          if (db) {
+            const q = query(collection(db, "products"), limit(1));
+            const s = await getDocs(q);
+            if (!s.empty) {
+              const d = s.docs[0];
+              rawProduct = { ...(d.data() as FirebaseProduct), ASIN: d.id };
+            }
+          }
+        } catch {}
+      }
+
+      if (!rawProduct) {
+        rawProduct = fallbackFirebase;
       }
 
       setFirebaseProduct(rawProduct);
@@ -358,9 +235,7 @@ export default function BuyingPage() {
       if (db && rawProduct.toko && rawProduct.kategori) {
         await fetchStoreData(rawProduct.toko, rawProduct.kategori);
       } else {
-        const fallbackKey = normalize(rawProduct.toko || "karyanusantara");
-        const fallbackStore = REAL_STORES[fallbackKey] || REAL_STORES["karyanusantara"];
-        setStoreData(fallbackStore);
+        setStoreData(null);
         setLoadingStore(false);
       }
 
@@ -380,13 +255,7 @@ export default function BuyingPage() {
 
   // === FETCH TOKO DARI FIRESTORE ===
   const fetchStoreData = async (namaToko: string, kategoriProduk: string) => {
-    if (!db) {
-      const fallbackKey = normalize(namaToko);
-      const fallbackStore = REAL_STORES[fallbackKey] || REAL_STORES["karyanusantara"];
-      setStoreData(fallbackStore);
-      setLoadingStore(false);
-      return;
-    }
+    if (!db) { setStoreData(null); setLoadingStore(false); return; }
 
     setLoadingStore(true);
     try {
@@ -402,16 +271,12 @@ export default function BuyingPage() {
         const store = snapshot.docs[0].data() as FirebaseStore;
         setStoreData(store);
       } else {
-        console.log(`Toko "${namaToko}" tidak ditemukan di kategori "${kategoriProduk}" → pakai fallback`);
-        const fallbackKey = normalize(namaToko);
-        const fallbackStore = REAL_STORES[fallbackKey] || REAL_STORES["karyanusantara"];
-        setStoreData(fallbackStore);
+        console.log(`Toko "${namaToko}" tidak ditemukan di kategori "${kategoriProduk}"`);
+        setStoreData(null);
       }
     } catch (err) {
       console.error("Gagal fetch toko:", err);
-      const fallbackKey = normalize(namaToko);
-      const fallbackStore = REAL_STORES[fallbackKey] || REAL_STORES["karyanusantara"];
-      setStoreData(fallbackStore);
+      setStoreData(null);
     } finally {
       setLoadingStore(false);
     }
@@ -549,7 +414,9 @@ export default function BuyingPage() {
         @media (min-width: 769px) { .product-title { font-size: 22px; -webkit-line-clamp: 2; } }
 
         .rating-reviews { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-        .stars { color: #fbbf24; font-size: 16px; font-weight: 600; }
+        .sold { color: #0ea5e9; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; }
+        .sold .icon { color: #0ea5e9; }
+        .sold-text { color: #334155; font-size: 13px; font-weight: 600; }
         .rating-text { color: #64748b; font-weight: 500; }
 
         .price-section { display: flex; align-items: baseline; gap: 10px; margin: 8px 0; }
@@ -622,8 +489,10 @@ export default function BuyingPage() {
             <div className="details-section">
               <h1 className="product-title">{displayProduct.product_title}</h1>
               <div className="rating-reviews">
-                <div className="stars">{stars}</div>
-                <span className="rating-text">{displayProduct.product_star_rating} ({displayProduct.product_num_ratings} Reviews)</span>
+                <div className="sold">
+                  <ShoppingCart size={16} className="icon" />
+                  <span className="sold-text">{displayProduct.product_sold || "Baru"}</span>
+                </div>
               </div>
               <div className="price-section">
                 <div className="current-price">{displayProduct.product_price}</div>

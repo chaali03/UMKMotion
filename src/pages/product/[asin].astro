@@ -1,15 +1,13 @@
 ---
-import LandingPageLayout from '../../layouts/LandingPageLayout.astro';
-import NavbarHome from '../../../Home/NavbarHome/NavbarHome.tsx';
-import ProductDetailPage from '../../components/ProductDetail/ProductDetailPage.tsx';
+import Layout from '../../layouts/HomepageLayout.astro';
+import ProductDetailPage from '../../../components/ProductDetail/ProductDetailPage.tsx';
 
 export const prerender = false;
 
 const { asin } = Astro.params;
 ---
 
-<LandingPageLayout title={`Detail Produk - UMKMotion`} description="Detail produk lengkap dengan variant, rating, dan ulasan">
-  <NavbarHome client:load />
+<Layout title={`Detail Produk - UMKMotion`} description="Detail produk lengkap dengan variant, rating, dan ulasan">
   <script>
     // Redirect semua /product/:asin ke /BuyingPage agar konsisten
     (function() {

@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
+import QRCode from "qrcode";
 import { motion, AnimatePresence } from "framer-motion";
 import { auth, db, storage } from "../../src/lib/firebase";
 import { onAuthStateChanged, updateProfile, sendPasswordResetEmail, signOut } from "firebase/auth";
@@ -82,46 +83,39 @@ export default function ProfilePage() {
   const [totpQRCode, setTotpQRCode] = useState<string>("");
   const [totpCode, setTotpCode] = useState<string>("");
   const [isSettingUpTOTP, setIsSettingUpTOTP] = useState(false);
-  const [activities, setActivities] = useState<Array<{ id: string; type: string; title?: string; store?: string | null; storeId?: string | null; productASIN?: string | null; productName?: string | null; category?: string | null; image?: string | null; consultantId?: number | null; consultantName?: string | null; createdAt?: Date | null }>>([]);
+  const [showTOTPLoginPrompt, setShowTOTPLoginPrompt] = useState(false);
+  const [loginOTPCode, setLoginOTPCode] = useState<string>("");
+  const [isVerifyingLoginOTP, setIsVerifyingLoginOTP] = useState(false);
+  const [postLoginIdToken, setPostLoginIdToken] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+  const [activities, setActivities] = useState<any[]>([]);
   const [historyTab, setHistoryTab] = useState<'all' | 'product' | 'visit' | 'consultation'>('all');
   
-  // Sidebar State
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Security Tips Data
   const securityTips: SecurityTip[] = [
-    { 
-      icon: Shield, 
-      color: 'blue', 
-      bgColor: 'bg-blue-50', 
-      textColor: 'text-blue-600',
-      title: 'Password Kuat', 
-      desc: 'Gunakan kombinasi huruf, angka, dan simbol' 
-    },
-    { 
-      icon: Smartphone, 
-      color: 'green', 
-      bgColor: 'bg-green-50', 
-      textColor: 'text-green-600',
-      title: 'Aktifkan 2FA', 
-      desc: 'Lapisan keamanan tambahan dengan kode' 
-    },
-    { 
-      icon: Key, 
-      color: 'purple', 
-      bgColor: 'bg-purple-50', 
+    {
+      icon: ShieldCheck,
+      color: 'purple',
+      bgColor: 'bg-purple-50',
       textColor: 'text-purple-600',
-      title: 'Update Password', 
-      desc: 'Ganti password secara berkala' 
+      title: 'Update Password',
+      desc: 'Ganti password secara berkala'
     },
-    { 
-      icon: AlertTriangle, 
-      color: 'orange', 
-      bgColor: 'bg-orange-50', 
+    {
+      icon: AlertTriangle,
+      color: 'orange',
+      bgColor: 'bg-orange-50',
       textColor: 'text-orange-600',
-      title: 'Jaga Kerahasiaan', 
-      desc: 'Jangan bagikan info login' 
+      title: 'Jaga Kerahasiaan',
+      desc: 'Jangan bagikan info login'
+    },
+    {
+      icon: Smartphone,
+      color: 'blue',
+      bgColor: 'bg-blue-50',
+      textColor: 'text-blue-600',
+      title: 'Aktifkan 2FA',
+      desc: 'Gunakan aplikasi Authenticator untuk keamanan ekstra'
     },
   ];
 
@@ -174,22 +168,11 @@ export default function ProfilePage() {
 
       setCurrentUser(user);
       setCanEdit(true);
-      
-      (async () => {
-        try {
-          const idToken = await user.getIdToken(false);
-          const sessionResp = await fetch('/api/session-login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ idToken })
-          });
-        } catch (e) {}
-      })().catch(() => {});
 
+      // Fetch user data to determine if 2FA is enabled before creating session cookie
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const userData = userDoc.exists() ? userDoc.data() : {};
-      
+
       setProfileData({
         nickname: userData.nickname || "",
         fullName: userData.fullName || "",
@@ -201,6 +184,25 @@ export default function ProfilePage() {
         securityScore: userData.securityScore || 0
       });
 
+      try {
+        const idToken = await user.getIdToken(false);
+        if (userData.twoFactorEnabled) {
+          // Require OTP verification before creating session cookie
+          setPostLoginIdToken(idToken);
+          setShowTOTPLoginPrompt(true);
+        } else {
+          // No 2FA enabled: create session cookie immediately
+          await fetch('/api/session-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ idToken })
+          });
+        }
+      } catch (e) {
+        // ignore
+      }
+
       const [userBadgesData, badgesData, statsData] = await Promise.all([
         getUserBadges(user.uid),
         fetchAllBadges(),
@@ -210,15 +212,15 @@ export default function ProfilePage() {
       setUserBadges(userBadgesData);
       setBadges(badgesData);
       setGamificationStats(statsData);
-      
+
+      // **FIX ERROR 1**: Load activities properly
       try {
-        let acts: any[] = [];
-        
+        let loadedActivities: any[] = [];
         if (db) {
           try {
             const q = query(collection(db, 'users', user.uid, 'activities'), orderBy('createdAt', 'desc'), limit(50));
             const snap = await getDocs(q);
-            acts = snap.docs.map(d => {
+            loadedActivities = snap.docs.map(d => {
               const data: any = d.data();
               const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : null;
               return {
@@ -229,34 +231,21 @@ export default function ProfilePage() {
                 storeId: data.storeId || null,
                 productASIN: data.productASIN || null,
                 productName: data.productName || null,
-                category: data.category || null,
-                image: data.image || null,
-                consultantId: data.consultantId || null,
                 consultantName: data.consultantName || null,
-                createdAt
+                image: data.image || null,
+                category: data.category || null,
+                createdAt,
               };
             });
-          } catch (firestoreError) {
-            console.warn('Firestore activities fetch failed, using localStorage:', firestoreError);
+          } catch (e) {
+            console.warn('Failed to load activities from Firestore:', e);
           }
         }
-        
-        if (acts.length === 0) {
-          try {
-            const localActivities = JSON.parse(localStorage.getItem('user_activities') || '[]');
-            acts = localActivities.map((a: any) => ({
-              ...a,
-              createdAt: a.createdAt ? new Date(a.createdAt) : new Date()
-            })).slice(0, 50);
-          } catch (localError) {
-            console.warn('Failed to load activities from localStorage:', localError);
-          }
-        }
-        
-        setActivities(acts);
+        setActivities(loadedActivities);
       } catch (e) {
         console.warn('Failed to load activities:', e);
       }
+      
       setLoading(false);
     });
 
@@ -299,8 +288,8 @@ export default function ProfilePage() {
         const issuer = encodeURIComponent('UMKMotion');
         const account = encodeURIComponent(currentUser.email || currentUser.uid || 'user');
         const otpAuthUrl = `otpauth://totp/${issuer}:${account}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
-        const qrUrl = `https://chart.googleapis.com/chart?chs=220x220&cht=qr&chl=${encodeURIComponent(otpAuthUrl)}`;
-        setTotpQRCode(qrUrl);
+        const dataUrl = await QRCode.toDataURL(otpAuthUrl, { width: 220, margin: 1 });
+        setTotpQRCode(dataUrl);
       } catch {
         setTotpQRCode('');
       }
@@ -390,6 +379,38 @@ export default function ProfilePage() {
       setModalTitle('Error TOTP');
       setModalMessage('Gagal menyimpan konfigurasi TOTP.');
       setShowErrorModal(true);
+    }
+  };
+
+  // Verify OTP during login to create session cookie
+  const handleVerifyLoginTOTP = async () => {
+    if (!postLoginIdToken) return;
+    setIsVerifyingLoginOTP(true);
+    try {
+      const resp = await fetch('/api/verify-totp-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ idToken: postLoginIdToken, otp: loginOTPCode })
+      });
+      if (resp.ok) {
+        setShowTOTPLoginPrompt(false);
+        setLoginOTPCode("");
+        setModalTitle('Login Berhasil');
+        setModalMessage('Verifikasi 2FA sukses. Sesi aman telah dibuat.');
+        setShowSuccessModal(true);
+      } else {
+        const data = await resp.json().catch(() => ({ error: 'Verifikasi gagal' }));
+        setModalTitle('Verifikasi Gagal');
+        setModalMessage(data.error || 'Kode OTP tidak valid atau kedaluwarsa. Coba lagi.');
+        setShowErrorModal(true);
+      }
+    } catch (e) {
+      setModalTitle('Kesalahan Jaringan');
+      setModalMessage('Tidak dapat memverifikasi OTP. Periksa koneksi Anda dan coba lagi.');
+      setShowErrorModal(true);
+    } finally {
+      setIsVerifyingLoginOTP(false);
     }
   };
 
@@ -1234,269 +1255,39 @@ export default function ProfilePage() {
                       <Star className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400 flex-shrink-0" />
                       <span>Semua Badge Tersedia ({badges.length})</span>
                     </h3>
-                    
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
-                      {badges.map((badge) => {
-                        const isEarned = userBadges.some(ub => ub.badgeId === badge.id);
-                        
-                        return (
+
+                    {badges.length === 0 ? (
+                      <div className="text-center py-6 sm:py-8 text-slate-500">
+                        <Award className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3 text-slate-300" />
+                        <p className="text-sm sm:text-base">Belum ada badge tersedia</p>
+                        <p className="text-xs sm:text-sm">Tunggu pembaruan konten untuk melihat badge baru.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+                        {badges.map((badge) => (
                           <div
                             key={badge.id}
-                            className={`relative p-3 sm:p-4 rounded-xl border-2 text-center transition-all duration-300 ${isEarned ? `${getRarityColor(badge.rarity)} shadow-lg` : "border-slate-200 opacity-60 hover:opacity-80"}`}
+                            className="relative p-3 sm:p-4 rounded-xl border-2 text-center transition-all duration-300 hover:scale-105 active:scale-100 border-slate-200"
                           >
-                            {isEarned && (
-                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                                <CheckCircle className="w-3 h-3 text-white" />
-                              </div>
-                            )}
-                            
                             <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">{badge.icon}</div>
                             <h4 className="font-semibold text-slate-900 text-xs sm:text-sm mb-0.5 line-clamp-1">{badge.name}</h4>
                             <p className="text-[10px] sm:text-xs text-slate-600 mb-1 line-clamp-2">{badge.description}</p>
-                            
-                            <div className="flex items-center justify-center gap-0.5 text-[10px] sm:text-xs text-slate-500">
+                            <div className="flex items-center justify-center gap-0.5 text-[10px] sm:text-xs text-slate-500 mb-1">
                               <Zap className="w-3 h-3 text-yellow-500" />
                               <span>{badge.points} poin</span>
                             </div>
+                            <div className="text-[10px] sm:text-xs text-slate-500 capitalize">{badge.rarity}</div>
                           </div>
-                        );
-                      })}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
             </>
           )}
 
-          {/* History Menu */}
-          {activeMenu === 'history' && (
-            <div className="space-y-4 sm:space-y-6">
-              {/* History Header */}
-              <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-4 sm:p-6 shadow-sm border border-orange-100">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <History className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg sm:text-xl font-bold text-slate-900">Riwayat Aktivitas</h3>
-                      <p className="text-xs sm:text-sm text-slate-600">Lihat semua aktivitas Anda di UMKMotion</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl sm:text-3xl font-bold text-orange-600">{activities.length}</div>
-                    <div className="text-xs text-slate-600">aktivitas</div>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { id: 'all', label: 'Semua', icon: History, color: 'slate' },
-                    { id: 'product', label: 'Produk Dilihat', icon: FileText, color: 'blue' },
-                    { id: 'visit', label: 'UMKM Dikunjungi', icon: Store, color: 'orange' },
-                    { id: 'consultation', label: 'Konsultasi', icon: Phone, color: 'purple' },
-                  ].map(t => {
-                    const Icon = t.icon;
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => setHistoryTab(t.id as any)}
-                        className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold border-2 transition-all ${
-                          historyTab === t.id 
-                            ? (t.color === 'slate' ? 'bg-slate-600 text-white border-slate-600' :
-                               t.color === 'blue' ? 'bg-blue-600 text-white border-blue-600' :
-                               t.color === 'orange' ? 'bg-orange-600 text-white border-orange-600' :
-                               'bg-purple-600 text-white border-purple-600') + ' shadow-lg transform scale-105'
-                            : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50' + (
-                              t.color === 'orange' ? ' hover:border-orange-400 hover:bg-orange-50' :
-                              t.color === 'purple' ? ' hover:border-purple-400 hover:bg-purple-50' :
-                              t.color === 'blue' ? ' hover:border-blue-400 hover:bg-blue-50' :
-                              ''
-                            )
-                        }`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        <span className="hidden sm:inline">{t.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Activity List */}
-              <div className="space-y-3">
-                {activities.length === 0 ? (
-                  <div className="bg-white rounded-2xl p-8 sm:p-12 shadow-sm border border-slate-200 text-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <History className="w-10 h-10 text-slate-400" />
-                    </div>
-                    <h4 className="text-base sm:text-lg font-bold text-slate-900 mb-2">Belum Ada Aktivitas</h4>
-                    <p className="text-sm text-slate-600 mb-6">Jelajahi produk, kunjungi UMKM, atau chat dengan konsultan untuk mengisi riwayat Anda</p>
-                    <div className="flex flex-wrap justify-center gap-3">
-                      <a href="/etalase" className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold text-sm hover:bg-orange-600 transition">
-                        Jelajahi Produk
-                      </a>
-                      <a href="/rumah-umkm" className="px-4 py-2 bg-white border-2 border-orange-500 text-orange-500 rounded-lg font-semibold text-sm hover:bg-orange-50 transition">
-                        Kunjungi UMKM
-                      </a>
-                      <a href="/ConsultantPage" className="px-4 py-2 bg-white border-2 border-purple-500 text-purple-500 rounded-lg font-semibold text-sm hover:bg-purple-50 transition">
-                        Chat Konsultan
-                      </a>
-                    </div>
-                  </div>
-                ) : (
-                  activities
-                    .filter(a => {
-                      if (historyTab === 'all') return true;
-                      if (historyTab === 'product') return a.type === 'product_view' || a.type === 'purchase' || a.type === 'review' || !!a.productASIN;
-                      if (historyTab === 'visit') return a.type === 'visit';
-                      if (historyTab === 'consultation') return a.type === 'consult_chat' || a.type === 'consult_chat_message';
-                      return true;
-                    })
-                    .map((a, idx) => {
-                      const getActivityIcon = () => {
-                        if (a.type === 'visit') return Store;
-                        if (a.type.startsWith('consult_')) return Phone;
-                        return FileText;
-                      };
-                      const getActivityColor = () => {
-                        if (a.type === 'visit') return 'orange';
-                        if (a.type.startsWith('consult_')) return 'purple';
-                        return 'blue';
-                      };
-                      const getActivityTitle = () => {
-                        if (a.title) return a.title;
-                        if (a.type === 'visit') return `Kunjungi ${a.store || 'UMKM'}`;
-                        if (a.type.startsWith('consult_')) return `Konsultasi dengan ${a.consultantName || 'Konsultan'}`;
-                        if (a.productASIN) return a.productName || 'Produk Dilihat';
-                        return 'Aktivitas';
-                      };
-                      const formatTime = (date: Date | null | undefined) => {
-                        if (!date) return 'Baru saja';
-                        const now = new Date();
-                        const diff = now.getTime() - date.getTime();
-                        const minutes = Math.floor(diff / 60000);
-                        const hours = Math.floor(diff / 3600000);
-                        const days = Math.floor(diff / 86400000);
-                        if (minutes < 1) return 'Baru saja';
-                        if (minutes < 60) return `${minutes} menit lalu`;
-                        if (hours < 24) return `${hours} jam lalu`;
-                        if (days < 7) return `${days} hari lalu`;
-                        return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-                      };
-                      
-                      const Icon = getActivityIcon();
-                      const color = getActivityColor();
-                      
-                      const getColorClasses = () => {
-                        if (color === 'orange') {
-                          return {
-                            bgGradient: 'from-orange-100 to-orange-200',
-                            border: 'border-orange-300',
-                            icon: 'text-orange-600',
-                            badge: 'bg-orange-500',
-                            button: 'from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700'
-                          };
-                        } else if (color === 'purple') {
-                          return {
-                            bgGradient: 'from-purple-100 to-purple-200',
-                            border: 'border-purple-300',
-                            icon: 'text-purple-600',
-                            badge: 'bg-purple-500',
-                            button: 'from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700'
-                          };
-                        } else {
-                          return {
-                            bgGradient: 'from-blue-100 to-blue-200',
-                            border: 'border-blue-300',
-                            icon: 'text-blue-600',
-                            badge: 'bg-blue-500',
-                            button: 'from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
-                          };
-                        }
-                      };
-                      
-                      const colorClasses = getColorClasses();
-                      
-                      return (
-                        <motion.div
-                          key={a.id || idx}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05 }}
-                          onClick={() => openActivity(a)}
-                          className="group bg-white rounded-xl p-3 sm:p-4 shadow-sm border-2 border-slate-200 hover:border-orange-300 hover:shadow-lg cursor-pointer transition-all duration-300"
-                        >
-                          <div className="flex items-start gap-3 sm:gap-4">
-                            {/* Icon & Image */}
-                            <div className="relative flex-shrink-0">
-                              {a.image ? (
-                                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 border-slate-200 group-hover:border-orange-300 transition">
-                                  <img 
-                                    src={a.image} 
-                                    alt="" 
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).style.display = 'none';
-                                    }}
-                                  />
-                                </div>
-                              ) : (
-                                <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br ${colorClasses.bgGradient} flex items-center justify-center border-2 ${colorClasses.border} group-hover:scale-110 transition-transform duration-300`}>
-                                  <Icon className={`w-7 h-7 sm:w-8 sm:h-8 ${colorClasses.icon}`} />
-                                </div>
-                              )}
-                              <div className={`absolute -top-1 -right-1 w-6 h-6 ${colorClasses.badge} rounded-full flex items-center justify-center border-2 border-white shadow-lg`}>
-                                <Icon className="w-3 h-3 text-white" />
-                              </div>
-                            </div>
-                            
-                            {/* Content */}
-                            <div className="flex-1 min-w-0">
-                              <h4 className="text-sm sm:text-base font-bold text-slate-900 mb-1 group-hover:text-orange-600 transition line-clamp-2">
-                                {getActivityTitle()}
-                              </h4>
-                              <div className="flex flex-wrap items-center gap-2 mb-2">
-                                {a.category && (
-                                  <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded-md text-[10px] sm:text-xs font-medium">
-                                    {a.category}
-                                  </span>
-                                )}
-                                {a.store && (
-                                  <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-md text-[10px] sm:text-xs font-medium flex items-center gap-1">
-                                    <Store className="w-3 h-3" />
-                                    {a.store}
-                                  </span>
-                                )}
-                                {a.consultantName && (
-                                  <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-[10px] sm:text-xs font-medium flex items-center gap-1">
-                                    <Phone className="w-3 h-3" />
-                                    {a.consultantName}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs text-slate-500 flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {formatTime(a.createdAt)}
-                                </span>
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); openActivity(a); }}
-                                  className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg bg-gradient-to-r ${colorClasses.button} text-white text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-1`}
-                                >
-                                  Buka
-                                  <ChevronRight className="w-3 h-3" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })
-                )}
-              </div>
-            </div>
-          )}
-
+          {/* **FIX ERROR 3 & 4**: Use activeMenu instead of activeTab */}
           {/* Pricing */}
           {activeMenu === 'pricing' && (
             <div className="-mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8">
@@ -1508,8 +1299,17 @@ export default function ProfilePage() {
           {activeMenu === 'store' && (
             <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8 text-center">
               <Store size={40} className="mx-auto text-gray-300 mb-3" />
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 capitalize">store Coming Soon</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 capitalize">Store Coming Soon</h3>
               <p className="text-sm text-gray-600">Halaman store akan segera hadir.</p>
+            </div>
+          )}
+
+          {/* History (placeholder) */}
+          {activeMenu === 'history' && (
+            <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8 text-center">
+              <History size={40} className="mx-auto text-gray-300 mb-3" />
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">Riwayat Coming Soon</h3>
+              <p className="text-sm text-gray-600">Halaman riwayat akan segera hadir.</p>
             </div>
           )}
         </div>
@@ -1569,6 +1369,53 @@ export default function ProfilePage() {
                     className="flex-1 px-4 py-2 sm:py-2.5 bg-slate-800 text-white rounded-lg font-medium text-sm hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition active:scale-95"
                   >
                     Verifikasi
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showTOTPLoginPrompt && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+            >
+              <div className="text-center mb-4">
+                <ShieldCheck className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-slate-800 mb-2" />
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">Verifikasi 2FA</h3>
+                <p className="text-xs sm:text-sm text-gray-600">Masukkan kode dari aplikasi Authenticator untuk melanjutkan.</p>
+              </div>
+              <div className="space-y-3 sm:space-y-4">
+                <div>
+                  <label className="block text-xs sm:text-sm text-gray-600 font-medium mb-2">Kode 6 digit</label>
+                  <input
+                    type="text"
+                    value={loginOTPCode}
+                    onChange={(e) => setLoginOTPCode(e.target.value.replace(/\D/g, '').slice(0,6))}
+                    placeholder="123456"
+                    maxLength={6}
+                    className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-lg text-center text-lg sm:text-xl font-mono tracking-widest focus:ring-2 focus:ring-slate-800 focus:border-transparent"
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    onClick={() => { setShowTOTPLoginPrompt(false); setLoginOTPCode(''); }}
+                    className="flex-1 px-4 py-2 sm:py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors active:scale-95"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleVerifyLoginTOTP}
+                    disabled={loginOTPCode.length !== 6 || isVerifyingLoginOTP}
+                    className="flex-1 px-4 py-2 sm:py-2.5 bg-slate-800 text-white rounded-lg font-medium text-sm hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition active:scale-95"
+                  >
+                    {isVerifyingLoginOTP ? 'Memverifikasi...' : 'Verifikasi'}
                   </button>
                 </div>
               </div>

@@ -301,6 +301,21 @@ const ConsultantHomePage: React.FC = () => {
     return () => unsub();
   }, []);
 
+  // Baca query ?chat=<id> untuk langsung membuka chat di halaman konsultan
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const chatIdRaw = params.get('chat');
+    const chatId = chatIdRaw ? Number(chatIdRaw) : NaN;
+    if (Number.isFinite(chatId)) {
+      const c = CONSULTANTS.find((x) => x.id === chatId);
+      if (c) {
+        setSelectedConsultant(c);
+        setShowChatPage(true);
+      }
+    }
+  }, []);
+
   const showToast = (type: 'favorite' | 'share', title: string, message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newToast = { id, type, title, message };
@@ -383,6 +398,16 @@ const ConsultantHomePage: React.FC = () => {
     } else {
       favorites.push({ ...consultant, favoriteType: 'consultant', dateAdded: new Date().toISOString() });
       showToast('favorite', 'Ditambahkan ke Favorit!', consultant.name);
+
+      // Setelah ditambahkan ke favorit, langsung arahkan ke halaman chat
+      // Gunakan route Astro yang sudah ada: /ConsultantChat?consultant=<id>
+      try {
+        const url = `/ConsultantPage?chat=${encodeURIComponent(consultant.id)}`;
+        // Simpan penanda terakhir agar fitur riwayat/aktivitas tetap bisa membaca
+        localStorage.setItem('lastConsultantChatId', String(consultant.id));
+        // Redirect ke halaman chat konsultan yang sama persis
+        window.location.href = url;
+      } catch {}
     }
 
     localStorage.setItem("consultantFavorites", JSON.stringify(favorites));
