@@ -149,19 +149,19 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
       description: "Halaman utama UMKMotion"
     },
     { 
-      href: "", 
+      href: "/etalase", 
       label: "Etalase", 
       icon: Store,
       description: "Lihat produk UMKM"
     },
     { 
-      href: "", 
+      href: "/rumah-umkm", 
       label: "Rumah UMKM", 
       icon: Building2,
       description: "Informasi tentang UMKM"
     },
     { 
-      href: "", 
+      href: "/ConsultantPage", 
       label: "Konsultasi", 
       icon: Lightbulb,
       description: "Konsultasi bisnis UMKM"
