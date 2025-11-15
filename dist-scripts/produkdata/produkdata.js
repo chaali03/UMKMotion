@@ -2606,6 +2606,9 @@ export async function seedProduk() {
         const tags = chosenDiscount > 0
             ? ([`Diskon ${chosenDiscount}%`, ...baseTags])
             : baseTags;
+        // Nilai favorit/likes dan interaksi deterministik per index
+        const likes = 30 + ((idx * 97) % 970); // 30..999
+        const interactions = 120 + ((idx * 53) % 3800); // 120..3919
         return {
             ...rest,
             harga_asli,
@@ -2613,6 +2616,11 @@ export async function seedProduk() {
             persentase_diskon: chosenDiscount,
             upload_at: d.toISOString().slice(0, 10), // YYYY-MM-DD dalam 2025 dan <= 2025-11-13
             tags,
+            // metrik favorit/keterlibatan
+            likes,
+            favorites: likes,
+            hearts: likes,
+            interactions,
         };
     });
     await uploadProducts(productsWithUpload);

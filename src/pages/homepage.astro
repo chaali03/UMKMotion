@@ -1,7 +1,6 @@
 ---
 import Layout from '../layouts/HomepageLayout.astro';
-import NavbarHome from '../../Home/NavbarHome/NavbarHome.tsx';
-import HomepageDashboard from '../../Home/homepage.tsx';
+import NavbarHome from '../../Home/NavbarHome/NavbarHome.tsx';;
 import { getAdminAuth } from '../lib/firebaseAdmin';
 
 export const prerender = false;
@@ -17,6 +16,6 @@ import "../styles/global.css";
   <NavbarHome slot="header" client:load />
   
   <main style="margin-top: 80px;">
-    <HomepageDashboard client:load />
+
   </main>
 </Layout>

@@ -49,8 +49,8 @@ export default defineConfig({
         /** @type {any} */ (viteCompression({ algorithm: 'gzip' })),
       ] : []),
     ],
-    // Store Vite cache in system temp to avoid OneDrive/AV file locks on Windows
-    cacheDir: path.resolve(os.tmpdir(), 'umkmotion-vite-cache'),
+    // Use a stable cache directory to avoid OS temp purges causing outdated optimize dep errors
+    cacheDir: path.resolve(process.cwd(), 'node_modules/.vite'), 
     server: {
       // OneDrive can lock files; polling reduces EPERM rename races
       watch: { usePolling: true, interval: 500 },
@@ -82,9 +82,21 @@ export default defineConfig({
         'three', 
         'firebase/app', 
         'firebase/auth', 
-        'firebase/firestore'
+        'firebase/firestore',
+        'firebase/storage',
+        // Ensure vaul is pre-bundled to avoid 504 Outdated Optimize Dep
+        'vaul',
+        // Ensure Motion (Framer Motion v12 package) is pre-bundled
+        'motion',
+        'motion/react'
       ],
-      force: true
+      // Force re-optimize on dev startup to invalidate any stale cache
+      force: true,
+      // Let Vite decide when to re-optimize to avoid frequent invalidations
+    },
+    // Ensure SSR bundles vaul instead of treating it as external
+    ssr: {
+      noExternal: ['vaul', 'motion']
     },
     resolve: {
       dedupe: ['react', 'react-dom'],

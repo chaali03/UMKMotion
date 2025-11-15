@@ -1,0 +1,12 @@
+---
+import FavoritesPage from "../components/Favorites/FavoritesPage.tsx";
+import NavbarSwitcher from "../components/NavbarSwitcher.tsx";
+import LandingPageLayout from "../layouts/LandingPageLayout.astro";
+---
+
+<LandingPageLayout title="Daftar Favorit - UMKMotion">
+  <NavbarSwitcher client:load />
+  <main class="min-h-screen pt-20">
+    <FavoritesPage client:load />
+  </main>
+</LandingPageLayout>
