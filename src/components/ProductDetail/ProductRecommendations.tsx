@@ -1,5 +1,5 @@
 // src/components/ProductDetail/ProductRecommendations.tsx
-'use client';
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
@@ -28,23 +28,17 @@ export default function ProductRecommendations() {
   const [loading, setLoading] = useState(true);
   const [currentProduct, setCurrentProduct] = useState<any>(null);
 
-  // Baca produk yang lagi dibuka dari localStorage (sama kayak BuyComponent kamu)
   useEffect(() => {
     const loadCurrentProduct = () => {
       try {
         const stored = localStorage.getItem("selectedProduct");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setCurrentProduct(parsed);
-        }
+        if (stored) setCurrentProduct(JSON.parse(stored));
       } catch (err) {
-        console.error("Gagal baca selectedProduct:", err);
+        console.error(err);
       }
     };
 
     loadCurrentProduct();
-
-    // Update kalau user ganti produk dari rekomendasi lain
     window.addEventListener("storage", loadCurrentProduct);
     return () => window.removeEventListener("storage", loadCurrentProduct);
   }, []);
@@ -67,11 +61,10 @@ export default function ProductRecommendations() {
   };
 
   const generateBonus = () => {
-    const bonuses = ["Gratis Ongkir", "Hadiah Gratis", "Cashback 10%", "Beli 1 Gratis 1", "Diskon Member"];
+    const bonuses = ["Gratis Ongkir", "Hadiah Gratis", "Cashback 10%", "Beli 1 Gratis 1", "Bonus Member"];
     return bonuses[Math.floor(Math.random() * bonuses.length)];
   };
 
-  // Fetch rekomendasi
   useEffect(() => {
     if (!currentProduct?.kategori || !currentProduct?.ASIN || !db) {
       setLoading(false);
@@ -85,9 +78,9 @@ export default function ProductRecommendations() {
           collection(db, "products"),
           where("kategori", "==", currentProduct.kategori)
         );
-        const snap = await getDocs(q);
 
-        let products: Product[] = snap.docs
+        const snap = await getDocs(q);
+        let products = snap.docs
           .map((doc) => ({ ...doc.data(), ASIN: doc.id } as Product))
           .filter((p) => p.ASIN !== currentProduct.ASIN);
 
@@ -98,8 +91,8 @@ export default function ProductRecommendations() {
           product_price: formatToIDR(p.harga_produk),
         }));
 
-        const shuffled = products.sort(() => 0.5 - Math.random()).slice(0, 6);
-        setRecommendations(shuffled);
+        const selected = products.sort(() => 0.5 - Math.random()).slice(0, 6);
+        setRecommendations(selected);
       } catch (err) {
         console.error("Error fetch rekomendasi:", err);
       } finally {
@@ -110,63 +103,79 @@ export default function ProductRecommendations() {
     fetchRecs();
   }, [currentProduct?.kategori, currentProduct?.ASIN]);
 
-  // Klik rekomendasi → ganti produk utama
   const handleClick = (item: Product) => {
     localStorage.setItem("selectedProduct", JSON.stringify(item));
     window.scrollTo(0, 0);
-    window.location.reload(); // atau pake router.refresh() kalau pake Next.js
+    window.location.reload();
   };
 
   if (loading) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Mencari produk serupa...</p>
-      </div>
-    );
+    return <div className=" py-16 text-gray-500">Mencari produk serupa...</div>;
   }
 
-  if (recommendations.length === 0) {
-    return null;
-  }
+  if (recommendations.length === 0) return null;
 
   return (
     <>
-      <style >{`
-        .rec-title {
-          font-size: 20px;
-          font-weight: 700;
-          margin: 0 0 24px;
+      <style>{`
+        .section-title {
+          font-size: 22px;
+          font-weight: 800;
+          margin: 0 0 28px;
           color: #0f172a;
+          text-align: left !important;  /* FIX: supaya ga center */
         }
         .rec-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
           gap: 20px;
+          max-width: 1200px;
+          margin: 0 auto;
         }
-        .rec-card {
-          border: 1px solid #e2e8f0;
-          border-radius: 16px;
-          overflow: hidden;
+        .card {
           background: white;
+          border-radius: 18px;
+          overflow: hidden;
+          box-shadow: 0 6px 20px rgba(0,0,0,0.08);
           transition: all 0.3s ease;
           cursor: pointer;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+          position: relative;
         }
-        .rec-card:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 16px 32px rgba(0,0,0,0.12);
-          border-color: #10b981;
+        .card:hover {
+          transform: translateY(-10px);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
-        .rec-img {
+        .img-wrap {
+          position: relative;
+          height: 200px;
+          overflow: hidden;
+        }
+        .img-wrap img {
           width: 100%;
-          height: 180px;
+          height: 100%;
           object-fit: cover;
+          transition: transform 0.4s ease;
         }
-        .rec-info {
-          padding: 14px;
+        .card:hover .img-wrap img {
+          transform: scale(1.1);
         }
-        .rec-name {
-          font-size: 14px;
+        .discount {
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          background: #ef4444;
+          color: white;
+          font-size: 12px;
+          font-weight: 800;
+          padding: 6px 10px;
+          border-radius: 12px;
+          z-index: 10;
+        }
+        .info {
+          padding: 16px;
+        }
+        .name {
+          font-size: 15px;
           font-weight: 600;
           color: #1e293b;
           line-height: 1.4;
@@ -174,87 +183,64 @@ export default function ProductRecommendations() {
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
-          margin-bottom: 6px;
+          margin-bottom: 8px;
         }
-        .rec-price {
-          font-size: 16px;
+        .price {
+          font-size: 17px;
           font-weight: 800;
           color: #dc2626;
         }
-        .rec-meta {
+        .meta {
           font-size: 12px;
           color: #64748b;
-          margin-top: 4px;
-        }
-        .bonus {
-          background: #fef3c7;
-          color: #92400e;
-          font-size: 10px;
-          font-weight: 700;
-          padding: 3px 8px;
-          border-radius: 8px;
-          display: inline-block;
           margin-top: 6px;
         }
-        .discount-badge {
-          position: absolute;
-          top: 12px;
-          left: 12px;
-          background: #ef4444;
+        .bonus {
+          background: linear-gradient(135deg, #fbbf24, #f59e0b);
           color: white;
           font-size: 11px;
-          font-weight: 800;
-          padding: 4px 8px;
+          font-weight: 700;
+          padding: 4px 10px;
           border-radius: 8px;
-        }
-        .img-wrapper {
-          position: relative;
+          display: inline-block;
+          margin-top: 8px;
         }
         @media (max-width: 768px) {
           .rec-grid {
             grid-template-columns: repeat(2, 1fr);
             gap: 16px;
           }
-          .rec-img { height: 140px; }
+          .img-wrap { height: 160px; }
         }
       `}</style>
 
-      <div>
-        <h2 className="rec-title">PRODUK LAIN DARI KATEGORI INI</h2>
+      <div style={{ marginTop: "60px", padding: "0 16px" }}>
+        <h2 className="section-title">Produk Lain Dari Kategori Ini</h2>
+
         <div className="rec-grid">
-          {recommendations.map((item) => {
-            const shortName = item.nama_produk.length > 50
-              ? item.nama_produk.slice(0, 47) + "..."
-              : item.nama_produk;
+          {recommendations.map((item) => (
+            <div key={item.ASIN} className="card" onClick={() => handleClick(item)}>
+              <div className="img-wrap">
+                <img
+                  src={item.thumbnail_produk || item.gambar_produk || "/placeholder.jpg"}
+                  alt={item.nama_produk}
+                  loading="lazy"
+                />
 
-            const sold = item.unit_terjual
-              ? `${(item.unit_terjual / 1000).toFixed(1)}K terjual`
-              : "Baru";
-
-            return (
-              <div key={item.ASIN} className="rec-card" onClick={() => handleClick(item)}>
-                <div className="img-wrapper">
-                  <img
-                    src={item.thumbnail_produk || item.gambar_produk || "/placeholder.jpg"}
-                    alt={item.nama_produk}
-                    className="rec-img"
-                    loading="lazy"
-                  />
-                  {item.discount && (
-                    <div className="discount-badge">{item.discount} OFF</div>
-                  )}
-                </div>
-                <div className="rec-info">
-                  <div className="rec-name">{shortName}</div>
-                  <div className="rec-price">{item.product_price}</div>
-                  <div className="rec-meta">
-                    ★ {renderStars(item.rating_bintang)} • {sold}
-                  </div>
-                  {item.bonusText && <div className="bonus">{item.bonusText}</div>}
-                </div>
+                {item.discount && <div className="discount">{item.discount} OFF</div>}
               </div>
-            );
-          })}
+
+              <div className="info">
+                <div className="name">{item.nama_produk}</div>
+                <div className="price">{item.product_price}</div>
+                <div className="meta">
+                  ★ {renderStars(item.rating_bintang)} •{" "}
+                  {item.unit_terjual ? `${(item.unit_terjual / 1000).toFixed(1)}K terjual` : "Baru"}
+                </div>
+                {item.bonusText && <div className="bonus">{item.bonusText}</div>}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </>

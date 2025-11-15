@@ -35,6 +35,11 @@ export async function seedProduk() {
                 "https://asset.kompas.com/crops/Xi5dv3Jxmh5HRC7RxOsflCPj5g4=/0x102:1000x769/1200x800/data/photo/2022/05/10/6279a89aa3520.jpeg",
                 "https://asset.kompas.com/crops/Xi5dv3Jxmh5HRC7RxOsflCPj5g4=/0x102:1000x769/1200x800/data/photo/2022/05/10/6279a89aa3520.jpeg"
             ],
+            varian_produk: [
+                "https://asset.kompas.com/crops/Xi5dv3Jxmh5HRC7RxOsflCPj5g4=/0x102:1000x769/1200x800/data/photo/2022/05/10/6279a89aa3520.jpeg",
+                "https://asset.kompas.com/crops/Xi5dv3Jxmh5HRC7RxOsflCPj5g4=/0x102:1000x769/1200x800/data/photo/2022/05/10/6279a89aa3520.jpeg",
+                "https://asset.kompas.com/crops/Xi5dv3Jxmh5HRC7RxOsflCPj5g4=/0x102:1000x769/1200x800/data/photo/2022/05/10/6279a89aa3520.jpeg"
+            ],
             toko: "Nusantara Rasa",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -89,6 +94,11 @@ export async function seedProduk() {
             gambar_produk: "https://assets.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/2023/04/17/kripik-pisang-coklat-khas-Lampung-2882179002.jpg",
             thumbnail_produk: "https://assets.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/2023/04/17/kripik-pisang-coklat-khas-Lampung-2882179002.jpg",
             galeri_gambar: [
+                "https://assets.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/2023/04/17/kripik-pisang-coklat-khas-Lampung-2882179002.jpg",
+                "https://assets.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/2023/04/17/kripik-pisang-coklat-khas-Lampung-2882179002.jpg",
+                "https://assets.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/2023/04/17/kripik-pisang-coklat-khas-Lampung-2882179002.jpg"
+            ],
+            varian_produk: [
                 "https://assets.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/2023/04/17/kripik-pisang-coklat-khas-Lampung-2882179002.jpg",
                 "https://assets.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/2023/04/17/kripik-pisang-coklat-khas-Lampung-2882179002.jpg",
                 "https://assets.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/2023/04/17/kripik-pisang-coklat-khas-Lampung-2882179002.jpg"
@@ -151,6 +161,11 @@ export async function seedProduk() {
                 "https://asset.kompas.com/crops/QsUYn6p5xK4DsivCrxa0_TXdjuk=/10x36:890x623/1200x800/data/photo/2023/03/25/641e5ef63dea4.jpg",
                 "https://asset.kompas.com/crops/QsUYn6p5xK4DsivCrxa0_TXdjuk=/10x36:890x623/1200x800/data/photo/2023/03/25/641e5ef63dea4.jpg"
             ],
+            varian_produk: [
+                "https://asset.kompas.com/crops/QsUYn6p5xK4DsivCrxa0_TXdjuk=/10x36:890x623/1200x800/data/photo/2023/03/25/641e5ef63dea4.jpg",
+                "https://asset.kompas.com/crops/QsUYn6p5xK4DsivCrxa0_TXdjuk=/10x36:890x623/1200x800/data/photo/2023/03/25/641e5ef63dea4.jpg",
+                "https://asset.kompas.com/crops/QsUYn6p5xK4DsivCrxa0_TXdjuk=/10x36:890x623/1200x800/data/photo/2023/03/25/641e5ef63dea4.jpg"
+            ],
             toko: "Nusantara Rasa",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -209,6 +224,11 @@ export async function seedProduk() {
                 "https://img.lazcdn.com/g/p/5d024f9972fc9a1052dae93c14d03350.jpg_720x720q80.jpg",
                 "https://img.lazcdn.com/g/p/5d024f9972fc9a1052dae93c14d03350.jpg_720x720q80.jpg"
             ],
+            varian_produk: [
+                "https://img.lazcdn.com/g/p/5d024f9972fc9a1052dae93c14d03350.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/5d024f9972fc9a1052dae93c14d03350.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/5d024f9972fc9a1052dae93c14d03350.jpg_720x720q80.jpg"
+            ],
             toko: "Nusantara Rasa",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -263,6 +283,11 @@ export async function seedProduk() {
             gambar_produk: "https://id-live-01.slatic.net/p/25bfa6d1256b3b64f2dd97fa2b650e3e.png",
             thumbnail_produk: "https://id-live-01.slatic.net/p/25bfa6d1256b3b64f2dd97fa2b650e3e.png",
             galeri_gambar: [
+                "https://id-live-01.slatic.net/p/25bfa6d1256b3b64f2dd97fa2b650e3e.png",
+                "https://id-live-01.slatic.net/p/25bfa6d1256b3b64f2dd97fa2b650e3e.png",
+                "https://id-live-01.slatic.net/p/25bfa6d1256b3b64f2dd97fa2b650e3e.png"
+            ],
+            varian_produk: [
                 "https://id-live-01.slatic.net/p/25bfa6d1256b3b64f2dd97fa2b650e3e.png",
                 "https://id-live-01.slatic.net/p/25bfa6d1256b3b64f2dd97fa2b650e3e.png",
                 "https://id-live-01.slatic.net/p/25bfa6d1256b3b64f2dd97fa2b650e3e.png"
@@ -328,6 +353,11 @@ export async function seedProduk() {
                 "https://images.tokopedia.net/img/cache/700/hDjmkQ/2023/12/1/a0925820-f2f8-46ab-8dde-ea1403f9997b.jpg",
                 "https://images.tokopedia.net/img/cache/700/hDjmkQ/2023/12/1/a0925820-f2f8-46ab-8dde-ea1403f9997b.jpg"
             ],
+            varian_produk: [
+                "https://images.tokopedia.net/img/cache/700/hDjmkQ/2023/12/1/a0925820-f2f8-46ab-8dde-ea1403f9997b.jpg",
+                "https://images.tokopedia.net/img/cache/700/hDjmkQ/2023/12/1/a0925820-f2f8-46ab-8dde-ea1403f9997b.jpg",
+                "https://images.tokopedia.net/img/cache/700/hDjmkQ/2023/12/1/a0925820-f2f8-46ab-8dde-ea1403f9997b.jpg"
+            ],
             toko: "Kain Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -384,6 +414,11 @@ export async function seedProduk() {
             gambar_produk: "https://img.lazcdn.com/g/p/2cdf23b79aff464195a7010cb3b3e58e.jpg_720x720q80.jpg",
             thumbnail_produk: "https://img.lazcdn.com/g/p/2cdf23b79aff464195a7010cb3b3e58e.jpg_720x720q80.jpg",
             galeri_gambar: [
+                "https://img.lazcdn.com/g/p/2cdf23b79aff464195a7010cb3b3e58e.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/2cdf23b79aff464195a7010cb3b3e58e.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/2cdf23b79aff464195a7010cb3b3e58e.jpg_720x720q80.jpg"
+            ],
+            varian_produk: [
                 "https://img.lazcdn.com/g/p/2cdf23b79aff464195a7010cb3b3e58e.jpg_720x720q80.jpg",
                 "https://img.lazcdn.com/g/p/2cdf23b79aff464195a7010cb3b3e58e.jpg_720x720q80.jpg",
                 "https://img.lazcdn.com/g/p/2cdf23b79aff464195a7010cb3b3e58e.jpg_720x720q80.jpg"
@@ -448,6 +483,11 @@ export async function seedProduk() {
                 "https://img.lazcdn.com/g/p/ca803f77d0b0e6645ace4500e30f7fd3.jpg_720x720q80.jpg",
                 "https://img.lazcdn.com/g/p/ca803f77d0b0e6645ace4500e30f7fd3.jpg_720x720q80.jpg"
             ],
+            varian_produk: [
+                "https://img.lazcdn.com/g/p/ca803f77d0b0e6645ace4500e30f7fd3.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/ca803f77d0b0e6645ace4500e30f7fd3.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/ca803f77d0b0e6645ace4500e30f7fd3.jpg_720x720q80.jpg"
+            ],
             toko: "Kain Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -504,6 +544,11 @@ export async function seedProduk() {
             gambar_produk: "https://images.tokopedia.net/img/cache/700/o3syd0/1997/1/1/a251b523fe4d4813aaeafc1a25c6d8f8~.jpeg",
             thumbnail_produk: "https://images.tokopedia.net/img/cache/700/o3syd0/1997/1/1/a251b523fe4d4813aaeafc1a25c6d8f8~.jpeg",
             galeri_gambar: [
+                "https://images.tokopedia.net/img/cache/700/o3syd0/1997/1/1/a251b523fe4d4813aaeafc1a25c6d8f8~.jpeg",
+                "https://images.tokopedia.net/img/cache/700/o3syd0/1997/1/1/a251b523fe4d4813aaeafc1a25c6d8f8~.jpeg",
+                "https://images.tokopedia.net/img/cache/700/o3syd0/1997/1/1/a251b523fe4d4813aaeafc1a25c6d8f8~.jpeg"
+            ],
+            varian_produk: [
                 "https://images.tokopedia.net/img/cache/700/o3syd0/1997/1/1/a251b523fe4d4813aaeafc1a25c6d8f8~.jpeg",
                 "https://images.tokopedia.net/img/cache/700/o3syd0/1997/1/1/a251b523fe4d4813aaeafc1a25c6d8f8~.jpeg",
                 "https://images.tokopedia.net/img/cache/700/o3syd0/1997/1/1/a251b523fe4d4813aaeafc1a25c6d8f8~.jpeg"
@@ -568,6 +613,11 @@ export async function seedProduk() {
                 "https://webicdn.com/sdirmember/13/12569/produk/12569_product_1582278401.jpg",
                 "https://webicdn.com/sdirmember/13/12569/produk/12569_product_1582278401.jpg"
             ],
+            varian_produk: [
+                "https://webicdn.com/sdirmember/13/12569/produk/12569_product_1582278401.jpg",
+                "https://webicdn.com/sdirmember/13/12569/produk/12569_product_1582278401.jpg",
+                "https://webicdn.com/sdirmember/13/12569/produk/12569_product_1582278401.jpg"
+            ],
             toko: "Kain Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -624,6 +674,11 @@ export async function seedProduk() {
             gambar_produk: "https://down-id.img.susercontent.com/file/id-11134207-7r98u-lw60c4i6d9uycc",
             thumbnail_produk: "https://down-id.img.susercontent.com/file/id-11134207-7r98u-lw60c4i6d9uycc",
             galeri_gambar: [
+                "https://down-id.img.susercontent.com/file/id-11134207-7r98u-lw60c4i6d9uycc",
+                "https://down-id.img.susercontent.com/file/id-11134207-7r98u-lw60c4i6d9uycc",
+                "https://down-id.img.susercontent.com/file/id-11134207-7r98u-lw60c4i6d9uycc"
+            ],
+            varian_produk: [
                 "https://down-id.img.susercontent.com/file/id-11134207-7r98u-lw60c4i6d9uycc",
                 "https://down-id.img.susercontent.com/file/id-11134207-7r98u-lw60c4i6d9uycc",
                 "https://down-id.img.susercontent.com/file/id-11134207-7r98u-lw60c4i6d9uycc"
@@ -687,6 +742,11 @@ export async function seedProduk() {
                 "https://www.alvarotrans.com/images/news/alvaro-transport-jogja-gerabah-kerajinan-tanah-liat-yang-ada-di-kasongan-bantul-46.jpeg",
                 "https://www.alvarotrans.com/images/news/alvaro-transport-jogja-gerabah-kerajinan-tanah-liat-yang-ada-di-kasongan-bantul-46.jpeg"
             ],
+            varian_produk: [
+                "https://www.alvarotrans.com/images/news/alvaro-transport-jogja-gerabah-kerajinan-tanah-liat-yang-ada-di-kasongan-bantul-46.jpeg",
+                "https://www.alvarotrans.com/images/news/alvaro-transport-jogja-gerabah-kerajinan-tanah-liat-yang-ada-di-kasongan-bantul-46.jpeg",
+                "https://www.alvarotrans.com/images/news/alvaro-transport-jogja-gerabah-kerajinan-tanah-liat-yang-ada-di-kasongan-bantul-46.jpeg"
+            ],
             toko: "Karya Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -742,6 +802,11 @@ export async function seedProduk() {
             gambar_produk: "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/108/MTA-165392838/brd-44261_songket-pash-kain-songket-tenun-asli-khas-palembang-berbagai-macam-motif-warna_full04-09934432.jpg",
             thumbnail_produk: "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/108/MTA-165392838/brd-44261_songket-pash-kain-songket-tenun-asli-khas-palembang-berbagai-macam-motif-warna_full04-09934432.jpg",
             galeri_gambar: [
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/108/MTA-165392838/brd-44261_songket-pash-kain-songket-tenun-asli-khas-palembang-berbagai-macam-motif-warna_full04-09934432.jpg",
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/108/MTA-165392838/brd-44261_songket-pash-kain-songket-tenun-asli-khas-palembang-berbagai-macam-motif-warna_full04-09934432.jpg",
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/108/MTA-165392838/brd-44261_songket-pash-kain-songket-tenun-asli-khas-palembang-berbagai-macam-motif-warna_full04-09934432.jpg"
+            ],
+            varian_produk: [
                 "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/108/MTA-165392838/brd-44261_songket-pash-kain-songket-tenun-asli-khas-palembang-berbagai-macam-motif-warna_full04-09934432.jpg",
                 "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/108/MTA-165392838/brd-44261_songket-pash-kain-songket-tenun-asli-khas-palembang-berbagai-macam-motif-warna_full04-09934432.jpg",
                 "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/108/MTA-165392838/brd-44261_songket-pash-kain-songket-tenun-asli-khas-palembang-berbagai-macam-motif-warna_full04-09934432.jpg"
@@ -805,6 +870,11 @@ export async function seedProduk() {
                 "https://static.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/p2/251/2024/11/18/IMG_5334-1797601408.jpeg",
                 "https://static.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/p2/251/2024/11/18/IMG_5334-1797601408.jpeg"
             ],
+            varian_produk: [
+                "https://static.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/p2/251/2024/11/18/IMG_5334-1797601408.jpeg",
+                "https://static.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/p2/251/2024/11/18/IMG_5334-1797601408.jpeg",
+                "https://static.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/p2/251/2024/11/18/IMG_5334-1797601408.jpeg"
+            ],
             toko: "Karya Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -860,6 +930,11 @@ export async function seedProduk() {
             gambar_produk: "https://smexpo.pertamina.com/data-smexpo/images/products/4416/id-11134207-7rasd-m1md1w3yvja7c1_1731047489.jpeg",
             thumbnail_produk: "https://smexpo.pertamina.com/data-smexpo/images/products/4416/id-11134207-7rasd-m1md1w3yvja7c1_1731047489.jpeg",
             galeri_gambar: [
+                "https://smexpo.pertamina.com/data-smexpo/images/products/4416/id-11134207-7rasd-m1md1w3yvja7c1_1731047489.jpeg",
+                "https://smexpo.pertamina.com/data-smexpo/images/products/4416/id-11134207-7rasd-m1md1w3yvja7c1_1731047489.jpeg",
+                "https://smexpo.pertamina.com/data-smexpo/images/products/4416/id-11134207-7rasd-m1md1w3yvja7c1_1731047489.jpeg"
+            ],
+            varian_produk: [
                 "https://smexpo.pertamina.com/data-smexpo/images/products/4416/id-11134207-7rasd-m1md1w3yvja7c1_1731047489.jpeg",
                 "https://smexpo.pertamina.com/data-smexpo/images/products/4416/id-11134207-7rasd-m1md1w3yvja7c1_1731047489.jpeg",
                 "https://smexpo.pertamina.com/data-smexpo/images/products/4416/id-11134207-7rasd-m1md1w3yvja7c1_1731047489.jpeg"
@@ -922,6 +997,11 @@ export async function seedProduk() {
                 "https://down-id.img.susercontent.com/file/id-11134207-81zto-mdydzuh0wzk012",
                 "https://down-id.img.susercontent.com/file/id-11134207-81zto-mdydzuh0wzk012"
             ],
+            varian_produk: [
+                "https://down-id.img.susercontent.com/file/id-11134207-81zto-mdydzuh0wzk012",
+                "https://down-id.img.susercontent.com/file/id-11134207-81zto-mdydzuh0wzk012",
+                "https://down-id.img.susercontent.com/file/id-11134207-81zto-mdydzuh0wzk012"
+            ],
             toko: "Apotek Sehat Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -975,6 +1055,11 @@ export async function seedProduk() {
             gambar_produk: "https://down-id.img.susercontent.com/file/id-11134207-7r98s-lqsqjcxm0qx1db",
             thumbnail_produk: "https://down-id.img.susercontent.com/file/id-11134207-7r98s-lqsqjcxm0qx1db",
             galeri_gambar: [
+                "https://down-id.img.susercontent.com/file/id-11134207-7r98s-lqsqjcxm0qx1db",
+                "https://down-id.img.susercontent.com/file/id-11134207-7r98s-lqsqjcxm0qx1db",
+                "https://down-id.img.susercontent.com/file/id-11134207-7r98s-lqsqjcxm0qx1db"
+            ],
+            varian_produk: [
                 "https://down-id.img.susercontent.com/file/id-11134207-7r98s-lqsqjcxm0qx1db",
                 "https://down-id.img.susercontent.com/file/id-11134207-7r98s-lqsqjcxm0qx1db",
                 "https://down-id.img.susercontent.com/file/id-11134207-7r98s-lqsqjcxm0qx1db"
@@ -1036,6 +1121,11 @@ export async function seedProduk() {
                 "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
                 "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg"
             ],
+            varian_produk: [
+                "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg"
+            ],
             toko: "Apotek Sehat Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -1093,6 +1183,11 @@ export async function seedProduk() {
                 "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
                 "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg"
             ],
+            varian_produk: [
+                "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/dc07fae0cfc740f0aeabe7e63486e3fd.jpg_720x720q80.jpg"
+            ],
             toko: "Apotek Sehat Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -1146,6 +1241,11 @@ export async function seedProduk() {
             gambar_produk: "https://cdn.ralali.id/assets/img/Libraries/JCL-Hand-Sanitizer-Gel-500ml-(70-Persen-Alkohol-Extra-Moisturizer)_Apboss6JdTo80KMU_1627646426.png",
             thumbnail_produk: "https://cdn.ralali.id/assets/img/Libraries/JCL-Hand-Sanitizer-Gel-500ml-(70-Persen-Alkohol-Extra-Moisturizer)_Apboss6JdTo80KMU_1627646426.png",
             galeri_gambar: [
+                "https://cdn.ralali.id/assets/img/Libraries/JCL-Hand-Sanitizer-Gel-500ml-(70-Persen-Alkohol-Extra-Moisturizer)_Apboss6JdTo80KMU_1627646426.png",
+                "https://cdn.ralali.id/assets/img/Libraries/JCL-Hand-Sanitizer-Gel-500ml-(70-Persen-Alkohol-Extra-Moisturizer)_Apboss6JdTo80KMU_1627646426.png",
+                "https://cdn.ralali.id/assets/img/Libraries/JCL-Hand-Sanitizer-Gel-500ml-(70-Persen-Alkohol-Extra-Moisturizer)_Apboss6JdTo80KMU_1627646426.png"
+            ],
+            varian_produk: [
                 "https://cdn.ralali.id/assets/img/Libraries/JCL-Hand-Sanitizer-Gel-500ml-(70-Persen-Alkohol-Extra-Moisturizer)_Apboss6JdTo80KMU_1627646426.png",
                 "https://cdn.ralali.id/assets/img/Libraries/JCL-Hand-Sanitizer-Gel-500ml-(70-Persen-Alkohol-Extra-Moisturizer)_Apboss6JdTo80KMU_1627646426.png",
                 "https://cdn.ralali.id/assets/img/Libraries/JCL-Hand-Sanitizer-Gel-500ml-(70-Persen-Alkohol-Extra-Moisturizer)_Apboss6JdTo80KMU_1627646426.png"
@@ -1209,6 +1309,11 @@ export async function seedProduk() {
                 "https://cf.shopee.co.id/file/id-11134207-81ztp-mfc5ugoi3zf01d",
                 "https://cf.shopee.co.id/file/id-11134207-81ztp-mfc5ugoi3zf01d"
             ],
+            varian_produk: [
+                "https://cf.shopee.co.id/file/id-11134207-81ztp-mfc5ugoi3zf01d",
+                "https://cf.shopee.co.id/file/id-11134207-81ztp-mfc5ugoi3zf01d",
+                "https://cf.shopee.co.id/file/id-11134207-81ztp-mfc5ugoi3zf01d"
+            ],
             toko: "Tani Makmur Indonesia",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -1263,6 +1368,11 @@ export async function seedProduk() {
             gambar_produk: "https://down-id.img.susercontent.com/file/id-11134207-7qul3-lkeypah4qam8ca",
             thumbnail_produk: "https://down-id.img.susercontent.com/file/id-11134207-7qul3-lkeypah4qam8ca",
             galeri_gambar: [
+                "https://down-id.img.susercontent.com/file/id-11134207-7qul3-lkeypah4qam8ca",
+                "https://down-id.img.susercontent.com/file/id-11134207-7qul3-lkeypah4qam8ca",
+                "https://down-id.img.susercontent.com/file/id-11134207-7qul3-lkeypah4qam8ca"
+            ],
+            varian_produk: [
                 "https://down-id.img.susercontent.com/file/id-11134207-7qul3-lkeypah4qam8ca",
                 "https://down-id.img.susercontent.com/file/id-11134207-7qul3-lkeypah4qam8ca",
                 "https://down-id.img.susercontent.com/file/id-11134207-7qul3-lkeypah4qam8ca"
@@ -1325,6 +1435,11 @@ export async function seedProduk() {
                 "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/97/MTA-181736251/brd-119704_bibit-cabe-rawit-merah-peak-cha-benih-bibit-cabe-rawit-benih-cabe-rawit-bibit-cabai-rawit-benih-cabai-rawit-benih-cabe-rawit-merah_full01-98c08398.jpg",
                 "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/97/MTA-181736251/brd-119704_bibit-cabe-rawit-merah-peak-cha-benih-bibit-cabe-rawit-benih-cabe-rawit-bibit-cabai-rawit-benih-cabai-rawit-benih-cabe-rawit-merah_full01-98c08398.jpg"
             ],
+            varian_produk: [
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/97/MTA-181736251/brd-119704_bibit-cabe-rawit-merah-peak-cha-benih-bibit-cabe-rawit-benih-cabe-rawit-bibit-cabai-rawit-benih-cabai-rawit-benih-cabe-rawit-merah_full01-98c08398.jpg",
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/97/MTA-181736251/brd-119704_bibit-cabe-rawit-merah-peak-cha-benih-bibit-cabe-rawit-benih-cabe-rawit-bibit-cabai-rawit-benih-cabai-rawit-benih-cabe-rawit-merah_full01-98c08398.jpg",
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/97/MTA-181736251/brd-119704_bibit-cabe-rawit-merah-peak-cha-benih-bibit-cabe-rawit-benih-cabe-rawit-bibit-cabai-rawit-benih-cabai-rawit-benih-cabe-rawit-merah_full01-98c08398.jpg"
+            ],
             toko: "Tani Makmur Indonesia",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -1383,6 +1498,11 @@ export async function seedProduk() {
                 "https://down-id.img.susercontent.com/file/id-11134207-7ra0q-mdrv8f30o3ij0c",
                 "https://down-id.img.susercontent.com/file/id-11134207-7ra0q-mdrv8f30o3ij0c"
             ],
+            varian_produk: [
+                "https://down-id.img.susercontent.com/file/id-11134207-7ra0q-mdrv8f30o3ij0c",
+                "https://down-id.img.susercontent.com/file/id-11134207-7ra0q-mdrv8f30o3ij0c",
+                "https://down-id.img.susercontent.com/file/id-11134207-7ra0q-mdrv8f30o3ij0c"
+            ],
             toko: "Tani Makmur Indonesia",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -1437,6 +1557,11 @@ export async function seedProduk() {
             gambar_produk: "https://img.lazcdn.com/g/ff/kf/S8ad24b275e6b46408de27ccb69b420e5l.jpg_720x720q80.jpg",
             thumbnail_produk: "https://img.lazcdn.com/g/ff/kf/S8ad24b275e6b46408de27ccb69b420e5l.jpg_720x720q80.jpg",
             galeri_gambar: [
+                "https://img.lazcdn.com/g/ff/kf/S8ad24b275e6b46408de27ccb69b420e5l.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/ff/kf/S8ad24b275e6b46408de27ccb69b420e5l.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/ff/kf/S8ad24b275e6b46408de27ccb69b420e5l.jpg_720x720q80.jpg"
+            ],
+            varian_produk: [
                 "https://img.lazcdn.com/g/ff/kf/S8ad24b275e6b46408de27ccb69b420e5l.jpg_720x720q80.jpg",
                 "https://img.lazcdn.com/g/ff/kf/S8ad24b275e6b46408de27ccb69b420e5l.jpg_720x720q80.jpg",
                 "https://img.lazcdn.com/g/ff/kf/S8ad24b275e6b46408de27ccb69b420e5l.jpg_720x720q80.jpg"
@@ -1502,6 +1627,11 @@ export async function seedProduk() {
                 "https://cdn.polytron.co.id/public-assets/polytroncoid/2025/03/NEW-ECOM-SKU-PLD-43RG9059-1.png",
                 "https://cdn.polytron.co.id/public-assets/polytroncoid/2025/03/NEW-ECOM-SKU-PLD-43RG9059-1.png"
             ],
+            varian_produk: [
+                "https://cdn.polytron.co.id/public-assets/polytroncoid/2025/03/NEW-ECOM-SKU-PLD-43RG9059-1.png",
+                "https://cdn.polytron.co.id/public-assets/polytroncoid/2025/03/NEW-ECOM-SKU-PLD-43RG9059-1.png",
+                "https://cdn.polytron.co.id/public-assets/polytroncoid/2025/03/NEW-ECOM-SKU-PLD-43RG9059-1.png"
+            ],
             toko: "Gadget Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -1557,6 +1687,11 @@ export async function seedProduk() {
             gambar_produk: "https://images.tokopedia.net/img/cache/700/VqbcmM/2021/3/13/faeb41e0-58e8-4fb2-82f1-2a2aa0370cf3.jpg",
             thumbnail_produk: "https://images.tokopedia.net/img/cache/700/VqbcmM/2021/3/13/faeb41e0-58e8-4fb2-82f1-2a2aa0370cf3.jpg",
             galeri_gambar: [
+                "https://images.tokopedia.net/img/cache/700/VqbcmM/2021/3/13/faeb41e0-58e8-4fb2-82f1-2a2aa0370cf3.jpg",
+                "https://images.tokopedia.net/img/cache/700/VqbcmM/2021/3/13/faeb41e0-58e8-4fb2-82f1-2a2aa0370cf3.jpg",
+                "https://images.tokopedia.net/img/cache/700/VqbcmM/2021/3/13/faeb41e0-58e8-4fb2-82f1-2a2aa0370cf3.jpg"
+            ],
+            varian_produk: [
                 "https://images.tokopedia.net/img/cache/700/VqbcmM/2021/3/13/faeb41e0-58e8-4fb2-82f1-2a2aa0370cf3.jpg",
                 "https://images.tokopedia.net/img/cache/700/VqbcmM/2021/3/13/faeb41e0-58e8-4fb2-82f1-2a2aa0370cf3.jpg",
                 "https://images.tokopedia.net/img/cache/700/VqbcmM/2021/3/13/faeb41e0-58e8-4fb2-82f1-2a2aa0370cf3.jpg"
@@ -1620,6 +1755,11 @@ export async function seedProduk() {
                 "https://down-id.img.susercontent.com/file/id-11134207-7qul2-lk6dxqoi0lyad1",
                 "https://down-id.img.susercontent.com/file/id-11134207-7qul2-lk6dxqoi0lyad1"
             ],
+            varian_produk: [
+                "https://down-id.img.susercontent.com/file/id-11134207-7qul2-lk6dxqoi0lyad1",
+                "https://down-id.img.susercontent.com/file/id-11134207-7qul2-lk6dxqoi0lyad1",
+                "https://down-id.img.susercontent.com/file/id-11134207-7qul2-lk6dxqoi0lyad1"
+            ],
             toko: "Gadget Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -1679,6 +1819,11 @@ export async function seedProduk() {
                 "https://down-id.img.susercontent.com/file/sg-11134201-23020-s1cro39ibanv80",
                 "https://down-id.img.susercontent.com/file/sg-11134201-23020-s1cro39ibanv80"
             ],
+            varian_produk: [
+                "https://down-id.img.susercontent.com/file/sg-11134201-23020-s1cro39ibanv80",
+                "https://down-id.img.susercontent.com/file/sg-11134201-23020-s1cro39ibanv80",
+                "https://down-id.img.susercontent.com/file/sg-11134201-23020-s1cro39ibanv80"
+            ],
             toko: "Gadget Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -1734,6 +1879,11 @@ export async function seedProduk() {
             gambar_produk: "https://img.lazcdn.com/g/p/4cd1595be25129fb3a75620a26652abc.jpg_720x720q80.jpg",
             thumbnail_produk: "https://img.lazcdn.com/g/p/4cd1595be25129fb3a75620a26652abc.jpg_720x720q80.jpg",
             galeri_gambar: [
+                "https://img.lazcdn.com/g/p/4cd1595be25129fb3a75620a26652abc.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/4cd1595be25129fb3a75620a26652abc.jpg_720x720q80.jpg",
+                "https://img.lazcdn.com/g/p/4cd1595be25129fb3a75620a26652abc.jpg_720x720q80.jpg"
+            ],
+            varian_produk: [
                 "https://img.lazcdn.com/g/p/4cd1595be25129fb3a75620a26652abc.jpg_720x720q80.jpg",
                 "https://img.lazcdn.com/g/p/4cd1595be25129fb3a75620a26652abc.jpg_720x720q80.jpg",
                 "https://img.lazcdn.com/g/p/4cd1595be25129fb3a75620a26652abc.jpg_720x720q80.jpg"
@@ -1799,6 +1949,11 @@ export async function seedProduk() {
                 "https://kursicafe.net/wp-content/uploads/2020/07/Meja-Jati-Solid-Tebal-Kaki-Besi-Alami.jpg",
                 "https://kursicafe.net/wp-content/uploads/2020/07/Meja-Jati-Solid-Tebal-Kaki-Besi-Alami.jpg",
             ],
+            varian_produk: [
+                "https://kursicafe.net/wp-content/uploads/2020/07/Meja-Jati-Solid-Tebal-Kaki-Besi-Alami.jpg",
+                "https://kursicafe.net/wp-content/uploads/2020/07/Meja-Jati-Solid-Tebal-Kaki-Besi-Alami.jpg",
+                "https://kursicafe.net/wp-content/uploads/2020/07/Meja-Jati-Solid-Tebal-Kaki-Besi-Alami.jpg",
+            ],
             toko: "Mebel Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -1854,6 +2009,11 @@ export async function seedProduk() {
             gambar_produk: "https://rumahmebel.id/wp-content/uploads/2020/11/Kursi-Rotan-Sintetis-Glouster-Minimalis-1.jpg",
             thumbnail_produk: "https://rumahmebel.id/wp-content/uploads/2020/11/Kursi-Rotan-Sintetis-Glouster-Minimalis-1.jpg",
             galeri_gambar: [
+                "https://rumahmebel.id/wp-content/uploads/2020/11/Kursi-Rotan-Sintetis-Glouster-Minimalis-1.jpg",
+                "https://rumahmebel.id/wp-content/uploads/2020/11/Kursi-Rotan-Sintetis-Glouster-Minimalis-1.jpg",
+                "https://rumahmebel.id/wp-content/uploads/2020/11/Kursi-Rotan-Sintetis-Glouster-Minimalis-1.jpg"
+            ],
+            varian_produk: [
                 "https://rumahmebel.id/wp-content/uploads/2020/11/Kursi-Rotan-Sintetis-Glouster-Minimalis-1.jpg",
                 "https://rumahmebel.id/wp-content/uploads/2020/11/Kursi-Rotan-Sintetis-Glouster-Minimalis-1.jpg",
                 "https://rumahmebel.id/wp-content/uploads/2020/11/Kursi-Rotan-Sintetis-Glouster-Minimalis-1.jpg"
@@ -1918,6 +2078,11 @@ export async function seedProduk() {
                 "https://cf.shopee.co.id/file/id-11134208-7qula-lfgk0elxqkyq41",
                 "https://cf.shopee.co.id/file/id-11134208-7qula-lfgk0elxqkyq41"
             ],
+            varian_produk: [
+                "https://cf.shopee.co.id/file/id-11134208-7qula-lfgk0elxqkyq41",
+                "https://cf.shopee.co.id/file/id-11134208-7qula-lfgk0elxqkyq41",
+                "https://cf.shopee.co.id/file/id-11134208-7qula-lfgk0elxqkyq41"
+            ],
             toko: "Mebel Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -1978,6 +2143,11 @@ export async function seedProduk() {
                 "https://www.sangkayu.co.id/wp-content/uploads/2023/09/23ef5af0-4c0c-46a8-8fd6-28ff4727a640-1.jpg",
                 "https://www.sangkayu.co.id/wp-content/uploads/2023/09/23ef5af0-4c0c-46a8-8fd6-28ff4727a640-1.jpg"
             ],
+            varian_produk: [
+                "https://www.sangkayu.co.id/wp-content/uploads/2023/09/23ef5af0-4c0c-46a8-8fd6-28ff4727a640-1.jpg",
+                "https://www.sangkayu.co.id/wp-content/uploads/2023/09/23ef5af0-4c0c-46a8-8fd6-28ff4727a640-1.jpg",
+                "https://www.sangkayu.co.id/wp-content/uploads/2023/09/23ef5af0-4c0c-46a8-8fd6-28ff4727a640-1.jpg"
+            ],
             toko: "Mebel Nusantara",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -2033,6 +2203,11 @@ export async function seedProduk() {
             gambar_produk: "https://ivaro.co.id/cdn/shop/files/cabriole.jpg?v=1752555149&width=1445",
             thumbnail_produk: "https://ivaro.co.id/cdn/shop/files/cabriole.jpg?v=1752555149&width=1445",
             galeri_gambar: [
+                "https://ivaro.co.id/cdn/shop/files/cabriole.jpg?v=1752555149&width=1445",
+                "https://ivaro.co.id/cdn/shop/files/cabriole.jpg?v=1752555149&width=1445",
+                "https://ivaro.co.id/cdn/shop/files/cabriole.jpg?v=1752555149&width=1445"
+            ],
+            varian_produk: [
                 "https://ivaro.co.id/cdn/shop/files/cabriole.jpg?v=1752555149&width=1445",
                 "https://ivaro.co.id/cdn/shop/files/cabriole.jpg?v=1752555149&width=1445",
                 "https://ivaro.co.id/cdn/shop/files/cabriole.jpg?v=1752555149&width=1445"
@@ -2097,6 +2272,11 @@ export async function seedProduk() {
                 "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKwjFXGNey8n88vzjitkEupNqcBm4KNWVNYw&s",
                 "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKwjFXGNey8n88vzjitkEupNqcBm4KNWVNYw&s"
             ],
+            varian_produk: [
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKwjFXGNey8n88vzjitkEupNqcBm4KNWVNYw&s",
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKwjFXGNey8n88vzjitkEupNqcBm4KNWVNYw&s",
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKwjFXGNey8n88vzjitkEupNqcBm4KNWVNYw&s"
+            ],
             toko: "Cendekia Press",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -2149,6 +2329,11 @@ export async function seedProduk() {
             gambar_produk: "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full//catalog-image/101/MTA-152358158/brd-44261_buku-filosofi-teras_full01-7172ae55.jpg",
             thumbnail_produk: "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full//catalog-image/101/MTA-152358158/brd-44261_buku-filosofi-teras_full01-7172ae55.jpg",
             galeri_gambar: [
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full//catalog-image/101/MTA-152358158/brd-44261_buku-filosofi-teras_full01-7172ae55.jpg",
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full//catalog-image/101/MTA-152358158/brd-44261_buku-filosofi-teras_full01-7172ae55.jpg",
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full//catalog-image/101/MTA-152358158/brd-44261_buku-filosofi-teras_full01-7172ae55.jpg"
+            ],
+            varian_produk: [
                 "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full//catalog-image/101/MTA-152358158/brd-44261_buku-filosofi-teras_full01-7172ae55.jpg",
                 "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full//catalog-image/101/MTA-152358158/brd-44261_buku-filosofi-teras_full01-7172ae55.jpg",
                 "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full//catalog-image/101/MTA-152358158/brd-44261_buku-filosofi-teras_full01-7172ae55.jpg"
@@ -2212,6 +2397,11 @@ export async function seedProduk() {
                 "https://cdn.gramedia.com/uploads/items/Sd_Mi_Kls.I_Bahasa_Inggris__Kur.Merdeka.jpg",
                 "https://cdn.gramedia.com/uploads/items/Sd_Mi_Kls.I_Bahasa_Inggris__Kur.Merdeka.jpg"
             ],
+            varian_produk: [
+                "https://cdn.gramedia.com/uploads/items/Sd_Mi_Kls.I_Bahasa_Inggris__Kur.Merdeka.jpg",
+                "https://cdn.gramedia.com/uploads/items/Sd_Mi_Kls.I_Bahasa_Inggris__Kur.Merdeka.jpg",
+                "https://cdn.gramedia.com/uploads/items/Sd_Mi_Kls.I_Bahasa_Inggris__Kur.Merdeka.jpg"
+            ],
             toko: "Cendekia Press",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -2271,6 +2461,11 @@ export async function seedProduk() {
                 "https://down-id.img.susercontent.com/file/sg-11134201-7qvcy-lfm7bswbmljic6",
                 "https://down-id.img.susercontent.com/file/sg-11134201-7qvcy-lfm7bswbmljic6"
             ],
+            varian_produk: [
+                "https://down-id.img.susercontent.com/file/sg-11134201-7qvcy-lfm7bswbmljic6",
+                "https://down-id.img.susercontent.com/file/sg-11134201-7qvcy-lfm7bswbmljic6",
+                "https://down-id.img.susercontent.com/file/sg-11134201-7qvcy-lfm7bswbmljic6"
+            ],
             toko: "Cendekia Press",
             rating_toko: 4.9,
             status_toko: "Official Store",
@@ -2285,7 +2480,7 @@ export async function seedProduk() {
                     nama_pengulas: "Rina S.",
                     rating: 5,
                     tanggal: "2025-10-15",
-                    isi: "Pedasnya pas banget, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
+                    isi: "Pedasnya pas bang hvxdet, aroma asapnya bikin nagih! Cumi lembut, cocok buat temen nasi hangat."
                 },
                 {
                     nama_pengulas: "Budi K.",
@@ -2326,6 +2521,11 @@ export async function seedProduk() {
             gambar_produk: "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/90/MTA-155204126/tentang-anak_tentang-anak_full01.jpg",
             thumbnail_produk: "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/90/MTA-155204126/tentang-anak_tentang-anak_full01.jpg",
             galeri_gambar: [
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/90/MTA-155204126/tentang-anak_tentang-anak_full01.jpg",
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/90/MTA-155204126/tentang-anak_tentang-anak_full01.jpg",
+                "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/90/MTA-155204126/tentang-anak_tentang-anak_full01.jpg",
+            ],
+            varian_produk: [
                 "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/90/MTA-155204126/tentang-anak_tentang-anak_full01.jpg",
                 "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/90/MTA-155204126/tentang-anak_tentang-anak_full01.jpg",
                 "https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/90/MTA-155204126/tentang-anak_tentang-anak_full01.jpg",

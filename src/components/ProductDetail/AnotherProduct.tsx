@@ -106,7 +106,7 @@ export default function AnotherProduct() {
           font-weight: 800;
           margin: 0 0 28px;
           color: #0f172a;
-          text-align: center;
+          text-align: left !important;
         }
         .lainnya-grid {
           display: grid;
@@ -199,7 +199,7 @@ export default function AnotherProduct() {
 
       <div style={{ marginTop: "80px", padding: "0 16px" }}>
         <h2 className="section-title">
-          JANGAN SAMPE KELUPAAN BELI INI JUGA
+          Produk Lainnya
         </h2>
         <div className="lainnya-grid">
           {products.map((item) => (
