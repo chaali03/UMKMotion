@@ -462,7 +462,7 @@ export default function BuyingPage() {
 
   return (
     <>
-      <style jsx>{`
+      <style >{`
         .page-container {
           padding-top: 88px;
           padding-left: 16px;
