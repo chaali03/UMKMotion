@@ -227,7 +227,7 @@ export default function ProductRecommendations() {
                   loading="lazy"
                 />
 
-                {item.discount && <div className="discount">{item.discount} OFF</div>}
+                {item.discount && <div className="discount">{item.discount} ON</div>}
               </div>
 
               <div className="info">

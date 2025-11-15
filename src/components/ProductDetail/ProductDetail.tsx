@@ -557,7 +557,7 @@ export default function BuyingPage() {
         .carousel-slide img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; transition: transform 0.5s ease; }
         @media (min-width: 769px) { .carousel-slide.zoomed img { transform: scale(2.2); } }
 
-        .discount-badge { position: absolute; top: 16px; right: 16px; background: linear-gradient(135deg, #f43f5e, #e11d48); color: white; font-weight: 800; font-size: 13px; padding: 6px 12px; border-radius: 12px; z-index: 10; box-shadow: 0 2px 8px rgba(244, 63, 94, 0.3); }
+        .discount-badge { position: absolute;  background: linear-gradient(135deg, #f43f5e, #e11d48); color: white; font-weight: 800; font-size: 13px; padding: 6px 12px; border-radius: 12px; z-index: 10; box-shadow: 0 2px 8px rgba(244, 63, 94, 0.3); }
 
         .carousel-dots { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
         .dot { width: 9px; height: 9px; border-radius: 50%; background: #cbd5e1; transition: all 0.3s ease; cursor: pointer; }
@@ -596,7 +596,7 @@ export default function BuyingPage() {
         .action-buttons-desktop { display: flex; gap: 12px; margin: 16px 0; }
         @media (max-width: 768px) { .action-buttons-desktop { display: none; } }
         .btn-buy, .btn-cart { flex: 1; padding: 14px; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; text-align: center; transition: all 0.25s ease; letter-spacing: 0.3px; }
-        .btn-buy { background: linear-gradient(135deg, #166534, #10b981); color: white; border: none; box-shadow: 0 4px 12px rgba(22, 101, 52, 0.3); }
+        .btn-buy { background: linear-gradient(135deg, #ff3b30, #ff6b35); color: white; border: none; box-shadow: 0 4px 12px rgba(22, 101, 52, 0.3); }
         .btn-buy:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(22, 101, 52, 0.4); }
         .btn-cart { background: white; color: #166534; border: 2.5px solid #166534; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         .btn-cart:hover { background: #f0fdf4; transform: translateY(-1px); }
@@ -608,7 +608,7 @@ export default function BuyingPage() {
         .store-info h3 { font-size: 18px; font-weight: 700; margin: 0; color: #0f172a; }
         .store-badge { background: #ecfdf5; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1.5px solid #a7f3d0; text-transform: uppercase; }
         .store-status { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #10b981; font-weight: 600; }
-        .visit-store-btn { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 700; font-size: 14.5px; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 4px 12px rgba(16,185,129,0.3); min-width: 140px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .visit-store-btn { background: linear-gradient(135deg, #ff3b30, #ff6b35); color: white; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 700; font-size: 14.5px; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 4px 12px rgba(16,185,129,0.3); min-width: 140px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .visit-store-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,185,129,0.4); }
 
         .store-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 16px; text-align: center; }
@@ -737,14 +737,14 @@ export default function BuyingPage() {
                 </div>
                 <div>
                   <div className="stat-value">
-                    <span>Box</span>
+                    <span style={{ color: '#ff3b30' }}>Box</span>
                     {storeData.jumlah_review}+
                   </div>
                   <div style={{ color: '#64748b', fontSize: '13px', marginTop: '2px' }}>Total Review</div>
                 </div>
                 <div>
                   <div className="stat-value">
-                    <span style={{ color: '#10b981' }}>Check</span>
+                    <span style={{ color: '#ff3b30' }}>Check</span>
                     98%
                   </div>
                   <div style={{ color: '#64748b', fontSize: '13px', marginTop: '2px' }}>Tingkat Respons</div>
@@ -758,7 +758,7 @@ export default function BuyingPage() {
 
       <div className="action-bar">
         <button className="btn-buy" onClick={handleBuyNow}>Beli Langsung</button>
-        <button className="btn-cart" onClick={handleAddToCart}>+ Keranjang</button>
+        <button className="btn-cart" onClick={handleAddToCart}> Keranjang</button>
       </div>
     </>
   );

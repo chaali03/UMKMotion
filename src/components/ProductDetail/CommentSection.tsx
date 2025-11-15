@@ -163,7 +163,7 @@ export default function CommentSection() {
           <button
             onClick={kirimDummy}
             disabled={!dummyNama || dummyIsi.length < 10}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition text-sm font-medium"
+            className=" linear-gradient(135deg, #ff3b30, #ff6b35) text-white px-6 py-3 rounded-lg hover:bg-[#ff6b35] disabled:bg-gray-400 disabled:cursor-not-allowed transition text-sm font-medium"
           >
             Kirim
           </button>
@@ -189,7 +189,7 @@ export default function CommentSection() {
               <div key={n} className="flex items-center gap-3 text-sm">
                 <span className="w-3 text-slate-600">{n}</span>
                 <div className="flex-1 bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${(ratingCount[n] || 0) / maxCount * 100}%` }} />
+                  <div className="bg-[#ff6b35] h-2 rounded-full transition-all" style={{ width: `${(ratingCount[n] || 0) / maxCount * 100}%` }} />
                 </div>
                 <span className="w-10 text-right text-gray-600">{ratingCount[n] || 0}</span>
               </div>
