@@ -386,7 +386,7 @@ export default function TokoDinamis() {
       </div>
 
       {/* FLOATING CHAT */}
-      <div className="chat-float" onClick={() => alert('Chat dibuka!')}>Chat</div>
+      <div className="chat-float" onClick={() => window.location.href='/chat'}>Chat</div>
 
       {/* MODAL DETAIL TOKO */}
       {modalOpen && store && (
