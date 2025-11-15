@@ -308,19 +308,6 @@ const useAuth = () => {
             email: currentUser.email,
             nickname: userData.nickname || userData.fullName || currentUser.displayName || currentUser.email?.split('@')[0] || 'User'
           });
-
-          // Ensure server session cookie is established for secure profile editing
-          try {
-            const idToken = await currentUser.getIdToken(false);
-            await fetch('/api/session-login', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({ idToken })
-            });
-          } catch (e) {
-            console.warn('Failed to establish server session from navbar:', e);
-          }
         } catch (error) {
           console.error('Error fetching user data:', error);
           setUser({
@@ -722,6 +709,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
   const animateClass = mounted
     ? "opacity-100 translate-y-0 scale-100"
     : "opacity-0 -translate-y-3 scale-95";
+
 
   return (
     <>

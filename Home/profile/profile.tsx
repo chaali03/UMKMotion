@@ -91,7 +91,6 @@ export default function ProfilePage() {
   const [modalMessage, setModalMessage] = useState('');
   const [modalTitle, setModalTitle] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [canEdit, setCanEdit] = useState(false);
   const [showTOTPSetup, setShowTOTPSetup] = useState(false);
   const [totpSecret, setTotpSecret] = useState<string>("");
   const [totpQRCode, setTotpQRCode] = useState<string>("");
@@ -108,19 +107,6 @@ export default function ProfilePage() {
       setCurrentUser(user);
       
       try {
-        // Verify server session cookie to lock profile editing to authenticated user
-        try {
-          const resp = await fetch('/api/me', { credentials: 'include' });
-          if (resp.ok) {
-            const data = await resp.json();
-            setCanEdit(data?.uid === user.uid);
-          } else {
-            setCanEdit(false);
-          }
-        } catch (e) {
-          setCanEdit(false);
-        }
-
         // Fetch user profile data
         const userDoc = await getDoc(doc(db, "users", user.uid));
         const userData = userDoc.exists() ? userDoc.data() : {};
@@ -325,12 +311,6 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     if (!currentUser) return;
-    if (!canEdit) {
-      setModalTitle('Akses Dibatasi');
-      setModalMessage('Edit profil dikunci. Pastikan Anda login dan memiliki sesi yang valid.');
-      setShowErrorModal(true);
-      return;
-    }
     
     setSaving(true);
     try {
@@ -348,25 +328,18 @@ export default function ProfilePage() {
       const updatedData = { ...profileData, photoURL };
       const newSecurityScore = calculateSecurityScore(updatedData);
 
-      // Update profile via secure server endpoint
-      const resp = await fetch('/api/profile-update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          nickname: updatedData.nickname,
-          fullName: updatedData.fullName,
-          bio: updatedData.bio,
-          photoURL: photoURL
-        })
-      });
-      if (!resp.ok) throw new Error('Gagal update profil via server');
-
-      // Optionally reflect in client-side auth profile for UI consistency
+      // Update Firebase Auth profile
       await updateProfile(currentUser, {
-        displayName: updatedData.nickname || updatedData.fullName,
-        photoURL
+        displayName: profileData.nickname || profileData.fullName,
+        photoURL: photoURL
       });
+
+      // Update Firestore document
+      await setDoc(doc(db, "users", currentUser.uid), {
+        ...updatedData,
+        securityScore: newSecurityScore,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
 
       setProfileData(prev => ({ ...prev, photoURL, securityScore: newSecurityScore }));
       setPreviewImage(null);
@@ -738,9 +711,8 @@ export default function ProfilePage() {
                       )}
                     </div>
                     <button
-                      onClick={() => canEdit && fileInputRef.current?.click()}
-                      disabled={!canEdit}
-                      className={`absolute bottom-0 right-0 w-9 h-9 rounded-full border-3 border-white flex items-center justify-center transition ${canEdit ? 'bg-orange-500 cursor-pointer hover:bg-orange-600' : 'bg-gray-300 cursor-not-allowed'}`}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-0 right-0 w-9 h-9 bg-orange-500 rounded-full border-3 border-white flex items-center justify-center cursor-pointer hover:bg-orange-600 transition"
                     >
                       <Camera size={18} className="text-white" />
                     </button>
@@ -758,7 +730,6 @@ export default function ProfilePage() {
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  disabled={!canEdit}
                   className="hidden"
                 />
               </div>
@@ -768,9 +739,8 @@ export default function ProfilePage() {
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-bold text-gray-900">Informasi Pribadi</h3>
                   <button 
-                    onClick={() => canEdit && setIsEditingPersonal(!isEditingPersonal)}
-                    disabled={!canEdit}
-                    className={`flex items-center gap-2 font-semibold text-sm px-3 py-2 rounded-lg transition ${canEdit ? 'text-orange-500 hover:bg-orange-50' : 'text-gray-400 cursor-not-allowed bg-gray-50'}`}
+                    onClick={() => setIsEditingPersonal(!isEditingPersonal)}
+                    className="flex items-center gap-2 text-orange-500 font-semibold text-sm px-3 py-2 rounded-lg hover:bg-orange-50 transition"
                   >
                     <Edit2 size={16} />
                     Edit
@@ -821,7 +791,7 @@ export default function ProfilePage() {
                           handleSave();
                           setIsEditingPersonal(false);
                         }}
-                        disabled={saving || !canEdit}
+                        disabled={saving}
                         className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-lg font-semibold text-sm hover:bg-orange-600 transition disabled:opacity-50"
                       >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={16} />}
@@ -852,9 +822,8 @@ export default function ProfilePage() {
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-bold text-gray-900">Deskripsi</h3>
                   <button 
-                    onClick={() => canEdit && setIsEditingBio(!isEditingBio)}
-                    disabled={!canEdit}
-                    className={`flex items-center gap-2 font-semibold text-sm px-3 py-2 rounded-lg transition ${canEdit ? 'text-orange-500 hover:bg-orange-50' : 'text-gray-400 cursor-not-allowed bg-gray-50'}`}
+                    onClick={() => setIsEditingBio(!isEditingBio)}
+                    className="flex items-center gap-2 text-orange-500 font-semibold text-sm px-3 py-2 rounded-lg hover:bg-orange-50 transition"
                   >
                     <Edit2 size={16} />
                     Edit
@@ -882,7 +851,7 @@ export default function ProfilePage() {
                           handleSave();
                           setIsEditingBio(false);
                         }}
-                        disabled={saving || !canEdit}
+                        disabled={saving}
                         className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-lg font-semibold text-sm hover:bg-orange-600 transition disabled:opacity-50"
                       >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={16} />}

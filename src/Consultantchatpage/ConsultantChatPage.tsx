@@ -107,7 +107,7 @@ export default function ConsultantChatPage() {
         <div className="space-y-4">
           {messages.map((m) => (
             <div key={m.id} className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2 shadow-sm border ${m.sender === "user" ? "bg-gradient-to-r from-orange-600 to-amber-500 text-white border-transparent" : "bg-white border-slate-200"}`}>
+              <div className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-sm border ${m.sender === "user" ? "bg-gradient-to-r from-orange-600 to-amber-500 text-white border-transparent" : "bg-white border-slate-200"}`}>
                 <p className="text-sm">{m.text}</p>
                 <div className={`mt-1 text-[10px] ${m.sender === "user" ? "text-white/80" : "text-slate-500"}`}>{format(m.timestamp, "HH:mm")}</div>
               </div>
@@ -129,7 +129,7 @@ export default function ConsultantChatPage() {
       {/* Input */}
       <footer className="sticky bottom-0 bg-white/80 backdrop-blur-sm border-t border-slate-200">
         <div className="max-w-5xl mx-auto px-4 py-3">
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+          <div className="flex items-center gap-2">
             <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-lg hover:bg-orange-50" title="Lampirkan"><Paperclip /></button>
             <input ref={fileInputRef} type="file" className="hidden" />
             <button className="p-2 rounded-lg hover:bg-orange-50" title="Emoji"><Smile /></button>
@@ -143,10 +143,9 @@ export default function ConsultantChatPage() {
                 }
               }}
               placeholder="Tulis pesan..."
-              className="flex-1 min-w-[180px] rounded-xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200"
+              className="flex-1 rounded-xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200"
             />
-            <button onClick={sendMessage} className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-4 py-2 rounded-xl font-semibold shadow-md hover:brightness-95"
-            >
+            <button onClick={sendMessage} className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white px-4 py-2 rounded-xl font-semibold shadow-md hover:brightness-95">
               <Send size={16} /> Kirim
             </button>
           </div>

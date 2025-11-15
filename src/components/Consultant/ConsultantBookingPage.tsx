@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
-import { format, addDays, addMinutes, isBefore, isAfter, setHours, setMinutes } from "date-fns";
+import { format, addDays, isBefore, isAfter, setHours, setMinutes } from "date-fns";
 import { Clock, Calendar, Video, MessageCircle, CheckCircle2, MapPin, Star, Globe, Timer, Check, ChevronRight, ArrowLeft } from "lucide-react";
 
 type MeetingType = "chat" | "zoom";
@@ -74,7 +74,7 @@ export default function ConsultantBookingPage() {
     let cursor = start;
     while (!isAfter(cursor, end)) {
       slots.push(cursor);
-      cursor = addMinutes(cursor, 30);
+      cursor = setMinutes(addDays(cursor, 0), cursor.getMinutes() + 30);
     }
     return slots;
   }, [selectedDate]);
@@ -211,7 +211,7 @@ export default function ConsultantBookingPage() {
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="text-orange-600" />
               <h3 className="font-bold">Pilih Tanggal</h3>
-            </div>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
             <DayPicker
               mode="single"
               selected={selectedDate}
@@ -222,7 +222,7 @@ export default function ConsultantBookingPage() {
             />
 
             {/* Timeslots */}
-            <div className="mt-6">
+                        "px-3 py-2 text-sm rounded-xl border transition " +
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="text-orange-600" />
                 <h3 className="font-bold">Pilih Jam</h3>
