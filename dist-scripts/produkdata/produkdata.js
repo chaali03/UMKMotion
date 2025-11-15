@@ -2675,6 +2675,16 @@ export async function seedProduk() {
             }
             return arr;
         };
+        const avgRating = (list) => {
+            if (!list.length)
+                return 0;
+            const sum = list.reduce((acc, r) => acc + (typeof r.rating === 'number' ? r.rating : 0), 0);
+            return Number((sum / list.length).toFixed(1));
+        };
+        const reviews = buatUlasan(rest.kategori || "Umum");
+        const unitTerjual = typeof rest.unit_terjual === 'number'
+            ? rest.unit_terjual
+            : (300 + ((idx * 41) % 1700)); // bervariasi per produk
         return {
             ...rest,
             harga_asli,
@@ -2688,7 +2698,10 @@ export async function seedProduk() {
             hearts: likes,
             interactions,
             // 10+ ulasan per produk, beragam
-            ulasan: buatUlasan(rest.kategori || "Umum"),
+            ulasan: reviews,
+            jumlah_ulasan: reviews.length,
+            unit_terjual: unitTerjual,
+            rating_bintang: typeof rest.rating_bintang === 'number' ? rest.rating_bintang : avgRating(reviews),
         };
     });
     await uploadProducts(productsWithUpload);

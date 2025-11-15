@@ -1,6 +1,9 @@
 ---
 import Layout from '../../layouts/LandingPageLayout.astro';
 import UMKMDetailPage from '../../../Home/UMKMDetailPage/UMKMDetailPage.tsx';
+import CommentSection from '../../components/ProductDetail/CommentSection.tsx';
+import ProductRecommendations from '../../components/ProductDetail/ProductRecommendations.tsx';
+import AnotherProduct from '../../components/ProductDetail/AnotherProduct.tsx';
 
 export const prerender = false;
 
@@ -30,7 +33,45 @@ const { id } = Astro.params;
     window.UMKM_ID = umkmId;
   </script>
 
+  <style>
+    :global(body) {
+      background: #f8fafc;
+    }
+    .container {
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 0 16px;
+    }
+  </style>
+
   <main class="min-h-screen bg-slate-50">
-    <UMKMDetailPage client:load />
+    <!-- DETAIL UMKM -->
+    <section class="container" id="umkm-detail">
+      <UMKMDetailPage client:load />
+    </section>
+
+    <!-- REKOMENDASI PRODUK TERKAIT -->
+    <section class="container" id="recommendations" style="margin-top: 64px;">
+      <ProductRecommendations client:load />
+    </section>
+
+    <!-- ULASAN / KOMENTAR -->
+    <section class="container" id="comment-section" style="margin-top: 48px;">
+      <CommentSection client:load />
+    </section>
+
+    <!-- PRODUK LAIN -->
+    <section class="container" id="another-products" style="margin-top: 80px;">
+      <AnotherProduct client:load />
+    </section>
   </main>
+
+  <script>
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'selectedProduct') {
+        window.location.reload();
+      }
+    });
+  </script>
 </Layout>

@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { format } from "date-fns";
 import { ArrowLeft, MoreVertical, Phone, Video, Paperclip, Smile, Send, Star, Clock } from "lucide-react";
 
@@ -44,10 +46,29 @@ export default function ConsultantChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const hasLoggedSessionRef = useRef<boolean>(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Log chat session start once per view if user is authenticated
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user && consultant && !hasLoggedSessionRef.current) {
+      const activityId = `consult_chat_${consultant.id}_${Date.now()}`;
+      setDoc(doc(db, 'users', user.uid, 'activities', activityId), {
+        type: 'consult_chat',
+        title: `Mulai chat dengan ${consultant.name}`,
+        consultantId: consultant.id,
+        consultantName: consultant.name,
+        specialty: consultant.specialty,
+        image: consultant.avatar || null,
+        createdAt: serverTimestamp()
+      }).catch(() => {});
+      hasLoggedSessionRef.current = true;
+    }
+  }, [consultant]);
 
   const sendMessage = () => {
     const text = input.trim();
@@ -56,6 +77,18 @@ export default function ConsultantChatPage() {
     setMessages((prev) => [...prev, m]);
     setInput("");
     setIsTyping(true);
+    // Optionally log first user message as engagement
+    const user = auth.currentUser;
+    if (user) {
+      const activityId = `consult_chat_msg_${consultant.id}_${Date.now()}`;
+      setDoc(doc(db, 'users', user.uid, 'activities', activityId), {
+        type: 'consult_chat_message',
+        title: `Kirim pesan ke ${consultant.name}`,
+        consultantId: consultant.id,
+        consultantName: consultant.name,
+        createdAt: serverTimestamp()
+      }).catch(() => {});
+    }
     // Simulasi balasan konsultan
     setTimeout(() => {
       setMessages((prev) => [

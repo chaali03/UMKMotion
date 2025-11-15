@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { auth, db, storage } from "../../src/lib/firebase";
 import { onAuthStateChanged, updateProfile, sendPasswordResetEmail, signOut } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getUserBadges, getUserGamificationStats } from "../../src/lib/gamification";
 
@@ -82,6 +82,34 @@ export default function ProfilePage() {
   const [totpQRCode, setTotpQRCode] = useState<string>("");
   const [totpCode, setTotpCode] = useState<string>("");
   const [isSettingUpTOTP, setIsSettingUpTOTP] = useState(false);
+  // History State
+  const [activities, setActivities] = useState<Array<{ id: string; type: string; title?: string; store?: string | null; storeId?: string | null; productASIN?: string | null; category?: string | null; image?: string | null; consultantId?: number | null; consultantName?: string | null; createdAt?: Date | null }>>([]);
+  const [historyTab, setHistoryTab] = useState<'all' | 'product' | 'visit' | 'consultation'>('all');
+
+  // Open activity destination
+  const openActivity = (a: any) => {
+    try {
+      // Product detail
+      if ((a.type === 'product_view' || a.productASIN) && a.productASIN) {
+        window.location.href = `/product/${a.productASIN}`;
+        return;
+      }
+      // Visit UMKM
+      if (a.type === 'visit') {
+        if (a.storeId) {
+          window.location.href = `/umkm/${a.storeId}`;
+        } else {
+          window.location.href = '/toko';
+        }
+        return;
+      }
+      // Consultant chat
+      if ((a.type === 'consult_chat' || a.type === 'consult_chat_message') && a.consultantId) {
+        window.location.href = `/ConsultantChat?consultant=${a.consultantId}`;
+        return;
+      }
+    } catch {}
+  };
   
   // Sidebar State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -200,6 +228,32 @@ export default function ProfilePage() {
       setUserBadges(userBadgesData);
       setBadges(badgesData);
       setGamificationStats(statsData);
+      
+      // Load recent activities for History UI
+      try {
+        const q = query(collection(db, 'users', user.uid, 'activities'), orderBy('createdAt', 'desc'), limit(50));
+        const snap = await getDocs(q);
+        const acts = snap.docs.map(d => {
+          const data: any = d.data();
+          const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : null;
+          return {
+            id: d.id,
+            type: data.type || 'other',
+            title: data.title || '',
+            store: data.store || null,
+            storeId: data.storeId || null,
+            productASIN: data.productASIN || null,
+            category: data.category || null,
+            image: data.image || null,
+            consultantId: data.consultantId || null,
+            consultantName: data.consultantName || null,
+            createdAt
+          };
+        });
+        setActivities(acts);
+      } catch (e) {
+        // Non-blocking; leave activities empty if fetch fails
+      }
       setLoading(false);
     });
 
@@ -1179,10 +1233,104 @@ export default function ProfilePage() {
             </>
           )}
 
-          {/* Other Menu Items */}
-          {activeMenu !== 'profile' && (
+          {/* History Menu */}
+          {activeMenu === 'history' && (
+            <div className="space-y-4">
+              {/* History Header */}
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <History className="w-5 h-5 text-slate-700" />
+                    <h3 className="text-base font-semibold text-slate-900">Riwayat Aktivitas</h3>
+                  </div>
+                  <div className="text-xs text-slate-500">{activities.length} aktivitas</div>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  {[
+                    { id: 'all', label: 'Semua' },
+                    { id: 'product', label: 'Produk' },
+                    { id: 'visit', label: 'Kunjungan UMKM' },
+                    { id: 'consultation', label: 'Konsultasi' },
+                  ].map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => setHistoryTab(t.id as any)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${historyTab === t.id ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'}`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Activity List */}
+              <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-slate-200">
+                {activities.length === 0 ? (
+                  <div className="text-center py-10 text-slate-500">
+                    <History className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+                    <p className="text-sm">Belum ada aktivitas yang tercatat</p>
+                    <p className="text-xs">Jelajahi produk dan layanan untuk mengisi riwayat Anda</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {activities
+                      .filter(a => {
+                        if (historyTab === 'all') return true;
+                        if (historyTab === 'product') return a.type === 'product_view' || a.type === 'purchase' || a.type === 'review' || !!a.productASIN;
+                        if (historyTab === 'visit') return a.type === 'visit';
+                        if (historyTab === 'consultation') return a.type === 'consult_chat' || a.type === 'consult_chat_message';
+                        return true;
+                      })
+                      .map(a => (
+                        <div
+                          key={a.id}
+                          onClick={() => openActivity(a)}
+                          className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"
+                        >
+                          {a.type === 'visit' ? (
+                            <Store className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                          ) : a.type.startsWith('consult_') ? (
+                            <Phone className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                          ) : (
+                            <FileText className="w-5 h-5 text-slate-600 flex-shrink-0" />
+                          )}
+                          {a.image && (
+                            <img src={a.image} alt="" className="w-10 h-10 rounded-lg object-cover border border-slate-200" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-slate-900 truncate">{a.title || (
+                              a.type === 'visit' ? `Kunjungi ${a.store || 'UMKM'}` :
+                              a.type.startsWith('consult_') ? `Konsultasi dengan ${a.consultantName || 'Konsultan'}` :
+                              'Aktivitas'
+                            )}</div>
+                            <div className="text-xs text-slate-600 truncate">
+                              {a.category ? <span className="mr-1">Kategori: {a.category}</span> : null}
+                              {a.store ? <span className="mr-1">Toko: {a.store}</span> : null}
+                              {a.productASIN ? <span>ASIN: {a.productASIN}</span> : null}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-[10px] text-slate-500 whitespace-nowrap">
+                              {a.createdAt ? a.createdAt.toLocaleString() : 'Baru saja'}
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); openActivity(a); }}
+                              className="px-2 py-1 rounded-md bg-slate-900 text-white text-[10px] hover:bg-slate-800"
+                            >
+                              Buka
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Other Menus (store, pricing) */}
+          {activeMenu !== 'profile' && activeMenu !== 'history' && (
             <div className="bg-white rounded-xl shadow-sm p-6 text-center">
-              {activeMenu === 'history' && <History size={32} className="mx-auto text-gray-300 mb-3" />}
               {activeMenu === 'store' && <Store size={32} className="mx-auto text-gray-300 mb-3" />}
               {activeMenu === 'pricing' && <CreditCard size={32} className="mx-auto text-gray-300 mb-3" />}
               <h3 className="text-lg font-bold text-gray-900 mb-2 capitalize">{activeMenu} Coming Soon</h3>
