@@ -1,9 +1,13 @@
 ---
-import ProfilePage from "../components/ProfileClient.tsx";
-import LandingPageLayout from "../layouts/LandingPageLayout.astro";
+import Layout from '../../layouts/HomepageLayout.astro';
+import ProductDetailPage from '../../../components/ProductDetail/ProductDetailPage.tsx';
+
+export const prerender = false;
+
+const { asin } = Astro.params;
 ---
 
-<LandingPageLayout title="Profil Saya - UMKMotion">
+<Layout title={`Detail Produk - UMKMotion`} description="Detail produk lengkap dengan variant, rating, dan ulasan">
   <script define:vars={{
     FIREBASE_API_KEY: import.meta.env.PUBLIC_FIREBASE_API_KEY || import.meta.env.FIREBASE_API_KEY,
     FIREBASE_AUTH_DOMAIN: import.meta.env.PUBLIC_FIREBASE_AUTH_DOMAIN || import.meta.env.FIREBASE_AUTH_DOMAIN,
@@ -12,7 +16,7 @@ import LandingPageLayout from "../layouts/LandingPageLayout.astro";
     FIREBASE_MESSAGING_SENDER_ID: import.meta.env.PUBLIC_FIREBASE_MESSAGING_SENDER_ID || import.meta.env.FIREBASE_MESSAGING_SENDER_ID,
     FIREBASE_APP_ID: import.meta.env.PUBLIC_FIREBASE_APP_ID || import.meta.env.FIREBASE_APP_ID,
     FIREBASE_MEASUREMENT_ID: import.meta.env.PUBLIC_FIREBASE_MEASUREMENT_ID || import.meta.env.FIREBASE_MEASUREMENT_ID,
-    GEMINI_API_KEY: import.meta.env.GEMINI_API_KEY
+    productASIN: asin
   }}>
     window.ENV = {
       FIREBASE_API_KEY,
@@ -21,12 +25,13 @@ import LandingPageLayout from "../layouts/LandingPageLayout.astro";
       FIREBASE_STORAGE_BUCKET,
       FIREBASE_MESSAGING_SENDER_ID,
       FIREBASE_APP_ID,
-      FIREBASE_MEASUREMENT_ID,
-      GEMINI_API_KEY
+      FIREBASE_MEASUREMENT_ID
     };
+    window.PRODUCT_ASIN = productASIN;
   </script>
 
-  <div class="w-full min-h-screen bg-gray-50">
-    <ProfilePage client:only="react" />
-  </div>
-</LandingPageLayout>
+  <main class="min-h-screen bg-gray-50">
+    <ProductDetailPage client:load />
+  </main>
+</Layout>
+

@@ -268,16 +268,19 @@ const IconButton = ({
   label, 
   count = 0, 
   animate = false, 
-  badgeType 
+  badgeType, 
+  id,
 }: { 
   href: string; 
   icon: React.ElementType; 
   label: string; 
   count?: number; 
   animate?: boolean; 
-  badgeType?: 'cart' | 'favorites' 
+  badgeType?: 'cart' | 'favorites'; 
+  id?: string;
 }) => (
   <a
+    id={id}
     href={href}
     aria-label={label}
     title={label}
@@ -303,17 +306,28 @@ const useAuth = () => {
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
           const userData = userDoc.exists() ? userDoc.data() : {};
 
+          // Get nickname with proper fallback, ensuring it's not empty
+          const getNickname = () => {
+            if (userData.nickname && userData.nickname.trim()) return userData.nickname.trim();
+            if (userData.fullName && userData.fullName.trim()) return userData.fullName.trim();
+            if (currentUser.displayName && currentUser.displayName.trim()) return currentUser.displayName.trim();
+            if (currentUser.email) return currentUser.email.split('@')[0];
+            return 'User';
+          };
+
           setUser({
             displayName: currentUser.displayName,
             email: currentUser.email,
-            nickname: userData.nickname || userData.fullName || currentUser.displayName || currentUser.email?.split('@')[0] || 'User'
+            nickname: getNickname()
           });
         } catch (error) {
           console.error('Error fetching user data:', error);
+          // Fallback when Firestore fetch fails
+          const fallbackNickname = currentUser.displayName?.trim() || currentUser.email?.split('@')[0] || 'User';
           setUser({
             displayName: currentUser.displayName,
             email: currentUser.email,
-            nickname: currentUser.displayName || currentUser.email?.split('@')[0] || 'User'
+            nickname: fallbackNickname
           });
         }
       } else {
@@ -576,13 +590,14 @@ const ProfileMenu = ({
 }: {
   show: boolean;
   menuTop: number;
-  menuPortalRef: React.RefObject<HTMLDivElement>;
+  menuPortalRef: React.RefObject<HTMLDivElement | null>;
   userInitial: string;
   avatarColor: string;
   loading: boolean;
   onClose: () => void;
   onLogout: () => void;
 }) => {
+
   if (!show || typeof document === 'undefined') return null;
 
   return createPortal(
@@ -646,9 +661,20 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
   const { cartCount, favoritesCount, animateCart, animateFavorites } = useCartAndFavorites();
 
   // Derived values
-  const displayName = user?.nickname || user?.displayName || (user?.email ? user.email.split('@')[0] : 'Pengguna');
-  const userInitial = getInitials(displayName);
-  const avatarColor = getAvatarColor(displayName);
+  // Use nickname with proper fallback chain to avoid showing "PE" (from "Pengguna")
+  const getNicknameForAvatar = (): string => {
+    if (!user) return 'User';
+    // Check if nickname exists and is not empty
+    if (user.nickname && user.nickname.trim()) {
+      return user.nickname.trim();
+    }
+    // Fallback chain: fullName -> displayName -> email prefix -> 'User'
+    return user.displayName || user.email?.split('@')[0] || 'User';
+  };
+  
+  const nicknameOnly = getNicknameForAvatar();
+  const userInitial = getInitials(nicknameOnly);
+  const avatarColor = getAvatarColor(nicknameOnly);
 
   // Effects
   useEffect(() => {
@@ -749,6 +775,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                     count={favoritesCount}
                     animate={animateFavorites}
                     badgeType="favorites"
+                    id="nav-fav-btn-mobile"
                   />
                   <IconButton
                     href="/cart"
@@ -757,6 +784,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                     count={cartCount}
                     animate={animateCart}
                     badgeType="cart"
+                    id="nav-cart-btn-mobile"
                   />
                   <a href="/profile">
                     <ProfileAvatar initial={userInitial} color={avatarColor} />
@@ -793,6 +821,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                     count={favoritesCount}
                     animate={animateFavorites}
                     badgeType="favorites"
+                    id="nav-fav-btn-desktop"
                   />
                   <IconButton
                     href="/cart"
@@ -801,6 +830,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
                     count={cartCount}
                     animate={animateCart}
                     badgeType="cart"
+                    id="nav-cart-btn-desktop"
                   />
                   <div className="relative" ref={profileRef}>
                     <ProfileAvatar
