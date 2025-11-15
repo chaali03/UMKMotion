@@ -7,7 +7,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import '../mapbox-custom.css';
 import type { UMKMLocation } from '../types';
 import {
-  MapPin, Layers, Search, X, Locate,
+  Layers, Search, X, Locate,
   Star, Clock, Phone, ExternalLink, Maximize2, Minimize2,
   Navigation, Share2, Heart, Globe, Instagram, Mail,
   Award, TrendingUp, DollarSign, Calendar, MessageCircle,
@@ -38,7 +38,16 @@ if (typeof window !== 'undefined') {
         return value;
       };
     }
-    
+    // Ensure bare identifier exists as a global var for chunks that reference it directly
+    try {
+      const g: any = globalThis as any;
+      if (typeof g.__publicField !== 'function') g.__publicField = (window as any).__publicField;
+      // Use indirect eval to create a real global var in the page scope
+      const defineBare = "var __publicField = (typeof __publicField==='function'? __publicField : (" + g.__publicField.toString() + "))";
+      // eslint-disable-next-line no-eval
+      (0, eval)(defineBare);
+    } catch {}
+
     // Set MapLibre worker URL
     if (typeof maplibregl !== 'undefined' && maplibregl) {
       (maplibregl as any).workerUrl = 'https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl-csp-worker.js';
@@ -88,16 +97,29 @@ const formatSpeed = (metersPerSecond: number): string => {
 };
 
 // Safe geolocation wrapper
+// Enhanced geolocation with high accuracy settings
 const safeGeolocation = {
   getCurrentPosition: (success: PositionCallback, error?: PositionErrorCallback, options?: PositionOptions) => {
     if (navigator.geolocation && typeof navigator.geolocation.getCurrentPosition === 'function') {
-      return navigator.geolocation.getCurrentPosition(success, error, options);
+      const enhancedOptions = {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+        ...options
+      };
+      return navigator.geolocation.getCurrentPosition(success, error, enhancedOptions);
     }
     error?.(new Error('Geolocation not supported') as any);
   },
   watchPosition: (success: PositionCallback, error?: PositionErrorCallback, options?: PositionOptions): number | null => {
     if (navigator.geolocation && typeof navigator.geolocation.watchPosition === 'function') {
-      return navigator.geolocation.watchPosition(success, error, options);
+      const enhancedOptions = {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 1000, // Allow 1 second old position
+        ...options
+      };
+      return navigator.geolocation.watchPosition(success, error, enhancedOptions);
     }
     return null;
   },
@@ -122,7 +144,7 @@ const MAP_TYPES = [
           type: 'raster',
           tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
           tileSize: 256,
-          attribution: '© OpenStreetMap contributors',
+          attribution: ' OpenStreetMap contributors',
           maxzoom: 19
         }
       },
@@ -500,11 +522,15 @@ export default function MapboxComponent({
     accuracy: number;
     speed: number | null;
     heading: number | null;
+    altitude: number | null;
+    altitudeAccuracy: number | null;
+    timestamp: number;
   } | null>(null);
   
-  const [gpsStatus, setGpsStatus] = useState<'searching' | 'low' | 'high' | 'off'>('off');
+  const [gpsStatus, setGpsStatus] = useState<'searching' | 'low' | 'medium' | 'high' | 'excellent' | 'off'>('off');
+  const [locationHistory, setLocationHistory] = useState<Array<{lat: number, lng: number, accuracy: number, timestamp: number}>>([]);
+  const [averageAccuracy, setAverageAccuracy] = useState<number>(0);
   const [nearestUMKM, setNearestUMKM] = useState<{ umkm: UMKMLocation; distance: number } | null>(null);
-  const [showUserInfo, setShowUserInfo] = useState(false);
   const [compassHeading, setCompassHeading] = useState(0);
 
   const filteredLocations = useMemo(() => {
@@ -755,23 +781,34 @@ export default function MapboxComponent({
           lng: longitude,
           accuracy: accuracy || 0,
           speed: speed,
-          heading: heading
+          heading: heading,
+          altitude: null,
+          altitudeAccuracy: null,
+          timestamp: Date.now()
         });
         
         if (!userMarker.current) {
           const el = document.createElement('div');
           el.className = 'gmap-user-location';
           el.innerHTML = `
-            <div class="user-accuracy-circle" style="width: ${Math.min(accuracy * 2, 200)}px; height: ${Math.min(accuracy * 2, 200)}px;"></div>
+            <div class="user-accuracy-circle" style="width: ${Math.min(Math.max(accuracy, 20), 120)}px; height: ${Math.min(Math.max(accuracy, 20), 120)}px;"></div>
             <div class="user-pulse-ring"></div>
-            ${heading !== null ? `<div class="user-direction-arrow" style="transform: rotate(${heading}deg);"></div>` : ''}
-            <div class="user-outer-circle">
-              <div class="user-inner-dot"></div>
+            <div class="user-dot">
+              <div class="user-dot-inner"></div>
+              ${heading !== null ? `<div class="user-direction-arrow" style="transform: rotate(${heading}deg)"></div>` : ''}
             </div>
           `;
+          // Click-to-center instantly to user indicator
+          el.addEventListener('click', () => {
+            const mInst = map.current;
+            const last = lastUserLocationRef.current;
+            if (!mInst || !last) return;
+            snapCenter(mInst, last.lon, last.lat);
+          });
           userMarker.current = new maplibregl.Marker({ 
             element: el, 
             anchor: 'center',
+            offset: [0, 0],
             pitchAlignment: 'map',
             rotationAlignment: 'map'
           })
@@ -779,29 +816,24 @@ export default function MapboxComponent({
             .addTo(map.current!);
         } else {
           userMarker.current.setLngLat([longitude, latitude]);
-          const el = userMarker.current.getElement();
-          const accuracyEl = el.querySelector('.user-accuracy-circle') as HTMLElement;
-          if (accuracyEl) {
-            const size = Math.min(accuracy * 2, 200);
-            accuracyEl.style.width = `${size}px`;
-            accuracyEl.style.height = `${size}px`;
+          // Update accuracy circle size
+          const accuracyCircle = userMarker.current.getElement().querySelector('.user-accuracy-circle') as HTMLElement;
+          if (accuracyCircle) {
+            const size = Math.min(Math.max(accuracy, 20), 120);
+            accuracyCircle.style.width = size + 'px';
+            accuracyCircle.style.height = size + 'px';
           }
-          
-          if (heading !== null) {
-            let arrowEl = el.querySelector('.user-direction-arrow') as HTMLElement;
-            if (!arrowEl) {
-              arrowEl = document.createElement('div');
-              arrowEl.className = 'user-direction-arrow';
-              el.querySelector('.user-pulse-ring')?.after(arrowEl);
-            }
-            arrowEl.style.transform = `rotate(${heading}deg)`;
+          // Update direction arrow
+          const directionArrow = userMarker.current.getElement().querySelector('.user-direction-arrow') as HTMLElement;
+          if (directionArrow && heading !== null) {
+            directionArrow.style.transform = `rotate(${heading}deg)`;
           }
         }
       },
       () => {
         setGpsStatus('off');
       },
-      { enableHighAccuracy: true, timeout: 3500, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, [mapReady]);
 
@@ -845,6 +877,64 @@ export default function MapboxComponent({
   const handleZoomIn = () => map.current?.zoomIn();
   const handleZoomOut = () => map.current?.zoomOut();
 
+  // Keep a fixed, very close zoom while following the user
+  const FOLLOW_ZOOM = 18; 
+
+  // Helper: center to lat/lon at the DEVICE SCREEN CENTER (not just map viewport center)
+  const snapCenter = (m: maplibregl.Map, lon: number, lat: number) => {
+    try { m.setPadding({ top: 0, right: 0, bottom: 0, left: 0 }); } catch {}
+    try { m.resize(); } catch {}
+    // Compute pixel offset so that the target sits at window center, even if the map canvas is offset
+    const rect = m.getContainer().getBoundingClientRect();
+    const vv = (window as any).visualViewport;
+    const viewportWidth = vv?.width ?? window.innerWidth;
+    const viewportHeight = vv?.height ?? window.innerHeight;
+    const viewportLeft = vv?.pageLeft ?? 0;
+    const viewportTop = vv?.pageTop ?? 0;
+    const desiredX = Math.round(viewportLeft + viewportWidth / 2);
+    // No vertical bias: keep exactly at device center; VisualViewport accounts for browser UI bars
+    const desiredY = Math.round(viewportTop + viewportHeight / 2);
+    const mapCenterX = Math.round(rect.left + rect.width / 2);
+    const mapCenterY = Math.round(rect.top + rect.height / 2);
+    const deltaX = desiredX - mapCenterX;
+    const deltaY = desiredY - mapCenterY;
+    // Use easeTo with offset and duration 0 to snap instantly with a pixel offset
+    m.easeTo({
+      center: [lon, lat],
+      zoom: Math.min(FOLLOW_ZOOM, m.getMaxZoom()),
+      bearing: 0,
+      pitch: 0,
+      offset: [deltaX, deltaY],
+      duration: 0,
+      animate: false,
+      essential: false
+    });
+  };
+
+  // Enhanced accuracy classification
+  const getAccuracyStatus = (accuracy: number): 'excellent' | 'high' | 'medium' | 'low' => {
+    if (accuracy <= 5) return 'excellent';
+    if (accuracy <= 10) return 'high';
+    if (accuracy <= 20) return 'medium';
+    return 'low';
+  };
+
+  // Update location history and calculate average accuracy
+  const updateLocationHistory = (lat: number, lng: number, accuracy: number) => {
+    const timestamp = Date.now();
+    setLocationHistory(prev => {
+      const newHistory = [...prev, { lat, lng, accuracy, timestamp }]
+        .filter(loc => timestamp - loc.timestamp < 30000) // Keep last 30 seconds
+        .slice(-10); // Keep last 10 readings
+      
+      // Calculate average accuracy
+      const avgAcc = newHistory.reduce((sum, loc) => sum + loc.accuracy, 0) / newHistory.length;
+      setAverageAccuracy(avgAcc);
+      
+      return newHistory;
+    });
+  };
+
   const handleLocateMe = () => {
     const m = map.current;
     if (!m) {
@@ -856,68 +946,55 @@ export default function MapboxComponent({
     setIsLocating(true);
 
     if (toggleOn) {
+      // Enter follow mode immediately and prepare camera like Google Maps
+      setIsFollowing(true);
+      try { m.setPadding({ top: 0, right: 0, bottom: 0, left: 0 }); } catch {}
+      try { m.resize(); } catch {}
+      // Smooth zoom and bearing reset like Google Maps
+      m.easeTo({ 
+        center: m.getCenter(), 
+        zoom: Math.min(FOLLOW_ZOOM, m.getMaxZoom()), 
+        bearing: 0, 
+        pitch: 0,
+        duration: 1000,
+        easing: (t) => t * (2 - t)
+      });
+      // If we already have a last known location, jump instantly to it
+      if (lastUserLocationRef.current) {
+        const { lat, lon } = lastUserLocationRef.current;
+        snapCenter(m, lon, lat);
+      }
       setGpsStatus('searching');
       safeGeolocation.getCurrentPosition(
         (pos) => {
-          const { latitude, longitude, accuracy, speed, heading } = pos.coords;
+          const { latitude, longitude, accuracy, speed, heading, altitude, altitudeAccuracy } = pos.coords;
+          const timestamp = Date.now();
 
           lastUserLocationRef.current = { lat: latitude, lon: longitude };
-          setGpsStatus(accuracy < 20 ? 'high' : 'low');
-          setUserLocation({
+          const accuracyStatus = getAccuracyStatus(accuracy || 999);
+          setGpsStatus(accuracyStatus);
+          
+          const locationData = {
             lat: latitude,
             lng: longitude,
             accuracy: accuracy || 0,
             speed: speed,
-            heading: heading
-          });
+            heading: heading,
+            altitude: altitude,
+            altitudeAccuracy: altitudeAccuracy,
+            timestamp
+          };
+          
+          setUserLocation(locationData);
+          updateLocationHistory(latitude, longitude, accuracy || 0);
 
           if (userMarker.current) {
             userMarker.current.setLngLat([longitude, latitude]);
-            const el = userMarker.current.getElement();
-            const accuracyEl = el.querySelector('.user-accuracy-circle') as HTMLElement;
-            if (accuracyEl) {
-              const size = Math.min(accuracy * 2, 200);
-              accuracyEl.style.width = `${size}px`;
-              accuracyEl.style.height = `${size}px`;
-            }
-            
-            if (heading !== null) {
-              let arrowEl = el.querySelector('.user-direction-arrow') as HTMLElement;
-              if (!arrowEl) {
-                arrowEl = document.createElement('div');
-                arrowEl.className = 'user-direction-arrow';
-                el.querySelector('.user-pulse-ring')?.after(arrowEl);
-              }
-              arrowEl.style.transform = `rotate(${heading}deg)`;
-            }
-          } else {
-            const el = document.createElement('div');
-            el.className = 'gmap-user-location';
-            el.innerHTML = `
-              <div class="user-accuracy-circle" style="width: ${Math.min(accuracy * 2, 200)}px; height: ${Math.min(accuracy * 2, 200)}px;"></div>
-              <div class="user-pulse-ring"></div>
-              ${heading !== null ? `<div class="user-direction-arrow" style="transform: rotate(${heading}deg);"></div>` : ''}
-              <div class="user-outer-circle">
-                <div class="user-inner-dot"></div>
-              </div>
-            `;
-            userMarker.current = new maplibregl.Marker({ 
-              element: el, 
-              anchor: 'center',
-              pitchAlignment: 'map',
-              rotationAlignment: 'map'
-            })
-              .setLngLat([longitude, latitude])
-              .addTo(m);
           }
 
           const initialZoom = m.getZoom();
-          m.flyTo({
-            center: [longitude, latitude],
-            zoom: initialZoom < 15 ? 16.5 : initialZoom,
-            duration: 1000,
-            essential: true
-          });
+          // Instantly center to the indicator without animation
+          snapCenter(m, longitude, latitude);
 
           setIsFollowing(true);
           setIsLocating(false);
@@ -925,62 +1002,127 @@ export default function MapboxComponent({
           if (geoWatchId.current == null) {
             const watchId = safeGeolocation.watchPosition(
               (p) => {
-                const { latitude: lat, longitude: lon, accuracy: acc, speed: spd, heading: hdg } = p.coords;
-                lastUserLocationRef.current = { lat, lon };
+                const { latitude: lat, longitude: lon, accuracy: acc, speed: spd, heading: hdg, altitude: alt, altitudeAccuracy: altAcc } = p.coords;
+                const ts = Date.now();
                 
-                setGpsStatus(acc < 20 ? 'high' : 'low');
+                lastUserLocationRef.current = { lat, lon };
+                const accStatus = getAccuracyStatus(acc || 999);
+                setGpsStatus(accStatus);
+                
+                const newLocationData = {
+                  lat,
+                  lng: lon,
+                  accuracy: acc || 0,
+                  speed: spd,
+                  heading: hdg,
+                  altitude: alt,
+                  altitudeAccuracy: altAcc,
+                  timestamp: ts
+                };
+                
+                setUserLocation(newLocationData);
+                updateLocationHistory(lat, lon, acc || 0);
+                
+                if (userMarker.current) {
+                  userMarker.current.setLngLat([lon, lat]);
+                  // Update accuracy circle (clamped)
+                  const accuracyCircle = userMarker.current.getElement().querySelector('.user-accuracy-circle') as HTMLElement;
+                  if (accuracyCircle && typeof acc === 'number') {
+                    const size = Math.min(Math.max(acc, 20), 120);
+                    accuracyCircle.style.width = size + 'px';
+                    accuracyCircle.style.height = size + 'px';
+                    const opacity = Math.max(0.1, Math.min(0.3, (50 - acc) / 50));
+                    accuracyCircle.style.backgroundColor = `rgba(66, 133, 244, ${opacity})`;
+                  }
+                  // Update direction arrow
+                  const directionArrow = userMarker.current.getElement().querySelector('.user-direction-arrow') as HTMLElement;
+                  if (directionArrow && typeof hdg === 'number') {
+                    directionArrow.style.transform = `rotate(${hdg}deg)`;
+                  }
+                }
+
+                if (isFollowing && m) {
+                  // Real-time smooth following like Google Maps - focus on user indicator
+                  const distance = lastUserLocationRef.current ? 
+                    Math.sqrt(Math.pow(lon - lastUserLocationRef.current.lon, 2) + Math.pow(lat - lastUserLocationRef.current.lat, 2)) : 0;
+                  
+                  // Adjust animation duration based on movement distance for natural feel
+                  const duration = Math.min(1200, Math.max(300, distance * 100000));
+                  
+                  m.easeTo({
+                    center: [lon, lat],
+                    zoom: Math.min(FOLLOW_ZOOM, m.getMaxZoom()),
+                    bearing: 0, // Keep north up for consistency
+                    pitch: 0,   // Keep flat view
+                    duration: duration,
+                    easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t, // Smooth ease-in-out
+                    essential: true
+                  });
+                }
+              },
+              (error) => {
+                console.warn('Geolocation error:', error);
+                setGpsStatus('off');
+              },
+              { 
+                enableHighAccuracy: true, 
+                maximumAge: 500, 
+                timeout: 8000 
+              }
+            );
+            geoWatchId.current = watchId;
+          }
+        },
+        (error) => {
+          console.warn('Initial location error:', error);
+          // Fallback: start a temporary high-accuracy watch to get the first fix
+          setGpsStatus('searching');
+          try {
+            const tmpWatch = safeGeolocation.watchPosition(
+              (p) => {
+                const { latitude: lat, longitude: lon, accuracy: acc, speed: spd, heading: hdg, altitude: alt, altitudeAccuracy: altAcc } = p.coords;
+                const ts = Date.now();
+                lastUserLocationRef.current = { lat, lon };
+                setGpsStatus(getAccuracyStatus(acc || 999));
                 setUserLocation({
                   lat,
                   lng: lon,
                   accuracy: acc || 0,
                   speed: spd,
-                  heading: hdg
+                  heading: hdg,
+                  altitude: alt,
+                  altitudeAccuracy: altAcc,
+                  timestamp: ts
                 });
-                
-                if (userMarker.current) {
-                  userMarker.current.setLngLat([lon, lat]);
-                  
-                  const el = userMarker.current.getElement();
-                  const accuracyCircle = el?.querySelector('.user-accuracy-circle') as HTMLElement;
-                  if (accuracyCircle && acc) {
-                    const size = Math.min(acc * 2, 200);
-                    accuracyCircle.style.width = `${size}px`;
-                    accuracyCircle.style.height = `${size}px`;
-                  }
-                  
-                  if (hdg !== null) {
-                    let arrowEl = el.querySelector('.user-direction-arrow') as HTMLElement;
-                    if (!arrowEl) {
-                      arrowEl = document.createElement('div');
-                      arrowEl.className = 'user-direction-arrow';
-                      el.querySelector('.user-pulse-ring')?.after(arrowEl);
-                    }
-                    arrowEl.style.transform = `rotate(${hdg}deg)`;
-                  }
+                updateLocationHistory(lat, lon, acc || 0);
+                if (userMarker.current) userMarker.current.setLngLat([lon, lat]);
+                if (isFollowing && map.current) {
+                  map.current.easeTo({ center: [lon, lat], zoom: FOLLOW_ZOOM, duration: 500, essential: false });
                 }
-
-                if (isFollowing && m) {
-                  m.easeTo({
-                    center: [lon, lat],
-                    duration: 320,
-                    essential: false
-                  });
+                // Got first fix: clear temp watch
+                if (geoWatchId.current == null) {
+                  geoWatchId.current = tmpWatch as unknown as number;
                 }
+                safeGeolocation.clearWatch(tmpWatch as unknown as number);
+                setIsLocating(false);
               },
-              () => {
+              (e2) => {
+                console.warn('Fallback watch error:', e2);
+                setIsLocating(false);
                 setGpsStatus('off');
               },
-              { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 }
+              { enableHighAccuracy: true, timeout: 10000, maximumAge: 1000 }
             );
-            geoWatchId.current = watchId;
+          } catch {
+            setIsLocating(false);
+            setGpsStatus('off');
           }
         },
-        () => {
-          setIsLocating(false);
-          setGpsStatus('off');
-          alert('Tidak dapat mengakses lokasi');
-        },
-        { enableHighAccuracy: true, timeout: 12000 }
+        { 
+          enableHighAccuracy: true, 
+          timeout: 8000,
+          maximumAge: 1000
+        }
       );
     } else {
       // Stop tracking
@@ -989,13 +1131,42 @@ export default function MapboxComponent({
       setIsLocating(false);
       setIsFollowing(false);
       setGpsStatus('off');
+      setLocationHistory([]);
+      setAverageAccuracy(0);
     }
   };
 
+  // Add compass functionality
   useEffect(() => {
+    let compassWatchId: number | null = null;
+    
+    if (typeof DeviceOrientationEvent !== 'undefined' && 'requestPermission' in DeviceOrientationEvent) {
+      // iOS 13+ permission request
+      (DeviceOrientationEvent as any).requestPermission()
+        .then((response: string) => {
+          if (response === 'granted') {
+            window.addEventListener('deviceorientation', handleDeviceOrientation);
+          }
+        })
+        .catch(() => {
+          // Fallback for older browsers
+          window.addEventListener('deviceorientation', handleDeviceOrientation);
+        });
+    } else {
+      // Older browsers or non-iOS
+      window.addEventListener('deviceorientation', handleDeviceOrientation);
+    }
+
+    function handleDeviceOrientation(event: DeviceOrientationEvent) {
+      if (event.alpha !== null) {
+        setCompassHeading(event.alpha);
+      }
+    }
+
     return () => {
       safeGeolocation.clearWatch(geoWatchId.current);
       geoWatchId.current = null;
+      window.removeEventListener('deviceorientation', handleDeviceOrientation);
     };
   }, []);
 
@@ -1022,7 +1193,7 @@ export default function MapboxComponent({
               transition={{ duration: 0.25, ease: 'easeOut' }}
             >
               <div className="loader-icon">
-                <MapPin size={48} strokeWidth={2} />
+                <Navigation2 size={48} strokeWidth={2} />
               </div>
               <p>Memuat peta interaktif...</p>
             </motion.div>
@@ -1074,100 +1245,10 @@ export default function MapboxComponent({
         </div>
       )}
 
-      {mapReady && gpsStatus !== 'off' && (
-        <motion.div
-          className={`gps-status-indicator ${gpsStatus}`}
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-        >
-          <div className="gps-icon">
-            {gpsStatus === 'searching' && <Activity size={14} className="searching-icon" />}
-            {gpsStatus === 'low' && <Navigation size={14} />}
-            {gpsStatus === 'high' && <Navigation2 size={14} />}
-          </div>
-          <span>
-            {gpsStatus === 'searching' && 'Mencari lokasi...'}
-            {gpsStatus === 'low' && `Akurasi: ${userLocation?.accuracy.toFixed(0)}m`}
-            {gpsStatus === 'high' && 'GPS Akurat'}
-          </span>
-        </motion.div>
-      )}
+      {}
 
-      <AnimatePresence>
-        {showUserInfo && userLocation && (
-          <motion.div
-            className="user-info-panel"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-          >
-            <div className="info-header">
-              <Compass size={18} />
-              <span>Informasi Lokasi</span>
-              <button onClick={() => setShowUserInfo(false)}>
-                <X size={16} />
-              </button>
-            </div>
-            <div className="info-content">
-              <div className="info-row">
-                <span className="info-label">Koordinat:</span>
-                <span className="info-value">
-                  {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
-                </span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Akurasi:</span>
-                <span className="info-value">{userLocation.accuracy.toFixed(1)} m</span>
-              </div>
-              {userLocation.speed !== null && (
-                <div className="info-row">
-                  <span className="info-label">Kecepatan:</span>
-                  <span className="info-value">{formatSpeed(userLocation.speed)}</span>
-                </div>
-              )}
-              {userLocation.heading !== null && (
-                <div className="info-row">
-                  <span className="info-label">Arah:</span>
-                  <span className="info-value">{Math.round(userLocation.heading)}°</span>
-                </div>
-              )}
-              {nearestUMKM && (
-                <div className="info-row highlight">
-                  <span className="info-label">Terdekat:</span>
-                  <span className="info-value">
-                    {nearestUMKM.umkm.name} - {formatDistance(nearestUMKM.distance)}
-                  </span>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      {mapReady && nearestUMKM && userLocation && !showUserInfo && (
-        <motion.div
-          className="nearest-umkm-badge"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          onClick={() => {
-            onSelectUMKM(nearestUMKM.umkm);
-            if (map.current) {
-              map.current.flyTo({
-                center: [nearestUMKM.umkm.lng, nearestUMKM.umkm.lat],
-                zoom: 17,
-                duration: 1000
-              });
-            }
-          }}
-        >
-          <MapPin size={16} />
-          <div className="nearest-info">
-            <div className="nearest-name">{nearestUMKM.umkm.name}</div>
-            <div className="nearest-distance">{formatDistance(nearestUMKM.distance)}</div>
-          </div>
-        </motion.div>
-      )}
+      
 
       <div ref={mapContainer} className={`gmap-view ${revealMap ? 'is-visible' : 'is-hidden'}`} />
 
@@ -1206,15 +1287,6 @@ export default function MapboxComponent({
               <Locate size={18} />
             </button>
 
-            {userLocation && (
-              <button 
-                onClick={() => setShowUserInfo(!showUserInfo)}
-                className={`toolbar-icon ${showUserInfo ? 'active' : ''}`}
-                title="Info Lokasi"
-              >
-                <Activity size={18} />
-              </button>
-            )}
 
             <button 
               onClick={() => setIsFullscreen(!isFullscreen)} 
@@ -1336,31 +1408,123 @@ export default function MapboxComponent({
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
+            padding: 12px 18px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            font-size: 13px;
-            font-weight: 500;
+            gap: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             z-index: 10;
+            min-width: 200px;
+          }
+
+          .gps-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          }
+
+          .gps-status-text {
+            font-weight: 700;
+            font-size: 13px;
+          }
+
+          .gps-details {
+            display: flex;
+            gap: 8px;
+            font-size: 10px;
+            font-weight: 500;
+            opacity: 0.8;
+          }
+
+          .accuracy {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+          }
+
+          .avg-accuracy {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            padding: 2px 6px;
+            border-radius: 4px;
+          }
+
+          .speed {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+            padding: 2px 6px;
+            border-radius: 4px;
+          }
+
+          .altitude {
+            background: rgba(139, 92, 246, 0.1);
+            color: #8b5cf6;
+            padding: 2px 6px;
+            border-radius: 4px;
+          }
+
+          .heading {
+            background: rgba(236, 72, 153, 0.1);
+            color: #ec4899;
+            padding: 2px 6px;
+            border-radius: 4px;
+          }
+
+          .direction {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            padding: 2px 6px;
+            border-radius: 4px;
           }
 
           .gps-status-indicator.searching {
             color: #f59e0b;
-            background: #fffbeb;
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border: 2px solid rgba(245, 158, 11, 0.3);
+            box-shadow: 0 8px 32px rgba(245, 158, 11, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.5);
           }
 
           .gps-status-indicator.low {
             color: #ef4444;
-            background: #fef2f2;
+            background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+          }
+
+          .gps-status-indicator.medium {
+            color: #f59e0b;
+            background: linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%);
           }
 
           .gps-status-indicator.high {
             color: #10b981;
-            background: #f0fdf4;
+            background: linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 100%);
+          }
+
+          .gps-status-indicator.excellent {
+            color: #059669;
+            background: linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%);
+            border: 1px solid rgba(5, 150, 105, 0.2);
+          }
+
+          .excellent-icon {
+            animation: pulse-glow 2s ease-in-out infinite;
+          }
+
+          @keyframes pulse-glow {
+            0%, 100% { 
+              transform: scale(1);
+              filter: drop-shadow(0 0 3px rgba(5, 150, 105, 0.5));
+            }
+            50% { 
+              transform: scale(1.1);
+              filter: drop-shadow(0 0 8px rgba(5, 150, 105, 0.8));
+            }
           }
 
           .gps-icon {
@@ -1368,13 +1532,109 @@ export default function MapboxComponent({
             align-items: center;
           }
 
-          .searching-icon {
-            animation: rotate 2s linear infinite;
+          .searching-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
           }
 
-          @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+          .radar-pulse {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid #f59e0b;
+            border-radius: 50%;
+            animation: radar-pulse 2s ease-out infinite;
+          }
+
+          .radar-pulse::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            border-radius: 50%;
+            animation: radar-pulse 2s ease-out infinite 0.5s;
+          }
+
+          .radar-pulse::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 50%;
+            animation: radar-pulse 2s ease-out infinite 1s;
+          }
+
+          @keyframes radar-pulse {
+            0% {
+              transform: scale(0.5);
+              opacity: 1;
+            }
+            100% {
+              transform: scale(2);
+              opacity: 0;
+            }
+          }
+
+          .searching-icon {
+            position: relative;
+            z-index: 2;
+            animation: gps-rotate 3s linear infinite;
+            filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.3));
+          }
+
+          @keyframes gps-rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+
+          .searching-text {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+          }
+
+          .text-primary {
+            font-weight: 700;
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+          }
+
+          .dots {
+            display: flex;
+            gap: 1px;
+          }
+
+          .dots span {
+            animation: dot-bounce 1.4s ease-in-out infinite;
+            font-weight: bold;
+            color: #f59e0b;
+          }
+
+          .dots span:nth-child(1) { animation-delay: 0s; }
+          .dots span:nth-child(2) { animation-delay: 0.2s; }
+          .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+          @keyframes dot-bounce {
+            0%, 60%, 100% {
+              transform: translateY(0);
+              opacity: 0.4;
+            }
+            30% {
+              transform: translateY(-8px);
+              opacity: 1;
+            }
           }
 
           .user-info-panel {
@@ -1443,62 +1703,17 @@ export default function MapboxComponent({
             font-weight: 600;
           }
 
-          .nearest-umkm-badge {
-            position: absolute;
-            top: 70px;
-            left: 10px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            cursor: pointer;
-            z-index: 10;
-            transition: all 0.2s;
-          }
-
-          .nearest-umkm-badge:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            transform: translateY(-2px);
-          }
-
-          .nearest-umkm-badge svg {
-            color: #1a73e8;
-            flex-shrink: 0;
-          }
-
-          .nearest-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-          }
-
-          .nearest-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: #202124;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 200px;
-          }
-
-          .nearest-distance {
-            font-size: 12px;
-            color: #5f6368;
-          }
+          
 
           .gmap-toolbar {
             position: absolute;
-            top: 70px;
+            top: 120px;
             right: 10px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            background: white;
-            border-radius: 12px;
+            gap: 10px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             padding: 6px;
             z-index: 10;
@@ -1673,81 +1888,119 @@ export default function MapboxComponent({
             height: 0;
             border-left: 10px solid transparent;
             border-right: 10px solid transparent;
-            border-bottom: 20px solid #1a73e8;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-            transform-origin: 10px 30px;
-            transition: transform 0.3s ease;
-            z-index: 5;
+}
+
+.user-direction-arrow {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform-origin: 50% 32px;
+  margin-left: -3px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 16px solid #1a73e8;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  z-index: 11;
+  transition: transform 0.3s ease;
+}
+
+.user-crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.crosshair-h, .crosshair-v {
+  position: absolute;
+  background: rgba(26, 115, 232, 0.6);
+  animation: crosshair-fade 2s ease-in-out infinite;
+}
+
+.crosshair-h {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  margin-top: -0.5px;
+}
+
+.crosshair-v {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  margin-left: -0.5px;
+}
+
+@keyframes crosshair-fade {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+.gmap-user-location:hover .user-dot {
+  transform: scale(1.15);
+  background: #1a73e8;
+  box-shadow: 0 4px 16px rgba(26, 115, 232, 0.5);
+}
+
+.gmap-user-location:hover .user-accuracy-circle {
+  border-color: rgba(26, 115, 232, 0.5);
+  background: rgba(26, 115, 232, 0.2);
+}
+
+.gmap-user-location:hover .crosshair-h,
+.gmap-user-location:hover .crosshair-v {
+  background: rgba(26, 115, 232, 0.9);
+}
           }
 
-          .user-outer-circle {
-            position: relative;
-            width: 22px;
-            height: 22px;
-            background: white;
-            border-radius: 50%;
-            box-shadow: 
-              0 0 0 1px rgba(0, 0, 0, 0.05),
-              0 2px 4px rgba(0, 0, 0, 0.15),
-              0 4px 12px rgba(66, 133, 244, 0.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            transition: transform 0.2s ease;
-          }
-
-          .user-inner-dot {
-            width: 14px;
-            height: 14px;
-            background: #4285f4;
-            border-radius: 50%;
-            position: relative;
-            transition: background 0.2s ease;
-          }
-
-          .user-inner-dot::after {
-            content: '';
-            position: absolute;
+          .crosshair-h {
             top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            margin-top: -0.5px;
+          }
+
+          .crosshair-v {
             left: 50%;
-            transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            background: radial-gradient(circle, rgba(66, 133, 244, 0.4) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: dotGlow 2s ease-in-out infinite;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            margin-left: -0.5px;
           }
 
-          @keyframes dotGlow {
-            0%, 100% {
-              opacity: 0.6;
-              transform: translate(-50%, -50%) scale(1);
-            }
-            50% {
-              opacity: 1;
-              transform: translate(-50%, -50%) scale(1.1);
-            }
+          @keyframes crosshair-fade {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
           }
 
-          .gmap-user-location:hover .user-outer-circle {
+          .gmap-user-location:hover .user-dot {
             transform: scale(1.15);
+            background: #1a73e8;
+            box-shadow: 0 4px 16px rgba(26, 115, 232, 0.5);
           }
 
-          .gmap-user-location:hover .user-inner-dot {
-            background: #1a73e8;
+          .gmap-user-location:hover .user-accuracy-circle {
+            border-color: rgba(26, 115, 232, 0.5);
+            background: rgba(26, 115, 232, 0.2);
+          }
+
+          .gmap-user-location:hover .crosshair-h,
+          .gmap-user-location:hover .crosshair-v {
+            background: rgba(26, 115, 232, 0.9);
           }
 
           @media (max-width: 640px) {
             .gmap-search-wrapper { width: calc(100% - 20px); }
-            .gmap-toolbar { top: 66px; }
-            .nearest-umkm-badge { 
-              top: 66px;
-              max-width: calc(100vw - 80px);
-            }
-            .nearest-name {
-              max-width: 150px;
-            }
+            .gmap-toolbar { top: 140px; }
           }
 
           /* Global Popup Styles */

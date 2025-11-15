@@ -1,8 +1,8 @@
 ---
-import LandingPageLayout from "src/layouts/LandingPageLayout.astro";
-import Navbar from "src/LandingPage/components/Navbar.astro";
-import TokoComponent from "src/components/Toko/Toko.tsx";
+import CheckoutPageComponent from "src/components/PaymentPage/Payment"
 ---
+
+<!DOCTYPE html>
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
@@ -11,5 +11,6 @@ import TokoComponent from "src/components/Toko/Toko.tsx";
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>
-<TokoComponent client:load />  </body>
+    <CheckoutPageComponent client:load />
+  </body>
 </html>

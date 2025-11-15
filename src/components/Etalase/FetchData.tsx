@@ -1,8 +1,7 @@
 // src/components/Etalase/FetchData.tsx
 'use client';
 
-import React, { useEffect, useRef, useState } from "react";
-
+import React, { useEffect, useRef, useState, Suspense } from "react";
 import { db, auth } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
@@ -10,7 +9,6 @@ import { onAuthStateChanged } from "firebase/auth";
 const LazyRadio = React.lazy(() =>
   import('react-loader-spinner').then((m) => ({ default: m.Radio }))
 );
-const LazyRadioAny = LazyRadio as unknown as any;
 
 export type Product = {
   ASIN: string;
@@ -103,7 +101,6 @@ function FetchData() {
     return "0%";
   };
 
-  // Normalize various Firestore field names to our Product shape
   const normalizeTags = (data: any): string[] | undefined => {
     const cands = [data?.tags, data?.tag, data?.promoTags, data?.labels, data?.label, data?.promo_labels];
     const arr = cands.find((v) => Array.isArray(v)) as string[] | undefined;
@@ -116,7 +113,6 @@ function FetchData() {
     for (const v of vals) {
       if (typeof v === 'number' && !isNaN(v)) return v;
       if (typeof v === 'string' && v.trim()) {
-        // Extract leading number from strings like '10%', '10 persen', '10.5'
         const m = v.match(/-?\d+(?:[\.,]\d+)?/);
         if (m) {
           const n = Number(m[0].replace(',', '.'));
@@ -127,11 +123,17 @@ function FetchData() {
     return null;
   };
 
-  // Kita tidak lagi men-generate bonusText; tag akan langsung dipakai dari Firestore
-
+  // === NAVIGASI KE BUYING PAGE DENGAN ASIN ===
   const handleProductClick = (product: Product) => {
+    if (!product.ASIN || product.ASIN === "unknown" || product.ASIN.length < 3) {
+      alert("Produk tidak valid! ASIN tidak tersedia.");
+      console.error("Invalid ASIN:", product.ASIN);
+      return;
+    }
+
     localStorage.setItem("selectedProduct", JSON.stringify(product));
-    window.location.href = "/buyingpage";
+    const url = `/buyingpage?asin=${encodeURIComponent(product.ASIN)}`;
+    window.location.href = url;
   };
 
   useEffect(() => {
@@ -218,14 +220,12 @@ function FetchData() {
             product_price: formatToIDR(p.harga_produk),
           }));
 
-          // Deduplicate by normalized image URL; fallback to normalized product name
           const normUrl = (u?: string) => {
             if (!u) return '';
             let s = u.trim().toLowerCase();
             s = s.replace(/^https?:\/\//, '');
             const q = s.indexOf('?');
             if (q !== -1) s = s.substring(0, q);
-            // common size suffixes after last underscore or @
             s = s.replace(/(_\d+x\d+|@\dx)\.(webp|jpg|jpeg|png)$/i, '.$2');
             return s;
           };
@@ -278,7 +278,6 @@ function FetchData() {
           product_price: formatToIDR(p.harga_produk),
         }));
 
-        // Deduplicate by normalized image URL; fallback to normalized product name
         const normUrl = (u?: string) => {
           if (!u) return '';
           let s = u.trim().toLowerCase();
@@ -400,6 +399,7 @@ function FetchData() {
           width: calc(100% - 24px);
           box-shadow: 0 8px 25px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.3);
         }
+
         .discount-chip {
           display: inline-flex;
           align-items: center;
@@ -413,6 +413,7 @@ function FetchData() {
           box-shadow: 0 6px 20px rgba(239,68,68,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
           text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
+
         .discount-chip-overlay {
           position: absolute;
           top: 12px;
@@ -428,7 +429,7 @@ function FetchData() {
           display: none;
           transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
         }
-        
+
         .favorite-icon-overlay:hover {
           transform: scale(1.1);
           box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
@@ -535,7 +536,7 @@ function FetchData() {
 
         .bonus-promo {
           font-size: 0.75rem;
-          color: var(--brand-orange);
+          color: #ea580c;
           font-weight: 700;
           background: #fff7ed;
           padding: 6px 10px;
@@ -547,7 +548,7 @@ function FetchData() {
 
         .store-name {
           font-size: 0.9rem;
-          color: var(--brand-orange);
+          color: #ea580c;
           font-weight: 800;
           margin: 8px 0 0;
           display: flex;
@@ -560,7 +561,7 @@ function FetchData() {
 
         .store-name::before {
           content: '✓';
-          background: linear-gradient(135deg, var(--brand-orange) 0%, #f97316 50%, #ea580c 100%);
+          background: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fd5701 100%);
           color: white;
           width: 20px;
           height: 20px;
@@ -595,7 +596,7 @@ function FetchData() {
           cursor: pointer;
           transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           border: 1px solid rgba(255,255,255,0.2);
-          background: linear-gradient(135deg, var(--brand-orange) 0%, #f97316 50%, #ea580c 100%);
+          background: linear-gradient(135deg, #fd5701 0%, #f97316 50%, #ea580c 100%);
           color: white;
           box-shadow: 0 6px 20px rgba(253,87,1,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
           text-shadow: 0 1px 2px rgba(0,0,0,0.2);
@@ -696,7 +697,7 @@ function FetchData() {
         }
 
         .load-more-btn {
-          background: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-500) 100%);
+          background: linear-gradient(135deg, #fd5701 0%, #ea580c 100%);
           color: white;
           border: none;
           padding: 14px 40px;
@@ -725,70 +726,34 @@ function FetchData() {
           padding: 40px 0;
         }
 
-        /* ========================================
-           RESPONSIVE DESIGN OPTIMIZATION - DIUBAH UNTUK 3 CARD DI DESKTOP
-           ======================================== */
-
-        /* 🖥️ Ultra Wide Desktop (1920px+) - 4 columns (tetap 4 untuk layar sangat lebar) */
         @media (min-width: 1920px) {
-          .product-list { 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 28px;
-          }
+          .product-list { grid-template-columns: repeat(4, 1fr); gap: 28px; }
           .product-card { min-height: 440px; }
           .product-image { height: 220px; }
         }
-
-        /* 🖥️ Large Desktop (1440px - 1919px) - 3 columns */
         @media (min-width: 1440px) and (max-width: 1919px) {
-          .product-list { 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 24px;
-          }
+          .product-list { grid-template-columns: repeat(3, 1fr); gap: 24px; }
         }
-
-        /* 🖥️ Desktop (1200px - 1439px) - 3 columns */
         @media (min-width: 1200px) and (max-width: 1439px) {
-          .product-list { 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 22px;
-          }
+          .product-list { grid-template-columns: repeat(3, 1fr); gap: 22px; }
         }
-
-        /* 💻 Small Desktop (1024px - 1199px) - 3 columns */
         @media (min-width: 1024px) and (max-width: 1199px) {
-          .product-list { 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 20px;
-          }
+          .product-list { grid-template-columns: repeat(3, 1fr); gap: 20px; }
           .product-container { padding: 28px 16px; }
         }
-
-        /* 📱 Tablet Landscape (900px - 1023px) - 2 columns */
         @media (min-width: 900px) and (max-width: 1023px) {
           .product-container { padding: 24px 16px; }
-          .product-list { 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 18px;
-          }
+          .product-list { grid-template-columns: repeat(2, 1fr); gap: 18px; }
           .product-card { min-height: 400px; }
           .product-image { height: 180px; }
           .product-info { padding: 14px; gap: 10px; }
           .product-title { font-size: 0.9rem; min-height: 2.5rem; }
           .price-large { font-size: 1.1rem; }
         }
-
-        /* 📱 Tablet Portrait (768px - 899px) - 2 columns */
         @media (min-width: 768px) and (max-width: 899px) {
           .product-container { padding: 20px 16px; }
-          .product-list { 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 16px;
-          }
-          .product-card { 
-            min-height: 380px;
-            border-radius: 16px;
-          }
+          .product-list { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+          .product-card { min-height: 380px; border-radius: 16px; }
           .product-image { height: 170px; }
           .product-info { padding: 12px; gap: 8px; }
           .product-title { font-size: 0.85rem; min-height: 2.3rem; }
@@ -796,237 +761,81 @@ function FetchData() {
           .btn-buy { padding: 10px 12px; font-size: 0.8rem; }
           .cart-icon-badge { width: 40px; height: 40px; }
         }
-
-        /* 📱 MOBILE - 2 CARD (640px - 767px) */
         @media (min-width: 640px) and (max-width: 767px) {
-          .product-container { 
-            padding: 20px 16px; 
-          }
-          .product-list { 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 16px;
-            max-width: 600px;
-            margin: 0 auto;
-          }
-          .product-card { 
-            min-height: 360px;
-            border-radius: 16px;
-          }
-          .product-image { 
-            height: 160px; 
-          }
-          .product-info { 
-            padding: 12px; 
-            gap: 8px; 
-          }
-          .product-title { 
-            font-size: 0.85rem; 
-            min-height: 2.3rem;
-            line-height: 1.3;
-          }
-          .price-large { 
-            font-size: 1rem; 
-            margin: 2px 0;
-          }
-          .rating {
-            font-size: 0.75rem;
-            gap: 4px;
-          }
-          .sold {
-            font-size: 0.7rem;
-            padding: 3px 6px;
-          }
-          .bonus-promo {
-            font-size: 0.7rem;
-            padding: 4px 8px;
-          }
-          .store-name {
-            font-size: 0.75rem;
-            padding-top: 8px;
-          }
-          .action-buttons {
-            gap: 8px;
-            padding-top: 10px;
-          }
-          .btn-buy { 
-            padding: 10px 12px;
-            font-size: 0.8rem;
-            border-radius: 10px;
-          }
-          .cart-icon-badge { 
-            width: 40px; 
-            height: 40px;
-            border-radius: 10px;
-          }
-          .favorite-icon-badge { 
-            width: 40px; 
-            height: 40px;
-            border-radius: 10px;
-          }
-          .cart-icon-badge svg { 
-            width: 18px; 
-            height: 18px; 
-          }
-          .discount-badge { 
-            font-size: 0.7rem; 
-            padding: 4px 8px; 
-            top: 8px;
-            left: 8px;
-          }
+          .product-container { padding: 20px 16px; }
+          .product-list { grid-template-columns: repeat(2, 1fr); gap: 16px; max-width: 600px; margin: 0 auto; }
+          .product-card { min-height: 360px; border-radius: 16px; }
+          .product-image { height: 160px; }
+          .product-info { padding: 12px; gap: 8px; }
+          .product-title { font-size: 0.85rem; min-height: 2.3rem; line-height: 1.3; }
+          .price-large { font-size: 1rem; margin: 2px 0; }
+          .rating { font-size: 0.75rem; gap: 4px; }
+          .sold { font-size: 0.7rem; padding: 3px 6px; }
+          .bonus-promo { font-size: 0.7rem; padding: 4px 8px; }
+          .store-name { font-size: 0.75rem; padding-top: 8px; }
+          .action-buttons { gap: 8px; padding-top: 10px; }
+          .btn-buy { padding: 10px 12px; font-size: 0.8rem; border-radius: 10px; }
+          .cart-icon-badge { width: 40px; height: 40px; border-radius: 10px; }
+          .favorite-icon-badge { width: 40px; height: 40px; border-radius: 10px; }
+          .cart-icon-badge svg { width: 18px; height: 18px; }
+          .discount-badge { font-size: 0.7rem; padding: 4px 8px; top: 8px; left: 8px; }
         }
-
-        /* 📱 Small Mobile (480px - 639px) - 2 columns lebih kecil */
         @media (min-width: 480px) and (max-width: 639px) {
-          .product-container { 
-            padding: 16px 12px; 
-          }
-          .product-list { 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 12px;
-          }
-          .product-card { 
-            min-height: 340px;
-            border-radius: 14px;
-          }
-          .product-image { 
-            height: 150px; 
-          }
-          .product-info { 
-            padding: 10px; 
-            gap: 6px; 
-          }
-          .product-title { 
-            font-size: 0.8rem; 
-            min-height: 2.1rem;
-          }
-          .price-large { 
-            font-size: 0.95rem; 
-          }
-          .btn-buy { 
-            padding: 8px 10px;
-            font-size: 0.75rem;
-          }
-          .cart-icon-badge { 
-            width: 36px; 
-            height: 36px; 
-          }
-          .favorite-icon-badge { 
-            width: 36px; 
-            height: 36px; 
-          }
+          .product-container { padding: 16px 12px; }
+          .product-list { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+          .product-card { min-height: 340px; border-radius: 14px; }
+          .product-image { height: 150px; }
+          .product-info { padding: 10px; gap: 6px; }
+          .product-title { font-size: 0.8rem; min-height: 2.1rem; }
+          .price-large { font-size: 0.95rem; }
+          .btn-buy { padding: 8px 10px; font-size: 0.75rem; }
+          .cart-icon-badge { width: 36px; height: 36px; }
+          .favorite-icon-badge { width: 36px; height: 36px; }
         }
-
-        /* 📱 Very Small Mobile (up to 479px) - 2 columns compact */
         @media (max-width: 479px) {
-          .product-container { 
-            padding: 12px 8px; 
-          }
-          .product-list { 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 10px;
-          }
-          .product-card { 
-            min-height: 320px;
-            border-radius: 12px;
-          }
-          .product-image { 
-            height: 140px; 
-          }
-          .product-info { 
-            padding: 8px; 
-            gap: 6px; 
-          }
-          .product-title { 
-            font-size: 0.75rem; 
-            min-height: 2rem;
-            line-height: 1.2;
-          }
-          .price-large { 
-            font-size: 0.9rem; 
-          }
-          .rating, .sold {
-            font-size: 0.65rem;
-          }
-          .bonus-promo {
-            font-size: 0.65rem;
-            padding: 3px 6px;
-          }
-          .store-name {
-            font-size: 0.7rem;
-          }
-          .btn-buy { 
-            padding: 8px;
-            font-size: 0.7rem;
-            border-radius: 8px;
-          }
-          .cart-icon-badge { 
-            width: 32px; 
-            height: 32px;
-            border-radius: 8px;
-          }
-          .cart-icon-badge svg { 
-            width: 16px; 
-            height: 16px; 
-          }
-          .discount-badge { 
-            font-size: 0.65rem; 
-            padding: 3px 6px; 
-            top: 6px;
-            left: 6px;
-          }
-          .load-more-btn {
-            padding: 12px 32px;
-            font-size: 0.85rem;
-          }
+          .product-container { padding: 12px 8px; }
+          .product-list { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+          .product-card { min-height: 320px; border-radius: 12px; }
+          .product-image { height: 140px; }
+          .product-info { padding: 8px; gap: 6px; }
+          .product-title { font-size: 0.75rem; min-height: 2rem; line-height: 1.2; }
+          .price-large { font-size: 0.9rem; }
+          .rating, .sold { font-size: 0.65rem; }
+          .bonus-promo { font-size: 0.65rem; padding: 3px 6px; }
+          .store-name { font-size: 0.7rem; }
+          .btn-buy { padding: 8px; font-size: 0.7rem; border-radius: 8px; }
+          .cart-icon-badge { width: 32px; height: 32px; border-radius: 8px; }
+          .cart-icon-badge svg { width: 16px; height: 16px; }
+          .discount-badge { font-size: 0.65rem; padding: 3px 6px; top: 6px; left: 6px; }
+          .load-more-btn { padding: 12px 32px; font-size: 0.85rem; }
         }
-
-        /* 📱 Extra Small Mobile (up to 360px) - Tetap 2 columns tapi lebih compact */
         @media (max-width: 360px) {
-          .product-container { 
-            padding: 10px 6px; 
-          }
-          .product-list { 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 8px;
-          }
-          .product-card { 
-            min-height: 300px;
-          }
-          .product-image { 
-            height: 130px; 
-          }
-          .product-info { 
-            padding: 6px; 
-          }
-          .product-title { 
-            font-size: 0.7rem; 
-          }
-          .price-large { 
-            font-size: 0.85rem; 
-          }
+          .product-container { padding: 10px 6px; }
+          .product-list { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+          .product-card { min-height: 300px; }
+          .product-image { height: 130px; }
+          .product-info { padding: 6px; }
+          .product-title { font-size: 0.7rem; }
+          .price-large { font-size: 0.85rem; }
         }
       `}</style>
 
       <div className="product-container">
         {loading ? (
           <div className="loader-wrap">
-            {isClient ? (
-              <React.Suspense fallback={null}>
-                <LazyRadioAny
+            {isClient && (
+              <Suspense fallback={null}>
+                <LazyRadio
                   visible={true}
                   height={80}
                   width={80}
-                  color="#FD5701"
-                  colors={["#FD5701", "#FD5701", "#FD5701"]}
-                  outerCircleColor="#FD5701"
-                  innerCircleColor="#FD5701"
-                  barColor="#FD5701"
+                  colors="#FD5701"
                   ariaLabel="radio-loading"
                   wrapperStyle={{}}
                   wrapperClass=""
                 />
-              </React.Suspense>
-            ) : null}
+              </Suspense>
+            )}
           </div>
         ) : displayedProducts.length === 0 ? (
           <p style={{ textAlign: "center", color: "#666", fontSize: "1rem", padding: "40px 0" }}>
@@ -1066,7 +875,7 @@ function FetchData() {
                     <span>{loadingMore ? "Memuat..." : "Lihat Lebih Banyak"}</span>
                   </button>
                 ) : (
-                  <a className="load-more-btn" href="/login">
+                  <a className="load-more-btn" href="/login" style={{ textDecoration: 'none', color: 'white' }}>
                     <span>Masuk untuk Lihat Lebih Banyak</span>
                   </a>
                 )}
@@ -1093,29 +902,18 @@ interface ProductCardProps {
 
 function ProductCard({ image, shortTitle, price, rating, sold, seller, discount, product, onProductClick }: ProductCardProps) {
   const toIDR = (n: number) => "Rp " + n.toLocaleString("id-ID");
-  const initialSrc = (image && image.trim()) || (product.thumbnail_produk as any) || (product.gambar_produk as any) || "/asset/placeholder/product.webp";
+  const initialSrc = image || "/asset/placeholder/product.webp";
   const [imgSrc, setImgSrc] = React.useState<string>(initialSrc);
+
   const handleImgError = () => {
-    const gallery = (product as any)?.galeri_gambar;
-    const alt1 = (product as any)?.gambar_produk || (Array.isArray(gallery) ? gallery[0] : undefined);
-    if (imgSrc && alt1 && imgSrc !== alt1) {
+    const alt1 = product.gambar_produk;
+    if (imgSrc !== alt1 && alt1) {
       setImgSrc(alt1);
       return;
     }
-    // Try thumbnail without query as a fallback
-    const thumb = (product as any)?.thumbnail_produk;
-    if (thumb && imgSrc !== thumb) {
-      try {
-        const u = new URL(thumb, window.location.origin);
-        setImgSrc(u.origin + u.pathname);
-        return;
-      } catch {
-        setImgSrc(thumb);
-        return;
-      }
-    }
     setImgSrc("/asset/placeholder/product.webp");
   };
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     let cart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -1134,11 +932,9 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
     let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
     const existing = favorites.find((p: Product) => p.ASIN === product.ASIN);
     if (existing) {
-      // Remove from favorites
       favorites = favorites.filter((p: Product) => p.ASIN !== product.ASIN);
       alert("Dihapus dari favorit!");
     } else {
-      // Add to favorites
       favorites.push(product);
       alert("Ditambahkan ke favorit!");
     }
@@ -1150,41 +946,30 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
     return favorites.some((p: Product) => p.ASIN === product.ASIN);
   };
 
-  // Only show discount badge if there's actual discount
   const hasDiscount = discount && discount !== "0%";
-  // Compute discounted price and original price for display
   const parsePercent = (d?: string) => {
-    if (!d) return undefined;
+    if (!d) return 0;
     const m = d.match(/(\d+(?:[\.,]\d+)?)/);
-    return m ? parseFloat(m[1].replace(',', '.')) : undefined;
+    return m ? parseFloat(m[1].replace(',', '.')) : 0;
   };
-  
-  // Determine original price - prioritize harga_asli if available and greater than harga_produk
+
   let originalPrice: number | null = null;
-  if (product.harga_asli && typeof product.harga_asli === 'number' && product.harga_asli > product.harga_produk) {
+  if (product.harga_asli && product.harga_asli > product.harga_produk) {
     originalPrice = product.harga_asli;
   }
-  
-  const percent = (typeof product.persentase_diskon === 'number' ? product.persentase_diskon : parsePercent(discount)) || 0;
+
+  const percent = product.persentase_diskon ?? parsePercent(discount);
   let discountedPrice = product.harga_produk;
-  
-  if (hasDiscount) {
-    if (originalPrice && originalPrice > product.harga_produk) {
-      // If harga_asli exists and is greater, use harga_produk as discounted price
-      discountedPrice = product.harga_produk;
-    } else if (percent > 0) {
-      // Calculate discounted price from percentage
-      if (originalPrice) {
-        discountedPrice = Math.max(0, Math.round(originalPrice * (1 - percent / 100)));
-      } else {
-        // Calculate from harga_produk and set it as original
-        originalPrice = product.harga_produk;
-        discountedPrice = Math.max(0, Math.round(originalPrice * (1 - percent / 100)));
-      }
+
+  if (hasDiscount && percent > 0) {
+    if (originalPrice) {
+      discountedPrice = Math.round(originalPrice * (1 - percent / 100));
+    } else {
+      originalPrice = product.harga_produk;
+      discountedPrice = Math.round(product.harga_produk * (1 - percent / 100));
     }
   }
-  
-  // Show old price if there's a discount and we have an original price that's higher than discounted
+
   const showOldPrice = hasDiscount && originalPrice && originalPrice > discountedPrice;
 
   return (
@@ -1194,21 +979,18 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
           src={imgSrc}
           alt={shortTitle}
           loading="lazy"
-          decoding="async"
-          referrerPolicy="no-referrer"
           onError={handleImgError}
         />
         {hasDiscount && (
-          <div className="discount-chip-overlay" aria-label={`Diskon ${discount}`}>
+          <div className="discount-chip-overlay">
             <span className="discount-chip">Diskon {discount}</span>
           </div>
         )}
         <div 
           className="favorite-icon-overlay"
           onClick={handleAddToFavorites}
-          aria-label="Tambah ke favorit"
-          title="Favorit"
           style={{
+            display: 'flex',
             alignItems: 'center', justifyContent: 'center',
             width: 40, height: 40, borderRadius: 12,
             background: 'white', border: '1px solid #e2e8f0',
@@ -1224,7 +1006,7 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
       <div className="product-info">
         <div>
           <h3 className="product-title">{shortTitle}</h3>
-          <div className="rating-sold" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div className="rating-sold" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div className="rating"><span>{rating}</span></div>
               <div className="sold">{sold}</div>
@@ -1237,7 +1019,7 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
-                <span>{typeof product.likes === 'number' ? product.likes : 0}</span>
+                <span>{product.likes ?? 0}</span>
               </div>
               <div className="interactions" title="Interaksi" style={{ 
                 display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -1246,20 +1028,20 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
                 </svg>
-                <span>{typeof product.interactions === 'number' ? product.interactions : 0}</span>
+                <span>{product.interactions ?? 0}</span>
               </div>
             </div>
           </div>
           <div className="price-container">
             {showOldPrice ? (
               <>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
                   <span className="price-large price-discounted">
                     {toIDR(discountedPrice)}
                   </span>
                 </div>
                 <span className="old-price">
-                  {toIDR(originalPrice as number)}
+                  {toIDR(originalPrice!)}
                 </span>
               </>
             ) : (
@@ -1267,42 +1049,47 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
             )}
           </div>
           {Array.isArray(product.tags) && product.tags.length > 0 && (
-            <div className="tag-list" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
               {product.tags
                 .filter(tag => !/\bdiskon\b/i.test(tag))
                 .slice(0, 4)
                 .map((tag, idx) => (
-                <span key={idx} className="tag-chip" style={{
-                  display: 'inline-flex', alignItems: 'center', padding: '8px 14px',
-                  borderRadius: 14, fontSize: 12, fontWeight: 800, color: '#374151',
-                  background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #e5e7eb 100%)',
-                  border: '1px solid #d1d5db',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7)',
-                  transition: 'all 0.3s cubic-bezier(0.23, 1, 0.32, 1)',
-                  cursor: 'pointer'
-                }} onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-1px) scale(1.02)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)';
-                }} onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7)';
-                }}>
-                  {tag}
-                </span>
-              ))}
+                  <span
+                    key={idx}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', padding: '8px 14px',
+                      borderRadius: 14, fontSize: 12, fontWeight: 800, color: '#374151',
+                      background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #e5e7eb 100%)',
+                      border: '1px solid #d1d5db',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7)',
+                      transition: 'all 0.3s cubic-bezier(0.23, 1, 0.32, 1)',
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e: React.MouseEvent<HTMLSpanElement>) => {
+                      e.currentTarget.style.transform = 'translateY(-1px) scale(1.02)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)';
+                    }}
+                    onMouseLeave={(e: React.MouseEvent<HTMLSpanElement>) => {
+                      e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                      e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7)';
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))}
             </div>
           )}
           <p className="store-name" title={seller}>{seller}</p>
         </div>
         <div className="action-buttons">
-          <button className="btn-buy" onClick={(e) => { e.stopPropagation(); onProductClick(product); }} aria-label="Beli produk">
+          <button className="btn-buy" onClick={(e) => { e.stopPropagation(); onProductClick(product); }}>
             <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 12l2 2 4-4" />
               <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
             </svg>
             Beli
           </button>
-          <div className="cart-icon-badge" onClick={handleAddToCart} aria-label="Tambah ke keranjang">
+          <div className="cart-icon-badge" onClick={handleAddToCart}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="9" cy="21" r="1" />
               <circle cx="20" cy="21" r="1" />
@@ -1312,7 +1099,6 @@ function ProductCard({ image, shortTitle, price, rating, sold, seller, discount,
           <div 
             className={`favorite-icon-badge ${isFavorited() ? 'favorited' : ''}`} 
             onClick={handleAddToFavorites}
-            aria-label="Tambah ke favorit"
           >
             <svg viewBox="0 0 24 24" fill={isFavorited() ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>

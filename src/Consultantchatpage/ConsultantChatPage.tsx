@@ -8,6 +8,8 @@ import {
   MoreVertical,
   Paperclip,
   Smile,
+  FileText,
+  Clock,
 } from "lucide-react";
 
 type Message = {
@@ -15,6 +17,7 @@ type Message = {
   text: string;
   sender: "user" | "consultant";
   timestamp: Date;
+  attachments?: { type: "file" | "image"; url: string; name: string }[];
 };
 
 type Consultant = {
@@ -48,6 +51,7 @@ const ConsultantChatPage: React.FC = () => {
   const [inputMsg, setInputMsg] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -80,6 +84,22 @@ const ConsultantChatPage: React.FC = () => {
         },
       ]);
     }, 1500);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const fileUrl = URL.createObjectURL(file);
+    const newM: Message = {
+      id: messages.length + 1,
+      text: `Mengirim file: ${file.name}`,
+      sender: "user",
+      timestamp: new Date(),
+      attachments: [{ type: file.type.startsWith("image/") ? "image" : "file", url: fileUrl, name: file.name }],
+    };
+
+    setMessages((prev) => [...prev, newM]);
   };
 
   const goBack = () => {
@@ -120,6 +140,10 @@ const ConsultantChatPage: React.FC = () => {
               <div>
                 <h1 className="font-bold text-slate-900">{consultant.name}</h1>
                 <p className="text-xs text-slate-500">{consultant.specialty}</p>
+                <p className="text-xs text-green-600 flex items-center gap-1 mt-0.5">
+                  <Clock size={10} />
+                  Respon &lt; 2 jam
+                </p>
               </div>
             </div>
           </div>
@@ -164,25 +188,43 @@ const ConsultantChatPage: React.FC = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"} group`}
             >
-              <div
-                className={`max-w-[70%] sm:max-w-md ${
-                  m.sender === "user"
-                    ? "bg-gradient-to-r from-orange-600 to-amber-500 text-white rounded-2xl rounded-tr-sm"
-                    : "bg-white text-slate-900 rounded-2xl rounded-tl-sm shadow-sm border border-orange-100"
-                } px-4 py-3`}
-              >
-                <p className="text-sm leading-relaxed">{m.text}</p>
+              <div className="flex flex-col max-w-[70%] sm:max-w-md">
                 <div
-                  className={`text-xs mt-1 ${
-                    m.sender === "user" ? "text-orange-100" : "text-slate-400"
-                  }`}
+                  className={`${
+                    m.sender === "user"
+                      ? "bg-gradient-to-r from-orange-600 to-amber-500 text-white rounded-2xl rounded-tr-sm"
+                      : "bg-white text-slate-900 rounded-2xl rounded-tl-sm shadow-sm border border-orange-100"
+                  } px-4 py-3`}
                 >
-                  {m.timestamp.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {m.attachments && m.attachments.length > 0 && (
+                    <div className="mb-2 space-y-2">
+                      {m.attachments.map((att, attIdx) => (
+                        <div key={attIdx} className="rounded-xl overflow-hidden">
+                          {att.type === "image" ? (
+                            <img src={att.url} alt={att.name} className="max-w-full h-auto rounded-lg" />
+                          ) : (
+                            <div className="flex items-center gap-2 p-2 bg-slate-100 rounded-lg">
+                              <FileText size={16} className="text-slate-600" />
+                              <span className="text-xs text-slate-700 truncate">{att.name}</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-sm leading-relaxed">{m.text}</p>
+                  <div
+                    className={`text-xs mt-1 ${
+                      m.sender === "user" ? "text-orange-100" : "text-slate-400"
+                    }`}
+                  >
+                    {m.timestamp.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -229,9 +271,19 @@ const ConsultantChatPage: React.FC = () => {
       >
         <div className="max-w-5xl mx-auto px-4 py-4">
           <div className="flex items-end gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={handleFileUpload}
+              accept="image/*,.pdf,.doc,.docx"
+            />
+            
             <button
+              onClick={() => fileInputRef.current?.click()}
               className="p-3 rounded-xl hover:bg-orange-50 transition-colors"
               aria-label="Lampiran"
+              title="Kirim File"
             >
               <Paperclip size={20} className="text-slate-600" />
             </button>
@@ -239,7 +291,11 @@ const ConsultantChatPage: React.FC = () => {
             <div className="flex-1 relative">
               <textarea
                 value={inputMsg}
-                onChange={(e) => setInputMsg(e.target.value)}
+                onChange={(e) => {
+                  setInputMsg(e.target.value);
+                  e.target.style.height = "auto";
+                  e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -254,6 +310,7 @@ const ConsultantChatPage: React.FC = () => {
               <button
                 className="absolute right-2 bottom-2 p-2 rounded-xl hover:bg-orange-100 transition-colors"
                 aria-label="Emoji"
+                title="Emoji"
               >
                 <Smile size={20} className="text-slate-500" />
               </button>
@@ -270,19 +327,21 @@ const ConsultantChatPage: React.FC = () => {
           </div>
 
           {/* Quick replies */}
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
-            {["Tentang pricing", "Strategi marketing", "Ekspansi bisnis"].map(
-              (reply, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setInputMsg(reply)}
-                  className="flex-shrink-0 px-4 py-2 rounded-full bg-white border border-orange-200 text-sm text-slate-700 hover:bg-orange-50 hover:border-orange-300 transition-colors"
-                >
-                  {reply}
-                </button>
-              )
-            )}
-          </div>
+          {messages.length <= 2 && (
+            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+              {["Tentang pricing", "Strategi marketing", "Ekspansi bisnis", "Manajemen keuangan"].map(
+                (reply, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setInputMsg(reply)}
+                    className="flex-shrink-0 px-4 py-2 rounded-full bg-orange-50 border border-orange-200 text-sm text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-colors font-medium"
+                  >
+                    {reply}
+                  </button>
+                )
+              )}
+            </div>
+          )}
         </div>
       </motion.footer>
     </div>

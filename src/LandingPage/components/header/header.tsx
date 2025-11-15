@@ -6,7 +6,6 @@ import { useEffect, useState, lazy, Suspense } from "react";
 
 const MobileDrawer = lazy(() => import("./MobileDrawer"));
 
-// Visually hidden component for accessibility
 const VisuallyHidden = ({ children, ...props }: { children: React.ReactNode } & React.HTMLAttributes<HTMLSpanElement>) => (
   <span 
     className="sr-only" 
@@ -96,12 +95,6 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
       label: "Konsultan", 
       icon: Lightbulb,
       description: "Konsultasi bisnis UMKM"
-    },
-    { 
-      href: "/checkout", 
-      label: "Checkout", 
-      icon: ShoppingCart,
-      description: "Selesaikan pembelian Anda"
     }
   ];
 
@@ -156,7 +149,6 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
           opacity: 0.6;
         }
 
-        /* Hide header when map fullscreen is active */
         .map-fullscreen-active header {
           display: none !important;
         }
@@ -182,7 +174,6 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
               : "border-b-2 border-gray-100/50 dark:border-neutral-900/50",
             animateClass
           )}>
-            {/* Mobile: Hamburger Menu */}
             {isMobile && (
               <Suspense fallback={
                 <button
@@ -196,10 +187,8 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
               </Suspense>
             )}
 
-            {/* Desktop Navigation */}
             {!isMobile && (
               <div className="hidden md:grid md:grid-cols-[1fr_auto_1fr] md:items-center w-full gap-8">
-                {/* Logo */}
                 <div className="flex items-center gap-3 justify-start">
                   <a href="/" data-astro-prefetch="false" className="flex items-center gap-2 leading-none group">
                     <img
@@ -214,7 +203,6 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                   </a>
                 </div>
 
-                {/* Center Navigation */}
                 <nav className="flex justify-center">
                   <ul className="flex items-center gap-2 font-medium bg-gray-100/80 dark:bg-neutral-900/80 p-1.5 rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-neutral-800 shadow-lg">
                     {navItems.map((item, i) => {
@@ -250,12 +238,10 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                   </ul>
                 </nav>
 
-                {/* Right Actions */}
                 <div className="flex items-center gap-2.5 justify-end">
                   <nav className="flex items-center gap-2.5">
-                    {/* Favorite */}
                     <a
-                      href="/favorites"
+                      href="/login"
                       data-astro-prefetch="false"
                       aria-label="Favorit"
                       title="Favorit"
@@ -263,9 +249,8 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                     >
                       <Heart size={18} className="transition-transform duration-300 group-hover:scale-110" />
                     </a>
-                    {/* Cart */}
                     <a
-                      href="/cart"
+                      href="/login"
                       data-astro-prefetch="false"
                       aria-label="Keranjang"
                       title="Keranjang"
@@ -286,11 +271,10 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
               </div>
             )}
 
-            {/* Mobile Right Actions */}
             {isMobile && (
               <nav className="flex items-center gap-2">
                 <a
-                  href="/favorites"
+                  href="/login"
                   data-astro-prefetch="false"
                   aria-label="Favorit"
                   className="h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white text-gray-700"
@@ -299,7 +283,7 @@ export default function HomeHeader({ localTheme, setLocalTheme }: HomeHeaderProp
                   <Heart size={18} />
                 </a>
                 <a
-                  href="/cart"
+                  href="/login"
                   data-astro-prefetch="false"
                   aria-label="Keranjang"
                   className="h-11 w-11 grid place-content-center rounded-xl border border-gray-200 bg-white text-gray-700"

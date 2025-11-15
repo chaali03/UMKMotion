@@ -1,10 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Sparkles, MapPin, BarChart3, Megaphone, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
-import { signInWithEmail, signInWithGoogle, checkEmailExists } from "../lib/auth";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Sparkles, MapPin, BarChart3, Megaphone, CheckCircle2, XCircle, AlertCircle, Loader2, UserX, ShieldAlert } from "lucide-react";
+import { signInWithEmail, signInWithGoogle, checkEmailExistsStrict } from "../lib/auth";
 import { auth } from "../lib/firebase";
-// removed auth state redirect to avoid auto-refresh loop
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -15,9 +14,10 @@ export default function LoginPage() {
   const [slideIndex, setSlideIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [notification, setNotification] = useState<{
-    type: "success" | "error" | "info";
+    type: "success" | "error" | "info" | "warning";
     title: string;
     message: string;
+    icon?: React.ReactNode;
   } | null>(null);
 
   const slides = [
@@ -38,7 +38,6 @@ export default function LoginPage() {
     },
   ];
 
-  // Slideshow effect
   useEffect(() => {
     if (paused) return;
     const interval = setInterval(() => {
@@ -47,17 +46,19 @@ export default function LoginPage() {
     return () => clearInterval(interval);
   }, [paused, slides.length]);
 
-  // Notification auto-dismiss
   useEffect(() => {
     if (!notification) return;
-    const timer = setTimeout(() => setNotification(null), 5000);
+    const timer = setTimeout(() => setNotification(null), 6000);
     return () => clearTimeout(timer);
   }, [notification]);
 
-  // Redirect handled explicitly after successful login only
-
-  const showNotification = (type: "success" | "error" | "info", title: string, message: string) => {
-    setNotification({ type, title, message });
+  const showNotification = (
+    type: "success" | "error" | "info" | "warning", 
+    title: string, 
+    message: string,
+    icon?: React.ReactNode
+  ) => {
+    setNotification({ type, title, message, icon });
   };
 
   const validateEmail = (email: string) => {
@@ -65,65 +66,193 @@ export default function LoginPage() {
     return regex.test(email);
   };
 
+  const processPendingAction = async (): Promise<string | null> => {
+    try {
+      const raw = localStorage.getItem('pendingAction');
+      if (!raw) return null;
+      const pending = JSON.parse(raw);
+      const returnUrl: string | null = pending?.returnUrl || null;
+
+      if (pending?.type === 'cart') {
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const exists = cart.find((p: any) => (p.ASIN || p.id) === (pending.product?.ASIN || pending.product?.id));
+        if (!exists && pending.product) {
+          cart.push({ ...pending.product, quantity: 1 });
+        }
+        localStorage.setItem('cart', JSON.stringify(cart));
+        window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { type: 'cart', count: cart.length } }));
+      } else if (pending?.type === 'favorites') {
+        let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+        const exists = favorites.find((p: any) => (p.ASIN || p.id) === (pending.product?.ASIN || pending.product?.id));
+        if (!exists && pending.product) {
+          favorites.push(pending.product);
+        }
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+        window.dispatchEvent(new CustomEvent('favoritesUpdated', { detail: { type: 'favorites', count: favorites.length } }));
+      }
+      localStorage.removeItem('pendingAction');
+      return returnUrl;
+    } catch {
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
+    // Normalize email
+    const emailNorm = email.trim().toLowerCase();
+
     // Validation
-    if (!email) {
+    if (!emailNorm) {
       setErrors({ email: "Email harus diisi" });
+      showNotification("warning", "Email Kosong", "Silakan masukkan alamat email Anda", <Mail size={22} />);
       return;
     }
-    if (!validateEmail(email)) {
+    if (!validateEmail(emailNorm)) {
       setErrors({ email: "Format email tidak valid" });
+      showNotification("error", "Format Email Salah", "Periksa kembali format email Anda (contoh: user@email.com)", <AlertCircle size={22} />);
       return;
     }
     if (!password) {
       setErrors({ password: "Password harus diisi" });
+      showNotification("warning", "Password Kosong", "Silakan masukkan password Anda", <Lock size={22} />);
       return;
     }
     if (password.length < 6) {
       setErrors({ password: "Password minimal 6 karakter" });
+      showNotification("error", "Password Terlalu Pendek", "Password harus memiliki minimal 6 karakter", <ShieldAlert size={22} />);
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await signInWithEmail(email, password);
-      // Skip session cookie creation for now - using client-side auth only
-      showNotification("success", "Login Berhasil!", "Mengalihkan ke Homepage...");
-      setTimeout(() => { window.location.href = "/homepage"; }, 800);
+      await signInWithEmail(emailNorm, password);
+      const redirectTo = await processPendingAction();
+      showNotification(
+        "success", 
+        "🎉 Login Berhasil!", 
+        redirectTo ? "Melanjutkan aksi Anda..." : "Selamat datang kembali! Mengalihkan ke Homepage...",
+        <CheckCircle2 size={24} />
+      );
+      setTimeout(() => { window.location.href = redirectTo || "/homepage"; }, 600);
     } catch (err: any) {
       let errorMessage = "Login gagal. Periksa email/password dan coba lagi.";
       const fieldErrors: Record<string, string> = {};
+      let notificationType: "error" | "warning" = "error";
+      let notificationTitle = "Login Gagal";
+      let notificationIcon: React.ReactNode = <XCircle size={24} />;
+
+      console.log("Login error code:", err.code); // Debug
 
       if (err.code === 'auth/user-not-found') {
-        errorMessage = "Email tidak terdaftar. Silakan daftar terlebih dahulu.";
+        errorMessage = "Email ini belum terdaftar di sistem kami";
         fieldErrors.email = errorMessage;
+        notificationType = "error";
+        notificationTitle = "❌ Email Tidak Terdaftar";
+        notificationIcon = <UserX size={24} />;
+        showNotification(
+          notificationType,
+          notificationTitle,
+          "Akun dengan email ini belum terdaftar. Silakan daftar terlebih dahulu atau periksa kembali email Anda.",
+          notificationIcon
+        );
       } else if (err.code === 'auth/wrong-password') {
-        errorMessage = "Password salah. Silakan coba lagi.";
+        errorMessage = "Password yang Anda masukkan salah";
         fieldErrors.password = errorMessage;
+        notificationType = "error";
+        notificationTitle = "🔒 Password Salah";
+        notificationIcon = <ShieldAlert size={24} />;
+        showNotification(
+          notificationType,
+          notificationTitle,
+          "Password yang Anda masukkan tidak sesuai. Periksa kembali atau gunakan fitur 'Lupa Password'.",
+          notificationIcon
+        );
       } else if (err.code === 'auth/invalid-email') {
-        errorMessage = "Format email tidak valid.";
+        errorMessage = "Format email tidak valid";
         fieldErrors.email = errorMessage;
+        notificationType = "error";
+        notificationTitle = "Format Email Salah";
+        showNotification(
+          notificationType,
+          notificationTitle,
+          "Format email yang Anda masukkan tidak valid. Gunakan format: nama@email.com",
+          <AlertCircle size={24} />
+        );
       } else if (err.code === 'auth/too-many-requests') {
-        errorMessage = "Terlalu banyak percobaan login. Coba lagi nanti.";
+        errorMessage = "Terlalu banyak percobaan login. Coba lagi dalam beberapa menit.";
+        fieldErrors.form = errorMessage;
+        notificationType = "warning";
+        notificationTitle = "⏱️ Terlalu Banyak Percobaan";
+        showNotification(
+          notificationType,
+          notificationTitle,
+          "Akun Anda telah diblokir sementara karena terlalu banyak percobaan login. Tunggu beberapa menit dan coba lagi.",
+          <AlertCircle size={24} />
+        );
       } else if (err.code === 'auth/invalid-credential') {
-        // Tentukan lebih spesifik apakah email tidak terdaftar atau password salah
-        const exists = await checkEmailExists(email);
-        if (!exists) {
-          errorMessage = "Email tidak terdaftar. Silakan daftar terlebih dahulu.";
-          fieldErrors.email = errorMessage;
-        } else {
-          errorMessage = "Password salah. Silakan coba lagi.";
-          fieldErrors.password = errorMessage;
+        // Check if email exists first
+        try {
+          const exists = await checkEmailExistsStrict(emailNorm);
+          if (!exists) {
+            errorMessage = "Email ini belum terdaftar di sistem kami";
+            fieldErrors.email = errorMessage;
+            notificationType = "error";
+            notificationTitle = "❌ Email Tidak Terdaftar";
+            notificationIcon = <UserX size={24} />;
+            showNotification(
+              notificationType,
+              notificationTitle,
+              "Akun dengan email ini tidak ditemukan. Apakah Anda yakin sudah mendaftar? Silakan daftar terlebih dahulu.",
+              notificationIcon
+            );
+          } else {
+            errorMessage = "Password yang Anda masukkan salah";
+            fieldErrors.password = errorMessage;
+            notificationType = "error";
+            notificationTitle = "🔒 Password Salah";
+            notificationIcon = <ShieldAlert size={24} />;
+            showNotification(
+              notificationType,
+              notificationTitle,
+              "Password yang Anda masukkan tidak cocok dengan akun ini. Periksa kembali atau klik 'Lupa Password' untuk reset.",
+              notificationIcon
+            );
+          }
+        } catch (checkErr) {
+          errorMessage = "Email atau password salah";
+          fieldErrors.form = errorMessage;
+          showNotification(
+            "error",
+            "Login Gagal",
+            "Email atau password yang Anda masukkan salah. Silakan coba lagi.",
+            <XCircle size={24} />
+          );
         }
+      } else if (err.code === 'auth/network-request-failed') {
+        errorMessage = "Koneksi internet bermasalah. Periksa koneksi Anda.";
+        fieldErrors.form = errorMessage;
+        showNotification(
+          "error",
+          "❌ Tidak Ada Koneksi",
+          "Periksa koneksi internet Anda dan coba lagi.",
+          <AlertCircle size={24} />
+        );
+      } else {
+        // Generic error
+        errorMessage = "Terjadi kesalahan. Silakan coba lagi.";
+        fieldErrors.form = errorMessage;
+        showNotification(
+          "error",
+          "Terjadi Kesalahan",
+          errorMessage + " Jika masalah berlanjut, hubungi support.",
+          <XCircle size={24} />
+        );
       }
 
-      if (!fieldErrors.email && !fieldErrors.password) {
-        fieldErrors.form = errorMessage;
-      }
       setErrors(fieldErrors);
     } finally {
       setIsLoading(false);
@@ -134,13 +263,39 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithGoogle();
-      // Skip session cookie creation for now - using client-side auth only
-      showNotification("success", "Login Berhasil!", "Mengalihkan ke Homepage...");
-      setTimeout(() => { window.location.href = "/homepage"; }, 800);
+      const redirectTo = await processPendingAction();
+      showNotification(
+        "success", 
+        "🎉 Login Google Berhasil!", 
+        redirectTo ? "Melanjutkan aksi Anda..." : "Selamat datang! Mengalihkan ke Homepage...",
+        <CheckCircle2 size={24} />
+      );
+      setTimeout(() => { window.location.href = redirectTo || "/homepage"; }, 600);
     } catch (err: any) {
       let errorMessage = "Login Google gagal. Silakan coba lagi.";
       if (err.code === 'auth/popup-closed-by-user') {
         errorMessage = "Login dibatalkan. Silakan coba lagi.";
+        showNotification(
+          "warning",
+          "Login Dibatalkan",
+          "Anda menutup jendela login Google. Silakan coba lagi jika ingin melanjutkan.",
+          <AlertCircle size={22} />
+        );
+      } else if (err.code === 'auth/popup-blocked') {
+        errorMessage = "Popup diblokir browser. Aktifkan popup dan coba lagi.";
+        showNotification(
+          "error",
+          "Popup Diblokir",
+          "Browser memblokir popup login Google. Izinkan popup di browser Anda dan coba lagi.",
+          <XCircle size={22} />
+        );
+      } else {
+        showNotification(
+          "error",
+          "Login Google Gagal",
+          errorMessage,
+          <XCircle size={22} />
+        );
       }
       setErrors({ form: errorMessage });
     } finally {
@@ -171,7 +326,6 @@ export default function LoginPage() {
           overflow: hidden;
         }
 
-        /* Animated Background */
         .login-container::before {
           content: '';
           position: absolute;
@@ -179,16 +333,9 @@ export default function LoginPage() {
           background: 
             radial-gradient(circle at 20% 50%, rgba(251, 146, 60, 0.25) 0%, transparent 50%),
             radial-gradient(circle at 80% 80%, rgba(249, 115, 22, 0.25) 0%, transparent 50%);
-          /* disable background pulsing to avoid page movement */
           animation: none;
         }
 
-        @keyframes bgPulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.8; }
-        }
-
-        /* Floating shapes */
         .floating-shape {
           position: absolute;
           border-radius: 50%;
@@ -200,22 +347,6 @@ export default function LoginPage() {
         .shape-2 { width: 200px; height: 200px; bottom: -100px; right: -100px; animation: none !important; }
         .shape-3 { width: 150px; height: 150px; top: 50%; right: 10%; animation: none !important; }
 
-        @keyframes float1 {
-          0%, 100% { transform: translate(0, 0) rotate(0deg); }
-          50% { transform: translate(30px, -30px) rotate(180deg); }
-        }
-
-        @keyframes float2 {
-          0%, 100% { transform: translate(0, 0) rotate(0deg); }
-          50% { transform: translate(-30px, 30px) rotate(-180deg); }
-        }
-
-        @keyframes float3 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(20px, -20px) scale(1.1); }
-        }
-
-        /* Back Button */
         .back-btn {
           position: fixed;
           top: 2rem;
@@ -241,7 +372,6 @@ export default function LoginPage() {
           transform: translateX(-4px);
         }
 
-        /* Main Card */
         .login-card {
           position: relative;
           z-index: 10;
@@ -251,12 +381,10 @@ export default function LoginPage() {
           backdrop-filter: blur(20px);
           border-radius: 24px;
           overflow: hidden;
-          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
           display: grid;
           grid-template-columns: 1fr 1fr;
         }
 
-        /* Left Side - Brand */
         .brand-side {
           padding: 3rem;
           background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
@@ -329,7 +457,6 @@ export default function LoginPage() {
           background: #f97316;
         }
 
-        /* Right Side - Form */
         .form-side {
           padding: 3rem 2.5rem;
           display: flex;
@@ -367,7 +494,6 @@ export default function LoginPage() {
           line-height: 1.5;
         }
 
-        /* Input Styles */
         .input-group {
           margin-bottom: 1.5rem;
         }
@@ -429,7 +555,6 @@ export default function LoginPage() {
         .input-field:focus {
           background: white;
           border-color: #f97316;
-          box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
         }
 
         .input-field:focus + .input-icon {
@@ -439,6 +564,13 @@ export default function LoginPage() {
         .input-field.error {
           border-color: #ef4444;
           background: #fef2f2;
+          animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-8px); }
+          75% { transform: translateX(8px); }
         }
 
         .toggle-password {
@@ -467,9 +599,13 @@ export default function LoginPage() {
           display: flex;
           align-items: center;
           gap: 0.375rem;
+          font-weight: 600;
+          padding: 0.5rem 0.75rem;
+          background: #fef2f2;
+          border-radius: 8px;
+          border-left: 3px solid #ef4444;
         }
 
-        /* Buttons */
         .btn {
           height: 52px;
           border-radius: 12px;
@@ -489,14 +625,11 @@ export default function LoginPage() {
           width: 100%;
           background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
           color: white;
-          box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
           margin-top: 0.5rem;
         }
 
         .btn-primary:hover:not(:disabled) {
-          /* prevent hover shift */
           transform: none;
-          box-shadow: 0 6px 20px rgba(249, 115, 22, 0.45);
         }
 
         .btn-primary:disabled {
@@ -534,7 +667,6 @@ export default function LoginPage() {
           background: #f9fafb;
           border-color: #d1d5db;
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .btn-google:disabled {
@@ -561,7 +693,6 @@ export default function LoginPage() {
           text-decoration: underline;
         }
 
-        /* Notification */
         .notification-wrapper {
           position: fixed;
           top: 1.5rem;
@@ -570,40 +701,59 @@ export default function LoginPage() {
         }
 
         .notification {
-          min-width: 320px;
-          max-width: 400px;
-          padding: 1rem 1.25rem;
+          min-width: 360px;
+          max-width: 440px;
+          padding: 1.25rem 1.5rem;
           background: white;
-          border-radius: 12px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-          border-left: 4px solid;
+          border-radius: 16px;
+          border-left: 5px solid;
           display: flex;
-          gap: 0.75rem;
+          gap: 1rem;
+          align-items: start;
         }
 
-        .notification.success { border-left-color: #10b981; }
-        .notification.error { border-left-color: #ef4444; }
-        .notification.info { border-left-color: #3b82f6; }
+        .notification.success { 
+          border-left-color: #10b981;
+          background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
+        }
+        .notification.error { 
+          border-left-color: #ef4444;
+          background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+        }
+        .notification.info { 
+          border-left-color: #3b82f6;
+          background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+        }
+        .notification.warning { 
+          border-left-color: #f59e0b;
+          background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+        }
 
         .notification-icon {
           flex-shrink: 0;
           margin-top: 0.125rem;
         }
 
+        .notification-icon.success { color: #10b981; }
+        .notification-icon.error { color: #ef4444; }
+        .notification-icon.info { color: #3b82f6; }
+        .notification-icon.warning { color: #f59e0b; }
+
         .notification-content h4 {
-          font-size: 0.95rem;
-          font-weight: 700;
+          font-size: 1rem;
+          font-weight: 800;
           color: #111827;
-          margin-bottom: 0.25rem;
+          margin-bottom: 0.375rem;
+          letter-spacing: -0.02em;
         }
 
         .notification-content p {
           font-size: 0.875rem;
-          color: #6b7280;
-          line-height: 1.5;
+          color: #4b5563;
+          line-height: 1.6;
+          font-weight: 500;
         }
 
-        /* Loading Spinner */
         .spinner {
           width: 20px;
           height: 20px;
@@ -617,12 +767,10 @@ export default function LoginPage() {
           to { transform: rotate(360deg); }
         }
 
-        /* Mobile Hero */
         .mobile-hero {
           display: none;
         }
 
-        /* Responsive */
         @media (max-width: 1024px) {
           .login-card {
             grid-template-columns: 1fr;
@@ -696,12 +844,10 @@ export default function LoginPage() {
         }
       `}</style>
 
-      {/* Floating Shapes */}
       <div className="floating-shape shape-1" />
       <div className="floating-shape shape-2" />
       <div className="floating-shape shape-3" />
 
-      {/* Back Button */}
       <motion.a
         href="/"
         className="back-btn"
@@ -714,9 +860,8 @@ export default function LoginPage() {
         <span>Kembali</span>
       </motion.a>
 
-      {/* Notification */}
       <AnimatePresence>
-        {notification && notification.type === "success" && (
+        {notification && (
           <div className="notification-wrapper">
             <motion.div
               className={`notification ${notification.type}`}
@@ -725,8 +870,8 @@ export default function LoginPage() {
               exit={{ opacity: 0, x: 20 }}
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             >
-              <div className="notification-icon">
-                {notification.type === "success" && <CheckCircle2 size={22} color="#10b981" />}
+              <div className={`notification-icon ${notification.type}`}>
+                {notification.icon}
               </div>
               <div className="notification-content">
                 <h4>{notification.title}</h4>
@@ -737,14 +882,12 @@ export default function LoginPage() {
         )}
       </AnimatePresence>
 
-      {/* Main Card */}
       <motion.div
         className="login-card"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        {/* Left Side - Brand */}
         <div
           className="brand-side"
           onMouseEnter={() => setPaused(true)}
@@ -776,9 +919,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Side - Form */}
         <div className="form-side">
-          {/* Mobile Hero */}
           <div className="mobile-hero">
             <img src="/asset/login/login.webp" alt="Login illustration" />
           </div>
@@ -793,7 +934,6 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* Email Input */}
             <div className="input-group">
               <label htmlFor="email" className="input-label">
                 Email
@@ -821,13 +961,12 @@ export default function LoginPage() {
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <AlertCircle size={14} />
+                  <AlertCircle size={16} />
                   {errors.email}
                 </motion.div>
               )}
             </div>
 
-            {/* Password Input */}
             <div className="input-group">
               <div className="input-label-row">
                 <label htmlFor="password" className="input-label">
@@ -867,7 +1006,7 @@ export default function LoginPage() {
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <AlertCircle size={14} />
+                  <AlertCircle size={16} />
                   {errors.password}
                 </motion.div>
               )}
@@ -880,12 +1019,11 @@ export default function LoginPage() {
                 animate={{ opacity: 1, y: 0 }}
                 style={{ marginTop: "0.5rem" }}
               >
-                <AlertCircle size={14} />
+                <AlertCircle size={16} />
                 {errors.form}
               </motion.div>
             )}
 
-            {/* Submit Button */}
             <button
               type="submit"
               className="btn btn-primary"
@@ -901,12 +1039,10 @@ export default function LoginPage() {
               )}
             </button>
 
-            {/* Divider */}
             <div className="divider">
               <span>atau</span>
             </div>
 
-            {/* Google Sign In */}
             <button
               type="button"
               className="btn btn-google"
@@ -935,7 +1071,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Footer */}
           <p className="footer-text">
             Belum punya akun?{" "}
             <a href="/register">Daftar di sini</a>

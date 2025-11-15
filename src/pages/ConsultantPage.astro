@@ -1,11 +1,11 @@
 ---
 import ConsultantPage from '../../Home/Consultanthomepage/ConsultantHomePage.tsx';
-import Navbar from "../LandingPage/components/Header.astro";
+import NavbarHome from '../../Home/NavbarHome/NavbarHome.tsx';
 import LandingPageLayout from "../layouts/LandingPageLayout.astro";
 ---
 
 <LandingPageLayout>
-  <Navbar />
+  <NavbarHome client:load />
   <main class="min-h-screen pt-20">
     <ConsultantPage client:load />
   </main>

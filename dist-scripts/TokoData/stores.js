@@ -1,15 +1,12 @@
 import 'dotenv/config';
 import { upsertStoresByName, deleteAllStores, listStoresWithWIB, listStores, deleteStoreByName, } from '../lib/stores.js';
-// debug info
 console.log('[SEED] Script seeding dijalankan!');
 console.log('[SEED] Waktu sekarang (WIB):', new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }));
-// Helper: generate random date in last 6 months
 const randomDate = (daysAgo) => {
     const date = new Date();
     date.setDate(date.getDate() - Math.floor(Math.random() * daysAgo));
     return date.toISOString();
 };
-// === DATA TOKO (8 TOKO + 3 ULASAN PER TOKO) ===
 export const stores = [
     {
         nama_toko: "Nusantara Rasa",
@@ -17,7 +14,7 @@ export const stores = [
         banner: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1920&auto=format&fit=crop&q=60",
         kategori: "Makanan & Minuman",
         deskripsi_toko: "Nusantara Rasa menyediakan berbagai produk makanan and minuman khas Nusantara dengan kualitas terbaik. Kami berkomitmen menghadirkan cita rasa autentik Indonesia untuk keluarga Indonesia.",
-        lokasi_toko: "Jl. Raya Darmo Permai III No.17, Pradahkalindungan, Kec. Dukuhpakis, Kota Surabaya, Jawa Timur 60226",
+        lokasi_toko: "Jl. Margonda Raya No.358, Kemiri Muka, Kec. Beji, Kota Depok, Jawa Barat 16423",
         no_telp: "+62 31 5678 9012",
         email: "hello@nusantararasa.id",
         profileImage: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&auto=format&fit=crop&q=60",
@@ -26,8 +23,6 @@ export const stores = [
         rating_toko: 5.0,
         jumlah_review: 203,
         maps_link: "https://maps.app.goo.gl/8vN9vL3kP9bZfG8J7",
-        fasilitas: ["Parkir", "Toilet", "WiFi", "Ruang Tunggu", "Mushola"],
-        metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank"],
         social: { instagram: "nusantararasa.id", whatsapp: "+623156789012" },
         reviews: [
             {
@@ -59,7 +54,7 @@ export const stores = [
         banner: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=1920&auto=format&fit=crop&q=60",
         kategori: "Fashion & Tekstil",
         deskripsi_toko: "Pusat kain batik dan tekstil tradisional Indonesia. Kain Nusantara menawarkan berbagai koleksi batik tulis, batik cap, dan kain tenun dari berbagai daerah di Indonesia dengan motif dan kualitas terbaik.",
-        lokasi_toko: "Jl. Raya Citayam No.45, Curug, Kec. Bojongsari, Kota Depok, Jawa Barat 16517",
+        lokasi_toko: "Jl. Raya Sawangan No.123, Pancoran Mas, Kec. Pancoran Mas, Kota Depok, Jawa Barat 16436",
         no_telp: "+62 21 8779 4321",
         email: "hello@kainnusantara.id",
         profileImage: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=400&auto=format&fit=crop&q=60",
@@ -68,8 +63,6 @@ export const stores = [
         rating_toko: 4.9,
         jumlah_review: 92,
         maps_link: "https://maps.app.goo.gl/3kL9mP7vX2fZ9k8J6",
-        fasilitas: ["Parkir", "Ruang Fitting", "Konsultasi Motif", "Workshop Batik"],
-        metode_pembayaran: ["Cash", "Transfer Bank", "E-Wallet", "QRIS", "Credit Card"],
         social: { instagram: "kainnusantara", facebook: "KainNusantaraPekalongan" },
         reviews: [
             {
@@ -101,7 +94,7 @@ export const stores = [
         banner: "https://klik-online.com/wp-content/uploads/2023/12/DUTA.jpg",
         kategori: "Kerajinan Tangan",
         deskripsi_toko: "Galeri dan toko kerajinan tangan Indonesia. Karya Nusantara menghadirkan berbagai produk kerajinan berkualitas seperti anyaman, ukiran kayu, keramik, dan suvenir khas Nusantara yang dibuat oleh pengrajin lokal terpilih.",
-        lokasi_toko: "Jl. Raya Sawangan No.123, Pancoran Mas, Kec. Pancoran Mas, Kota Depok, Jawa Barat 16436",
+        lokasi_toko: "Jl. Raya Limo No.88, Limo, Kec. Limo, Kota Depok, Jawa Barat 16515",
         no_telp: "+62 21 7564 8901",
         email: "hello@karyanusantara.id",
         profileImage: "https://klik-online.com/wp-content/uploads/2023/12/DUTA.jpg",
@@ -110,8 +103,6 @@ export const stores = [
         rating_toko: 4.9,
         jumlah_review: 159,
         maps_link: "https://maps.app.goo.gl/9vX8kL3mP7vZfG8J7",
-        fasilitas: ["Parkir", "Galeri Pameran", "Workshop", "Café"],
-        metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank"],
         social: { instagram: "karyanusantara", whatsapp: "+622748901234" },
         reviews: [
             {
@@ -152,8 +143,6 @@ export const stores = [
         rating_toko: 4.9,
         jumlah_review: 206,
         maps_link: "https://maps.app.goo.gl/2mK9vL3kP7bZfG8J7",
-        fasilitas: ["Parkir", "Konsultasi Dokter", "Drive Thru", "Apotek 24 Jam"],
-        metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank", "BPJS"],
         social: { whatsapp: "+622184567890" },
         reviews: [
             {
@@ -185,7 +174,7 @@ export const stores = [
         banner: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=1920&auto=format&fit=crop&q=60",
         kategori: "Pertanian",
         deskripsi_toko: "Toko pertanian terlengkap yang menyediakan bibit unggul, pupuk organik dan anorganik, pestisida, alat pertanian modern, dan perlengkapan berkebun. Melayani petani dan penggemar urban farming dengan konsultasi gratis.",
-        lokasi_toko: "Jl. Raya Parung No.56, Kemang, Kec. Bogor, Kabupaten Bogor, Jawa Barat 16330",
+        lokasi_toko: "Jl. Raya Bojongsari No.56, Bojongsari, Kec. Bojongsari, Kota Depok, Jawa Barat 16517",
         no_telp: "+62 21 8796 5678",
         email: "support@tanimakmur.id",
         profileImage: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400&auto=format&fit=crop&q=60",
@@ -234,8 +223,6 @@ export const stores = [
         rating_toko: 4.9,
         jumlah_review: 315,
         maps_link: "https://maps.app.goo.gl/7kL9mP7vX2fZ9k8J6",
-        fasilitas: ["Service Center", "Demo Produk", "Trade-in", "Cicilan 0%"],
-        metode_pembayaran: ["Cash", "Debit Card", "Credit Card", "E-Wallet", "QRIS", "Transfer Bank", "Cicilan 0%"],
         social: { instagram: "gadgetnusantara", facebook: "GadgetNusantaraOfficial", whatsapp: "+622167890123" },
         reviews: [
             {
@@ -267,7 +254,7 @@ export const stores = [
         banner: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1920&auto=format&fit=crop&q=60",
         kategori: "Furniture",
         deskripsi_toko: "Produsen dan penjual furniture berkualitas tinggi khas Jepara. Mebel Nusantara menawarkan berbagai produk furniture kayu jati seperti kursi, meja, lemari, tempat tidur, dan custom furniture dengan ukiran detail dan finishing premium.",
-        lokasi_toko: "Jl. Raya Limo No.88, Limo, Kec. Limo, Kota Depok, Jawa Barat 16515",
+        lokasi_toko: "Jl. Raya Citayam No.45, Curug, Kec. Bojongsari, Kota Depok, Jawa Barat 16517",
         no_telp: "+62 21 7532 3456",
         email: "support@mebelnusantara.id",
         profileImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&auto=format&fit=crop&q=60",
@@ -276,8 +263,6 @@ export const stores = [
         rating_toko: 4.9,
         jumlah_review: 148,
         maps_link: "https://maps.app.goo.gl/4kL9mP7vX2OOM9k8J6",
-        fasilitas: ["Showroom", "Custom Order", "Pengiriman", "Garansi Kayu"],
-        metode_pembayaran: ["Cash", "Transfer Bank", "Credit Card", "Cicilan", "DP System"],
         social: { instagram: "mebelnusantara", whatsapp: "+622913456789" },
         reviews: [
             {
@@ -344,9 +329,7 @@ export const stores = [
         ]
     },
 ];
-// normalisasi nama
 const normalize = (s) => s.trim().toLowerCase();
-//hapus update insert
 async function syncAndSeed() {
     console.log('[SYNC] Mulai sync penuh...');
     const dbStores = await listStores();
@@ -362,7 +345,6 @@ async function syncAndSeed() {
     const items = stores.map(s => ({ ...s }));
     return await upsertStoresByName(items);
 }
-// seeding script
 const isDirectRun = import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.includes('stores');
 if (isDirectRun) {
     const mode = process.argv[2];

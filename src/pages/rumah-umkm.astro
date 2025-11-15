@@ -10,21 +10,19 @@ import RumahUMKM from '../RumahUMKM/RumahUMKM';
 </Layout>
 
 <script is:inline>
-  if (typeof globalThis !== 'undefined' && typeof globalThis.__publicField !== 'function') {
-    globalThis.__publicField = function (obj, key, value) {
-      try {
-        Object.defineProperty(obj, key, {
-          enumerable: true,
-          configurable: true,
-          writable: true,
-          value,
-        });
-      } catch (error) {
-        obj[key] = value;
-      }
-      return value;
-    };
-  }
+  // Define a global bare identifier and also attach to common globals
+  // eslint-disable-next-line no-var
+  var __publicField = (typeof __publicField === 'function') ? __publicField : function (obj, key, value) {
+    try {
+      Object.defineProperty(obj, key, { enumerable: true, configurable: true, writable: true, value });
+    } catch (error) {
+      obj[key] = value;
+    }
+    return value;
+  };
+  try { window.__publicField = __publicField; } catch {}
+  try { self.__publicField = __publicField; } catch {}
+  try { globalThis.__publicField = __publicField; } catch {}
 </script>
 
 <style is:global>

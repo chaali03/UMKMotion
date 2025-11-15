@@ -102,7 +102,7 @@ function HeroKonsultanAbout() {
         <div className="space-y-8">
           {/* Heading with gradient */}
           <div className="overflow-visible">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 mb-6 leading-[1.25] md:!leading-[1.1] overflow-visible">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 mb-5 leading-[1.25] md:!leading-[1.1] overflow-visible">
               <VerticalCutReveal delay={0.3} duration={0.8}>
                 <span className="block mb-2">Tumbuhkan Bisnis</span>
                 <span className="inline-block bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-clip-text text-transparent leading-[1.3] md:leading-[1.15] pb-[0.3em]">
@@ -117,7 +117,7 @@ function HeroKonsultanAbout() {
               animationNum={1}
               timelineRef={heroRef}
               customVariants={revealVariants}
-              className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-2xl"
+              className="text-base md:text-lg text-slate-600 leading-relaxed max-w-2xl"
             >
               Dapatkan <span className="font-bold text-orange-600">strategi, pendampingan, dan eksekusi</span> yang tepat untuk meningkatkan performa usaha. Fokus pada pertumbuhan; sisanya kami bantu.
             </TimelineContent>
@@ -201,7 +201,7 @@ function HeroKonsultanAbout() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 aria-label="Jadwalkan Konsultasi"
-                className="bg-gradient-to-r from-orange-600 to-amber-600 text-white px-8 py-4 rounded-2xl font-bold text-base inline-flex items-center justify-center gap-3 shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-400/40"
+                className="bg-gradient-to-r from-orange-600 to-amber-600 text-white px-6 py-3 rounded-2xl font-bold text-sm inline-flex items-center justify-center gap-2.5 shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-400/40"
               >
                 <Calendar className="w-5 h-5" />
                 <span>Jadwalkan Konsultasi</span>
@@ -212,7 +212,7 @@ function HeroKonsultanAbout() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 aria-label="Pelajari Layanan"
-                className="bg-white border-2 border-slate-200 text-slate-900 px-6 py-4 rounded-2xl font-semibold text-base inline-flex items-center justify-center gap-2.5 hover:border-orange-300 hover:bg-orange-50/50 transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/40"
+                className="bg-white border-2 border-slate-200 text-slate-900 px-5 py-3 rounded-2xl font-semibold text-sm inline-flex items-center justify-center gap-2 hover:border-orange-300 hover:bg-orange-50/50 transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/40"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>Pelajari Layanan</span>
@@ -262,9 +262,8 @@ function HeroKonsultanAbout() {
                 <motion.img
                   src="https://images.unsplash.com/photo-1557804506-669a67965ba0?q=60&w=800&auto=format&fit=crop"
                   alt="Kolaborasi Konsultan"
-                  className="w-full h-[400px] sm:h-[500px] object-cover"
+                  className="w-full h-[320px] sm:h-[420px] object-cover"
                   loading="eager"
-                  fetchPriority="high"
                   decoding="async"
                   width={600}
                   height={500}
@@ -443,12 +442,12 @@ const KonsulPage: React.FC = () => {
               transition={{ duration: 0.8 }}
               className="space-y-6"
             >
-              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 text-orange-700 px-5 py-2.5 rounded-full text-base sm:text-lg font-bold shadow-lg">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 text-orange-700 px-4 py-2 rounded-full text-sm sm:text-base font-bold shadow-lg">
                 <Sparkles className="w-4 h-4" />
                 <span className="uppercase tracking-wide">Program Konsultasi UMKM</span>
               </div>
 
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-black text-slate-900 leading-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-black text-slate-900 leading-tight">
                 Konsultasi Profesional untuk{' '}
                 <span className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
                   Mengembangkan dan
@@ -460,10 +459,10 @@ const KonsulPage: React.FC = () => {
               </h2>
 
               <div className="space-y-5 text-slate-600 leading-relaxed">
-                <p className="text-base md:text-lg lg:text-xl">
+                <p className="text-sm md:text-base lg:text-lg">
                   Konsultasi bisnis merupakan langkah penting bagi pelaku UMKM yang ingin meningkatkan kualitas usaha, memperluas jangkauan pasar, dan memperkuat strategi bisnisnya.
                 </p>
-                <p className="text-base md:text-lg lg:text-xl">
+                <p className="text-sm md:text-base lg:text-lg">
                   Dengan <span className="font-bold text-orange-600">wawasan dan pengalaman tim kami</span>, Anda akan mendapatkan bimbingan, strategi, serta dukungan nyata untuk mengoptimalkan potensi bisnis mulai dari manajemen, pemasaran, hingga transformasi digital.
                 </p>
               </div>
@@ -473,7 +472,7 @@ const KonsulPage: React.FC = () => {
                 href="#"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-orange-600 to-amber-600 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-400/40"
+                className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white px-6 py-3 rounded-2xl font-bold text-base shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-400/40"
               >
                 <Calendar className="w-5 h-5" />
                 <span>Jadwalkan Konsultasi Anda</span>

@@ -10,6 +10,19 @@ import FloatingAIButton from '@/components/FloatingAIButton';
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
+    <script is:inline type="text/javascript">
+      // Define as var and also attach to common globals to cover different eval contexts
+      // eslint-disable-next-line no-var
+      var __publicField = (typeof __publicField === 'function') ? __publicField : function(obj, key, value) {
+        try { Object.defineProperty(obj, key, { enumerable: true, configurable: true, writable: true, value }); }
+        catch { obj[key] = value; }
+        return value;
+      };
+      try { (window).__publicField = __publicField; } catch {}
+      try { (self).__publicField = __publicField; } catch {}
+      try { (globalThis).__publicField = __publicField; } catch {}
+      try { (0, eval)("this.__publicField = this.__publicField || window.__publicField; __publicField = this.__publicField;"); } catch {}
+    </script>
   </head>
   <body class="min-h-screen bg-gradient-to-br from-orange-50 via-white to-sky-50 text-slate-900 antialiased">
     <div class="relative min-h-screen flex flex-col">
