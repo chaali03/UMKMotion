@@ -1,0 +1,12 @@
+---
+import LandingPageLayout from "../layouts/LandingPageLayout.astro";
+import ConsultantHomePage from "../../Home/Consultanthomepage/ConsultantHomePage";
+import NavbarHome from "../../Home/NavbarHome/NavbarHome";
+---
+
+<LandingPageLayout title="Konsultasi UMKM - UMKMotion">
+  <NavbarHome client:load />
+  <main class="min-h-screen pt-20">
+    <ConsultantHomePage client:load />
+  </main>
+</LandingPageLayout>

@@ -206,6 +206,9 @@ const CONSULTANTS: Consultant[] = [
     specialties: ["Process Optimization", "Supply Chain", "Quality Management"],
     responseTime: "< 2 jam",
     membership: "Premium",
+    performance: {
+      satisfaction: 93,
+      response: 96,
       completion: 95
     }
   },
@@ -282,7 +285,7 @@ const ConsultantHomePage: React.FC = () => {
     const onMove = (e: MouseEvent) => {
       const x = (e.clientX / window.innerWidth - 0.5) * 2;
       const y = (e.clientY / window.innerHeight - 0.5) * 2;
-            style={{ translateX: useTransform(mvX, (v) => `${-v * 8}px`), translateY: useTransform(mvY, (v) => `${-v * 6}px`) }}
+      mvX.set(x);
       mvY.set(y);
     };
     window.addEventListener("mousemove", onMove);
@@ -815,7 +818,7 @@ const ConsultantHomePage: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    <div className="flex gap-4 pt-6 border-t border-slate-200">
+
                     {/* Stats - Compact */}
                     <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-3 sm:mb-4">
                       <div className="bg-orange-50 rounded-lg p-2 text-center">
@@ -831,7 +834,7 @@ const ConsultantHomePage: React.FC = () => {
                           </div>
                           <div className="text-[8px] sm:text-[10px] text-slate-600">Klien</div>
                         </div>
-                            window.location.href = `/consultant/booking?consultant=${selectedConsultant.id}`;
+                      )}
                       {selectedConsultant.successRate && (
                         <div className="bg-green-50 rounded-lg p-2 text-center">
                           <div className="text-sm sm:text-base font-bold text-green-600 mb-0.5">
