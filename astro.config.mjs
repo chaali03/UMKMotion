@@ -92,7 +92,20 @@ export default defineConfig({
         // Add problematic dependencies
         'lucide-react',
         'framer-motion',
-        'react-loader-spinner'
+        'react-loader-spinner',
+        // Prebundle qrcode to fix 504 Outdated Optimize Dep on dev
+        'qrcode',
+        // Prebundle date-fns and locales for CommentSection formatting
+        'date-fns',
+        'date-fns/locale',
+        'date-fns/locale/id',
+        // Fix 504 for UI utility libs used by components
+        'class-variance-authority',
+        '@radix-ui/react-slot',
+        // Optimize OGL used by CircularGallery to prevent 504
+        'ogl',
+        // MapLibre for map picker in Profile
+        'maplibre-gl'
       ],
       // Force re-optimize on dev startup to invalidate any stale cache
       force: true,
@@ -101,7 +114,7 @@ export default defineConfig({
     },
     // Ensure SSR bundles vaul instead of treating it as external
     ssr: {
-      noExternal: ['vaul', 'motion']
+      noExternal: ['vaul', 'motion', 'ogl', 'maplibre-gl']
     },
     resolve: {
       dedupe: ['react', 'react-dom'],

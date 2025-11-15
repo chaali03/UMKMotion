@@ -240,41 +240,41 @@ const features = [
   { icon: Target, text: "Fokus pada omzet & distribusi" },
 ];
 
-// Performance Chart Component
+// Performance Chart Component - IMPROVED
 const PerformanceChart: React.FC<{ data: Consultant['performance'] }> = ({ data }) => {
   if (!data) return null;
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-center justify-between text-[10px]">
-        <span className="text-slate-600">Kepuasan</span>
-        <span className="font-semibold text-green-600">{data.satisfaction}%</span>
+        <span className="text-slate-600 font-medium">Kepuasan</span>
+        <span className="font-bold text-emerald-600">{data.satisfaction}%</span>
       </div>
-      <div className="w-full bg-slate-200 rounded-full h-1">
-        <div 
-          className="bg-green-500 h-1 rounded-full transition-all duration-500" 
+      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+        <div
+          className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-1.5 rounded-full transition-all duration-500"
           style={{ width: `${data.satisfaction}%` }}
         />
       </div>
 
       <div className="flex items-center justify-between text-[10px]">
-        <span className="text-slate-600">Respons</span>
-        <span className="font-semibold text-blue-600">{data.response}%</span>
+        <span className="text-slate-600 font-medium">Respons</span>
+        <span className="font-bold text-blue-600">{data.response}%</span>
       </div>
-      <div className="w-full bg-slate-200 rounded-full h-1">
+      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
         <div 
-          className="bg-blue-500 h-1 rounded-full transition-all duration-500" 
+          className="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 rounded-full transition-all duration-500" 
           style={{ width: `${data.response}%` }}
         />
       </div>
 
       <div className="flex items-center justify-between text-[10px]">
-        <span className="text-slate-600">Penyelesaian</span>
-        <span className="font-semibold text-purple-600">{data.completion}%</span>
+        <span className="text-slate-600 font-medium">Penyelesaian</span>
+        <span className="font-bold text-purple-600">{data.completion}%</span>
       </div>
-      <div className="w-full bg-slate-200 rounded-full h-1">
+      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
         <div 
-          className="bg-purple-500 h-1 rounded-full transition-all duration-500" 
+          className="bg-gradient-to-r from-purple-500 to-purple-600 h-1.5 rounded-full transition-all duration-500" 
           style={{ width: `${data.completion}%` }}
         />
       </div>
@@ -399,19 +399,15 @@ const ConsultantHomePage: React.FC = () => {
       favorites.push({ ...consultant, favoriteType: 'consultant', dateAdded: new Date().toISOString() });
       showToast('favorite', 'Ditambahkan ke Favorit!', consultant.name);
 
-      // Setelah ditambahkan ke favorit, langsung arahkan ke halaman chat
-      // Gunakan route Astro yang sudah ada: /ConsultantChat?consultant=<id>
       try {
         const url = `/ConsultantPage?chat=${encodeURIComponent(consultant.id)}`;
-        // Simpan penanda terakhir agar fitur riwayat/aktivitas tetap bisa membaca
         localStorage.setItem('lastConsultantChatId', String(consultant.id));
-        // Redirect ke halaman chat konsultan yang sama persis
         window.location.href = url;
       } catch {}
     }
 
     localStorage.setItem("consultantFavorites", JSON.stringify(favorites));
-    
+
     window.dispatchEvent(new CustomEvent('favoritesUpdated', {
       detail: { type: 'consultant_favorites', count: favorites.length }
     }));
@@ -427,9 +423,7 @@ const ConsultantHomePage: React.FC = () => {
         title: consultant.name,
         text: shareText,
         url: shareUrl,
-      }).catch(() => {
-        // Fallback jika user cancel
-      });
+      }).catch(() => {});
     } else {
       navigator.clipboard.writeText(shareUrl).then(() => {
         showToast('share', 'Link disalin!', 'Link konsultan berhasil disalin ke clipboard');
@@ -471,14 +465,10 @@ const ConsultantHomePage: React.FC = () => {
               initial={{ opacity: 0, x: 100 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 100 }}
-              className={`bg-white rounded-lg shadow-lg p-4 min-w-[280px] border-l-4 ${
-                toast.type === 'favorite' ? 'border-red-500' : 'border-blue-500'
-              }`}
+              className={`bg-white rounded-lg shadow-lg p-4 min-w-[280px] border-l-4 ${ toast.type === 'favorite' ? 'border-red-500' : 'border-blue-500' }`}
             >
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-full ${
-                  toast.type === 'favorite' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'
-                }`}>
+                <div className={`p-2 rounded-full ${ toast.type === 'favorite' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600' }`}>
                   {toast.type === 'favorite' ? (
                     <Heart size={20} className={toast.message.includes('Ditambahkan') ? 'fill-current' : ''} />
                   ) : (
@@ -494,6 +484,7 @@ const ConsultantHomePage: React.FC = () => {
           ))}
         </AnimatePresence>
       </div>
+
       {/* HERO */}
       <header ref={heroRef} className="relative overflow-hidden py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-12">
         {/* Background orbs */}
@@ -728,120 +719,117 @@ const ConsultantHomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Consultant Cards - SUPER COMPACT & RESPONSIVE */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-2.5">
+        {/* Consultant Cards - CLEAN & IMPROVED */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3">
           {filteredConsultants.map((c) => (
             <motion.article
               key={c.id}
               layout
-              whileHover={{ y: -2, boxShadow: "0 8px 20px rgba(2,6,23,0.1)" }}
-              className="bg-white rounded-lg sm:rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col border border-orange-100"
+              whileHover={{ y: -4, boxShadow: "0 12px 24px rgba(251,146,60,0.15)" }}
+              className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col border border-slate-100/50 hover:border-orange-200"
             >
-              {/* Header - Very compact */}
-              <div className="relative">
+              {/* Header - Clean, no badge */}
+              <div className="relative group">
                 <img
                   src={c.image}
                   alt={c.name}
-                  className="w-full h-16 sm:h-18 object-cover"
+                  className="w-full h-20 sm:h-24 object-cover"
                   loading="lazy"
                 />
-                <div className="absolute top-1 left-1">
-                  <div className={`px-1.5 py-0.5 rounded-full text-[8px] font-semibold ${
-                    c.membership === 'Premium' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white' :
-                    c.membership === 'Pro' ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' :
-                    'bg-slate-600 text-white'
-                  }`}>
-                    {c.membership}
-                  </div>
-                </div>
+                
+                {/* Gradient Overlay on hover */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                
                 {/* Favorite & Share buttons */}
-                <div className="absolute top-1 right-1 flex gap-1">
+                <div className="absolute top-1.5 right-1.5 flex gap-1">
                   <button
                     onClick={(e) => handleAddToFavorites(e, c)}
-                    className={`p-1 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white transition-all ${
-                      isConsultantFavorited(c.id) ? 'text-red-500' : 'text-slate-600'
+                    className={`p-1.5 rounded-lg backdrop-blur-md shadow-sm hover:scale-110 transition-all ${
+                      isConsultantFavorited(c.id) 
+                        ? 'bg-red-500 text-white' 
+                        : 'bg-white/90 text-slate-600 hover:bg-white'
                     }`}
                     aria-label="Tambah ke favorit"
                     title={isConsultantFavorited(c.id) ? 'Hapus dari favorit' : 'Tambah ke favorit'}
                   >
                     <Heart 
-                      size={10} 
+                      size={12} 
                       className={isConsultantFavorited(c.id) ? 'fill-current' : ''} 
                     />
                   </button>
                   <button
                     onClick={(e) => handleShare(e, c)}
-                    className="p-1 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white text-slate-600 transition-all"
+                    className="p-1.5 rounded-lg bg-white/90 backdrop-blur-md shadow-sm hover:bg-white text-slate-600 hover:scale-110 transition-all"
                     aria-label="Bagikan"
                     title="Bagikan konsultan"
                   >
-                    <Share2 size={10} />
+                    <Share2 size={12} />
                   </button>
                 </div>
               </div>
 
-              {/* Content - Super compact */}
-              <div className="p-1.5 sm:p-2 flex flex-col gap-1 sm:gap-1.5 flex-1">
+              {/* Content - Clean & Compact */}
+              <div className="p-2 sm:p-2.5 flex flex-col gap-1.5 flex-1">
                 <div className="flex items-start justify-between gap-1">
                   <div className="flex-1 min-w-0">
                     <h3
-                      className="text-[10px] sm:text-xs font-bold cursor-pointer hover:text-orange-600 transition-colors truncate leading-tight"
+                      className="text-[11px] sm:text-xs font-bold cursor-pointer hover:text-orange-600 transition-colors line-clamp-1 leading-tight"
                       onClick={() => openDetail(c)}
                     >
                       {c.name}
                     </h3>
-                    <div className="text-[8px] sm:text-[10px] text-slate-500 truncate mt-0.5">{c.specialty}</div>
+                    <div className="text-[9px] sm:text-[10px] text-slate-500 line-clamp-1 mt-0.5">{c.specialty}</div>
                   </div>
-                  <div className="flex items-center gap-0.5 text-amber-500 font-bold text-[10px] flex-shrink-0">
-                    <Star size={8} className="fill-amber-500" />
+                  <div className="flex items-center gap-0.5 text-amber-500 font-bold text-[10px] flex-shrink-0 bg-amber-50 px-1.5 py-0.5 rounded-md">
+                    <Star size={9} className="fill-amber-500" />
                     {c.rating}
                   </div>
                 </div>
 
                 {/* Location */}
                 {c.location && (
-                  <div className="flex items-center gap-0.5 text-[8px] text-slate-400">
-                    <MapPin size={8} />
+                  <div className="flex items-center gap-1 text-[9px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md w-fit">
+                    <MapPin size={9} />
                     <span className="truncate">{c.location}</span>
                   </div>
                 )}
 
-                {/* Performance Chart - Compact */}
+                {/* Performance Chart - Clean */}
                 {c.performance && (
-                  <div className="mt-0.5">
+                  <div className="mt-1 bg-slate-50/80 rounded-lg p-1.5">
                     <PerformanceChart data={c.performance} />
                   </div>
                 )}
 
-                {/* Stats - Very compact */}
-                <div className="flex items-center justify-between text-[8px] text-slate-500 mt-0.5">
-                  <div className="flex items-center gap-0.5">
-                    <Briefcase size={8} />
+                {/* Stats - Clean */}
+                <div className="flex items-center justify-between text-[9px] text-slate-500 mt-1 bg-slate-50/50 px-1.5 py-1 rounded-md">
+                  <div className="flex items-center gap-1">
+                    <Briefcase size={9} />
                     <span>{c.experience}</span>
                   </div>
                   {c.responseTime && (
-                    <div className="flex items-center gap-0.5">
-                      <Clock size={8} />
+                    <div className="flex items-center gap-1 text-emerald-600">
+                      <Clock size={9} />
                       <span>{c.responseTime}</span>
                     </div>
                   )}
                 </div>
 
-                {/* Buttons - Super compact */}
-                <div className="mt-1 flex gap-1">
+                {/* Buttons - Clean */}
+                <div className="mt-1.5 flex gap-1">
                   <button
                     onClick={() => openChat(c)}
-                    className="flex-1 inline-flex items-center justify-center gap-1 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-[8px] px-1.5 py-1 rounded-md font-semibold hover:brightness-95 transition-all shadow-sm"
+                    className="flex-1 inline-flex items-center justify-center gap-1 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-[9px] px-2 py-1.5 rounded-lg font-semibold hover:brightness-95 hover:shadow-md transition-all shadow-sm"
                   >
-                    <MessageCircle size={8} />
+                    <MessageCircle size={10} />
                     Chat
                   </button>
 
                   <button
                     onClick={() => openDetail(c)}
-                    className="inline-flex items-center justify-center gap-1 px-1.5 py-1 text-[8px] rounded-md border border-orange-200 text-orange-600 font-semibold hover:bg-orange-50 transition-colors"
+                    className="inline-flex items-center justify-center gap-1 px-2 py-1.5 text-[9px] rounded-lg border border-orange-300 text-orange-600 font-semibold hover:bg-orange-50 hover:border-orange-400 transition-all"
                   >
-                    <BookOpen size={8} />
+                    <BookOpen size={10} />
                     Detail
                   </button>
                 </div>
@@ -895,7 +883,7 @@ const ConsultantHomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Detail Modal - COMPACT */}
+      {/* Detail Modal - CLEAN & IMPROVED */}
       <AnimatePresence>
         {showDetailModal && selectedConsultant && (
           <>
@@ -915,164 +903,159 @@ const ConsultantHomePage: React.FC = () => {
               <div className="min-h-full flex items-center justify-center p-1">
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-white rounded-xl sm:rounded-2xl shadow-xl max-w-2xl w-full max-h-[95vh] overflow-y-auto"
+                  className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[95vh] overflow-y-auto"
                 >
-                  {/* Header - Compact */}
+                  {/* Header - Clean, no badge */}
                   <div className="relative">
-                    <div className="h-20 sm:h-24 bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600" />
+                    <div className="h-24 sm:h-28 bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600" />
                     <button
                       onClick={closeDetail}
-                      className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/95 hover:bg-white flex items-center justify-center shadow-lg transition-colors"
+                      className="absolute top-2 right-2 sm:top-3 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/95 hover:bg-white flex items-center justify-center shadow-lg transition-all hover:scale-110"
                     >
-                      <X size={12} className="sm:w-3.5 sm:h-3.5 text-slate-700" />
+                      <X size={14} className="sm:w-4 sm:h-4 text-slate-700" />
                     </button>
-                    <div className="absolute -bottom-6 sm:-bottom-8 left-3 sm:left-4">
+                    <div className="absolute -bottom-8 sm:-bottom-10 left-4 sm:left-5">
                       <img
                         src={selectedConsultant.image}
                         alt={selectedConsultant.name}
-                        className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl object-cover border-2 sm:border-3 border-white shadow-lg"
+                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl object-cover border-3 sm:border-4 border-white shadow-xl"
                       />
                     </div>
                   </div>
 
-                  {/* Content - Compact */}
-                  <div className="pt-8 sm:pt-10 px-3 sm:px-4 pb-3 sm:pb-4">
-                    <div className="flex items-start justify-between mb-3 sm:mb-4">
+                  {/* Content - Clean */}
+                  <div className="pt-10 sm:pt-12 px-4 sm:px-5 pb-4 sm:pb-5">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                          <div className={`px-2 py-1 rounded-full text-[10px] font-semibold ${
-                            selectedConsultant.membership === 'Premium' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white' :
-                            selectedConsultant.membership === 'Pro' ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' :
-                            'bg-slate-600 text-white'
-                          }`}>
-                            {selectedConsultant.membership} Membership
-                          </div>
-                        </div>
-                        <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-1 truncate">
+                        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1.5">
                           {selectedConsultant.name}
                         </h2>
-                        <p className="text-sm text-slate-600 mb-2">
+                        <p className="text-sm sm:text-base text-slate-600 mb-3">
                           {selectedConsultant.specialty}
                         </p>
                         
-                        {/* Compact badges */}
-                        <div className="flex flex-wrap gap-1">
-                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-semibold">
-                            <Star size={10} className="fill-amber-500" />
+                        {/* Clean badges */}
+                        <div className="flex flex-wrap gap-1.5">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200">
+                            <Star size={12} className="fill-amber-500" />
                             {selectedConsultant.rating}
                           </span>
-                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px]">
-                            <Briefcase size={10} />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 text-xs border border-slate-200">
+                            <Briefcase size={12} />
                             {selectedConsultant.experience}
                           </span>
                           {selectedConsultant.responseTime && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px]">
-                              <Clock size={10} />
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs border border-emerald-200">
+                              <Clock size={12} />
                               {selectedConsultant.responseTime}
                             </span>
                           )}
                           {selectedConsultant.location && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px]">
-                              <MapPin size={10} />
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs border border-blue-200">
+                              <MapPin size={12} />
                               {selectedConsultant.location}
                             </span>
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1.5">
                         <button 
                           onClick={(e) => handleAddToFavorites(e, selectedConsultant)}
-                          className={`p-2 rounded-lg hover:bg-orange-50 transition-colors ${
-                            isConsultantFavorited(selectedConsultant.id) ? 'bg-red-50' : ''
+                          className={`p-2.5 rounded-lg transition-all hover:scale-110 ${
+                            isConsultantFavorited(selectedConsultant.id) 
+                              ? 'bg-red-50 hover:bg-red-100 text-red-500' 
+                              : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
                           }`}
                           title={isConsultantFavorited(selectedConsultant.id) ? 'Hapus dari favorit' : 'Tambah ke favorit'}
                         >
                           <Heart 
-                            size={16} 
-                            className={isConsultantFavorited(selectedConsultant.id) ? 'text-red-500 fill-current' : 'text-slate-600'} 
+                            size={18} 
+                            className={isConsultantFavorited(selectedConsultant.id) ? 'fill-current' : ''} 
                           />
                         </button>
                         <button 
                           onClick={(e) => handleShare(e, selectedConsultant)}
-                          className="p-2 rounded-lg hover:bg-orange-50 transition-colors"
+                          className="p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 transition-all hover:scale-110"
                           title="Bagikan konsultan"
                         >
-                          <Share2 size={16} className="text-slate-600" />
+                          <Share2 size={18} className="text-slate-600" />
                         </button>
                       </div>
                     </div>
 
                     {/* Performance Chart */}
                     {selectedConsultant.performance && (
-                      <div className="mb-3 sm:mb-4">
-                        <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-1.5">
-                          <BarChart3 size={14} className="text-orange-600" />
-                          Performance
+                      <div className="mb-4 sm:mb-5">
+                        <h3 className="text-sm font-bold text-slate-900 mb-2.5 flex items-center gap-2">
+                          <BarChart3 size={16} className="text-orange-600" />
+                          Performance Metrics
                         </h3>
-                        <div className="bg-slate-50 rounded-lg p-3">
+                        <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl p-4 border border-slate-200">
                           <PerformanceChart data={selectedConsultant.performance} />
                         </div>
                       </div>
                     )}
 
-                    {/* Stats - Compact */}
-                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-3 sm:mb-4">
-                      <div className="bg-orange-50 rounded-lg p-2 text-center">
-                        <div className="text-sm sm:text-base font-bold text-orange-600 mb-0.5">
+                    {/* Stats - Clean */}
+                    <div className="grid grid-cols-3 gap-2 sm:gap-2.5 mb-4 sm:mb-5">
+                      <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-xl p-3 text-center border border-orange-200">
+                        <div className="text-base sm:text-lg font-bold text-orange-600 mb-1">
                           {selectedConsultant.experience}
                         </div>
-                        <div className="text-[8px] sm:text-[10px] text-slate-600">Pengalaman</div>
+                        <div className="text-[9px] sm:text-[10px] text-slate-600 font-medium">Pengalaman</div>
                       </div>
                       {selectedConsultant.clientsCount && (
-                        <div className="bg-amber-50 rounded-lg p-2 text-center">
-                          <div className="text-sm sm:text-base font-bold text-amber-600 mb-0.5">
+                        <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl p-3 text-center border border-amber-200">
+                          <div className="text-base sm:text-lg font-bold text-amber-600 mb-1">
                             {selectedConsultant.clientsCount}+
                           </div>
-                          <div className="text-[8px] sm:text-[10px] text-slate-600">Klien</div>
+                          <div className="text-[9px] sm:text-[10px] text-slate-600 font-medium">Klien</div>
                         </div>
                       )}
                       {selectedConsultant.successRate && (
-                        <div className="bg-green-50 rounded-lg p-2 text-center">
-                          <div className="text-sm sm:text-base font-bold text-green-600 mb-0.5">
+                        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-3 text-center border border-emerald-200">
+                          <div className="text-base sm:text-lg font-bold text-emerald-600 mb-1">
                             {selectedConsultant.successRate}
                           </div>
-                          <div className="text-[8px] sm:text-[10px] text-slate-600">Success Rate</div>
+                          <div className="text-[9px] sm:text-[10px] text-slate-600 font-medium">Success Rate</div>
                         </div>
                       )}
                     </div>
 
                     {/* Bio */}
                     {selectedConsultant.bio && (
-                      <div className="mb-3 sm:mb-4">
-                        <h3 className="text-sm font-bold text-slate-900 mb-1.5">Tentang</h3>
-                        <p className="text-xs text-slate-600 leading-relaxed">
+                      <div className="mb-4 sm:mb-5">
+                        <h3 className="text-sm font-bold text-slate-900 mb-2">Tentang</h3>
+                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-200">
                           {selectedConsultant.bio}
                         </p>
                       </div>
                     )}
 
                     {/* Education & Certifications */}
-                    <div className="grid md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+                    <div className="grid md:grid-cols-2 gap-4 mb-4 sm:mb-5">
                       {selectedConsultant.education && (
                         <div>
-                          <h3 className="text-sm font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
-                            <GraduationCap size={14} className="text-orange-600" />
+                          <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
+                            <GraduationCap size={16} className="text-orange-600" />
                             Pendidikan
                           </h3>
-                          <p className="text-xs text-slate-600">{selectedConsultant.education}</p>
+                          <p className="text-xs sm:text-sm text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                            {selectedConsultant.education}
+                          </p>
                         </div>
                       )}
                       {selectedConsultant.certifications && selectedConsultant.certifications.length > 0 && (
                         <div>
-                          <h3 className="text-sm font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
-                            <Award size={14} className="text-orange-600" />
+                          <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
+                            <Award size={16} className="text-orange-600" />
                             Sertifikasi
                           </h3>
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-1.5">
                             {selectedConsultant.certifications.map((cert, idx) => (
                               <span
                                 key={idx}
-                                className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded text-[10px] font-semibold"
+                                className="px-2.5 py-1 bg-orange-50 text-orange-700 rounded-lg text-[10px] sm:text-xs font-semibold border border-orange-200"
                               >
                                 {cert}
                               </span>
@@ -1084,15 +1067,15 @@ const ConsultantHomePage: React.FC = () => {
 
                     {/* Specialties */}
                     {selectedConsultant.specialties && selectedConsultant.specialties.length > 0 && (
-                      <div className="mb-3 sm:mb-4">
-                        <h3 className="text-sm font-bold text-slate-900 mb-1.5">
+                      <div className="mb-4 sm:mb-5">
+                        <h3 className="text-sm font-bold text-slate-900 mb-2">
                           Keahlian Khusus
                         </h3>
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1.5">
                           {selectedConsultant.specialties.map((spec, idx) => (
                             <span
                               key={idx}
-                              className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-[10px] font-medium"
+                              className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-[10px] sm:text-xs font-medium border border-slate-200"
                             >
                               {spec}
                             </span>
@@ -1103,13 +1086,13 @@ const ConsultantHomePage: React.FC = () => {
 
                     {/* Languages */}
                     {selectedConsultant.languages && selectedConsultant.languages.length > 0 && (
-                      <div className="mb-3 sm:mb-4">
-                        <h3 className="text-sm font-bold text-slate-900 mb-1.5">Bahasa</h3>
-                        <div className="flex flex-wrap gap-1">
+                      <div className="mb-4 sm:mb-5">
+                        <h3 className="text-sm font-bold text-slate-900 mb-2">Bahasa</h3>
+                        <div className="flex flex-wrap gap-1.5">
                           {selectedConsultant.languages.map((lang, idx) => (
                             <span
                               key={idx}
-                              className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-[10px] font-medium"
+                              className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] sm:text-xs font-medium border border-blue-200"
                             >
                               {lang}
                             </span>
@@ -1118,16 +1101,16 @@ const ConsultantHomePage: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Action Buttons - Compact */}
-                    <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-2 pt-3 border-t border-slate-200">
+                    {/* Action Buttons - Clean */}
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-2.5 pt-4 border-t border-slate-200">
                       <button
                         onClick={() => {
                           closeDetail();
                           openChat(selectedConsultant);
                         }}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-sm px-3 py-2 rounded-lg font-semibold hover:brightness-95 transition-all shadow-md"
+                        className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-sm px-4 py-2.5 rounded-xl font-semibold hover:brightness-95 hover:shadow-lg transition-all shadow-md"
                       >
-                        <MessageCircle size={14} />
+                        <MessageCircle size={16} />
                         Mulai Chat
                       </button>
                       <button
@@ -1138,9 +1121,9 @@ const ConsultantHomePage: React.FC = () => {
                             window.location.href = `/ConsultantBooking?consultant=${id}`;
                           }
                         }}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 border border-orange-600 text-orange-600 text-sm px-3 py-2 rounded-lg font-semibold hover:bg-orange-50 transition-colors"
+                        className="flex-1 inline-flex items-center justify-center gap-2 border-2 border-orange-600 text-orange-600 text-sm px-4 py-2.5 rounded-xl font-semibold hover:bg-orange-50 transition-all"
                       >
-                        <Calendar size={14} />
+                        <Calendar size={16} />
                         Booking Sesi
                       </button>
                     </div>
@@ -1155,7 +1138,7 @@ const ConsultantHomePage: React.FC = () => {
   );
 };
 
-// Chat Page Component (tetap sama seperti sebelumnya)
+// Chat Page Component
 const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onBack }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -1221,7 +1204,7 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50/30 to-white flex flex-col">
-      {/* Header - Compact */}
+      {/* Header - Clean */}
       <motion.header
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -1229,11 +1212,7 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
       >
         <div className="max-w-5xl mx-auto px-2 sm:px-3 py-1.5 sm:py-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-            <button
-              onClick={onBack}
-              className="p-1 sm:p-1.5 rounded-lg hover:bg-orange-50 transition-colors flex-shrink-0"
-              aria-label="Kembali"
-            >
+            <button onClick={onBack} className="p-1 sm:p-1.5 rounded-lg hover:bg-orange-50 transition-colors flex-shrink-0" aria-label="Kembali">
               <ArrowRight size={14} className="sm:w-4 sm:h-4 text-slate-700 rotate-180" />
             </button>
 
@@ -1271,7 +1250,7 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
         </div>
       </motion.header>
 
-      {/* Chat Messages - Compact */}
+      {/* Chat Messages */}
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-2 sm:px-3 py-2 sm:py-3 space-y-2 sm:space-y-3">
           {/* Date divider */}
@@ -1300,7 +1279,7 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
                 >
                   {m.attachments && m.attachments.length > 0 && (
                     <div className="mb-1.5 space-y-1.5">
-                      {m.attachments.map((att: { type: "image" | "file"; url: string; name: string }, attIdx: number) => (
+                      {m.attachments.map((att, attIdx) => (
                         <div key={attIdx} className="rounded-lg overflow-hidden">
                           {att.type === "image" ? (
                             <img src={att.url} alt={att.name} className="max-w-full h-auto rounded-lg" />
@@ -1361,7 +1340,7 @@ const ConsultantChatPage: React.FC<ConsultantChatPageProps> = ({ consultant, onB
         </div>
       </main>
 
-      {/* Input Area - Compact */}
+      {/* Input Area */}
       <motion.footer
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}

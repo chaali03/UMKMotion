@@ -130,6 +130,39 @@ export default function RegisterPage() {
     return !bannedWords.some(w => nrm.includes(normalize(w)));
   };
 
+  // Nickname validation - allow capital letters, no spaces
+  const validateNickname = (value: string) => {
+    // Remove any spaces that user might try to input
+    const cleanValue = value.replace(/\s/g, '');
+    
+    // Check if contains spaces (should not happen due to above, but just in case)
+    if (/\s/.test(value)) {
+      return "Nickname tidak boleh mengandung spasi";
+    }
+    
+    // Check minimum length
+    if (cleanValue.length < 3) {
+      return "Nickname minimal 3 karakter";
+    }
+    
+    // Check maximum length
+    if (cleanValue.length > 20) {
+      return "Nickname maksimal 20 karakter";
+    }
+    
+    // Check allowed characters (letters, numbers, underscore)
+    if (!/^[A-Za-z0-9_]+$/.test(cleanValue)) {
+      return "Nickname hanya boleh mengandung huruf, angka, dan underscore (_)";
+    }
+    
+    // Check profanity
+    if (!isCleanNickname(cleanValue)) {
+      return "Nickname mengandung kata tidak pantas";
+    }
+    
+    return null;
+  };
+
   // Slideshow effect
   useEffect(() => {
     if (paused) return;
@@ -175,6 +208,13 @@ export default function RegisterPage() {
 
   // Debounced Nickname Check
   useEffect(() => {
+    const validationError = validateNickname(nickname);
+    if (validationError) {
+      setNicknameStatus('taken');
+      setErrors((prev) => ({ ...prev, nickname: validationError }));
+      return;
+    }
+
     if (nickname.length < 3) {
       setNicknameStatus('idle');
       return;
@@ -187,12 +227,6 @@ export default function RegisterPage() {
     setNicknameStatus('checking');
     
     nicknameCheckTimeout.current = setTimeout(async () => {
-      // Profanity validation first
-      if (!isCleanNickname(nickname)) {
-        setNicknameStatus('taken');
-        setErrors((prev) => ({ ...prev, nickname: "Nickname mengandung kata tidak pantas." }));
-        return;
-      }
       const { nicknameExists } = await checkUserExists(undefined, nickname);
       setNicknameStatus(nicknameExists ? 'taken' : 'available');
       if (nicknameExists) {
@@ -209,6 +243,13 @@ export default function RegisterPage() {
     };
   }, [nickname]);
 
+  // Handle nickname input change - remove spaces and validate
+  const handleNicknameChange = (value: string) => {
+    // Remove any spaces
+    const cleanValue = value.replace(/\s/g, '');
+    setNickname(cleanValue);
+  };
+
   // Step 1: Name Handler
   const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,17 +259,21 @@ export default function RegisterPage() {
       setErrors({ fullName: "Nama minimal 3 karakter" });
       return;
     }
-    if (nickname.length < 3) {
-      setErrors({ nickname: "Nickname minimal 3 karakter" });
-      return;
-    }
-    if (!isCleanNickname(nickname)) {
-      setErrors({ nickname: "Nickname mengandung kata tidak pantas." });
+
+    const nicknameValidation = validateNickname(nickname);
+    if (nicknameValidation) {
+      setErrors({ nickname: nicknameValidation });
       setNicknameStatus('taken');
       return;
     }
+
     if (nicknameStatus === 'taken') {
       setErrors({ nickname: "Nickname sudah digunakan" });
+      return;
+    }
+
+    if (nicknameStatus === 'checking') {
+      setErrors({ nickname: "Sedang memeriksa nickname..." });
       return;
     }
 
@@ -348,8 +393,10 @@ export default function RegisterPage() {
       setErrors({ confirm: "Password tidak cocok" });
       return;
     }
-    if (!isCleanNickname(nickname)) {
-      setErrors({ nickname: "Nickname mengandung kata tidak pantas." });
+
+    const nicknameValidation = validateNickname(nickname);
+    if (nicknameValidation) {
+      setErrors({ nickname: nicknameValidation });
       return;
     }
 
@@ -1127,11 +1174,9 @@ export default function RegisterPage() {
                       id="nickname"
                       type="text"
                       className={`input-field ${errors.nickname ? "error" : ""}`}
-                      placeholder="mamat"
+                      placeholder="Mamat123"
                       value={nickname}
-                      onChange={(e) =>
-                        setNickname(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))
-                      }
+                      onChange={(e) => handleNicknameChange(e.target.value)}
                     />
                     <div className="input-feedback">
                       {nicknameStatus === 'checking' && <Loader2 size={20} className="spinner" color="#6366f1" />}
@@ -1159,6 +1204,9 @@ export default function RegisterPage() {
                       Nickname tersedia
                     </motion.div>
                   )}
+                  <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                    Huruf kapital diperbolehkan, tanpa spasi
+                  </div>
                 </div>
 
                 <button type="submit" className="btn btn-primary" disabled={nicknameStatus === 'checking' || nicknameStatus === 'taken'}>

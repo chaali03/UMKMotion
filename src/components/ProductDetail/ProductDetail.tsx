@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, limit, doc, getDoc } from "firebase/firestore";
-import { ShoppingCart } from "lucide-react";
+import { db, auth } from "@/lib/firebase";
+import { collection, getDocs, query, where, limit, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { ShoppingCart, Heart, Star, ChevronLeft, ChevronRight, Store, Shield, Truck, ArrowLeft, Check, Minus, Plus } from "lucide-react";
 
-// === TIPE PRODUK ===
+// === TIPE DATA ===
 interface FirebaseProduct {
   nama_produk?: string;
   thumbnail_produk?: string;
@@ -18,34 +18,32 @@ interface FirebaseProduct {
   deskripsi_produk?: string;
   bullet_points?: string[];
   product_photos?: string[];
-  specifications?: Array<{ name: string; value: string }>;
   kategori?: string;
   ASIN?: string;
   discount?: string;
+  persentase_diskon?: number;
+  jumlah_ulasan?: number;
+  merek_produk?: string;
+  varian?: ProductVariant[];
 }
 
-// === TIPE TOKO ===
+interface ProductVariant {
+  id: string;
+  nama: string;
+  harga: number;
+  stok: number;
+  gambar?: string;
+}
+
 interface FirebaseStore {
   nama_toko: string;
   image?: string;
-  banner?: string;
   kategori: string;
   deskripsi_toko?: string;
-  lokasi_toko?: string;
-  no_telp?: string;
-  email?: string;
-  profileImage?: string;
-  jam_operasional?: string;
-  hari_operasional?: string;
   rating_toko?: number;
   jumlah_review?: number;
-  maps_link?: string;
-  fasilitas?: string[];
-  metode_pembayaran?: string[];
-  social?: { instagram?: string; whatsapp?: string; facebook?: string };
 }
 
-// === TIPE TAMPILAN ===
 interface DisplayProduct {
   product_title: string;
   product_photo: string;
@@ -54,49 +52,29 @@ interface DisplayProduct {
   product_star_rating?: string;
   product_num_ratings?: string;
   seller_name?: string;
-  seller_logo?: string;
   asin: string;
   product_description?: string;
   category?: string;
   bullet_points?: string[];
   product_photos?: string[];
-  specifications?: Array<{ name: string; value: string }>;
   discount?: string;
-  store?: FirebaseStore | null;
   product_sold?: string;
+  varian?: ProductVariant[];
 }
-
-// === DATA TOKO ASLI (DARI SEED) ===
-
-// === UTILS ===
-// Dummy store seed removed. Store data is fetched directly from Firestore.
 
 const formatRupiah = (num?: number) => num ? `Rp ${num.toLocaleString("id-ID")}` : "Rp 0";
 
 const formatSold = (sold?: number) => {
   if (!sold || sold <= 0) return "Baru";
-  if (sold < 1000) return `${sold.toLocaleString('id-ID')} terjual`;
+  if (sold < 1000) return `${sold} terjual`;
   const k = (sold / 1000);
   const text = k >= 10 ? Math.floor(k).toString() : k.toFixed(1).replace('.0', '');
-  return `${text}K terjual`;
+  return `${text}rb terjual`;
 };
 
-const categoryMap: Record<string, string> = {
-  "Makanan & Minuman": "food",
-  "Fashion & Tekstil": "fashion",
-  "Kerajinan Tangan": "craft",
-  "Kesehatan": "beauty",
-  "Pertanian": "agriculture",
-  "Elektronik": "electronics",
-  "Furniture": "furniture",
-  "Buku & Percetakan": "education",
-};
-
-// === FALLBACK PRODUK (CONTOH MAKANAN) ===
 const fallbackFirebase: FirebaseProduct = {
   nama_produk: "Paket Sambal Nusantara - 3 Varian (Roa, Rica, Matah)",
   thumbnail_produk: "https://via.placeholder.com/600x800/dc2626/ffffff?text=Sambal+Set",
-  gambar_produk: "https://via.placeholder.com/600x800/dc2626/ffffff?text=Sambal+Set",
   harga_produk: 89000,
   harga_asli: 120000,
   rating_bintang: 4.9,
@@ -110,15 +88,15 @@ const fallbackFirebase: FirebaseProduct = {
     "Rasa autentik khas daerah",
     "Bisa langsung makan atau campur nasi"
   ],
-  product_photos: Array(8).fill(null).map((_, i) => `https://via.placeholder.com/600x800/ef4444/ffffff?text=Sambal+${i + 1}`),
-  specifications: [
-    { name: "Isi", value: "3 botol @150g" },
-    { name: "Kadaluarsa", value: "6 bulan dari produksi" },
-    { name: "Penyimpanan", value: "Suhu ruang / kulkas" }
-  ],
+  product_photos: Array(4).fill(null).map((_, i) => `https://via.placeholder.com/600x800/ef4444/ffffff?text=Sambal+${i + 1}`),
   kategori: "Makanan & Minuman",
   ASIN: "B0SAMBAL123",
-  discount: "26%"
+  discount: "26%",
+  varian: [
+    { id: "var1", nama: "Paket 3 Varian (Roa, Rica, Matah)", harga: 89000, stok: 50, gambar: "https://via.placeholder.com/600x800/dc2626/ffffff?text=Sambal+Set" },
+    { id: "var2", nama: "Paket 5 Varian + Extra Pedas", harga: 145000, stok: 30, gambar: "https://via.placeholder.com/600x800/ef4444/ffffff?text=Sambal+Set+Extra" },
+    { id: "var3", nama: "Paket 10 Mini Jar", harga: 220000, stok: 15, gambar: "https://via.placeholder.com/600x800/f97316/ffffff?text=Sambal+Mini+Set" }
+  ]
 };
 
 export default function BuyingPage() {
@@ -128,83 +106,81 @@ export default function BuyingPage() {
   const [loadingStore, setLoadingStore] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [activeSlide, setActiveSlide] = useState(0);
-  const [activeVariant, setActiveVariant] = useState(0);
   const [loadingDetail, setLoadingDetail] = useState(true);
   const [showFullDetail, setShowFullDetail] = useState(false);
   const [recommendations, setRecommendations] = useState<DisplayProduct[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(true);
-
-  const MAX_THUMBS = 8;
-  const THUMB_WIDTH_DESKTOP = 120;
-  const THUMB_GAP = 8;
-  const thumbItemWidthDesktop = THUMB_WIDTH_DESKTOP + THUMB_GAP;
-
-  const [thumbStart, setThumbStart] = useState(0);
-  const [isClient, setIsClient] = useState(false);
-  const [currentThumbWidth, setCurrentThumbWidth] = useState(thumbItemWidthDesktop);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
 
   const allProductPhotos = displayProduct?.product_photos || [];
-  const carouselImages = allProductPhotos.slice(0, MAX_THUMBS);
-  const hasMoreThanThumbs = allProductPhotos.length > MAX_THUMBS;
-
-  const variants = allProductPhotos.length > 0
-    ? allProductPhotos.map((photo, i) => ({
-        name: `Varian ${i + 1}`,
-        photo,
-        color: i % 2 === 0 ? "#1a1a1a" : i % 3 === 0 ? "#d4d4d8" : "#fbbf24"
-      }))
-    : [{ name: "Default", photo: displayProduct?.product_photo || "", color: "#1a1a1a" }];
+  const carouselImages = allProductPhotos.slice(0, 4);
 
   const mapToDisplay = (p: FirebaseProduct): DisplayProduct => {
-    const allPhotos = p.product_photos && p.product_photos.length > 0
+    const allPhotos = (p.product_photos && p.product_photos.length > 0)
       ? p.product_photos
       : [p.thumbnail_produk || p.gambar_produk || "https://via.placeholder.com/600x800/f3f4f6/9ca3af?text=No+Image"];
 
     return {
-      product_title: p.nama_produk || "Produk Tanpa Nama",
+      product_title: p.nama_produk || p.merek_produk || "Produk Tanpa Nama",
       product_photo: p.thumbnail_produk || p.gambar_produk || "https://via.placeholder.com/600x800/f3f4f6/9ca3af?text=No+Image",
       product_price: formatRupiah(p.harga_produk),
       product_original_price: p.harga_asli ? formatRupiah(p.harga_asli) : undefined,
       product_star_rating: p.rating_bintang ? p.rating_bintang.toFixed(1) : undefined,
-      product_num_ratings: undefined,
+      product_num_ratings: p.jumlah_ulasan ? p.jumlah_ulasan.toString() : undefined,
       product_sold: formatSold(p.unit_terjual),
       seller_name: p.toko || "Toko Tidak Diketahui",
-      seller_logo: storeData?.profileImage || "",
       asin: p.ASIN || "unknown",
       product_description: p.deskripsi_produk || "Deskripsi tidak tersedia.",
       category: p.kategori || "Lainnya",
       bullet_points: p.bullet_points,
       product_photos: allPhotos,
-      specifications: p.specifications,
-      discount: p.discount,
-      store: storeData
+      discount: p.discount || (typeof p.persentase_diskon === 'number' ? `${p.persentase_diskon}%` : undefined),
+      varian: p.varian,
     };
   };
 
-  useEffect(() => {
-    setIsClient(true);
-    const updateThumbWidth = () => {
-      setCurrentThumbWidth(window.innerWidth <= 768 ? 0 : thumbItemWidthDesktop);
-    };
-    updateThumbWidth();
-    window.addEventListener('resize', updateThumbWidth);
-    return () => window.removeEventListener('resize', updateThumbWidth);
-  }, []);
-
-  // === LOAD SEMUA DATA ===
   useEffect(() => {
     const loadAllData = async () => {
       if (typeof window === "undefined") return;
 
       let rawProduct: FirebaseProduct | null = null;
+      const resolveAsin = (): string | null => {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const fromQuery = params.get("asin");
+          if (fromQuery) return fromQuery;
+        } catch {}
+        try {
+          const sel = localStorage.getItem('selectedProduct');
+          if (sel) {
+            const parsed = JSON.parse(sel);
+            if (parsed && typeof parsed === 'object' && parsed.ASIN) return String(parsed.ASIN);
+          }
+        } catch {}
+        return null;
+      };
+
+      const asinParam = resolveAsin();
       try {
-        const params = new URLSearchParams(window.location.search);
-        const asinParam = params.get("asin");
         if (db && asinParam) {
-          const snap = await getDoc(doc(db, "products", asinParam));
-          if (snap.exists()) {
-            const data = snap.data() as FirebaseProduct;
-            rawProduct = { ...data, ASIN: asinParam };
+          try {
+            const snap = await getDoc(doc(db, "products", asinParam));
+            if (snap.exists()) {
+              const data = snap.data() as FirebaseProduct;
+              rawProduct = { ...data, ASIN: asinParam };
+            }
+          } catch {}
+          if (!rawProduct) {
+            try {
+              const q1 = query(collection(db, "products"), where("ASIN", "==", asinParam), limit(1));
+              const s1 = await getDocs(q1);
+              if (!s1.empty) {
+                const d = s1.docs[0];
+                rawProduct = { ...(d.data() as FirebaseProduct), ASIN: d.id };
+              }
+            } catch {}
           }
         }
       } catch (err) {
@@ -212,7 +188,6 @@ export default function BuyingPage() {
       }
 
       if (!rawProduct) {
-        // Fallback jika tidak ada param atau dokumen tidak ada
         try {
           if (db) {
             const q = query(collection(db, "products"), limit(1));
@@ -231,9 +206,13 @@ export default function BuyingPage() {
 
       setFirebaseProduct(rawProduct);
 
-      // === FETCH TOKO DARI FIRESTORE DENGAN NORMALISASI ===
-      if (db && rawProduct.toko && rawProduct.kategori) {
-        await fetchStoreData(rawProduct.toko, rawProduct.kategori);
+      // Set selected variant to the first one if available
+      if (rawProduct.varian && rawProduct.varian.length > 0) {
+        setSelectedVariant(rawProduct.varian[0]);
+      }
+
+      if (db && rawProduct.toko) {
+        await fetchStoreData(rawProduct.toko);
       } else {
         setStoreData(null);
         setLoadingStore(false);
@@ -242,7 +221,19 @@ export default function BuyingPage() {
       setDisplayProduct(mapToDisplay(rawProduct));
       setLoadingDetail(false);
 
-      // === REKOMENDASI ===
+      try {
+        const u = auth?.currentUser;
+        if (u && rawProduct?.ASIN) {
+          const favRef = doc(db, "favorites", `${u.uid}_${rawProduct.ASIN}`);
+          const favSnap = await getDoc(favRef);
+          setIsFavorite(favSnap.exists());
+        } else {
+          setIsFavorite(false);
+        }
+      } catch (e) {
+        console.warn('Gagal cek favorit:', e);
+      }
+
       if (db && rawProduct.kategori && rawProduct.ASIN) {
         fetchSameCategoryProducts(rawProduct.kategori, rawProduct.ASIN);
       } else {
@@ -253,8 +244,7 @@ export default function BuyingPage() {
     loadAllData();
   }, []);
 
-  // === FETCH TOKO DARI FIRESTORE ===
-  const fetchStoreData = async (namaToko: string, kategoriProduk: string) => {
+  const fetchStoreData = async (namaToko: string) => {
     if (!db) { setStoreData(null); setLoadingStore(false); return; }
 
     setLoadingStore(true);
@@ -262,7 +252,6 @@ export default function BuyingPage() {
       const q = query(
         collection(db, "stores"),
         where("nama_toko", "==", namaToko),
-        where("kategori", "==", kategoriProduk),
         limit(1)
       );
 
@@ -271,7 +260,6 @@ export default function BuyingPage() {
         const store = snapshot.docs[0].data() as FirebaseStore;
         setStoreData(store);
       } else {
-        console.log(`Toko "${namaToko}" tidak ditemukan di kategori "${kategoriProduk}"`);
         setStoreData(null);
       }
     } catch (err) {
@@ -282,7 +270,6 @@ export default function BuyingPage() {
     }
   };
 
-  // === REKOMENDASI ===
   const fetchSameCategoryProducts = async (currentCategory: string, currentASIN: string) => {
     if (!db) { setLoadingRecs(false); return; }
     setLoadingRecs(true);
@@ -303,304 +290,1109 @@ export default function BuyingPage() {
     }
   };
 
-  // === KLIK REKOMENDASI ===
   const handleRecommendationClick = (item: DisplayProduct) => {
-    const fullProductData: FirebaseProduct = {
-      nama_produk: item.product_title,
-      thumbnail_produk: item.product_photo,
-      gambar_produk: item.product_photo,
-      harga_produk: parseInt(item.product_price.replace(/\D/g, '')) || undefined,
-      harga_asli: item.product_original_price ? parseInt(item.product_original_price.replace(/\D/g, '')) : undefined,
-      rating_bintang: item.product_star_rating ? parseFloat(item.product_star_rating) : undefined,
-      unit_terjual: item.product_num_ratings ? parseInt(item.product_num_ratings) * 100 : undefined,
-      toko: item.seller_name,
-      deskripsi_produk: item.product_description,
-      bullet_points: item.bullet_points,
-      product_photos: item.product_photos,
-      specifications: item.specifications,
-      kategori: item.category,
-      ASIN: item.asin,
-      discount: item.discount
-    };
-    localStorage.setItem("selectedProduct", JSON.stringify(fullProductData));
-    window.location.reload();
+    try {
+      localStorage.setItem("selectedProduct", JSON.stringify({ ASIN: item.asin }));
+    } catch {}
+    window.location.href = `/BuyingPage?asin=${encodeURIComponent(item.asin)}`;
   };
 
-  // === RENDER BINTANG ===
   const renderStars = (rating?: number) => {
-    if (!rating) return "☆☆☆☆☆";
-    const full = Math.floor(rating);
-    const half = rating % 1 >= 0.5 ? 1 : 0;
-    const empty = 5 - full - half;
+    const r = Number.isFinite(rating as number) ? (rating as number) : 0;
+    const clamped = Math.min(5, Math.max(0, r));
+    const full = Math.floor(clamped);
+    const half = clamped - full >= 0.5 ? 1 : 0;
+    const empty = Math.max(0, 5 - full - half);
     return "★".repeat(full) + (half ? "★" : "") + "☆".repeat(empty);
   };
 
   const stars = renderStars(parseFloat(displayProduct?.product_star_rating || "0"));
   const discount = displayProduct?.discount || "0%";
 
-  // === HANDLER LAIN ===
-  const handleVariantClick = (index: number) => { setActiveVariant(index); setActiveSlide(0); };
   const handleAddToCart = () => {
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    const existing = cart.find((p: any) => p.asin === displayProduct?.asin);
-    if (existing) existing.quantity = (existing.quantity || 1) + quantity;
-    else cart.push({ ...displayProduct, quantity });
+    const productToAdd = {
+      ...displayProduct,
+      quantity,
+      selectedVariant: selectedVariant || null,
+      product_price: selectedVariant ? formatRupiah(selectedVariant.harga) : displayProduct?.product_price
+    };
+    
+    const existing = cart.find((p: any) => p.asin === displayProduct?.asin && 
+      JSON.stringify(p.selectedVariant) === JSON.stringify(selectedVariant));
+      
+    if (existing) {
+      existing.quantity = (existing.quantity || 1) + quantity;
+    } else {
+      cart.push(productToAdd);
+    }
+    
     localStorage.setItem("cart", JSON.stringify(cart));
-    alert(`Ditambahkan ke keranjang: ${quantity} item`);
+    
+    // Show success notification
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      background: #10b981;
+      color: white;
+      padding: 16px 20px;
+      border-radius: 8px;
+      z-index: 1000;
+      font-weight: 600;
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    `;
+    notification.textContent = `✓ Ditambahkan ke keranjang: ${quantity} item`;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+    setTimeout(() => {
+      notification.style.transform = 'translateX(400px)';
+      setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
   };
+  
+  const toggleFavorite = async () => {
+    if (!displayProduct || !firebaseProduct) return;
+    const u = auth?.currentUser;
+    if (!u) {
+      alert('Silakan login untuk menambahkan favorit');
+      return;
+    }
+    if (!firebaseProduct.ASIN) return;
+    setFavLoading(true);
+    try {
+      const favId = `${u.uid}_${firebaseProduct.ASIN}`;
+      const favRef = doc(db, "favorites", favId);
+      if (isFavorite) {
+        await deleteDoc(favRef);
+        setIsFavorite(false);
+      } else {
+        await setDoc(favRef, {
+          uid: u.uid,
+          asin: firebaseProduct.ASIN,
+          nama_produk: firebaseProduct.nama_produk || displayProduct.product_title,
+          thumbnail: displayProduct.product_photo,
+          harga: firebaseProduct.harga_produk || null,
+          kategori: firebaseProduct.kategori || null,
+          toko: firebaseProduct.toko || null,
+          createdAt: new Date().toISOString(),
+        });
+        setIsFavorite(true);
+      }
+    } catch (e) {
+      console.error('Gagal toggle favorit:', e);
+      alert('Gagal mengubah favorit. Coba lagi.');
+    } finally {
+      setFavLoading(false);
+    }
+  };
+  
   const handleBuyNow = () => {
     if (!displayProduct) return;
-    const selectedImage = variants[activeVariant]?.photo || displayProduct.product_photo;
-    const checkoutItem = { ...displayProduct, quantity, selectedImage, product_price_num: parseInt(displayProduct.product_price.replace(/\D/g, '')) || 0 };
+    const checkoutItem = { 
+      ...displayProduct, 
+      quantity, 
+      selectedVariant,
+      product_price_num: selectedVariant ? selectedVariant.harga : parseInt(displayProduct.product_price.replace(/\D/g, '')) || 0 
+    };
     localStorage.setItem("checkoutItem", JSON.stringify(checkoutItem));
     window.location.href = "/checkoutpage";
   };
 
-  const goToSlide = (index: number) => {
-    setActiveSlide(index);
-    if (!isClient || window.innerWidth <= 768) return;
-    const containerWidth = MAX_THUMBS * currentThumbWidth;
-    const currentOffset = thumbStart * currentThumbWidth;
-    const targetOffset = index * currentThumbWidth;
-    if (targetOffset < currentOffset) setThumbStart(Math.max(0, index));
-    else if (targetOffset + currentThumbWidth > currentOffset + containerWidth) setThumbStart(Math.min(carouselImages.length - MAX_THUMBS, index - MAX_THUMBS + 1));
+  const nextSlide = () => {
+    setActiveSlide((prev) => (prev + 1) % carouselImages.length);
   };
+
+  const prevSlide = () => {
+    setActiveSlide((prev) => (prev - 1 + carouselImages.length) % carouselImages.length);
+  };
+
+  const handleVisitStore = () => {
+    const product = JSON.parse(localStorage.getItem("selectedProduct") || "{}");
+    const categoryKey = product.kategori || "all";
+    localStorage.setItem("currentStoreCategory", categoryKey);
+    window.location.href = "/toko";
+  };
+
+  const handleVariantSelect = (variant: ProductVariant) => {
+    setSelectedVariant(variant);
+    setQuantity(1); // Reset quantity when variant changes
+  };
+
+  if (loadingDetail || !displayProduct) {
+    return (
+      <div className="page-container">
+        <div className="skeleton-container">
+          <div className="skeleton-card">
+            <div className="skeleton-grid">
+              <div>
+                <div className="skeleton skeleton-image"></div>
+              </div>
+              <div className="skeleton-content">
+                <div className="skeleton skeleton-title"></div>
+                <div className="skeleton skeleton-text"></div>
+                <div className="skeleton skeleton-text"></div>
+                <div className="skeleton skeleton-price"></div>
+                <div className="skeleton skeleton-text"></div>
+                <div className="skeleton skeleton-text"></div>
+                <div className="skeleton-actions">
+                  <div className="skeleton skeleton-button"></div>
+                  <div className="skeleton skeleton-button"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const MAX_CHARS = 280;
   const fullDescription = displayProduct?.product_description || "";
   const isLongDescription = fullDescription.length > MAX_CHARS;
   const shortDescription = isLongDescription ? fullDescription.slice(0, MAX_CHARS) + "..." : fullDescription;
 
-  const handleVisitStore = () => {
-    const product = JSON.parse(localStorage.getItem("selectedProduct") || "{}");
-    const categoryKey = categoryMap[product.kategori || ""] || "all";
-    localStorage.setItem("currentStoreCategory", categoryKey);
-    window.dispatchEvent(new CustomEvent("categoryChange", { detail: categoryKey }));
-    window.location.href = "/toko";
-  };
-
-  if (loadingDetail || !displayProduct) {
-    return <div style={{ textAlign: "center", padding: "40px" }}><p>Memuat detail produk...</p></div>;
-  }
+  // Determine current price based on selected variant
+  const currentPrice = selectedVariant ? formatRupiah(selectedVariant.harga) : displayProduct.product_price;
+  const currentOriginalPrice = selectedVariant ? undefined : displayProduct.product_original_price;
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.6; }
-        .page-container { padding-top: 88px; padding-left: 16px; padding-right: 16px; min-height: 100vh; }
-        @media (min-width: 769px) { .page-container { padding-left: 32px; padding-right: 32px; } }
+      <style jsx>{`
+        .page-container {
+          padding-top: 88px;
+          padding-left: 16px;
+          padding-right: 16px;
+          min-height: 100vh;
+          background: #f8fafc;
+        }
+        
+        @media (min-width: 769px) {
+          .page-container {
+            padding-left: 32px;
+            padding-right: 32px;
+          }
+        }
 
-        .product-card { max-width: 1200px; margin: 0 auto 32px; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
-        .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
-        @media (max-width: 768px) { .product-grid { grid-template-columns: 1fr; gap: 0; } }
+        .back-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          color: #374151;
+          border-radius: 8px;
+          padding: 12px 20px;
+          font-weight: 600;
+          font-size: 14px;
+          margin-bottom: 20px;
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
 
-        .carousel-wrapper { position: relative; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.08); width: 100%; height: 540px; user-select: none; }
-        @media (max-width: 768px) { .carousel-wrapper { height: 420px; border-radius: 0; } }
-        .carousel { display: flex; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; }
-        .carousel-slide { min-width: 100%; position: relative; overflow: hidden; height: 100%; display: flex; align-items: center; justify-content: center; background: #fff; }
-        .carousel-slide img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+        .product-card {
+          max-width: 1200px;
+          margin: 0 auto 32px;
+          background: white;
+          border-radius: 16px;
+          overflow: hidden;
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
 
-        .discount-badge { position: absolute; background: linear-gradient(135deg, #f43f5e, #e11d48); color: white; font-weight: 800; font-size: 13px; padding: 6px 12px; border-radius: 12px; z-index: 10; box-shadow: 0 2px 8px rgba(244, 63, 94, 0.3); }
+        .product-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 40px;
+          align-items: start;
+        }
 
-        .carousel-dots { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
-        .dot { width: 9px; height: 9px; border-radius: 50%; background: #cbd5e1; transition: all 0.3s ease; cursor: pointer; }
-        .dot.active { background: #10b981; transform: scale(1.3); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
+        @media (max-width: 768px) {
+          .product-grid {
+            grid-template-columns: 1fr;
+            gap: 0;
+          }
+        }
 
-        .details-section { padding: 20px; background: white; display: flex; flex-direction: column; gap: 16px; }
-        @media (min-width: 769px) { .details-section { padding: 0 28px 28px; } }
+        .carousel-section {
+          position: relative;
+          padding: 24px;
+        }
 
-        .product-title { font-size: 20px; font-weight: 700; line-height: 1.35; color: #0f172a; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
-        @media (min-width: 769px) { .product-title { font-size: 22px; -webkit-line-clamp: 2; } }
+        .carousel-wrapper {
+          position: relative;
+          border-radius: 12px;
+          overflow: hidden;
+          background: #fff;
+          width: 100%;
+          height: 400px;
+          user-select: none;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
 
-        .rating-reviews { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-        .sold { color: #0ea5e9; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; }
-        .sold .icon { color: #0ea5e9; }
-        .sold-text { color: #334155; font-size: 13px; font-weight: 600; }
-        .rating-text { color: #64748b; font-weight: 500; }
+        @media (max-width: 768px) {
+          .carousel-wrapper {
+            height: 300px;
+          }
+        }
 
-        .price-section { display: flex; align-items: baseline; gap: 10px; margin: 8px 0; }
-        .current-price { font-size: 28px; font-weight: 800; color: #dc2626; }
-        .original-price { font-size: 16px; color: #94a3b8; text-decoration: line-through; font-weight: 500; }
+        .carousel {
+          display: flex;
+          transition: transform 0.3s ease;
+          height: 100%;
+        }
 
-        .description { font-size: 14px; color: #475569; line-height: 1.7; margin: 10px 0; }
-        .see-more { color: #10b981; font-weight: 600; cursor: pointer; font-size: 13.5px; margin-top: 6px; display: inline-block; }
+        .carousel-slide {
+          min-width: 100%;
+          position: relative;
+          overflow: hidden;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #fff;
+        }
 
-        .variant-section label { font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 8px; display: block; }
-        .color-options { display: flex; gap: 14px; flex-wrap: wrap; }
-        .color-btn { width: 44px; height: 44px; border-radius: 14px; border: 2.5px solid transparent; cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-        .color-btn.active { border-color: #10b981; transform: scale(1.18); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25); }
-        .color-btn img { width: 100%; height: 100%; object-fit: cover; border-radius: 11px; }
+        .carousel-slide img {
+          max-width: 100%;
+          max-height: 100%;
+          width: auto;
+          height: auto;
+          object-fit: contain;
+        }
 
-        .quantity-section { display: flex; align-items: center; gap: 12px; margin: 14px 0; background: #f8fafc; padding: 6px; border-radius: 12px; width: fit-content; }
-        .quantity-section button { width: 36px; height: 36px; border: 1.5px solid #cbd5e1; background: white; font-size: 18px; font-weight: 700; cursor: pointer; border-radius: 10px; color: #475569; }
-        .quantity-section input { width: 52px; height: 36px; text-align: center; border: 1.5px solid #cbd5e1; border-radius: 10px; font-weight: 700; font-size: 15px; background: white; }
+        .carousel-nav {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background: rgba(255,255,255,0.95);
+          border: 1px solid #e2e8f0;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          z-index: 10;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
 
-        .action-buttons-desktop { display: flex; gap: 12px; margin: 16px 0; }
-        @media (max-width: 768px) { .action-buttons-desktop { display: none; } }
-        .btn-buy, .btn-cart { flex: 1; padding: 14px; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; text-align: center; letter-spacing: 0.3px; }
-        .btn-buy { background: linear-gradient(135deg, #ff3b30, #ff6b35); color: white; border: none; box-shadow: 0 4px 12px rgba(22, 101, 52, 0.3); }
-        .btn-cart { background: white; color: #166534; border: 2.5px solid #166534; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .carousel-nav.prev {
+          left: 16px;
+        }
 
-        .store-container { background: white; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 24px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 18px; margin: 32px auto 0; max-width: 1200px; }
-        .store-header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-        .store-avatar { width: 68px; height: 68px; border-radius: 16px; overflow: hidden; flex-shrink: 0; background: linear-gradient(135deg, #10b981, #059669); display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 900; text-transform: uppercase; box-shadow: 0 6px 16px rgba(16,185,129,0.3); }
-        .store-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .store-info h3 { font-size: 18px; font-weight: 700; margin: 0; color: #0f172a; }
-        .store-badge { background: #ecfdf5; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1.5px solid #a7f3d0; text-transform: uppercase; }
-        .store-status { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #10b981; font-weight: 600; }
-        .visit-store-btn { background: linear-gradient(135deg, #ff3b30, #ff6b35); color: white; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 700; font-size: 14.5px; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.3); min-width: 140px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .carousel-nav.next {
+          right: 16px;
+        }
 
-        .store-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 16px; text-align: center; }
-        .stat-value { font-size: 18px; font-weight: 800; color: #1e293b; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .store-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 13.5px; color: #475569; }
-        @media (max-width: 768px) { .store-detail-grid { grid-template-columns: 1fr; } }
-        .detail-item strong { color: #1e293b; }
-        .fasilitas-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
-        .fasilitas-tag { background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-        .sosmed-btn { display: flex; align-items: center; gap: 6px; color: #10b981; font-weight: 600; font-size: 13px; }
+        .discount-badge {
+          position: absolute;
+          top: 16px;
+          left: 16px;
+          background: #dc2626;
+          color: white;
+          font-weight: 700;
+          font-size: 14px;
+          padding: 6px 12px;
+          border-radius: 6px;
+          z-index: 10;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-        .action-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px 16px; box-shadow: 0 -8px 25px rgba(0,0,0,0.12); display: flex; gap: 12px; z-index: 1000; border-top: 1px solid #e2e8f0; backdrop-filter: blur(10px); }
-        @media (min-width: 769px) { .action-bar { display: none; } }
+        .carousel-dots {
+          display: flex;
+          justify-content: center;
+          gap: 8px;
+          margin-top: 16px;
+        }
+
+        .dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #e2e8f0;
+          cursor: pointer;
+        }
+
+        .dot.active {
+          background: #10b981;
+        }
+
+        .details-section {
+          padding: 32px 32px 32px 0;
+          background: white;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+          .details-section {
+            padding: 24px;
+          }
+        }
+
+        .product-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 16px;
+        }
+
+        .product-title {
+          font-size: 22px;
+          font-weight: 600;
+          line-height: 1.4;
+          color: #0f172a;
+          flex: 1;
+        }
+
+        .favorite-button {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 12px;
+          cursor: pointer;
+          flex-shrink: 0;
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .favorite-button.active {
+          background: #fff1f2;
+          border-color: #f43f5e;
+          color: #f43f5e;
+        }
+
+        .rating-section {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        .rating-item {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 14px;
+          color: #64748b;
+          font-weight: 500;
+        }
+
+        .rating-stars {
+          color: #fbbf24;
+          font-size: 16px;
+        }
+
+        .sold-badge {
+          background: #eff6ff;
+          color: #1d4ed8;
+          padding: 6px 12px;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .price-section {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin: 8px 0;
+          flex-wrap: wrap;
+        }
+
+        .current-price {
+          font-size: 28px;
+          font-weight: 700;
+          color: #dc2626;
+        }
+
+        .original-price {
+          font-size: 16px;
+          color: #94a3b8;
+          text-decoration: line-through;
+          font-weight: 500;
+        }
+
+        .discount-tag {
+          background: #fef2f2;
+          color: #dc2626;
+          padding: 6px 12px;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 600;
+        }
+
+        .description-section {
+          background: #f8fafc;
+          padding: 16px;
+          border-radius: 8px;
+          border: 1px solid #f1f5f9;
+        }
+
+        .description {
+          font-size: 15px;
+          color: #475569;
+          line-height: 1.6;
+          margin: 0;
+        }
+
+        .see-more {
+          color: #10b981;
+          font-weight: 600;
+          cursor: pointer;
+          font-size: 14px;
+          margin-top: 8px;
+          display: inline-block;
+        }
+
+        /* Variant Section */
+        .variant-section {
+          margin: 16px 0;
+        }
+
+        .variant-label {
+          font-size: 15px;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 12px;
+        }
+
+        .variant-options {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .variant-option {
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          padding: 12px 16px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          transition: all 0.2s;
+          background: white;
+        }
+
+        .variant-option.selected {
+          border-color: #10b981;
+          background: #f0fdf4;
+        }
+
+        .variant-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .variant-name {
+          font-weight: 500;
+          color: #1f2937;
+        }
+
+        .variant-price {
+          font-weight: 600;
+          color: #dc2626;
+        }
+
+        .variant-stock {
+          font-size: 12px;
+          color: #6b7280;
+        }
+
+        .variant-check {
+          color: #10b981;
+          opacity: 0;
+        }
+
+        .variant-option.selected .variant-check {
+          opacity: 1;
+        }
+
+        .quantity-section {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin: 16px 0;
+          background: #f8fafc;
+          padding: 12px;
+          border-radius: 8px;
+          width: fit-content;
+          border: 1px solid #f1f5f9;
+        }
+
+        .quantity-label {
+          font-size: 15px;
+          font-weight: 600;
+          color: #374151;
+        }
+
+        .quantity-controls {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          background: white;
+          padding: 8px;
+          border-radius: 8px;
+          border: 1px solid #e5e7eb;
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .quantity-btn {
+          width: 36px;
+          height: 36px;
+          border: 1px solid #d1d5db;
+          background: white;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          border-radius: 6px;
+          color: #374151;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .quantity-input {
+          width: 50px;
+          height: 36px;
+          text-align: center;
+          border: 1px solid #e5e7eb;
+          border-radius: 6px;
+          font-weight: 600;
+          font-size: 16px;
+          background: white;
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 12px;
+          margin: 20px 0;
+        }
+
+        .btn-buy, .btn-cart {
+          flex: 1;
+          padding: 16px 20px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 16px;
+          cursor: pointer;
+          text-align: center;
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .btn-buy {
+          background: #dc2626;
+          color: white;
+        }
+
+        .btn-cart {
+          background: white;
+          color: #166534;
+          border: 1px solid #166534;
+        }
+
+        .features-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+          margin-top: 16px;
+        }
+
+        .feature-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 14px;
+          color: #475569;
+        }
+
+        .feature-icon {
+          width: 18px;
+          height: 18px;
+          color: #10b981;
+        }
+
+        .store-container {
+          background: white;
+          border-radius: 16px;
+          padding: 24px;
+          border: 1px solid #e2e8f0;
+          max-width: 1200px;
+          margin: 0 auto;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .store-header {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 20px;
+        }
+
+        .store-avatar {
+          width: 60px;
+          height: 60px;
+          border-radius: 8px;
+          overflow: hidden;
+          flex-shrink: 0;
+          background: #10b981;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 24px;
+          font-weight: 700;
+          text-transform: uppercase;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .store-avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .store-info {
+          flex: 1;
+        }
+
+        .store-info h3 {
+          font-size: 18px;
+          font-weight: 600;
+          margin: 0 0 8px 0;
+          color: #0f172a;
+        }
+
+        .store-badge {
+          background: #ecfdf5;
+          color: #166534;
+          padding: 4px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 600;
+          border: 1px solid #a7f3d0;
+          text-transform: uppercase;
+          display: inline-block;
+          margin-bottom: 8px;
+        }
+
+        .store-status {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 14px;
+          color: #10b981;
+          font-weight: 500;
+        }
+
+        .status-dot {
+          width: 6px;
+          height: 6px;
+          background: #10b981;
+          border-radius: 50%;
+        }
+
+        .visit-store-btn {
+          background: #10b981;
+          color: white;
+          border: none;
+          padding: 12px 20px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 14px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .store-stats {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+          gap: 16px;
+          margin: 20px 0;
+          padding: 20px;
+          background: #f8fafc;
+          border-radius: 8px;
+          border: 1px solid #f1f5f9;
+        }
+
+        .stat-item {
+          text-align: center;
+        }
+
+        .stat-value {
+          font-size: 18px;
+          font-weight: 700;
+          color: #1e293b;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          margin-bottom: 4px;
+        }
+
+        .stat-label {
+          color: #64748b;
+          font-size: 13px;
+          font-weight: 500;
+        }
+
+        .action-bar {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: white;
+          padding: 12px;
+          border-top: 1px solid #e2e8f0;
+          display: flex;
+          gap: 12px;
+          z-index: 1000;
+          box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (min-width: 769px) {
+          .action-bar {
+            display: none;
+          }
+        }
+
+        .action-bar .btn-buy,
+        .action-bar .btn-cart {
+          padding: 14px;
+          font-size: 14px;
+        }
+
+        /* Skeleton Loading */
+        .skeleton-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 16px;
+        }
+
+        .skeleton-card {
+          background: white;
+          border-radius: 12px;
+          overflow: hidden;
+          border: 1px solid #e2e8f0;
+        }
+
+        .skeleton-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 40px;
+          padding: 24px;
+        }
+
+        @media (max-width: 768px) {
+          .skeleton-grid {
+            grid-template-columns: 1fr;
+            gap: 0;
+          }
+        }
+
+        .skeleton {
+          background: #f1f5f9;
+          border-radius: 6px;
+        }
+
+        .skeleton-image {
+          height: 400px;
+          border-radius: 8px;
+        }
+
+        .skeleton-content {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .skeleton-title {
+          height: 28px;
+          width: 80%;
+        }
+
+        .skeleton-text {
+          height: 16px;
+        }
+
+        .skeleton-price {
+          height: 32px;
+          width: 40%;
+        }
+
+        .skeleton-actions {
+          display: flex;
+          gap: 12px;
+          margin-top: 16px;
+        }
+
+        .skeleton-button {
+          height: 48px;
+          flex: 1;
+        }
       `}</style>
 
       <div className="page-container">
+        {/* Back Button */}
+        <div style={{ maxWidth: 1200, margin: '0 auto 20px' }}>
+          <button className="back-button" onClick={() => window.history.back()}>
+            <ArrowLeft size={18} />
+            Kembali
+          </button>
+        </div>
+
         {/* PRODUCT CARD */}
         <div className="product-card">
           <div className="product-grid">
-            <div className="image-section">
+            {/* Image Section */}
+            <div className="carousel-section">
               <div className="carousel-wrapper">
                 <div className="carousel" style={{ transform: `translateX(-${activeSlide * 100}%)` }}>
                   {carouselImages.map((src, i) => (
                     <div key={i} className="carousel-slide">
-                      <img src={src} alt={`${displayProduct.product_title} ${i + 1}`} onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/600x800/f3f4f6/9ca3af?text=No+Image")} />
+                      <img 
+                        src={src} 
+                        alt={`${displayProduct.product_title} ${i + 1}`} 
+                        onError={(e) => {
+                          e.currentTarget.src = "https://via.placeholder.com/600x800/f3f4f6/9ca3af?text=No+Image";
+                        }}
+                      />
                       {discount !== "0%" && <div className="discount-badge">{discount} OFF</div>}
                     </div>
                   ))}
                 </div>
-              </div>
-              <div className="carousel-dots">
-                {carouselImages.map((_, i) => (
-                  <div key={i} className={`dot ${activeSlide === i ? "active" : ""}`} onClick={() => goToSlide(i)} />
-                ))}
-              </div>
-            </div>
-
-            <div className="details-section">
-              <h1 className="product-title">{displayProduct.product_title}</h1>
-              <div className="rating-reviews">
-                <div className="sold">
-                  <ShoppingCart size={16} className="icon" />
-                  <span className="sold-text">{displayProduct.product_sold || "Baru"}</span>
-                </div>
-              </div>
-              <div className="price-section">
-                <div className="current-price">{displayProduct.product_price}</div>
-                {displayProduct.product_original_price && <div className="original-price">{displayProduct.product_original_price}</div>}
-              </div>
-
-              <div className="description">
-                {showFullDetail ? fullDescription : shortDescription}
-                {isLongDescription && !showFullDetail && (
-                  <span className="see-more" onClick={() => setShowFullDetail(true)}>Lihat lebih banyak</span>
-                )}
-                {showFullDetail && (
-                  <span className="see-more" onClick={() => setShowFullDetail(false)}>Sembunyikan</span>
-                )}
-              </div>
-
-              <div className="variant-section">
-                <label>Pilih Varian</label>
-                <div className="color-options">
-                  {variants.map((variant, i) => (
-                    <button key={i} className={`color-btn ${activeVariant === i ? "active" : ""}`} onClick={() => handleVariantClick(i)} title={variant.name}>
-                      <img src={variant.photo} alt={variant.name} />
+                
+                {carouselImages.length > 1 && (
+                  <>
+                    <button className="carousel-nav prev" onClick={prevSlide}>
+                      <ChevronLeft size={20} />
                     </button>
+                    <button className="carousel-nav next" onClick={nextSlide}>
+                      <ChevronRight size={20} />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {carouselImages.length > 1 && (
+                <div className="carousel-dots">
+                  {carouselImages.map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`dot ${activeSlide === i ? "active" : ""}`} 
+                      onClick={() => setActiveSlide(i)} 
+                    />
                   ))}
                 </div>
+              )}
+            </div>
+
+            {/* Details Section */}
+            <div className="details-section">
+              <div className="product-header">
+                <h1 className="product-title">{displayProduct.product_title}</h1>
+                <button 
+                  className={`favorite-button ${isFavorite ? 'active' : ''}`}
+                  onClick={toggleFavorite}
+                  disabled={favLoading}
+                >
+                  <Heart size={20} fill={isFavorite ? "currentColor" : "none"} />
+                </button>
+              </div>
+
+              <div className="rating-section">
+                <div className="rating-item">
+                  <span className="rating-stars">{stars}</span>
+                  <span>({displayProduct.product_star_rating || '0'})</span>
+                </div>
+                <div className="rating-item">
+                  <span>{displayProduct.product_num_ratings || '0'} ulasan</span>
+                </div>
+                <div className="sold-badge">
+                  <ShoppingCart size={14} />
+                  {displayProduct.product_sold || "Baru"}
+                </div>
+              </div>
+
+              <div className="price-section">
+                <div className="current-price">{currentPrice}</div>
+                {currentOriginalPrice && (
+                  <div className="original-price">{currentOriginalPrice}</div>
+                )}
+                {discount !== "0%" && (
+                  <div className="discount-tag">Hemat {discount}</div>
+                )}
+              </div>
+
+              {/* Variant Selection */}
+              {displayProduct.varian && displayProduct.varian.length > 0 && (
+                <div className="variant-section">
+                  <div className="variant-label">Pilih Varian:</div>
+                  <div className="variant-options">
+                    {displayProduct.varian.map((variant) => (
+                      <div 
+                        key={variant.id}
+                        className={`variant-option ${selectedVariant?.id === variant.id ? 'selected' : ''}`}
+                        onClick={() => handleVariantSelect(variant)}
+                      >
+                        <div className="variant-info">
+                          <div className="variant-name">{variant.nama}</div>
+                          <div className="variant-price">{formatRupiah(variant.harga)}</div>
+                          <div className="variant-stock">Stok: {variant.stok}</div>
+                        </div>
+                        <div className="variant-check">
+                          <Check size={18} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="description-section">
+                <p className="description">
+                  {showFullDetail ? fullDescription : shortDescription}
+                </p>
+                {isLongDescription && (
+                  <span 
+                    className="see-more" 
+                    onClick={() => setShowFullDetail(!showFullDetail)}
+                  >
+                    {showFullDetail ? 'Sembunyikan' : 'Lihat lebih banyak'}
+                  </span>
+                )}
               </div>
 
               <div className="quantity-section">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
-                <input type="number" value={quantity} readOnly />
-                <button onClick={() => setQuantity(quantity + 1)}>+</button>
+                <span className="quantity-label">Jumlah:</span>
+                <div className="quantity-controls">
+                  <button 
+                    className="quantity-btn"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <input 
+                    type="number" 
+                    className="quantity-input"
+                    value={quantity} 
+                    readOnly 
+                  />
+                  <button 
+                    className="quantity-btn"
+                    onClick={() => setQuantity(quantity + 1)}
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
               </div>
 
-              <div className="action-buttons-desktop">
-                <button className="btn-buy" onClick={handleBuyNow}>Beli</button>
-                <button className="btn-cart" onClick={handleAddToCart}>Tambahkan Keranjang</button>
+              <div className="features-grid">
+                <div className="feature-item">
+                  <Shield size={18} className="feature-icon" />
+                  <span>Garansi 100% Original</span>
+                </div>
+                <div className="feature-item">
+                  <Truck size={18} className="feature-icon" />
+                  <span>Gratis Ongkir</span>
+                </div>
+              </div>
+
+              <div className="action-buttons">
+                <button className="btn-buy" onClick={handleBuyNow}>
+                  <ShoppingCart size={18} />
+                  Beli Sekarang
+                </button>
+                <button className="btn-cart" onClick={handleAddToCart}>
+                  <Heart size={18} />
+                  Tambah Keranjang
+                </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* TOKO SECTION */}
-        <div className="store-container">
-          {loadingStore ? (
-            <p style={{ textAlign: "center", color: "#666" }}>Memuat info toko...</p>
-          ) : storeData ? (
-            <>
-              <div className="store-header">
-                <div className="store-avatar">
-                  {storeData.profileImage ? (
-                    <img src={storeData.profileImage} alt={storeData.nama_toko} />
-                  ) : (
-                    <>{storeData.nama_toko.charAt(0)}</>
-                  )}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <h3>{storeData.nama_toko}</h3>
-                    <span className="store-badge">RESMI</span>
-                  </div>
-                  <div className="store-status">
-                    <span style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%', display: 'inline-block' }} />
-                    Aktif beberapa menit lalu
-                  </div>
-                </div>
-                <button className="visit-store-btn" onClick={handleVisitStore}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                  </svg>
-                  Kunjungi Toko
-                </button>
+        {/* STORE SECTION */}
+        {storeData && (
+          <div className="store-container">
+            <div className="store-header">
+              <div className="store-avatar">
+                {storeData.image ? (
+                  <img src={storeData.image} alt={storeData.nama_toko} />
+                ) : (
+                  <>{storeData.nama_toko.charAt(0)}</>
+                )}
               </div>
-
-              <div style={{ height: '1px', background: 'linear-gradient(to right, transparent, #e2e8f0 25%, #e2e8f0 75%, transparent)' }} />
-
-              <div className="store-stats">
-                <div>
-                  <div className="stat-value">
-                    <span style={{ color: '#fbbf24' }}>★</span>
-                    {storeData.rating_toko}
-                  </div>
-                  <div style={{ color: '#64748b', fontSize: '13px', marginTop: '2px' }}>Rating Toko</div>
-                </div>
-                <div>
-                  <div className="stat-value">
-                    <span style={{ color: '#ff3b30' }}>Box</span>
-                    {storeData.jumlah_review}+
-                  </div>
-                  <div style={{ color: '#64748b', fontSize: '13px', marginTop: '2px' }}>Total Review</div>
-                </div>
-                <div>
-                  <div className="stat-value">
-                    <span style={{ color: '#ff3b30' }}>Check</span>
-                    98%
-                  </div>
-                  <div style={{ color: '#64748b', fontSize: '13px', marginTop: '2px' }}>Tingkat Respons</div>
+              <div className="store-info">
+                <div className="store-badge">TOKO RESMI</div>
+                <h3>{storeData.nama_toko}</h3>
+                <div className="store-status">
+                  <span className="status-dot"></span>
+                  Aktif beberapa menit lalu
                 </div>
               </div>
+              <button className="visit-store-btn" onClick={handleVisitStore}>
+                <Store size={18} />
+                Kunjungi Toko
+              </button>
+            </div>
 
-            </>
-          ) : null}
+            <div className="store-stats">
+              <div className="stat-item">
+                <div className="stat-value">
+                  <Star size={18} color="#fbbf24" />
+                  {storeData.rating_toko || '4.9'}
+                </div>
+                <div className="stat-label">Rating Toko</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">
+                  <span>📦</span>
+                  {storeData.jumlah_review || '500'}+
+                </div>
+                <div className="stat-label">Total Review</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">
+                  <span>✓</span>
+                  98%
+                </div>
+                <div className="stat-label">Tingkat Respons</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Action Bar */}
+        <div className="action-bar">
+          <button className="btn-buy" onClick={handleBuyNow}>
+            <ShoppingCart size={16} />
+            Beli
+          </button>
+          <button className="btn-cart" onClick={handleAddToCart}>
+            <Heart size={16} />
+            Keranjang
+          </button>
         </div>
-      </div>
-
-      <div className="action-bar">
-        <button className="btn-buy" onClick={handleBuyNow}>Beli Langsung</button>
-        <button className="btn-cart" onClick={handleAddToCart}> Keranjang</button>
       </div>
     </>
   );

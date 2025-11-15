@@ -1,7 +1,9 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { db, auth } from "@/lib/firebase";
+import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
+import { followStore, unfollowStore, isFollowingStore, getFollowerCount } from "@/lib/follow";
+import { onAuthStateChanged } from "firebase/auth";
 
 // === TIPE DATA ===
 interface Review {
@@ -93,6 +95,10 @@ export default function TokoDinamis() {
   const [filteredReviews, setFilteredReviews] = useState<Review[]>([]);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [storeId, setStoreId] = useState<string>('');
 
   // Format tanggal WIB
   const formatWIB = (isoString: string): string => {
@@ -108,6 +114,46 @@ export default function TokoDinamis() {
     });
   };
 
+  // Navigasi ke halaman pembelian
+  const goToBuyingPage = (product: Product) => {
+    localStorage.setItem("selectedProduct", JSON.stringify(product));
+    window.location.href = "/beli";
+  };
+
+  // Handler tambah ke keranjang
+  const handleAddToCart = (p: Product, e: React.MouseEvent) => {
+    e.stopPropagation();
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const existing = cart.find((item: any) => item.ASIN === p.ASIN);
+    if (existing) {
+      existing.quantity = (existing.quantity || 1) + 1;
+    } else {
+      cart.push({
+        ASIN: p.ASIN,
+        nama_produk: p.nama_produk,
+        harga_produk: p.harga_produk,
+        gambar_produk: p.gambar_produk,
+        thumbnail_produk: p.thumbnail_produk,
+        quantity: 1
+      });
+    }
+    localStorage.setItem("cart", JSON.stringify(cart));
+    
+    // Trigger custom event untuk update cart counter
+    window.dispatchEvent(new Event('cartUpdated'));
+    
+    // Show success message
+    alert(`${p.nama_produk} berhasil ditambahkan ke keranjang!`);
+  };
+
+  // Auth state listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Ambil toko dari selectedProduct → lalu ambil semua produk dari toko itu
   useEffect(() => {
     const selected = localStorage.getItem("selectedProduct");
@@ -118,6 +164,14 @@ export default function TokoDinamis() {
       setLoading(false);
     }
   }, []);
+
+  // Check follow status and load follower count
+  useEffect(() => {
+    if (currentUser && storeId) {
+      checkFollowStatus();
+      loadFollowerCount();
+    }
+  }, [currentUser, storeId]);
 
   const fetchStoreAndAllProducts = async (storeName: string) => {
     if (!db || !storeName) return;
@@ -139,7 +193,9 @@ export default function TokoDinamis() {
       };
 
       if (!storeSnap.empty) {
-        storeData = { ...storeData, ...storeSnap.docs[0].data() } as StoreData;
+        const storeDoc = storeSnap.docs[0];
+        storeData = { ...storeData, ...storeDoc.data() } as StoreData;
+        setStoreId(storeDoc.id);
       }
       setStore(storeData);
       setAllReviews(storeData.reviews || []);
@@ -189,6 +245,49 @@ export default function TokoDinamis() {
     }
   }, [selectedRating, allReviews]);
 
+  const checkFollowStatus = async () => {
+    if (!currentUser?.uid || !storeId) return;
+    try {
+      const following = await isFollowingStore(currentUser.uid, storeId);
+      setIsFollowing(following);
+    } catch (error) {
+      console.error('Error checking follow status:', error);
+    }
+  };
+
+  const loadFollowerCount = async () => {
+    if (!storeId) return;
+    try {
+      const count = await getFollowerCount(storeId);
+      setFollowerCount(count);
+    } catch (error) {
+      console.error('Error loading follower count:', error);
+    }
+  };
+
+  const handleFollow = async () => {
+    if (!currentUser?.uid) {
+      alert('Silakan login terlebih dahulu untuk mengikuti toko');
+      return;
+    }
+    if (!storeId || !store) return;
+
+    try {
+      if (isFollowing) {
+        await unfollowStore(currentUser.uid, storeId);
+        setIsFollowing(false);
+        setFollowerCount(prev => Math.max(0, prev - 1));
+      } else {
+        await followStore(currentUser.uid, storeId, store.nama_toko);
+        setIsFollowing(true);
+        setFollowerCount(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+      alert('Gagal mengubah status follow. Silakan coba lagi.');
+    }
+  };
+
   // Carousel
   const cardWidth = 316;
   const maxIndex = Math.max(0, trending.length - 3);
@@ -201,25 +300,9 @@ export default function TokoDinamis() {
     }
   }, [carouselIndex]);
 
-  // Handler
-  const handleAddToCart = (p: Product, e: React.MouseEvent) => {
-    e.stopPropagation();
-    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    const existing = cart.find((item: any) => item.ASIN === p.ASIN);
-    if (existing) existing.quantity = (existing.quantity || 1) + 1;
-    else cart.push({ ...p, quantity: 1 });
-    localStorage.setItem("cart", JSON.stringify(cart));
-    alert("Ditambahkan ke keranjang!");
-  };
-
-  const goToBuyingPage = (p: Product) => {
-    localStorage.setItem("selectedProduct", JSON.stringify(p));
-    window.location.href = "/buyingpage";
-  };
-
-  // Render Cards
+  // Render functions
   const renderTrendingCard = (p: Product) => {
-    const short = p.nama_produk.length > 50 ? p.nama_produk.slice(0,47)+"..." : p.nama_produk;
+    const short = p.nama_produk.length > 60 ? p.nama_produk.slice(0,57)+"..." : p.nama_produk;
     return (
       <div key={p.ASIN} className="trending-card" onClick={() => goToBuyingPage(p)}>
         <div className="trending-badge">Terbaru</div>
@@ -242,13 +325,13 @@ export default function TokoDinamis() {
     const short = p.nama_produk.length > 60 ? p.nama_produk.slice(0,57)+"..." : p.nama_produk;
     return (
       <div key={p.ASIN} className="product-card" onClick={() => goToBuyingPage(p)}>
-        {p.persentase_diskon > 0 && <div className="discount-badge">{p.persentase_diskon}%</div>}
+        {p.persentase_diskon && p.persentase_diskon > 0 && <div className="discount-badge">{p.persentase_diskon}%</div>}
         <div className="cart-icon-badge" onClick={(e) => handleAddToCart(p, e)}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-          <circle cx="9" cy="21" r="1" />
-          <circle cx="20" cy="21" r="1" />
-          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-        </svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="20" cy="21" r="1" />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+          </svg>
         </div>
         <div className="product-image">
           <img src={p.thumbnail_produk || p.gambar_produk} alt={short} loading="lazy" />
@@ -312,11 +395,17 @@ export default function TokoDinamis() {
             <div className="store-stats">
               <div className="stat-item"><span className="rating-stars">{renderStars(store?.rating_toko || 4.9)}</span><strong>{store?.rating_toko || 4.9}</strong> <span style={{color:'#64748b'}}>({store?.jumlah_review || 178})</span></div>
               <div className="stat-item"><span>Terjual</span> <strong>1.2k+</strong></div>
+              <div className="stat-item"><span>Follower</span> <strong>{followerCount}</strong></div>
               <div className="stat-item"><span>Proses</span> <strong>±1 jam</strong></div>
             </div>
           </div>
           <div className="store-actions">
-            <button className="btn btn-primary">+ Follow</button>
+            <button 
+              className={`btn ${isFollowing ? 'btn-outline' : 'btn-primary'}`}
+              onClick={handleFollow}
+            >
+              {isFollowing ? '✓ Following' : '+ Follow'}
+            </button>
             <button className="btn btn-outline">Chat Penjual</button>
             <button className="btn btn-secondary" onClick={() => setModalOpen(true)}>Lihat Detail</button>
           </div>
@@ -408,7 +497,7 @@ export default function TokoDinamis() {
         </div>
       )}
 
-      {/* FULL STYLE — 100% SAMA DENGAN YANG KAMU MAU */}
+      {/* STYLES */}
       <style jsx>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Poppins:wght@600;700&display=swap');
         :root {

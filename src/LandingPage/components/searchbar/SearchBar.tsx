@@ -18,8 +18,23 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   }, []);
 
   const handleSearch = () => {
-    if (onSearch && query.trim()) {
-      onSearch(query);
+    const trimmed = query.trim();
+    if (!trimmed) return;
+
+    // Simpan ke localStorage untuk dipakai Etalase
+    try {
+      localStorage.setItem('searchQuery', trimmed);
+    } catch {}
+
+    // Panggil callback lokal jika ada
+    if (onSearch) {
+      onSearch(trimmed);
+    }
+
+    // Redirect ke halaman Etalase dengan query di URL
+    if (typeof window !== 'undefined') {
+      const encoded = encodeURIComponent(trimmed);
+      window.location.href = `/etalase?search=${encoded}`;
     }
   };
 

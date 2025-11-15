@@ -6,6 +6,7 @@ export interface Activity {
   type: 'product_view' | 'visit' | 'consult_chat' | 'purchase' | 'review';
   title?: string;
   store?: string;
+  storeName?: string;
   storeId?: string;
   productASIN?: string;
   productName?: string;
@@ -88,6 +89,7 @@ export async function trackUMKMVisit(store: {
         type: 'visit',
         title: `Kunjungi ${store.nama_toko}`,
         store: store.nama_toko,
+        storeName: store.nama_toko,
         storeId: store.id,
         category: store.kategori,
         image: store.image || store.profileImage,
@@ -101,6 +103,7 @@ export async function trackUMKMVisit(store: {
       type: 'visit',
       title: `Kunjungi ${store.nama_toko}`,
       store: store.nama_toko,
+      storeName: store.nama_toko,
       storeId: store.id,
       category: store.kategori,
       image: store.image || store.profileImage,

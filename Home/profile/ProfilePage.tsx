@@ -1,95 +1,32 @@
+"use client";
 import React, { useEffect, useState, useRef } from "react";
+import QRCode from "qrcode";
 import { motion, AnimatePresence } from "framer-motion";
 import { auth, db, storage } from "../../src/lib/firebase";
-import { 
-  onAuthStateChanged, 
-  updateProfile, 
-  sendPasswordResetEmail, 
-  signOut
-} from "firebase/auth";
-import type { User as FirebaseUser } from "firebase/auth";
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  serverTimestamp, 
-  collection, 
-  getDocs,
-  Timestamp 
-} from "firebase/firestore";
+import { onAuthStateChanged, updateProfile, sendPasswordResetEmail, signOut } from "firebase/auth";
+import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs, query, orderBy, limit, deleteDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getUserBadges, getUserGamificationStats } from "../../src/lib/gamification";
-import { 
-  User as UserIcon,
-  History, 
-  DollarSign, 
-  Store, 
-  Settings, 
-  LogOut,
-  Edit2,
-  Camera,
-  Save,
-  X,
-  Plus,
-  Trash2,
-  MessageCircle,
-  Calendar,
-  Clock,
-  Package,
-  TrendingUp,
-  Eye,
-  Edit,
-  Search,
-  Filter,
-  MoreVertical, 
-  Loader2, 
-  Mail, 
-  Phone, 
-  FileText, 
-  Trophy,
-  Award,
-  Star,
-  Zap,
-  CheckCircle,
-  Lock,
-  MapPin,
-  Navigation
-} from 'lucide-react';
+import Harga from "../Pricing/harga";
+import maplibregl from "maplibre-gl";
 
-// ... (interfaces tetap sama)
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  stock: number;
-  category: string;
-  image: string;
-  sold: number;
-  status: 'active' | 'inactive';
-}
+import {
+  Camera, Loader2, LogOut, Save, User, Mail, Phone, FileText, Trophy,
+  Award, Star, Zap, CheckCircle, History, DollarSign, Store, CreditCard,
+  Edit2, X, Shield, ShieldCheck, ShieldAlert, Lock, Smartphone, AlertTriangle,
+  CheckCircle2, Clock, Key, Eye, EyeOff, Menu, ChevronLeft, ChevronRight, ArrowLeft
+} from "lucide-react";
 
-interface ConsultHistory {
-  id: number;
-  consultantName: string;
-  consultantImage: string;
-  specialty: string;
-  date: string;
-  duration: string;
-  topics: string[];
-  status: 'completed' | 'scheduled';
-  rating?: number;
-}
-
+// Interfaces
 interface UserProfileData {
   nickname?: string;
   fullName?: string;
-  phone?: string;
   bio?: string;
   photoURL?: string;
   email?: string | null;
-  location?: string;
-  businessName?: string;
-  joinDate?: string;
+  twoFactorEnabled?: boolean;
+  lastPasswordChange?: Date | null;
+  securityScore?: number;
 }
 
 interface Badge {
@@ -105,97 +42,158 @@ interface Badge {
 
 interface UserBadge {
   badgeId: string;
-  earnedAt: Date | Timestamp;
+  earnedAt: Date;
   fromMission?: string;
 }
 
-interface NewProduct {
-  name: string;
-  price: string;
-  stock: string;
-  category: string;
-  image: string;
+interface SecurityTip {
+  icon: any;
+  color: string;
+  bgColor: string;
+  textColor: string;
+  title: string;
+  desc: string;
 }
 
-interface ProfileCompletionItem {
+interface AddressItem {
+  id: string;
   label: string;
-  percentage: number;
-  completed: boolean;
+  recipient?: string;
+  phone?: string;
+  addressLine?: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
+  location?: { lat: number; lng: number } | null;
+  isPrimary?: boolean;
+  isBackup1?: boolean;
+  isBackup2?: boolean;
+  createdAt?: any;
+  updatedAt?: any;
 }
 
-interface GamificationStats {
-  totalPoints?: number;
-  level?: number;
-  completedMissions?: number;
-  totalBadges?: number;
-  [key: string]: any;
-}
-
-interface FavoriteAddress {
-  id: number;
-  name: string;
-  address: string;
-  city: string;
-  distance: string;
-  savedAt: string;
-  isDefault?: boolean;
-}
-
-interface FavoriteProduct {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  storeName: string;
-  rating: number;
-  sold: number;
-  savedAt: string;
-}
-
-interface FavoriteStore {
-  id: number;
-  name: string;
-  image: string;
-  category: string;
-  rating: number;
-  totalProducts: number;
-  location: string;
-  savedAt: string;
-  isVerified?: boolean;
-}
-
-type MenuType = 'profile' | 'history' | 'pricing' | 'store' | 'settings';
-
-const UMKMProfilePage: React.FC = () => {
-  // State Management with proper typing
-  const [isEditingPersonal, setIsEditingPersonal] = useState<boolean>(false);
-  const [isEditingBio, setIsEditingBio] = useState<boolean>(false);
-  const [activeMenu, setActiveMenu] = useState<MenuType>('profile');
-  const [showAddProduct, setShowAddProduct] = useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [showAllBadgesModal, setShowAllBadgesModal] = useState<boolean>(false);
-  const [selectedBadgeCategory, setSelectedBadgeCategory] = useState<string>('all');
-  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
-  const [activeHistoryTab, setActiveHistoryTab] = useState<'consultation' | 'address' | 'product' | 'store'>('consultation');
-  const [profileData, setProfileData] = useState<UserProfileData>({
-    nickname: "",
-    fullName: "",
-    phone: "",
-    bio: "",
-    photoURL: "",
-    email: "",
-    location: "",
-    businessName: "",
-    joinDate: ""
-  });
+export default function ProfilePage() {
+  // State Management
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [profileData, setProfileData] = useState<UserProfileData>({});
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [userBadges, setUserBadges] = useState<UserBadge[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
-  const [gamificationStats, setGamificationStats] = useState<GamificationStats>({});
+  const [gamificationStats, setGamificationStats] = useState<any>({});
+  const [activeTab, setActiveTab] = useState<"profile" | "security" | "badges">("profile");
+  const [activeMenu, setActiveMenu] = useState<"profile" | "history" | "store" | "pricing">("profile");
+  const [isEditingPersonal, setIsEditingPersonal] = useState(false);
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [securityScore, setSecurityScore] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalTitle, setModalTitle] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+  const [canEdit, setCanEdit] = useState(false);
+  const [showTOTPSetup, setShowTOTPSetup] = useState(false);
+  const [totpSecret, setTotpSecret] = useState<string>("");
+  const [totpQRCode, setTotpQRCode] = useState<string>("");
+  const [totpCode, setTotpCode] = useState<string>("");
+  const [isSettingUpTOTP, setIsSettingUpTOTP] = useState(false);
+  const [showTOTPLoginPrompt, setShowTOTPLoginPrompt] = useState(false);
+  const [loginOTPCode, setLoginOTPCode] = useState<string>("");
+  const [isVerifyingLoginOTP, setIsVerifyingLoginOTP] = useState(false);
+  const [postLoginIdToken, setPostLoginIdToken] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [historyTab, setHistoryTab] = useState<'all' | 'product' | 'visit' | 'consultation'>('all');
+  const [addresses, setAddresses] = useState<AddressItem[]>([]);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<AddressItem | null>(null);
+  const [addrForm, setAddrForm] = useState<Partial<AddressItem>>({ label: '', recipient: '', phone: '', addressLine: '', city: '', province: '', postalCode: '', location: null });
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<maplibregl.Map | null>(null);
+  const mapMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const [mapSearch, setMapSearch] = useState('');
+
+  // Security Tips
+  const securityTips: SecurityTip[] = [
+    {
+      icon: ShieldCheck,
+      color: 'green',
+      bgColor: 'bg-green-50',
+      textColor: 'text-green-600',
+      title: 'Verifikasi Email',
+      desc: 'Pastikan email Anda terverifikasi untuk keamanan akun'
+    },
+    {
+      icon: Lock,
+      color: 'purple',
+      bgColor: 'bg-purple-50',
+      textColor: 'text-purple-600',
+      title: 'Update Password',
+      desc: 'Ganti password secara berkala'
+    },
+    {
+      icon: AlertTriangle,
+      color: 'orange',
+      bgColor: 'bg-orange-50',
+      textColor: 'text-orange-600',
+      title: 'Jaga Kerahasiaan',
+      desc: 'Jangan bagikan info login'
+    },
+    {
+      icon: Smartphone,
+      color: 'blue',
+      bgColor: 'bg-blue-50',
+      textColor: 'text-blue-600',
+      title: 'Aktifkan 2FA',
+      desc: 'Gunakan aplikasi Authenticator untuk keamanan ekstra'
+    },
+  ];
+
+  // Open activity destination
+  const openActivity = (a: any) => {
+    try {
+      if ((a.type === 'product_view' || a.productASIN) && a.productASIN) {
+        window.location.href = `/product/${a.productASIN}`;
+        return;
+      }
+      if (a.type === 'visit') {
+        if (a.storeId) {
+          window.location.href = `/umkm/${a.storeId}`;
+        } else {
+          window.location.href = '/toko';
+        }
+        return;
+      }
+      if ((a.type === 'consult_chat' || a.type === 'consult_chat_message') && a.consultantId) {
+        window.location.href = `/ConsultantChat?consultant=${a.consultantId}`;
+        return;
+      }
+    } catch {}
+  };
+
+  // Responsive Handler
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Auth State Observer
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -204,51 +202,77 @@ const UMKMProfilePage: React.FC = () => {
       }
 
       setCurrentUser(user);
-      
+      setCanEdit(true);
+
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userData = userDoc.exists() ? userDoc.data() : {};
+
+      setProfileData({
+        nickname: userData.nickname || "",
+        fullName: userData.fullName || "",
+        bio: userData.bio || "",
+        photoURL: userData.photoURL || user.photoURL || "",
+        email: user.email,
+        twoFactorEnabled: userData.twoFactorEnabled || false,
+        lastPasswordChange: userData.lastPasswordChange?.toDate() || null,
+        securityScore: userData.securityScore || 0
+      });
+
       try {
-        // Fetch user profile data
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const userData = userDoc.exists() ? userDoc.data() : {};
-        
-        setProfileData({
-          nickname: userData.nickname || "",
-          fullName: userData.fullName || "",
-          phone: userData.phone || "",
-          bio: userData.bio || "",
-          photoURL: userData.photoURL || user.photoURL || "",
-          email: user.email,
-          location: userData.location || "",
-          businessName: userData.businessName || "",
-          joinDate: userData.joinDate || new Date().toLocaleDateString('id-ID')
-        });
-
-        // Fetch gamification data - dengan error handling
-        try {
-          const userBadgesData = await getUserBadges(user.uid);
-          setUserBadges(userBadgesData || []);
-        } catch (error) {
-          console.error("Error fetching user badges:", error);
-          setUserBadges([]);
+        const idToken = await user.getIdToken(false);
+        if (userData.twoFactorEnabled) {
+          setPostLoginIdToken(idToken);
+          setShowTOTPLoginPrompt(true);
+        } else {
+          await fetch('/api/session-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ idToken })
+          });
         }
+      } catch (e) {}
 
-        try {
-          const badgesData = await fetchAllBadges();
-          setBadges(badgesData);
-        } catch (error) {
-          console.error("Error fetching badges:", error);
-          setBadges([]);
-        }
+      const [userBadgesData, badgesData, statsData] = await Promise.all([
+        getUserBadges(user.uid),
+        fetchAllBadges(),
+        getUserGamificationStats(user.uid)
+      ]);
 
-        try {
-          const statsData = await getUserGamificationStats(user.uid);
-          setGamificationStats(statsData || {});
-        } catch (error) {
-          console.error("Error fetching gamification stats:", error);
-          setGamificationStats({});
+      setUserBadges(userBadgesData);
+      setBadges(badgesData);
+      setGamificationStats(statsData);
+
+      try {
+        let loadedActivities: any[] = [];
+        if (db) {
+          try {
+            const q = query(collection(db, 'users', user.uid, 'activities'), orderBy('createdAt', 'desc'), limit(50));
+            const snap = await getDocs(q);
+            loadedActivities = snap.docs.map(d => {
+              const data: any = d.data();
+              const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : null;
+              return {
+                id: d.id,
+                type: data.type || 'other',
+                title: data.title || '',
+                store: data.store || null,
+                storeId: data.storeId || null,
+                productASIN: data.productASIN || null,
+                productName: data.productName || null,
+                consultantName: data.consultantName || null,
+                image: data.image || null,
+                category: data.category || null,
+                createdAt,
+              };
+            });
+          } catch (e) {
+            console.warn('Failed to load activities from Firestore:', e);
+          }
         }
-        
-      } catch (error) {
-        console.error("Error fetching profile data:", error);
+        setActivities(loadedActivities);
+      } catch (e) {
+        console.warn('Failed to load activities:', e);
       }
       
       setLoading(false);
@@ -257,87 +281,390 @@ const UMKMProfilePage: React.FC = () => {
     return () => unsub();
   }, []);
 
+  // Address Helpers
+  const loadAddresses = async (uid?: string) => {
+    const userId = uid || currentUser?.uid;
+    if (!db || !userId) return;
+    try {
+      const snap = await getDocs(collection(db, 'users', userId, 'addresses'));
+      const list: AddressItem[] = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+      setAddresses(list);
+    } catch {}
+  };
+
+  useEffect(() => { 
+    if (currentUser?.uid) loadAddresses(currentUser.uid); 
+  }, [currentUser?.uid]);
+
+  const openAddAddress = () => {
+    setEditingAddress(null);
+    setAddrForm({ 
+      label: '', 
+      recipient: '', 
+      phone: '', 
+      addressLine: '', 
+      city: '', 
+      province: '', 
+      postalCode: '', 
+      location: null, 
+      isPrimary: addresses.length === 0 
+    });
+    setShowAddressModal(true);
+    setTimeout(initMap, 50);
+  };
+
+  const openEditAddress = (a: AddressItem) => {
+    setEditingAddress(a);
+    setAddrForm({ ...a });
+    setShowAddressModal(true);
+    setTimeout(initMap, 50);
+  };
+
+  const saveAddress = async () => {
+    if (!currentUser?.uid) return;
+    const id = editingAddress?.id || Date.now().toString();
+    const data = {
+      label: (addrForm.label || '').trim() || 'Alamat',
+      recipient: (addrForm.recipient || '').trim(),
+      phone: (addrForm.phone || '').trim(),
+      addressLine: (addrForm.addressLine || '').trim(),
+      city: (addrForm.city || '').trim(),
+      province: (addrForm.province || '').trim(),
+      postalCode: (addrForm.postalCode || '').trim(),
+      location: addrForm.location || null,
+      isPrimary: !!addrForm.isPrimary,
+      isBackup1: !!addrForm.isBackup1,
+      isBackup2: !!addrForm.isBackup2,
+      updatedAt: serverTimestamp(),
+      ...(editingAddress ? {} : { createdAt: serverTimestamp() })
+    };
+    
+    try {
+      await setDoc(doc(db, 'users', currentUser.uid, 'addresses', id), data, { merge: true });
+      
+      const others = addresses.filter((a: AddressItem) => a.id !== id);
+      if (data.isPrimary) {
+        await Promise.all(others.map((a: AddressItem) => 
+          setDoc(doc(db, 'users', currentUser.uid, 'addresses', a.id), { isPrimary: false }, { merge: true })
+        ));
+      }
+      if (data.isBackup1) {
+        await Promise.all(others.map((a: AddressItem) => 
+          setDoc(doc(db, 'users', currentUser.uid, 'addresses', a.id), { isBackup1: false }, { merge: true })
+        ));
+      }
+      if (data.isBackup2) {
+        await Promise.all(others.map((a: AddressItem) => 
+          setDoc(doc(db, 'users', currentUser.uid, 'addresses', a.id), { isBackup2: false }, { merge: true })
+        ));
+      }
+      await loadAddresses();
+      setShowAddressModal(false);
+    } catch (e) {
+      setModalTitle('Gagal menyimpan alamat');
+      setModalMessage('Periksa koneksi dan coba lagi.');
+      setShowErrorModal(true);
+    }
+  };
+
+  const deleteAddressById = async (id: string) => {
+    if (!currentUser?.uid) return;
+    if (!confirm('Hapus alamat ini?')) return;
+    try {
+      await deleteDoc(doc(db, 'users', currentUser.uid, 'addresses', id));
+      await loadAddresses();
+    } catch {}
+  };
+
+  const setPrimary = async (id: string) => {
+    if (!currentUser?.uid) return;
+    try {
+      await Promise.all(addresses.map(a => 
+        setDoc(doc(db, 'users', currentUser.uid, 'addresses', a.id), { isPrimary: a.id === id }, { merge: true })
+      ));
+      await loadAddresses();
+    } catch {}
+  };
+
+  const setBackup1 = async (id: string) => {
+    if (!currentUser?.uid) return;
+    try {
+      await Promise.all(addresses.map(a => 
+        setDoc(doc(db, 'users', currentUser.uid, 'addresses', a.id), { isBackup1: a.id === id }, { merge: true })
+      ));
+      await loadAddresses();
+    } catch {}
+  };
+
+  const setBackup2 = async (id: string) => {
+    if (!currentUser?.uid) return;
+    try {
+      await Promise.all(addresses.map(a => 
+        setDoc(doc(db, 'users', currentUser.uid, 'addresses', a.id), { isBackup2: a.id === id }, { merge: true })
+      ));
+      await loadAddresses();
+    } catch {}
+  };
+
+  const initMap = () => {
+    try {
+      const center: [number, number] = addrForm.location ? 
+        [addrForm.location.lng, addrForm.location.lat] : 
+        [106.8166, -6.2000];
+
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.setCenter(center);
+        mapInstanceRef.current.setZoom(12);
+      } else if (mapContainerRef.current) {
+        mapInstanceRef.current = new maplibregl.Map({
+          container: mapContainerRef.current,
+          style: {
+            version: 8,
+            sources: {
+              osm: {
+                type: 'raster',
+                tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                tileSize: 256,
+                attribution: '© OpenStreetMap contributors'
+              }
+            },
+            layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
+          },
+          center: center,
+          zoom: 12
+        });
+        
+        mapInstanceRef.current.on('click', (e: maplibregl.MapMouseEvent) => {
+          const lat = e.lngLat.lat;
+          const lng = e.lngLat.lng;
+          placeMarker(lat, lng);
+        });
+      }
+      
+      if (addrForm.location) {
+        placeMarker(addrForm.location.lat!, addrForm.location.lng!);
+      }
+    } catch {}
+  };
+
+  const placeMarker = (lat: number, lng: number) => {
+    if (!mapInstanceRef.current) return;
+    
+    if (!mapMarkerRef.current) {
+      mapMarkerRef.current = new maplibregl.Marker({ color: '#ff6b35' });
+      mapMarkerRef.current.addTo(mapInstanceRef.current);
+    }
+    
+    mapMarkerRef.current.setLngLat([lng, lat]);
+    setAddrForm(f => ({ ...f, location: { lat, lng } }));
+    mapInstanceRef.current.flyTo({ center: [lng, lat], zoom: 14 });
+  };
+
+  const searchPlace = async () => {
+    const q = mapSearch.trim();
+    if (!q) return;
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&limit=5&countrycodes=id`);
+      const data = await res.json();
+      if (data && data[0]) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        placeMarker(lat, lon);
+      }
+    } catch {}
+  };
+
+  // Calculate Security Score
+  const calculateSecurityScore = (data: UserProfileData): number => {
+    let score = 0;
+    if (data.email) score += 30;
+    if (data.twoFactorEnabled) score += 40;
+    if (data.fullName && data.bio) score += 20;
+    if (data.lastPasswordChange) {
+      const daysSinceChange = (Date.now() - data.lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceChange <= 90) score += 10;
+    }
+    return Math.min(score, 100);
+  };
+  
+  useEffect(() => {
+    setSecurityScore(calculateSecurityScore(profileData));
+  }, [profileData]);
+
+  // TOTP Functions
+  const startTOTPSetup = async () => {
+    if (!currentUser) return;
+    try {
+      setIsSettingUpTOTP(true);
+      const generateBase32Secret = (length: number = 32) => {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        const bytes = new Uint8Array(length);
+        window.crypto.getRandomValues(bytes);
+        let out = '';
+        for (let i = 0; i < length; i++) out += alphabet[bytes[i] % alphabet.length];
+        return out;
+      };
+      const secret = generateBase32Secret(32);
+      setTotpSecret(secret);
+      try {
+        const issuer = encodeURIComponent('UMKMotion');
+        const account = encodeURIComponent(currentUser.email || currentUser.uid || 'user');
+        const otpAuthUrl = `otpauth://totp/${issuer}:${account}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
+        const dataUrl = await QRCode.toDataURL(otpAuthUrl, { width: 220, margin: 1 });
+        setTotpQRCode(dataUrl);
+      } catch {
+        setTotpQRCode('');
+      }
+      setTotpCode("");
+      setShowTOTPSetup(true);
+    } catch (e) {
+      setModalTitle('Error TOTP');
+      setModalMessage('Gagal menyiapkan TOTP. Coba lagi.');
+      setShowErrorModal(true);
+    } finally {
+      setIsSettingUpTOTP(false);
+    }
+  };
+
+  const base32ToBytes = (b32: string): Uint8Array => {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    let bits = '';
+    const cleaned = b32.replace(/=+$/, '').toUpperCase().replace(/[^A-Z2-7]/g, '');
+    for (let i = 0; i < cleaned.length; i++) {
+      const val = alphabet.indexOf(cleaned[i]);
+      if (val < 0) continue;
+      bits += val.toString(2).padStart(5, '0');
+    }
+    const bytes: number[] = [];
+    for (let i = 0; i + 8 <= bits.length; i += 8) {
+      bytes.push(parseInt(bits.substring(i, i + 8), 2));
+    }
+    return new Uint8Array(bytes);
+  };
+
+  const hmacSha1 = async (key: Uint8Array, msg: Uint8Array): Promise<ArrayBuffer> => {
+    const cryptoKey = await crypto.subtle.importKey('raw', key.buffer as ArrayBuffer, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+    return crypto.subtle.sign('HMAC', cryptoKey, msg.buffer as ArrayBuffer);
+  };
+
+  const hotp = async (secretB32: string, counter: number, digits = 6): Promise<string> => {
+    const key = base32ToBytes(secretB32);
+    const ctr = new ArrayBuffer(8);
+    const view = new DataView(ctr);
+    const hi = Math.floor(counter / 0x100000000);
+    const lo = counter >>> 0;
+    view.setUint32(0, hi);
+    view.setUint32(4, lo);
+    const hmac = new Uint8Array(await hmacSha1(key, new Uint8Array(ctr)));
+    const offset = hmac[hmac.length - 1] & 0x0f;
+    const code = ((hmac[offset] & 0x7f) << 24) | ((hmac[offset + 1] & 0xff) << 16) | ((hmac[offset + 2] & 0xff) << 8) | (hmac[offset + 3] & 0xff);
+    return (code % 10 ** digits).toString().padStart(digits, '0');
+  };
+
+  const verifyTotp = async (secretB32: string, token: string, step = 30, windowSkew = 1): Promise<boolean> => {
+    const time = Math.floor(Date.now() / 1000);
+    const counter = Math.floor(time / step);
+    for (let w = -windowSkew; w <= windowSkew; w++) {
+      const code = await hotp(secretB32, counter + w, 6);
+      if (code === token) return true;
+    }
+    return false;
+  };
+
+  const verifyTOTPSetup = async () => {
+    if (!currentUser || !totpSecret || totpCode.length !== 6) return;
+    try {
+      const isValid = await verifyTotp(totpSecret, totpCode);
+      if (!isValid) {
+        setModalTitle('Verifikasi TOTP Gagal');
+        setModalMessage('Kode tidak valid. Periksa waktu perangkat dan coba lagi.');
+        setShowErrorModal(true);
+        return;
+      }
+      const updatedData = { ...profileData, twoFactorEnabled: true } as UserProfileData;
+      const newSecurityScore = calculateSecurityScore(updatedData);
+      await setDoc(doc(db, "users", currentUser.uid), {
+        ...updatedData,
+        securityScore: newSecurityScore,
+        totpSecret,
+        totpEnabled: true,
+        twoFactorEnabledAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
+      setProfileData(updatedData);
+      setShowTOTPSetup(false);
+      setModalTitle('TOTP Diaktifkan');
+      setModalMessage('Autentikasi aplikasi (TOTP) berhasil diaktifkan.');
+      setShowSuccessModal(true);
+    } catch (e) {
+      setModalTitle('Error TOTP');
+      setModalMessage('Gagal menyimpan konfigurasi TOTP.');
+      setShowErrorModal(true);
+    }
+  };
+
+  const handleVerifyLoginTOTP = async () => {
+    if (!postLoginIdToken) return;
+    setIsVerifyingLoginOTP(true);
+    try {
+      const resp = await fetch('/api/verify-totp-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ idToken: postLoginIdToken, otp: loginOTPCode })
+      });
+      if (resp.ok) {
+        setShowTOTPLoginPrompt(false);
+        setLoginOTPCode("");
+        setModalTitle('Login Berhasil');
+        setModalMessage('Verifikasi 2FA sukses. Sesi aman telah dibuat.');
+        setShowSuccessModal(true);
+      } else {
+        const data = await resp.json().catch(() => ({ error: 'Verifikasi gagal' }));
+        setModalTitle('Verifikasi Gagal');
+        setModalMessage(data.error || 'Kode OTP tidak valid atau kedaluwarsa. Coba lagi.');
+        setShowErrorModal(true);
+      }
+    } catch (e) {
+      setModalTitle('Kesalahan Jaringan');
+      setModalMessage('Tidak dapat memverifikasi OTP. Periksa koneksi Anda dan coba lagi.');
+      setShowErrorModal(true);
+    } finally {
+      setIsVerifyingLoginOTP(false);
+    }
+  };
+
   const fetchAllBadges = async (): Promise<Badge[]> => {
     try {
       const querySnapshot = await getDocs(collection(db, "badges"));
-      const badgesList: Badge[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        badgesList.push({
-          id: doc.id,
-          name: data.name || '',
-          description: data.description || '',
-          icon: data.icon || '🏆',
-          color: data.color || 'gray',
-          category: data.category || 'general',
-          rarity: data.rarity || 'common',
-          points: data.points || 0
-        });
-      });
-      return badgesList;
+      return querySnapshot.docs.map(doc => ({ ...doc.data() } as Badge));
     } catch (error) {
       console.error("Error fetching badges:", error);
       return [];
     }
   };
 
-  const getBadgeData = (badgeId: string): Badge | undefined => {
-    return badges.find(b => b.id === badgeId);
-  };
-
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'common': return 'border-gray-300 bg-gray-50';
-      case 'uncommon': return 'border-green-300 bg-green-50';
-      case 'rare': return 'border-blue-300 bg-blue-50';
-      case 'epic': return 'border-purple-300 bg-purple-50';
-      case 'legendary': return 'border-yellow-300 bg-yellow-50';
-      default: return 'border-gray-300 bg-gray-50';
-    }
-  };
-
-  const getRarityTextColor = (rarity: string) => {
-    switch (rarity) {
-      case 'common': return 'text-gray-600';
-      case 'uncommon': return 'text-green-600';
-      case 'rare': return 'text-blue-600';
-      case 'epic': return 'text-purple-600';
-      case 'legendary': return 'text-yellow-600';
-      default: return 'text-gray-600';
-    }
-  };
-
-  const getBadgeCategories = (): string[] => {
-    const categories = new Set(badges.map(badge => badge.category));
-    return ['all', ...Array.from(categories)];
-  };
-
-  const getFilteredBadges = (): Badge[] => {
-    if (selectedBadgeCategory === 'all') {
-      return badges;
-    }
-    return badges.filter(badge => badge.category === selectedBadgeCategory);
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => {
-        setPreviewImage(reader.result as string);
-      };
+      reader.onload = () => setPreviewImage(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSave = async (): Promise<void> => {
-    if (!currentUser) return;
+  const handleSave = async () => {
+    if (!currentUser || !canEdit) {
+      setModalTitle('Akses Dibatasi');
+      setModalMessage('Anda tidak diizinkan untuk mengedit profil ini.');
+      setShowErrorModal(true);
+      return;
+    }
     
     setSaving(true);
     try {
       let photoURL = profileData.photoURL;
-      
-      // Upload new image if selected
       if (previewImage && fileInputRef.current?.files?.[0]) {
         const file = fileInputRef.current.files[0];
         const imageRef = ref(storage, `profile-images/${currentUser.uid}`);
@@ -345,33 +672,66 @@ const UMKMProfilePage: React.FC = () => {
         photoURL = await getDownloadURL(imageRef);
       }
 
-      // Update Firebase Auth profile
-      await updateProfile(currentUser, {
-        displayName: profileData.nickname || profileData.fullName,
-        photoURL: photoURL
+      const updatedData = { ...profileData, photoURL };
+      const newSecurityScore = calculateSecurityScore(updatedData);
+
+      const idToken = await currentUser.getIdToken(false);
+      
+      const updateResp = await fetch('/api/profile-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          nickname: updatedData.nickname,
+          fullName: updatedData.fullName,
+          bio: updatedData.bio,
+          photoURL: photoURL,
+          idToken: idToken
+        })
       });
 
-      // Update Firestore document
-      await setDoc(doc(db, "users", currentUser.uid), {
-        ...profileData,
-        photoURL,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      if (!updateResp.ok) {
+        const errorData = await updateResp.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.details || 'Failed to update profile');
+      }
 
-      setProfileData(prev => ({ ...prev, photoURL }));
+      await updateProfile(currentUser, {
+        displayName: updatedData.nickname || updatedData.fullName,
+        photoURL
+      });
+
+      setProfileData(prev => ({ ...prev, photoURL, securityScore: newSecurityScore }));
       setPreviewImage(null);
       setIsEditingPersonal(false);
       setIsEditingBio(false);
-      alert("Profil berhasil diperbarui!");
-      
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      alert("Gagal memperbarui profil");
+      setModalTitle('Profil Diperbarui');
+      setModalMessage('Profil berhasil diperbarui!');
+      setShowSuccessModal(true);
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      setModalTitle('Error');
+      setModalMessage(error.message || 'Gagal memperbarui profil. Silakan coba lagi.');
+      setShowErrorModal(true);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
-  const handleLogout = async (): Promise<void> => {
+  const handleResetPassword = async () => {
+    if (!currentUser?.email) return;
+    try {
+      await sendPasswordResetEmail(auth, currentUser.email);
+      setModalTitle('Email Terkirim');
+      setModalMessage('Email untuk reset kata sandi telah dikirim.');
+      setShowSuccessModal(true);
+    } catch (error) {
+      setModalTitle('Error');
+      setModalMessage('Gagal mengirim email reset kata sandi.');
+      setShowErrorModal(true);
+    }
+  };
+
+  const handleSignOut = async () => {
     try {
       await signOut(auth);
       window.location.href = "/login";
@@ -380,1495 +740,1378 @@ const UMKMProfilePage: React.FC = () => {
     }
   };
 
-  // Data dummy tetap sama
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: 1,
-      name: 'Nasi Goreng Special',
-      price: 25000,
-      stock: 50,
-      category: 'Makanan',
-      image: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=300&h=300&fit=crop',
-      sold: 234,
-      status: 'active'
-    },
-    {
-      id: 2,
-      name: 'Ayam Bakar Madu',
-      price: 35000,
-      stock: 30,
-      category: 'Makanan',
-      image: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=300&h=300&fit=crop',
-      sold: 189,
-      status: 'active'
-    },
-    {
-      id: 3,
-      name: 'Es Teh Manis',
-      price: 5000,
-      stock: 100,
-      category: 'Minuman',
-      image: 'https://images.unsplash.com/photo-1556881286-fc6915169721?w=300&h=300&fit=crop',
-      sold: 456,
-      status: 'active'
-    },
-    {
-      id: 4,
-      name: 'Sate Ayam (10 tusuk)',
-      price: 30000,
-      stock: 0,
-      category: 'Makanan',
-      image: 'https://images.unsplash.com/photo-1529563021893-cc83c992d75d?w=300&h=300&fit=crop',
-      sold: 167,
-      status: 'inactive'
-    }
-  ]);
-
-  const [newProduct, setNewProduct] = useState<NewProduct>({
-    name: '',
-    price: '',
-    stock: '',
-    category: 'Makanan',
-    image: ''
-  });
-
-  const consultHistory: ConsultHistory[] = [
-    {
-      id: 1,
-      consultantName: 'Dr. Budi Santoso',
-      consultantImage: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop',
-      specialty: 'Manajemen Keuangan UMKM',
-      date: '15 Nov 2024',
-      duration: '45 menit',
-      topics: ['Pembukuan', 'Cash Flow', 'Laporan Keuangan'],
-      status: 'completed',
-      rating: 5
-    },
-    {
-      id: 2,
-      consultantName: 'Siti Nurhaliza',
-      consultantImage: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop',
-      specialty: 'Digital Marketing & Branding',
-      date: '10 Nov 2024',
-      duration: '60 menit',
-      topics: ['Social Media', 'Content Strategy', 'Instagram Marketing'],
-      status: 'completed',
-      rating: 5
-    },
-    {
-      id: 3,
-      consultantName: 'Ahmad Wijaya',
-      consultantImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-      specialty: 'Strategi Bisnis & Ekspansi',
-      date: '20 Nov 2024',
-      duration: '30 menit',
-      topics: ['Business Plan', 'Market Analysis'],
-      status: 'scheduled'
-    },
-    {
-      id: 4,
-      consultantName: 'Dewi Lestari',
-      consultantImage: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop',
-      specialty: 'Legalitas & Perizinan UMKM',
-      date: '5 Nov 2024',
-      duration: '40 menit',
-      topics: ['NIB', 'Izin Usaha', 'PIRT'],
-      status: 'completed',
-      rating: 4
-    }
-  ];
-
-  const handleAddProduct = (): void => {
-    if (!newProduct.name || !newProduct.price || !newProduct.stock) {
-      alert('Mohon lengkapi semua field!');
-      return;
-    }
-
-    const product: Product = {
-      id: products.length + 1,
-      name: newProduct.name,
-      price: parseInt(newProduct.price),
-      stock: parseInt(newProduct.stock),
-      category: newProduct.category,
-      image: newProduct.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=300&fit=crop',
-      sold: 0,
-      status: 'active'
+  // Helper Functions
+  const getBadgeData = (badgeId: string) => badges.find(b => b.id === badgeId);
+  
+  const getRarityColor = (rarity: string) => {
+    const colors: { [key: string]: string } = {
+      common: 'border-gray-300 bg-gray-50',
+      uncommon: 'border-green-300 bg-green-50',
+      rare: 'border-blue-300 bg-blue-50',
+      epic: 'border-purple-300 bg-purple-50',
+      legendary: 'border-yellow-300 bg-yellow-50',
     };
-
-    setProducts([...products, product]);
-    setNewProduct({ name: '', price: '', stock: '', category: 'Makanan', image: '' });
-    setShowAddProduct(false);
+    return colors[rarity] || colors.common;
   };
 
-  const handleDeleteProduct = (id: number): void => {
-    if (confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
-      setProducts(products.filter(p => p.id !== id));
-    }
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    return name.trim().split(/\s+/).map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
-  const handleUpdateStock = (id: number, change: number): void => {
-    setProducts(products.map(p => 
-      p.id === id ? { ...p, stock: Math.max(0, p.stock + change) } : p
-    ));
+  const getAvatarColor = (name: string) => {
+    const colors = ['bg-orange-500', 'bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-pink-500', 'bg-indigo-500'];
+    if (!name) return colors[0];
+    const hash = name.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+    return colors[Math.abs(hash) % colors.length];
   };
 
-  // Favorites dummy data
-  const favoriteAddresses: FavoriteAddress[] = [
-  {
-      id: 1,
-      name: 'Alamat Usaha Utama',
-      address: 'Jl. Sudirman No. 123, Kelurahan Melati',
-      city: 'Jakarta Selatan',
-      distance: '2.5 km',
-      savedAt: '10 Nov 2024',
-      isDefault: true
-    },
-    {
-      id: 2,
-      name: 'Cabang Bekasi',
-      address: 'Ruko Galaxy Blok B-12, Jl. Kemang Pratama',
-      city: 'Bekasi Barat',
-      distance: '15 km',
-      savedAt: '5 Nov 2024'
-    },
-    {
-      id: 3,
-      name: 'Gudang Pusat',
-      address: 'Kawasan Industri MM2100, Blok J-5',
-      city: 'Cikarang',
-      distance: '35 km',
-      savedAt: '1 Nov 2024'
-    }
-  ];
+  const getSecurityLevel = (score: number) => {
+    if (score >= 90) return { level: 'Sangat Aman', color: 'text-green-600', icon: <ShieldCheck className="w-4 h-4 text-green-600" /> };
+    if (score >= 70) return { level: 'Aman', color: 'text-blue-600', icon: <Shield className="w-4 h-4 text-blue-600" /> };
+    if (score >= 50) return { level: 'Cukup Aman', color: 'text-yellow-600', icon: <ShieldAlert className="w-4 h-4 text-yellow-600" /> };
+    return { level: 'Kurang Aman', color: 'text-red-600', icon: <AlertTriangle className="w-4 h-4 text-red-600" /> };
+  };
 
-  const favoriteProducts: FavoriteProduct[] = [
-    {
-      id: 1,
-      name: 'Kemasan Box Premium Custom',
-      price: 15000,
-      image: 'https://images.unsplash.com/photo-1565206077212-4eb48d41f54b?w=300&h=300&fit=crop',
-      storeName: 'CV. Packaging Solution',
-      rating: 4.8,
-      sold: 523,
-      savedAt: '12 Nov 2024'
-    },
-    {
-      id: 2,
-      name: 'Stiker Label Produk Waterproof',
-      price: 25000,
-      image: 'https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=300&h=300&fit=crop',
-      storeName: 'Percetakan Maju Jaya',
-      rating: 4.5,
-      sold: 892,
-      savedAt: '8 Nov 2024'
-    },
-    {
-      id: 3,
-      name: 'Display Stand Akrilik',
-      price: 75000,
-      image: 'https://images.unsplash.com/photo-1556909114-44e3e70034e2?w=300&h=300&fit=crop',
-      storeName: 'Toko Display Pro',
-      rating: 4.9,
-      sold: 156,
-      savedAt: '3 Nov 2024'
-    }
-  ];
+  const getSecurityRecommendations = (data: UserProfileData) => {
+    const recommendations: string[] = [];
+    if (!data.twoFactorEnabled) recommendations.push('Aktifkan autentikasi dua faktor (2FA)');
+    if (!data.fullName || !data.bio) recommendations.push('Lengkapi profil Anda');
+    const daysSincePasswordChange = data.lastPasswordChange ? (Date.now() - data.lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24) : 999;
+    if (daysSincePasswordChange > 90) recommendations.push('Perbarui kata sandi secara berkala');
+    return recommendations;
+  };
 
-  const favoriteStores: FavoriteStore[] = [
-    {
-      id: 1,
-      name: 'CV. Packaging Solution',
-      image: 'https://images.unsplash.com/photo-1556909114-44e3e70034e2?w=100&h=100&fit=crop',
-      category: 'Packaging & Kemasan',
-      rating: 4.8,
-      totalProducts: 124,
-      location: 'Jakarta Barat',
-      savedAt: '15 Nov 2024',
-      isVerified: true
-    },
-    {
-      id: 2,
-      name: 'Toko Bahan Kue Sejahtera',
-      image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=100&h=100&fit=crop',
-      category: 'Bahan Makanan',
-      rating: 4.7,
-      totalProducts: 256,
-      location: 'Tangerang',
-      savedAt: '10 Nov 2024',
-      isVerified: true
-    },
-    {
-      id: 3,
-      name: 'Supplier Elektronik Jaya',
-      image: 'https://images.unsplash.com/photo-1516387938699-a93567ec168e?w=100&h=100&fit=crop',
-      category: 'Elektronik & Gadget',
-      rating: 4.6,
-      totalProducts: 89,
-      location: 'Depok',
-      savedAt: '5 Nov 2024'
-    }
-  ];
-  const profileCompletion: ProfileCompletionItem[] = [
-    { label: 'Setup akun', percentage: 10, completed: true },
-    { label: 'Upload foto profil', percentage: 10, completed: !!profileData.photoURL },
-    { label: 'Informasi pribadi', percentage: 15, completed: !!(profileData.fullName && profileData.phone) },
-    { label: 'Lokasi usaha', percentage: 15, completed: !!profileData.location },
-    { label: 'Deskripsi bisnis', percentage: 20, completed: !!profileData.bio },
-    { label: 'Informasi toko', percentage: 30, completed: !!profileData.businessName }
-  ];
-
-  const totalCompletion: number = profileCompletion
-    .filter(item => item.completed)
-    .reduce((sum, item) => sum + item.percentage, 0);
-
-  const radius: number = 60;
-  const circumference: number = 2 * Math.PI * radius;
-  const offset: number = circumference - (totalCompletion / 100) * circumference;
-
-  // Modal Component untuk menampilkan semua badge
-  const AllBadgesModal = () => (
-    <AnimatePresence>
-      {showAllBadgesModal && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowAllBadgesModal(false)}
-            className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          />
-
-          {/* Modal Content */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 50 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 50 }}
-            className="fixed inset-0 z-50 overflow-y-auto"
-          >
-            <div className="flex items-center justify-center min-h-screen p-4">
-              <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-xl">
-                {/* Modal Header */}
-                <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Trophy className="w-6 h-6 text-orange-500" />
-                      <h2 className="text-xl font-bold text-gray-900">
-                        Semua Badge ({badges.length})
-                      </h2>
-                    </div>
-                    <button
-                      onClick={() => setShowAllBadgesModal(false)}
-                      className="p-2 hover:bg-gray-100 rounded-lg transition"
-                    >
-                      <X className="w-5 h-5 text-gray-500" />
-                    </button>
-                  </div>
-
-                  {/* Category Filter */}
-                  <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
-                    {getBadgeCategories().map((category) => (
-                      <button
-                        key={category}
-                        onClick={() => setSelectedBadgeCategory(category)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap ${
-                          selectedBadgeCategory === category
-                            ? 'bg-orange-500 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        {category === 'all' ? 'Semua' : category.charAt(0).toUpperCase() + category.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Modal Body */}
-                <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-                  {/* Progress Stats */}
-                  <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-4 mb-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-600">Progress Badge</p>
-                        <p className="text-2xl font-bold text-orange-600">
-                          {userBadges.length} / {badges.length} Badge Diperoleh
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-600">Completion Rate</p>
-                        <p className="text-2xl font-bold text-orange-600">
-                          {Math.round((userBadges.length / badges.length) * 100)}%
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {/* Progress Bar */}
-                    <div className="mt-4 bg-white rounded-full h-3 overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-orange-400 to-orange-500 transition-all duration-500"
-                        style={{ width: `${(userBadges.length / badges.length) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Badge Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {getFilteredBadges().map((badge) => {
-                      const isEarned = userBadges.some(ub => ub.badgeId === badge.id);
-                      const userBadge = userBadges.find(ub => ub.badgeId === badge.id);
-
-                      return (
-                        <motion.div
-                          key={badge.id}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className={`relative p-4 rounded-xl border-2 transition-all ${
-                            isEarned 
-                              ? getRarityColor(badge.rarity)
-                              : 'border-gray-200 bg-gray-50 opacity-75'
-                          }`}
-                        >
-                          {/* Status Badge */}
-                          {isEarned ? (
-                            <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                              <CheckCircle className="w-4 h-4 text-white" />
-                            </div>
-                          ) : (
-                            <div className="absolute -top-2 -right-2 w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center">
-                              <Lock className="w-3 h-3 text-white" />
-                            </div>
-                          )}
-
-                          {/* Badge Content */}
-                          <div className="text-center">
-                            <div className="text-3xl mb-2">{badge.icon}</div>
-                            <h4 className="font-semibold text-sm text-gray-900 mb-1">
-                              {badge.name}
-                            </h4>
-                            <p className="text-xs text-gray-600 mb-2 line-clamp-2">
-                              {badge.description}
-                            </p>
-
-                            {/* Badge Info */}
-                            <div className="space-y-1">
-                              <div className="flex items-center justify-center gap-1 text-xs">
-                                <Zap className="w-3 h-3 text-yellow-500" />
-                                <span className="text-gray-600">{badge.points} poin</span>
-                              </div>
-                              <div className={`text-xs font-medium ${getRarityTextColor(badge.rarity)}`}>
-                                {badge.rarity.toUpperCase()}
-                              </div>
-                              {isEarned && userBadge && (
-                                <div className="text-xs text-green-600 font-medium">
-                                  ✓ {typeof userBadge.earnedAt === 'object' && 'toDate' in userBadge.earnedAt
-                                    ? userBadge.earnedAt.toDate().toLocaleDateString('id-ID')
-                                    : new Date(userBadge.earnedAt as any).toLocaleDateString('id-ID')}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Empty State */}
-                  {getFilteredBadges().length === 0 && (
-                    <div className="text-center py-12">
-                      <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500">Tidak ada badge dalam kategori ini</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-
-  // Render Profile Content dengan updated badges section
-  const renderProfileContent = (): JSX.Element => (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-6">
-        {/* Profile Photo */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <div className="flex flex-col items-center mb-8">
-            <div className="relative">
-              <div className="w-32 h-32 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center">
-                {previewImage || profileData.photoURL ? (
-                  <img
-                    src={previewImage || profileData.photoURL}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <UserIcon className="w-16 h-16 text-slate-400" />
-                )}
-              </div>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 w-10 h-10 bg-orange-500 text-white rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors"
-              >
-                <Camera className="w-5 h-5" />
-              </button>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-            />
-            <h2 className="text-xl font-bold text-gray-900 mt-4">
-              {profileData.fullName || profileData.nickname || 'User'}
-            </h2>
-            <p className="text-sm text-gray-600">{profileData.email}</p>
-          </div>
-        </div>
-
-        {/* Personal Info */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-gray-900">Informasi Pribadi</h3>
-            <button 
-              onClick={() => setIsEditingPersonal(!isEditingPersonal)}
-              className="flex items-center gap-2 text-orange-500 font-semibold text-sm px-3 py-2 rounded-lg hover:bg-orange-50 transition"
-            >
-              <Edit2 size={16} />
-              Edit
-            </button>
-          </div>
-
-          {isEditingPersonal ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label className="block text-sm text-gray-600 font-medium mb-2">Nama Lengkap</label>
-                  <input 
-                    type="text" 
-                    value={profileData.fullName}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfileData({...profileData, fullName: e.target.value})}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-600 font-medium mb-2">Nomor Telepon</label>
-                  <input 
-                    type="tel" 
-                    value={profileData.phone}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfileData({...profileData, phone: e.target.value})}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-600 font-medium mb-2">Lokasi</label>
-                  <input 
-                    type="text" 
-                    value={profileData.location}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfileData({...profileData, location: e.target.value})}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-600 font-medium mb-2">Nama Usaha</label>
-                  <input 
-                    type="text" 
-                    value={profileData.businessName}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfileData({...profileData, businessName: e.target.value})}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-3">
-                <button 
-                  onClick={() => setIsEditingPersonal(false)}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold text-sm hover:bg-gray-200 transition"
-                >
-                  <X size={16} />
-                  Batal
-                </button>
-                <button 
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-lg font-semibold text-sm hover:bg-orange-600 transition disabled:opacity-50"
-                >
-                  {saving ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Save size={16} />
-                  )}
-                  {saving ? 'Menyimpan...' : 'Simpan'}
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-600 font-medium mb-1.5">Nama Lengkap</div>
-                <div className="text-sm text-gray-900 font-medium">{profileData.fullName || '-'}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-600 font-medium mb-1.5">Email</div>
-                <div className="text-sm text-gray-900 font-medium">{profileData.email || '-'}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-600 font-medium mb-1.5">Nomor Telepon</div>
-                <div className="text-sm text-gray-900 font-medium">{profileData.phone || '-'}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-600 font-medium mb-1.5">Lokasi</div>
-                <div className="text-sm text-gray-900 font-medium">{profileData.location || '-'}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-600 font-medium mb-1.5">Nama Usaha</div>
-                <div className="text-sm text-gray-900 font-medium">{profileData.businessName || '-'}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-600 font-medium mb-1.5">Bergabung Sejak</div>
-                <div className="text-sm text-gray-900 font-medium">{profileData.joinDate || '-'}</div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Bio Section */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-gray-900">Deskripsi Bisnis</h3>
-            <button 
-              onClick={() => setIsEditingBio(!isEditingBio)}
-              className="flex items-center gap-2 text-orange-500 font-semibold text-sm px-3 py-2 rounded-lg hover:bg-orange-50 transition"
-            >
-              <Edit2 size={16} />
-              Edit
-            </button>
-          </div>
-
-          {isEditingBio ? (
-            <>
-              <textarea 
-                value={profileData.bio}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setProfileData({...profileData, bio: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent min-h-[120px] resize-y"
-                placeholder="Ceritakan tentang bisnis Anda..."
-              />
-              <div className="flex justify-end gap-3 mt-4">
-                <button 
-                  onClick={() => setIsEditingBio(false)}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold text-sm hover:bg-gray-200 transition"
-                >
-                  <X size={16} />
-                  Batal
-                </button>
-                <button 
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-lg font-semibold text-sm hover:bg-orange-600 transition disabled:opacity-50"
-                >
-                  {saving ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Save size={16} />
-                  )}
-                  {saving ? 'Menyimpan...' : 'Simpan'}
-                </button>
-              </div>
-            </>
-          ) : (
-            <p className="text-gray-700 leading-relaxed text-sm">
-              {profileData.bio || 'Belum ada deskripsi bisnis'}
-            </p>
-          )}
-        </div>
-
-        {/* Badges Section dengan tombol untuk membuka modal */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <div className="mb-6">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-orange-500" />
-              Pencapaian & Badge
-            </h3>
-            <p className="text-sm text-gray-600 mt-1">Badge yang telah Anda dapatkan</p>
-          </div>
-
-          {/* Gamification Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{gamificationStats.totalPoints || 0}</div>
-              <div className="text-xs text-gray-600">Total Poin</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">Level {gamificationStats.level || 1}</div>
-              <div className="text-xs text-gray-600">Level</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{gamificationStats.completedMissions || 0}</div>
-              <div className="text-xs text-gray-600">Misi Selesai</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{userBadges.length}</div>
-              <div className="text-xs text-gray-600">Badge</div>
-            </div>
-          </div>
-
-          {/* Earned Badges */}
-          {userBadges.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Award className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p>Belum ada badge yang diperoleh</p>
-              <p className="text-sm mt-1">Selesaikan misi untuk mendapatkan badge!</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-              {userBadges.slice(0, 5).map((userBadge) => {
-                const badge = getBadgeData(userBadge.badgeId);
-                if (!badge) return null;
-
-                return (
-                  <motion.div
-                    key={userBadge.badgeId}
-                    whileHover={{ scale: 1.1 }}
-                    className={`relative p-3 rounded-xl border-2 text-center transition-all duration-300 ${getRarityColor(badge.rarity)}`}
-                  >
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                      <CheckCircle className="w-3 h-3 text-white" />
-                    </div>
-                    
-                    <div className="text-2xl mb-1">{badge.icon}</div>
-                    <h4 className="font-semibold text-xs text-gray-900 line-clamp-1">{badge.name}</h4>
-                    
-                    <div className="flex items-center justify-center gap-1 text-xs text-gray-500 mt-1">
-                      <Zap className="w-3 h-3 text-yellow-500" />
-                      <span>{badge.points}</span>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* View All Badges Button */}
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <button 
-              onClick={() => setShowAllBadgesModal(true)}
-              className="text-sm text-orange-500 hover:text-orange-600 font-medium flex items-center gap-1 mx-auto transition"
-            >
-              <Star className="w-4 h-4" />
-              Lihat semua {badges.length} badge yang tersedia
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Sidebar */}
-      <div className="space-y-6">
-        {/* Completion Card */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-5">Kelengkapan Profil</h3>
-          
-          <div className="flex justify-center mb-6">
-            <div className="relative w-36 h-36">
-              <svg className="transform -rotate-90 w-full h-full">
-                <circle
-                  cx="72"
-                  cy="72"
-                  r={radius}
-                  fill="none"
-                  stroke="#f0f0f0"
-                  strokeWidth="10"
-                />
-                <circle
-                  cx="72"
-                  cy="72"
-                  r={radius}
-                  fill="none"
-                  stroke="#ff6b35"
-                  strokeWidth="10"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={offset}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-orange-500">
-                {totalCompletion}%
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-0">
-            {profileCompletion.map((item, index) => (
-              <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                <div className="flex items-center gap-3">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
-                    item.completed ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'
-                  }`}>
-                    {item.completed && '✓'}
-                  </div>
-                  <span className={`text-sm ${item.completed ? 'text-gray-900' : 'text-gray-500'}`}>
-                    {item.label}
-                  </span>
-                </div>
-                <span className={`text-sm font-semibold ${
-                  item.completed ? 'text-green-500' : 'text-orange-500'
-                }`}>
-                  {item.completed ? `✓ ${item.percentage}%` : `+${item.percentage}%`}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Render Store Content
-    const renderStoreContent = (): JSX.Element => (
-      <div className="space-y-6">
-        {/* Store Header Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                <Package className="text-orange-500" size={24} />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">{products.length}</div>
-            <div className="text-sm text-gray-600">Total Produk</div>
-          </div>
-          
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <TrendingUp className="text-green-500" size={24} />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">{products.filter(p => p.status === 'active').length}</div>
-            <div className="text-sm text-gray-600">Produk Aktif</div>
-          </div>
-  
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Store className="text-blue-500" size={24} />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">{products.reduce((sum, p) => sum + p.sold, 0)}</div>
-            <div className="text-sm text-gray-600">Total Terjual</div>
-          </div>
-  
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <DollarSign className="text-purple-500" size={24} />
-              </div>
-            </div>
-            <div className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
-              {new Intl.NumberFormat('id-ID', { 
-                style: 'currency', 
-                currency: 'IDR', 
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0 
-              }).format(
-                products.reduce((sum, p) => sum + (p.price * p.sold), 0)
-              )}
-            </div>
-            <div className="text-sm text-gray-600">Total Pendapatan</div>
-          </div>
-        </div>
-  
-        {/* Products Management */}
-        <div className="bg-white rounded-2xl shadow-sm">
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">Kelola Produk</h3>
-                <p className="text-sm text-gray-600 mt-1">Tambah, edit, atau hapus produk Anda</p>
-              </div>
-              <button 
-                onClick={() => setShowAddProduct(!showAddProduct)}
-                className="flex items-center gap-2 px-5 py-3 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition"
-              >
-                <Plus size={20} />
-                Tambah Produk
-              </button>
-            </div>
-  
-            {/* Search and Filter */}
-            <div className="flex gap-3 mt-6">
-              <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  placeholder="Cari produk..."
-                  value={searchQuery}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-              </div>
-              <button className="flex items-center gap-2 px-5 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition">
-                <Filter size={20} />
-                Filter
-              </button>
-            </div>
-          </div>
-  
-          {/* Add Product Form */}
-          {showAddProduct && (
-            <div className="p-6 bg-orange-50 border-b border-orange-100">
-              <h4 className="font-bold text-gray-900 mb-4">Tambah Produk Baru</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nama Produk</label>
-                  <input
-                    type="text"
-                    value={newProduct.name}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProduct({...newProduct, name: e.target.value})}
-                    placeholder="Contoh: Nasi Goreng"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
-                  <select
-                    value={newProduct.category}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewProduct({...newProduct, category: e.target.value})}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  >
-                    <option>Makanan</option>
-                    <option>Minuman</option>
-                    <option>Snack</option>
-                    <option>Lainnya</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Harga</label>
-                  <input
-                    type="number"
-                    value={newProduct.price}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProduct({...newProduct, price: e.target.value})}
-                    placeholder="25000"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Stok</label>
-                  <input
-                    type="number"
-                    value={newProduct.stock}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProduct({...newProduct, stock: e.target.value})}
-                    placeholder="50"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-3 mt-4">
-                <button
-                  onClick={() => setShowAddProduct(false)}
-                  className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleAddProduct}
-                  className="px-5 py-2.5 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition"
-                >
-                  Simpan Produk
-                </button>
-              </div>
-            </div>
-          )}
-  
-          {/* Products List */}
-          <div className="p-6">
-            <div className="grid gap-4">
-              {products.filter(p => 
-                p.name.toLowerCase().includes(searchQuery.toLowerCase())
-              ).map((product) => (
-                <div key={product.id} className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6 p-4 border border-gray-200 rounded-xl hover:border-orange-300 hover:shadow-md transition">
-                  <img 
-                    src={product.image} 
-                    alt={product.name}
-                    className="w-full md:w-24 h-32 md:h-24 rounded-xl object-cover"
-                  />
-                  
-                  <div className="flex-1 w-full">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-bold text-gray-900 text-lg">{product.name}</h4>
-                        <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full mt-1">
-                          {product.category}
-                        </span>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        product.status === 'active' 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-red-100 text-red-700'
-                      }`}>
-                        {product.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
-                      </span>
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
-                      <span className="font-semibold text-orange-500 text-lg">
-                        Rp {product.price.toLocaleString('id-ID')}
-                      </span>
-                      <span>Stok: <strong className={product.stock === 0 ? 'text-red-500' : 'text-gray-900'}>{product.stock}</strong></span>
-                      <span>Terjual: <strong className="text-gray-900">{product.sold}</strong></span>
-                    </div>
-  
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-                        <button
-                          onClick={() => handleUpdateStock(product.id, -1)}
-                          disabled={product.stock === 0}
-                          className="w-8 h-8 flex items-center justify-center bg-white rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                        >
-                          -
-                        </button>
-                        <span className="w-12 text-center font-semibold">{product.stock}</span>
-                        <button
-                          onClick={() => handleUpdateStock(product.id, 1)}
-                          className="w-8 h-8 flex items-center justify-center bg-white rounded-md hover:bg-gray-50 transition"
-                        >
-                          +
-                        </button>
-                      </div>
-  
-                      <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm font-medium">
-                        <Edit size={16} />
-                        Edit
-                      </button>
-                      
-                      <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm font-medium">
-                        <Eye size={16} />
-                        Lihat
-                      </button>
-  
-                      <button
-                        onClick={() => handleDeleteProduct(product.id)}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition text-sm font-medium ml-auto"
-                      >
-                        <Trash2 size={16} />
-                        Hapus
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-  
-            {products.filter(p => 
-              p.name.toLowerCase().includes(searchQuery.toLowerCase())
-            ).length === 0 && (
-              <div className="text-center py-12">
-                <Package size={48} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-gray-500">Tidak ada produk ditemukan</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  
-    // Render History Content
-    const renderHistoryContent = (): JSX.Element => (
-    <div className="space-y-6">
-      {/* Tab Navigation */}
-      <div className="bg-white rounded-2xl shadow-sm p-2">
-        <div className="grid grid-cols-4 gap-2">
-          <button
-            onClick={() => setActiveHistoryTab('consultation')}
-            className={`py-3 px-4 rounded-xl font-medium transition-all ${
-              activeHistoryTab === 'consultation'
-                ? 'bg-orange-500 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <MessageCircle className="w-5 h-5 mx-auto mb-1" />
-            <span className="text-sm">Konsultasi</span>
-          </button>
-          <button
-            onClick={() => setActiveHistoryTab('address')}
-            className={`py-3 px-4 rounded-xl font-medium transition-all ${
-              activeHistoryTab === 'address'
-                ? 'bg-orange-500 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <MapPin className="w-5 h-5 mx-auto mb-1" />
-            <span className="text-sm">Alamat Favorit</span>
-          </button>
-          <button
-            onClick={() => setActiveHistoryTab('product')}
-            className={`py-3 px-4 rounded-xl font-medium transition-all ${
-              activeHistoryTab === 'product'
-                ? 'bg-orange-500 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <Package className="w-5 h-5 mx-auto mb-1" />
-            <span className="text-sm">Produk Favorit</span>
-          </button>
-          <button
-            onClick={() => setActiveHistoryTab('store')}
-            className={`py-3 px-4 rounded-xl font-medium transition-all ${
-              activeHistoryTab === 'store'
-                ? 'bg-orange-500 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <Store className="w-5 h-5 mx-auto mb-1" />
-            <span className="text-sm">Toko Favorit</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Content based on active tab */}
-      {activeHistoryTab === 'consultation' && (
-        <div className="bg-white rounded-2xl shadow-sm">
-          <div className="p-6 border-b border-gray-100">
-            <h3 className="text-xl font-bold text-gray-900">Riwayat Konsultasi</h3>
-            <p className="text-sm text-gray-600 mt-1">Lihat semua riwayat konsultasi dengan konsultan kami</p>
-          </div>
-
-          <div className="p-6">
-            <div className="space-y-4">
-              {consultHistory.map((consult) => (
-                <div key={consult.id} className="border border-gray-200 rounded-xl p-5 hover:border-orange-300 hover:shadow-md transition">
-                  <div className="flex flex-col md:flex-row gap-4">
-                    <img 
-                      src={consult.consultantImage} 
-                      alt={consult.consultantName}
-                      className="w-20 h-20 rounded-full object-cover mx-auto md:mx-0"
-                    />
-                    
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h4 className="font-bold text-gray-900 text-lg">{consult.consultantName}</h4>
-                          <p className="text-sm text-orange-500 font-semibold">{consult.specialty}</p>
-                        </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          consult.status === 'completed' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-blue-100 text-blue-700'
-                        }`}>
-                          {consult.status === 'completed' ? 'Selesai' : 'Dijadwalkan'}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
-                        <span className="flex items-center gap-1.5">
-                          <Calendar size={16} />
-                          {consult.date}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <Clock size={16} />
-                          {consult.duration}
-                        </span>
-                        {consult.rating && (
-                          <span className="flex items-center gap-1.5 text-yellow-500 font-semibold">
-                            ⭐ {consult.rating}.0
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {consult.topics.map((topic, idx) => (
-                          <span key={idx} className="px-3 py-1 bg-orange-50 text-orange-600 text-xs rounded-full font-medium">
-                            {topic}
-                          </span>
-                        ))}
-                      </div>
-
-                      <div className="flex flex-wrap gap-3">
-                        <button className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm font-semibold">
-                          <MessageCircle size={16} />
-                          Lihat Detail
-                        </button>
-                        {consult.status === 'completed' && !consult.rating && (
-                          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm font-semibold">
-                            ⭐ Beri Rating
-                          </button>
-                        )}
-                        {consult.status === 'scheduled' && (
-                          <button className="flex items-center gap-2 px-4 py-2 border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50 transition text-sm font-semibold">
-                            <Calendar size={16} />
-                            Reschedule
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Summary Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
-              <div className="text-center p-4 bg-orange-50 rounded-xl">
-                <div className="text-2xl font-bold text-orange-500 mb-1">
-                  {consultHistory.length}
-                </div>
-                <div className="text-sm text-gray-600">Total Konsultasi</div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-xl">
-                <div className="text-2xl font-bold text-green-500 mb-1">
-                  {consultHistory.filter(c => c.status === 'completed').length}
-                </div>
-                <div className="text-sm text-gray-600">Selesai</div>
-              </div>
-              <div className="text-center p-4 bg-blue-50 rounded-xl">
-                <div className="text-2xl font-bold text-blue-500 mb-1">
-                  {consultHistory.filter(c => c.status === 'scheduled').length}
-                </div>
-                <div className="text-sm text-gray-600">Dijadwalkan</div>
-              </div>
-              <div className="text-center p-4 bg-yellow-50 rounded-xl">
-                <div className="text-2xl font-bold text-yellow-500 mb-1">
-                  {(consultHistory.filter(c => c.rating).reduce((sum, c) => sum + (c.rating || 0), 0) / consultHistory.filter(c => c.rating).length || 0).toFixed(1)}
-                </div>
-                <div className="text-sm text-gray-600">Rating Rata-rata</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeHistoryTab === 'address' && (
-        <div className="bg-white rounded-2xl shadow-sm">
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">Alamat Favorit</h3>
-                <p className="text-sm text-gray-600 mt-1">Alamat UMKM yang tersimpan</p>
-              </div>
-              <button className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm font-semibold">
-                <Plus size={16} />
-                Tambah Alamat
-              </button>
-            </div>
-          </div>
-
-          <div className="p-6">
-            <div className="grid gap-4">
-              {favoriteAddresses.map((address) => (
-                <motion.div
-                  key={address.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="border border-gray-200 rounded-xl p-5 hover:border-orange-300 hover:shadow-md transition"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex gap-4">
-                      <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                        <MapPin className="w-6 h-6 text-orange-500" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-bold text-gray-900">{address.name}</h4>
-                          {address.isDefault && (
-                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                              Utama
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-600 mb-2">{address.address}</p>
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <MapPin size={14} />
-                            {address.city}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Navigation size={14} />
-                            {address.distance}
-                          </span>
-                          <span>Disimpan: {address.savedAt}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-                        <Edit2 size={16} className="text-gray-500" />
-                      </button>
-                      <button className="p-2 hover:bg-red-50 rounded-lg transition">
-                        <Trash2 size={16} className="text-red-500" />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeHistoryTab === 'product' && (
-        <div className="bg-white rounded-2xl shadow-sm">
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">Produk Favorit</h3>
-                <p className="text-sm text-gray-600 mt-1">Produk yang Anda simpan</p>
-              </div>
-              <button className="text-sm text-orange-500 hover:text-orange-600 font-medium">
-                Lihat Semua
-              </button>
-            </div>
-          </div>
-
-          <div className="p-6">
-            <div className="grid gap-4">
-              {favoriteProducts.map((product) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-4 border border-gray-200 rounded-xl p-4 hover:border-orange-300 hover:shadow-md transition"
-                >
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-20 h-20 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-bold text-gray-900 mb-1">{product.name}</h4>
-                    <p className="text-sm text-gray-600 mb-2">dari {product.storeName}</p>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className="font-bold text-orange-500">
-                        Rp {product.price.toLocaleString('id-ID')}
-                      </span>
-                      <span className="flex items-center gap-1 text-yellow-500">
-                        <Star size={14} fill="currentColor" />
-                        {product.rating}
-                      </span>
-                      <span className="text-gray-500">
-                        {product.sold} Terjual
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm font-semibold">
-                      Lihat Produk
-                    </button>
-                    <span className="text-xs text-gray-500">Disimpan: {product.savedAt}</span>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeHistoryTab === 'store' && (
-        <div className="bg-white rounded-2xl shadow-sm">
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">Toko Favorit</h3>
-                <p className="text-sm text-gray-600 mt-1">Toko UMKM yang Anda ikuti</p>
-              </div>
-              <button className="text-sm text-orange-500 hover:text-orange-600 font-medium">
-                Jelajahi Toko
-              </button>
-            </div>
-          </div>
-
-          <div className="p-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {favoriteStores.map((store) => (
-                <motion.div
-                  key={store.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="border border-gray-200 rounded-xl p-4 hover:border-orange-300 hover:shadow-md transition"
-                >
-                  <div className="flex items-start gap-3 mb-3">
-                    <img
-                      src={store.image}
-                      alt={store.name}
-                      className="w-14 h-14 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-gray-900 text-sm">{store.name}</h4>
-                        {store.isVerified && (
-                          <CheckCircle className="w-4 h-4 text-blue-500" />
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-600 mt-1">{store.category}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 text-center mb-3">
-                    <div className="bg-gray-50 rounded-lg py-2">
-                      <div className="text-sm font-bold text-gray-900">{store.rating}</div>
-                      <div className="text-xs text-gray-600">Rating</div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg py-2">
-                      <div className="text-sm font-bold text-gray-900">{store.totalProducts}</div>
-                      <div className="text-xs text-gray-600">Produk</div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg py-2">
-                      <MapPin className="w-4 h-4 text-gray-500 mx-auto mb-1" />
-                      <div className="text-xs text-gray-600">{store.location}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Disimpan: {store.savedAt}</span>
-                    <button className="px-3 py-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-xs font-semibold">
-                      Kunjungi Toko
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  const displayName = profileData.nickname || profileData.fullName || currentUser?.displayName || 'Pengguna';
 
   // Loading State
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="animate-spin w-12 h-12 text-orange-500 mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+          <p className="text-slate-600 text-sm">Memuat profil...</p>
         </div>
       </div>
     );
   }
 
+  // Sidebar Animation Variants - IMPROVED
+  const sidebarVariants = {
+    open: {
+      x: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+        mass: 0.8,
+        staggerChildren: 0.07,
+        delayChildren: 0.1
+      }
+    },
+    closed: {
+      x: isMobile ? -280 : 0,
+      opacity: isMobile ? 0 : 1,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+        mass: 0.8,
+        staggerChildren: 0.05,
+        staggerDirection: -1
+      }
+    }
+  };
+
+  const navItemVariants = {
+    open: {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 24
+      }
+    },
+    closed: {
+      x: -20,
+      opacity: 0,
+      scale: 0.95,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 24
+      }
+    }
+  };
+
   return (
-    <>
-      <div className="flex min-h-screen bg-gray-50 font-sans">
-        {/* Sidebar */}
-        <div className="w-72 bg-white shadow-lg flex flex-col p-6">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-              <Store size={24} className="text-white" />
-            </div>
-            <div className="text-2xl font-bold">
-              UMKM<span className="text-orange-500">otion</span>
-            </div>
-          </div>
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 font-sans">
+      {/* Mobile Overlay with Blur */}
+      <AnimatePresence>
+        {isMobile && isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            animate={{ opacity: 1, backdropFilter: "blur(8px)" }}
+            exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            transition={{ duration: 0.3 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
 
-          <div className="space-y-2 flex-1">
-            <div className="text-xs text-gray-500 uppercase font-semibold mb-3 px-3">Menu Utama</div>
+      {/* Sidebar - IMPROVED ANIMATION */}
+      <motion.aside
+        initial={false}
+        animate={{
+          width: isMobile 
+            ? (isSidebarOpen ? '280px' : '0px')
+            : (isSidebarOpen ? '280px' : '80px')
+        }}
+        transition={{ 
+          type: "spring",
+          stiffness: 300,
+          damping: 30,
+          mass: 0.8
+        }}
+        className={`${
+          isMobile 
+            ? 'fixed' 
+            : 'sticky'
+        } top-0 h-screen bg-white/95 backdrop-blur-xl shadow-2xl flex flex-col z-50 overflow-hidden border-r border-gray-200/50`}
+        style={{
+          left: isMobile && !isSidebarOpen ? '-100%' : '0',
+          boxShadow: isSidebarOpen ? '0 0 50px rgba(0,0,0,0.1)' : '0 0 20px rgba(0,0,0,0.05)'
+        }}
+      >
+        {/* Logo Section - POSISI LEBIH KE BAWAH */}
+        <div className="flex items-center justify-center h-24 pt-6 pb-4 border-b border-gray-100 px-4 flex-shrink-0">
+          <AnimatePresence mode="wait">
+            {isSidebarOpen ? (
+              <motion.img
+                key="logo-full"
+                initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                exit={{ opacity: 0, scale: 0.8, rotate: 10 }}
+                transition={{ 
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 20
+                }}
+                src="/LogoNavbar.webp"
+                alt="UMKMotion"
+                className="h-12 w-auto drop-shadow-lg"
+              />
+            ) : (
+              <motion.div
+                key="logo-mini"
+                initial={{ opacity: 0, scale: 0.5, rotate: -180 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                exit={{ opacity: 0, scale: 0.5, rotate: 180 }}
+                transition={{ 
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 20
+                }}
+                className="w-12 h-12 bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-xl"
+              >
+                U
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Profile Mini Card - DENGAN ANIMASI LEBIH SMOOTH */}
+        <AnimatePresence>
+          {isSidebarOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, y: -20 }}
+              animate={{ opacity: 1, height: 'auto', y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -20 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 300,
+                damping: 25
+              }}
+              className="px-4 py-5 border-b border-gray-100 overflow-hidden"
+            >
+              <motion.div 
+                className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-orange-50 to-red-50 border border-orange-100"
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg ring-4 ring-white ${getAvatarColor(displayName)}`}>
+                  {profileData.photoURL ? (
+                    <img src={profileData.photoURL} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    getInitials(displayName)
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold text-gray-900 truncate">{displayName}</div>
+                  <div className="text-xs text-gray-500 truncate">{profileData.email}</div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Navigation - POSISI LEBIH KE BAWAH DENGAN PADDING TOP */}
+        <nav className="flex-1 overflow-y-auto py-6 px-3 mt-2">
+          <AnimatePresence>
+            {isSidebarOpen && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="text-xs text-gray-500 uppercase font-bold mb-4 px-3 tracking-wider"
+              >
+                Menu Navigasi
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          <motion.div 
+            className="space-y-2"
+            variants={sidebarVariants}
+            initial="closed"
+            animate={isSidebarOpen ? "open" : "closed"}
+          >
+            {[
+              { label: 'Profil', icon: User, menu: 'profile', gradient: 'from-orange-500 to-red-500', bgHover: 'hover:bg-orange-50' },
+              { label: 'Riwayat', icon: History, menu: 'history', gradient: 'from-blue-500 to-cyan-500', bgHover: 'hover:bg-blue-50' },
+              { label: 'Toko', icon: Store, menu: 'store', gradient: 'from-green-500 to-emerald-500', bgHover: 'hover:bg-green-50' },
+              { label: 'Pricing', icon: CreditCard, menu: 'pricing', gradient: 'from-purple-500 to-pink-500', bgHover: 'hover:bg-purple-50' },
+            ].map((item) => (
+              <motion.button
+                key={item.menu}
+                variants={navItemVariants}
+                onClick={() => {
+                  setActiveMenu(item.menu as any);
+                  if (isMobile) setIsSidebarOpen(false);
+                }}
+                whileHover={{ 
+                  scale: 1.03,
+                  x: isSidebarOpen ? 5 : 0,
+                  transition: { type: "spring", stiffness: 400, damping: 17 }
+                }}
+                whileTap={{ scale: 0.97 }}
+                className={`w-full flex items-center gap-3 py-3.5 rounded-xl font-bold transition-all duration-300 relative group overflow-hidden ${
+                  activeMenu === item.menu 
+                    ? `bg-gradient-to-r ${item.gradient} text-white shadow-xl shadow-${item.gradient.split('-')[1]}-500/30` 
+                    : `text-gray-700 ${item.bgHover}`
+                } ${isSidebarOpen ? 'px-4 justify-start' : 'px-0 justify-center'}`}
+                title={!isSidebarOpen ? item.label : ''}
+              >
+                {activeMenu === item.menu && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/0"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                )}
+                
+                <item.icon size={22} className="flex-shrink-0 relative z-10" />
+                
+                <AnimatePresence>
+                  {isSidebarOpen && (
+                    <motion.span
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: 'auto' }}
+                      exit={{ opacity: 0, width: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="whitespace-nowrap overflow-hidden text-sm relative z-10"
+                    >
+                      {item.label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+
+                {/* Tooltip for collapsed state */}
+                {!isSidebarOpen && !isMobile && (
+                  <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-xl">
+                    {item.label}
+                    <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-gray-900"></div>
+                  </div>
+                )}
+              </motion.button>
+            ))}
+          </motion.div>
+        </nav>
+
+        {/* Logout Button - ANIMASI LEBIH SMOOTH */}
+        <div className="border-t border-gray-200 p-3 flex-shrink-0">
+          <motion.button
+            onClick={handleSignOut}
+            whileHover={{ 
+              scale: 1.03,
+              transition: { type: "spring", stiffness: 400, damping: 17 }
+            }}
+            whileTap={{ scale: 0.95 }}
+            className={`group w-full flex items-center gap-3 p-3.5 rounded-xl font-bold text-red-600 hover:bg-red-50 transition-all relative overflow-hidden ${
+              isSidebarOpen ? 'justify-start' : 'justify-center'
+            }`}
+            title={!isSidebarOpen ? 'Keluar' : ''}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             
-            <button
-              onClick={() => setActiveMenu('profile')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
-                activeMenu === 'profile'
-                  ? 'bg-orange-50 text-orange-500'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <UserIcon size={20} />
-              Profil
-            </button>
+            <LogOut size={22} className="flex-shrink-0 relative z-10" />
+            
+            <AnimatePresence>
+              {isSidebarOpen && (
+                <motion.div
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 'auto' }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex-1 text-left overflow-hidden relative z-10"
+                >
+                  <div className="text-sm font-bold whitespace-nowrap">Keluar Akun</div>
+                  <div className="text-xs text-red-500 whitespace-nowrap">Akhiri sesi Anda</div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            <button
-              onClick={() => setActiveMenu('history')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
-                activeMenu === 'history'
-                  ? 'bg-orange-50 text-orange-500'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <History size={20} />
-              Riwayat
-            </button>
-
-            <button
-              onClick={() => setActiveMenu('pricing')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
-                activeMenu === 'pricing'
-                  ? 'bg-orange-50 text-orange-500'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <DollarSign size={20} />
-              Pricing
-            </button>
-
-            <button
-              onClick={() => setActiveMenu('store')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
-                activeMenu === 'store'
-                  ? 'bg-orange-50 text-orange-500'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <Store size={20} />
-              Toko Anda
-            </button>
-
-            <button
-              onClick={() => setActiveMenu('settings')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
-                activeMenu === 'settings'
-                  ? 'bg-orange-50 text-orange-500'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <Settings size={20} />
-              Pengaturan
-            </button>
-          </div>
-
-          <div className="pt-6 border-t border-gray-200">
-            <button 
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-red-600 hover:bg-red-50 transition"
-            >
-              <LogOut size={20} />
-              Keluar
-            </button>
-          </div>
+            {/* Tooltip for collapsed state */}
+            {!isSidebarOpen && !isMobile && (
+              <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-xl">
+                Keluar Akun
+                <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-gray-900"></div>
+              </div>
+            )}
+          </motion.button>
         </div>
+      </motion.aside>
 
-        {/* Main Content */}
-        <div className="flex-1 p-8 overflow-y-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {activeMenu === 'profile' && 'Edit Profil'}
-              {activeMenu === 'history' && 'Riwayat Konsultasi'}
-              {activeMenu === 'pricing' && 'Paket Pricing'}
-              {activeMenu === 'store' && 'Toko Anda'}
-              {activeMenu === 'settings' && 'Pengaturan'}
-            </h1>
-          </div>
+      {/* Toggle Button - Desktop Only - ANIMASI LEBIH SMOOTH */}
+      {!isMobile && (
+        <motion.button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="hidden lg:flex fixed top-28 z-[60] w-11 h-11 rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white shadow-2xl hover:shadow-orange-500/50 transition-all items-center justify-center group"
+          animate={{ 
+            left: isSidebarOpen ? '268px' : '68px'
+          }}
+          transition={{ 
+            type: "spring",
+            stiffness: 300,
+            damping: 30,
+            mass: 0.8
+          }}
+          whileHover={{ 
+            scale: 1.15,
+            rotate: isSidebarOpen ? -5 : 5,
+            transition: { type: "spring", stiffness: 400, damping: 17 }
+          }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <motion.div
+            animate={{ rotate: isSidebarOpen ? 0 : 180 }}
+            transition={{ 
+              type: "spring",
+              stiffness: 300,
+              damping: 20
+            }}
+          >
+            <ChevronLeft size={22} />
+          </motion.div>
+        </motion.button>
+      )}
 
-          {activeMenu === 'profile' && renderProfileContent()}
-          {activeMenu === 'store' && renderStoreContent()}
-          {activeMenu === 'history' && renderHistoryContent()}
+      {/* Mobile Menu Toggle - ANIMASI LEBIH BAGUS */}
+      {isMobile && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ 
+            type: "spring",
+            stiffness: 300,
+            damping: 20
+          }}
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="fixed top-4 left-4 z-[60] lg:hidden w-14 h-14 bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 text-white rounded-2xl shadow-2xl flex items-center justify-center"
+          whileHover={{ 
+            scale: 1.1,
+            rotate: 5,
+            transition: { type: "spring", stiffness: 400, damping: 17 }
+          }}
+          whileTap={{ scale: 0.9, rotate: -5 }}
+        >
+          <motion.div
+            animate={{ rotate: isSidebarOpen ? 180 : 0 }}
+            transition={{ 
+              type: "spring",
+              stiffness: 300,
+              damping: 20
+            }}
+          >
+            {isSidebarOpen ? <X size={26} /> : <Menu size={26} />}
+          </motion.div>
+        </motion.button>
+      )}
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto min-w-0">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+          {/* Header */}
+          <motion.header 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6 lg:mb-8"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <motion.button
+                  onClick={() => window.history.back()}
+                  className="p-2.5 bg-white text-orange-600 hover:bg-orange-50 rounded-xl shadow-sm border border-orange-100 transition-all"
+                  whileHover={{ scale: 1.05, x: -3 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="Kembali"
+                >
+                  <ArrowLeft size={20} />
+                </motion.button>
+                
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent truncate">
+                    {activeMenu === 'profile' && 'Profil Saya'}
+                    {activeMenu === 'history' && 'Riwayat'}
+                    {activeMenu === 'store' && 'Toko Saya'}
+                    {activeMenu === 'pricing' && 'Pricing'}
+                  </h1>
+                  {activeMenu === 'profile' && (
+                    <p className="text-slate-600 mt-0.5 text-sm line-clamp-1">
+                      Kelola informasi profil dan lihat pencapaian Anda
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.header>
+
+          {/* Profile Content */}
+          {activeMenu === 'profile' && (
+            <>
+              {/* Security Dashboard */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 rounded-2xl p-6 text-white mb-8 relative overflow-hidden shadow-2xl"
+              >
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjAzIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-40"></div>
+                <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-3xl -translate-y-20 translate-x-20"></div>
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-white/10 to-transparent rounded-full blur-2xl translate-y-16 -translate-x-16"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      {getSecurityLevel(securityScore).icon}
+                      <div>
+                        <h3 className="text-xl font-bold">Keamanan Akun</h3>
+                        <p className="text-sm text-gray-300">Tingkatkan keamanan untuk perlindungan maksimal</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <motion.div 
+                        className="text-4xl font-bold"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+                      >
+                        {securityScore}%
+                      </motion.div>
+                      <div className={`text-sm font-medium ${getSecurityLevel(securityScore).color}`}>
+                        {getSecurityLevel(securityScore).level}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <div className="w-full bg-slate-700/50 rounded-full h-3 backdrop-blur-sm">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${securityScore}%` }}
+                        transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }}
+                        className={`h-3 rounded-full ${
+                          securityScore >= 90 ? 'bg-gradient-to-r from-green-500 to-green-400' :
+                          securityScore >= 70 ? 'bg-gradient-to-r from-blue-500 to-blue-400' :
+                          securityScore >= 50 ? 'bg-gradient-to-r from-yellow-500 to-yellow-400' :
+                          'bg-gradient-to-r from-red-500 to-red-400'
+                        } shadow-lg`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { label: 'Email', status: profileData.email, icon: Mail },
+                      { label: '2FA', status: profileData.twoFactorEnabled, icon: Lock },
+                      { label: 'Profil', status: (profileData.fullName && profileData.bio), icon: User }
+                    ].map((item, idx) => (
+                      <motion.div 
+                        key={item.label}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 + (idx * 0.1) }}
+                        className="text-center p-4 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20 hover:bg-white/15 transition-all"
+                      >
+                        <div className="flex justify-center mb-2">
+                          {item.status ? 
+                            <CheckCircle2 className="w-6 h-6 text-green-400" /> : 
+                            <AlertTriangle className="w-6 h-6 text-red-400" />
+                          }
+                        </div>
+                        <div className="text-sm font-medium">{item.label}</div>
+                        <div className="text-xs text-gray-300">
+                          {item.status ? 'Aktif' : 'Belum aktif'}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Tabs */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-center gap-2 bg-white rounded-xl p-2 mb-6 shadow-lg border border-gray-100"
+              >
+                {[
+                  { id: 'profile', label: 'Profil', icon: User, gradient: 'from-orange-500 via-red-500 to-pink-500' },
+                  { id: 'security', label: 'Keamanan', icon: Shield, gradient: 'from-blue-500 via-indigo-500 to-purple-500' },
+                  { id: 'badges', label: `Badge (${userBadges.length})`, icon: Award, gradient: 'from-purple-500 via-pink-500 to-red-500' }
+                ].map((tab, idx) => (
+                  <motion.button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-bold text-sm transition-all duration-300 relative overflow-hidden ${
+                      activeTab === tab.id
+                        ? `bg-gradient-to-r ${tab.gradient} text-white shadow-xl`
+                        : "text-slate-600 hover:text-slate-900 hover:bg-gray-50"
+                    }`}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {activeTab === tab.id && (
+                      <motion.div
+                        layoutId="activeTabBg"
+                        className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/0"
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    )}
+                    <tab.icon className="w-5 h-5 relative z-10" />
+                    <span className="hidden sm:inline relative z-10">{tab.label}</span>
+                    <span className="sm:hidden relative z-10">{tab.label.split(' ')[0]}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
+
+              {/* Tab Content - Profile */}
+              {activeTab === "profile" && (
+                <motion.div
+                  key="profile"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+                >
+                  <div className="lg:col-span-2 space-y-6">
+                    {/* Photo Section */}
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="bg-white rounded-xl p-6 shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="relative group">
+                          <div className={`w-28 h-28 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg border-4 border-white ${getAvatarColor(displayName)} transition-transform group-hover:scale-105`}>
+                            {previewImage || profileData.photoURL ? (
+                              <img src={previewImage || profileData.photoURL} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                            ) : (
+                              getInitials(displayName)
+                            )}
+                          </div>
+                          <motion.button
+                            onClick={() => canEdit && fileInputRef.current?.click()}
+                            disabled={!canEdit}
+                            className={`absolute bottom-0 right-0 w-10 h-10 rounded-full border-3 border-white flex items-center justify-center transition-all ${canEdit ? 'bg-gradient-to-r from-orange-500 to-red-500 cursor-pointer hover:from-orange-600 hover:to-red-600' : 'bg-gray-300 cursor-not-allowed'} shadow-lg`}
+                            whileHover={canEdit ? { scale: 1.1, rotate: 5 } : {}}
+                            whileTap={canEdit ? { scale: 0.95 } : {}}
+                          >
+                            <Camera size={18} className="text-white" />
+                          </motion.button>
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-bold text-lg text-gray-900 mb-1">Upload foto baru</div>
+                          <div className="text-sm text-gray-500">
+                            Minimal 800×800 px. Format JPG atau PNG.
+                          </div>
+                        </div>
+                      </div>
+                      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} disabled={!canEdit} className="hidden" />
+                    </motion.div>
+                    
+                    {/* Personal Info */}
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="bg-white rounded-xl p-6 shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow"
+                    >
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-bold text-gray-900">Informasi Pribadi</h3>
+                        <motion.button 
+                          onClick={() => canEdit && setIsEditingPersonal(!isEditingPersonal)}
+                          disabled={!canEdit}
+                          className={`flex items-center gap-2 font-bold text-sm px-3 py-2 rounded-lg transition ${canEdit ? 'text-orange-500 hover:bg-orange-50' : 'text-gray-400 cursor-not-allowed bg-gray-50'}`}
+                          whileHover={canEdit ? { scale: 1.05 } : {}}
+                          whileTap={canEdit ? { scale: 0.95 } : {}}
+                        >
+                          <Edit2 size={16} />
+                          Edit
+                        </motion.button>
+                      </div>
+
+                      {isEditingPersonal ? (
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className="block text-sm text-gray-600 font-medium mb-2">Nama Panggilan</label>
+                              <input 
+                                type="text" 
+                                value={profileData.nickname || ""}
+                                onChange={(e) => setProfileData({...profileData, nickname: e.target.value})}
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm text-gray-600 font-medium mb-2">Nama Lengkap</label>
+                              <input 
+                                type="text" 
+                                value={profileData.fullName || ""}
+                                onChange={(e) => setProfileData({...profileData, fullName: e.target.value})}
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                              />
+                            </div>
+                          </div>
+                          <div className="mb-4">
+                            <label className="block text-sm text-gray-600 font-medium mb-2">Email</label>
+                            <input 
+                              type="email" 
+                              value={profileData.email || ""}
+                              disabled
+                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-500"
+                            />
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <motion.button 
+                              onClick={() => setIsEditingPersonal(false)}
+                              className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <X size={16} />
+                              Batal
+                            </motion.button>
+                            <motion.button 
+                              onClick={() => { handleSave(); setIsEditingPersonal(false); }}
+                              disabled={saving || !canEdit}
+                              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-bold text-sm hover:from-orange-600 hover:to-red-600 transition disabled:opacity-50 shadow-lg"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={16} />}
+                              Simpan
+                            </motion.button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <div className="text-sm text-gray-600 font-medium mb-1">Nama Panggilan</div>
+                            <div className="text-sm text-gray-900 font-medium">{profileData.nickname || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-600 font-medium mb-1">Nama Lengkap</div>
+                            <div className="text-sm text-gray-900 font-medium">{profileData.fullName || '-'}</div>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <div className="text-sm text-gray-600 font-medium mb-1">Email</div>
+                            <div className="text-sm text-gray-900 font-medium break-all">{profileData.email || '-'}</div>
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+
+                    {/* Bio Section */}
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="bg-white rounded-xl p-6 shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow"
+                    >
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-bold text-gray-900">Deskripsi</h3>
+                        <motion.button 
+                          onClick={() => canEdit && setIsEditingBio(!isEditingBio)}
+                          disabled={!canEdit}
+                          className={`flex items-center gap-2 font-bold text-sm px-3 py-2 rounded-lg transition ${canEdit ? 'text-orange-500 hover:bg-orange-50' : 'text-gray-400 cursor-not-allowed bg-gray-50'}`}
+                          whileHover={canEdit ? { scale: 1.05 } : {}}
+                          whileTap={canEdit ? { scale: 0.95 } : {}}
+                        >
+                          <Edit2 size={16} />
+                          Edit
+                        </motion.button>
+                      </div>
+
+                      {isEditingBio ? (
+                        <>
+                          <textarea 
+                            value={profileData.bio || ""}
+                            onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent min-h-[120px] resize-y transition-all"
+                            placeholder="Ceritakan tentang diri Anda..."
+                          />
+                          <div className="flex justify-end gap-2 mt-4">
+                            <motion.button 
+                              onClick={() => setIsEditingBio(false)}
+                              className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <X size={16} />
+                              Batal
+                            </motion.button>
+                            <motion.button 
+                              onClick={() => { handleSave(); setIsEditingBio(false); }}
+                              disabled={saving || !canEdit}
+                              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-bold text-sm hover:from-orange-600 hover:to-red-600 transition disabled:opacity-50 shadow-lg"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={16} />}
+                              Simpan
+                            </motion.button>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-gray-700 leading-relaxed text-sm">
+                          {profileData.bio || 'Belum ada deskripsi. Klik Edit untuk menambahkan.'}
+                        </p>
+                      )}
+                    </motion.div>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-6">
+                    {/* Security Recommendations */}
+                    <motion.div 
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-5 shadow-xl border border-orange-100 hover:shadow-2xl transition-shadow"
+                    >
+                      <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <ShieldAlert className="w-5 h-5 text-orange-500" />
+                        Rekomendasi Keamanan
+                      </h3>
+                      <div className="space-y-3">
+                        {getSecurityRecommendations(profileData).length === 0 ? (
+                          <div className="text-center py-4">
+                            <ShieldCheck className="w-12 h-12 mx-auto text-green-500 mb-2" />
+                            <p className="text-green-600 font-medium">Akun Anda sudah aman!</p>
+                            <p className="text-xs text-gray-500">Semua fitur keamanan telah diaktifkan</p>
+                          </div>
+                        ) : (
+                          getSecurityRecommendations(profileData).map((rec, index) => (
+                            <motion.div 
+                              key={index}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.2 + (index * 0.1) }}
+                              className="flex items-start gap-2 p-3 bg-white rounded-lg border border-orange-200 shadow-sm hover:shadow-md transition-shadow"
+                            >
+                              <AlertTriangle className="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" />
+                              <p className="text-sm font-medium text-gray-900">{rec}</p>
+                            </motion.div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+
+                    {/* Quick Actions */}
+                    <motion.div 
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 shadow-xl border border-green-100 hover:shadow-2xl transition-shadow"
+                    >
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">Aksi Cepat</h3>
+                      <div className="space-y-3">
+                        {!profileData.twoFactorEnabled && (
+                          <motion.button
+                            onClick={startTOTPSetup}
+                            disabled={isSettingUpTOTP}
+                            className="w-full flex items-center gap-3 p-3 bg-white hover:bg-green-50 rounded-lg border border-green-200 transition-all disabled:opacity-50 shadow-sm hover:shadow-md"
+                            whileHover={{ scale: 1.02, x: 2 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Lock className="w-5 h-5 text-green-600 flex-shrink-0" />
+                            <div className="text-left flex-1">
+                              <div className="text-sm font-bold text-green-900">Aktifkan 2FA</div>
+                              <div className="text-xs text-green-600">Tingkatkan keamanan +40%</div>
+                            </div>
+                            {isSettingUpTOTP && <Loader2 className="w-4 h-4 animate-spin text-green-600" />}
+                          </motion.button>
+                        )}
+                        
+                        <motion.button
+                          onClick={handleResetPassword}
+                          className="w-full flex items-center gap-3 p-3 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition-all shadow-sm hover:shadow-md"
+                          whileHover={{ scale: 1.02, x: 2 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Key className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                          <div className="text-left flex-1">
+                            <div className="text-sm font-bold text-gray-900">Reset Password</div>
+                            <div className="text-xs text-gray-600">Perbarui kata sandi Anda</div>
+                          </div>
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Tab Content - Security */}
+              {activeTab === "security" && (
+                <motion.div
+                  key="security"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  {/* Security Settings */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-xl p-6 shadow-xl border border-slate-200 hover:shadow-2xl transition-shadow"
+                  >
+                    <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                      <Shield className="w-6 h-6 text-blue-600" />
+                      Pengaturan Keamanan
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      {/* 2FA */}
+                      <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="border border-gray-200 rounded-lg p-4 hover:border-green-300 hover:bg-green-50/30 transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-start gap-2 flex-1">
+                            <Lock className="w-5 h-5 text-green-600 mt-0.5" />
+                            <div>
+                              <h4 className="font-bold text-gray-900">Autentikasi Dua Faktor (2FA)</h4>
+                              <p className="text-sm text-gray-600">Lapisan keamanan tambahan dengan Aplikasi Authenticator.</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {profileData.twoFactorEnabled ? (
+                              <span className="flex items-center gap-1 text-green-600 text-sm font-bold">
+                                <CheckCircle2 className="w-4 h-4" />
+                                Aktif
+                              </span>
+                            ) : (
+                              <motion.button
+                                onClick={startTOTPSetup}
+                                className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:from-green-700 hover:to-emerald-700 transition shadow-lg"
+                                disabled={isSettingUpTOTP}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                              >
+                                {isSettingUpTOTP ? 'Menyiapkan…' : 'Aktifkan TOTP'}
+                              </motion.button>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+
+                      {/* Password */}
+                      <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="border border-gray-200 rounded-lg p-4 hover:border-purple-300 hover:bg-purple-50/30 transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-start gap-2 flex-1">
+                            <Key className="w-5 h-5 text-purple-600 mt-0.5" />
+                            <div>
+                              <h4 className="font-bold text-gray-900">Kata Sandi</h4>
+                              <p className="text-sm text-gray-600">
+                                {profileData.lastPasswordChange 
+                                  ? `Terakhir diubah ${Math.floor((Date.now() - profileData.lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24))} hari lalu`
+                                  : 'Belum pernah diubah'
+                                }
+                              </p>
+                            </div>
+                          </div>
+                          <motion.button
+                            onClick={handleResetPassword}
+                            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:from-purple-700 hover:to-pink-700 transition shadow-lg"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            Reset
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    </div>
+                  </motion.div>
+
+                  {/* Security Tips */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-white rounded-xl p-6 shadow-xl border border-slate-200 hover:shadow-2xl transition-shadow"
+                  >
+                    <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                      <ShieldCheck className="w-6 h-6 text-green-600" />
+                      Tips Keamanan
+                    </h3>
+                    
+                    <div className="space-y-3">
+                      {securityTips.map((tip, idx) => (
+                        <motion.div 
+                          key={idx}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.2 + (idx * 0.1) }}
+                          className={`flex items-start gap-3 p-4 ${tip.bgColor} rounded-lg hover:scale-[1.02] transition-transform`}
+                        >
+                          <tip.icon className={`w-5 h-5 ${tip.textColor} mt-0.5 flex-shrink-0`} />
+                          <div>
+                            <h4 className={`font-bold ${tip.textColor.replace('600', '900')} mb-0.5`}>{tip.title}</h4>
+                            <p className={`text-xs ${tip.textColor.replace('600', '700')}`}>{tip.desc}</p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+
+              {/* Tab Content - Badges */}
+              {activeTab === "badges" && (
+                <motion.div
+                  key="badges"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  {/* Earned Badges */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-xl p-6 shadow-xl border border-slate-200 hover:shadow-2xl transition-shadow"
+                  >
+                    <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                      <Trophy className="w-6 h-6 text-orange-600" />
+                      Badge yang Diperoleh ({userBadges.length})
+                    </h3>
+                    
+                    {userBadges.length === 0 ? (
+                      <div className="text-center py-12 text-slate-500">
+                        <Award className="w-20 h-20 mx-auto mb-4 text-slate-300" />
+                        <p className="font-bold text-lg">Belum ada badge yang diperoleh</p>
+                        <p className="text-sm">Selesaikan misi untuk mendapatkan badge!</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {userBadges.map((userBadge, idx) => {
+                          const badge = getBadgeData(userBadge.badgeId);
+                          if (!badge) return null;
+
+                          return (
+                            <motion.div
+                              key={userBadge.badgeId}
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: idx * 0.05 }}
+                              whileHover={{ scale: 1.05, y: -5 }}
+                              className={`relative p-4 rounded-xl border-2 text-center transition-all duration-300 shadow-lg ${getRarityColor(badge.rarity)}`}
+                            >
+                              <motion.div 
+                                className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center border-2 border-white shadow-lg"
+                                initial={{ scale: 0, rotate: -180 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ delay: idx * 0.05 + 0.2, type: "spring", stiffness: 500 }}
+                              >
+                                <CheckCircle className="w-3.5 h-3.5 text-white" />
+                              </motion.div>
+                              
+                              <div className="text-5xl mb-3">{badge.icon}</div>
+                              <h4 className="font-bold text-slate-900 text-sm mb-1 line-clamp-1">{badge.name}</h4>
+                              <p className="text-xs text-slate-600 mb-2 line-clamp-2">{badge.description}</p>
+                              
+                              <div className="flex items-center justify-center gap-1 text-xs text-slate-500 mb-1">
+                                <Zap className="w-3.5 h-3.5 text-yellow-500" />
+                                <span className="font-bold">{badge.points} poin</span>
+                              </div>
+                              
+                              <div className="text-xs text-green-600 font-medium">
+                                {userBadge.earnedAt.toLocaleDateString()}
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </motion.div>
+
+                  {/* All Available Badges */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-white rounded-xl p-6 shadow-xl border border-slate-200 hover:shadow-2xl transition-shadow"
+                  >
+                    <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                      <Star className="w-6 h-6 text-slate-400" />
+                      Semua Badge Tersedia ({badges.length})
+                    </h3>
+
+                    {badges.length === 0 ? (
+                      <div className="text-center py-12 text-slate-500">
+                        <Award className="w-20 h-20 mx-auto mb-4 text-slate-300" />
+                        <p className="font-bold text-lg">Belum ada badge tersedia</p>
+                        <p className="text-sm">Tunggu pembaruan konten untuk melihat badge baru.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {badges.map((badge, idx) => (
+                          <motion.div
+                            key={badge.id}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: idx * 0.03 }}
+                            whileHover={{ scale: 1.05, y: -5 }}
+                            className="relative p-4 rounded-xl border-2 text-center transition-all duration-300 border-slate-200 bg-slate-50 hover:bg-white shadow-md hover:shadow-xl"
+                          >
+                            <div className="text-5xl mb-3 opacity-70 group-hover:opacity-100 transition-opacity">{badge.icon}</div>
+                            <h4 className="font-bold text-slate-900 text-sm mb-1 line-clamp-1">{badge.name}</h4>
+                            <p className="text-xs text-slate-600 mb-2 line-clamp-2">{badge.description}</p>
+                            <div className="flex items-center justify-center gap-1 text-xs text-slate-500 mb-1">
+                              <Zap className="w-3.5 h-3.5 text-yellow-500" />
+                              <span className="font-bold">{badge.points} poin</span>
+                            </div>
+                            <div className="text-xs text-slate-500 capitalize font-medium">{badge.rarity}</div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                </motion.div>
+              )}
+            </>
+          )}
+
+          {/* Pricing */}
           {activeMenu === 'pricing' && (
-            <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-              <DollarSign size={64} className="mx-auto text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Pricing Coming Soon</h3>
-              <p className="text-gray-600">Halaman pricing akan segera hadir</p>
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="-mx-4 sm:-mx-6 lg:-mx-8"
+            >
+              <Harga hideFooter />
+            </motion.div>
           )}
-          {activeMenu === 'settings' && (
-            <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-              <Settings size={64} className="mx-auto text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Pengaturan Coming Soon</h3>
-              <p className="text-gray-600">Halaman pengaturan akan segera hadir</p>
-            </div>
+
+          {/* Store */}
+          {activeMenu === 'store' && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl shadow-2xl p-12 text-center border border-gray-100"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1, rotate: 360 }}
+                transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
+              >
+                <Store size={64} className="mx-auto text-gray-300 mb-4" />
+              </motion.div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Toko Coming Soon</h3>
+              <p className="text-sm text-gray-600">Halaman toko akan segera hadir.</p>
+            </motion.div>
+          )}
+
+          {/* History */}
+          {activeMenu === 'history' && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl shadow-2xl p-12 text-center border border-gray-100"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1, rotate: 360 }}
+                transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
+              >
+                <History size={64} className="mx-auto text-gray-300 mb-4" />
+              </motion.div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Riwayat Coming Soon</h3>
+              <p className="text-sm text-gray-600">Halaman riwayat akan segera hadir.</p>
+            </motion.div>
           )}
         </div>
-      </div>
+      </main>
 
-      {/* All Badges Modal */}
-      <AllBadgesModal />
-    </>
+      {/* TOTP Setup Modal */}
+      <AnimatePresence>
+        {showTOTPSetup && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100"
+            >
+              <div className="text-center mb-4">
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 300, delay: 0.1 }}
+                >
+                  <Lock className="w-14 h-14 mx-auto text-slate-800 mb-3" />
+                </motion.div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Aktifkan TOTP 2FA</h3>
+                <p className="text-sm text-gray-600">Scan QR atau masukkan secret key di aplikasi Authenticator.</p>
+              </div>
+
+              <div className="space-y-4">
+                {totpQRCode && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="flex justify-center p-4 bg-slate-50 rounded-xl border-2 border-slate-200"
+                  >
+                    <img src={totpQRCode} alt="QR Code" className="w-56 h-56 rounded-lg shadow-lg" />
+                  </motion.div>
+                )}
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="bg-gradient-to-br from-slate-50 to-gray-100 border-2 border-slate-200 rounded-xl p-4"
+                >
+                  <p className="text-sm text-gray-600 font-bold mb-2">Secret Key:</p>
+                  <div className="bg-white border border-slate-300 rounded-lg p-3 font-mono text-sm text-center break-all select-all cursor-pointer hover:bg-slate-50 transition shadow-inner">
+                    {totpSecret}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">Salin dan masukkan ke aplikasi Authenticator Anda</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <label className="block text-sm text-gray-600 font-bold mb-2">Kode 6 digit</label>
+                  <input
+                    type="text"
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0,6))}
+                    placeholder="123456"
+                    maxLength={6}
+                    className="w-full px-4 py-4 border-2 border-gray-300 rounded-xl text-center text-2xl font-mono tracking-widest focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all shadow-inner"
+                  />
+                </motion.div>
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex gap-3 pt-2"
+                >
+                  <motion.button
+                    onClick={() => setShowTOTPSetup(false)}
+                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Batal
+                  </motion.button>
+                  <motion.button
+                    onClick={verifyTOTPSetup}
+                    disabled={totpCode.length !== 6}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-xl font-bold hover:from-slate-900 hover:to-black disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Verifikasi
+                  </motion.button>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* TOTP Login Prompt */}
+      <AnimatePresence>
+        {showTOTPLoginPrompt && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-100"
+            >
+              <div className="text-center mb-4">
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 300, delay: 0.1 }}
+                >
+                  <ShieldCheck className="w-14 h-14 mx-auto text-slate-800 mb-3" />
+                </motion.div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Verifikasi 2FA</h3>
+                <p className="text-sm text-gray-600">Masukkan kode dari aplikasi Authenticator untuk melanjutkan.</p>
+              </div>
+              <div className="space-y-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <label className="block text-sm text-gray-600 font-bold mb-2">Kode 6 digit</label>
+                  <input
+                    type="text"
+                    value={loginOTPCode}
+                    onChange={(e) => setLoginOTPCode(e.target.value.replace(/\D/g, '').slice(0,6))}
+                    placeholder="123456"
+                    maxLength={6}
+                    className="w-full px-4 py-4 border-2 border-gray-300 rounded-xl text-center text-2xl font-mono tracking-widest focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all shadow-inner"
+                  />
+                </motion.div>
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex gap-3 pt-2"
+                >
+                  <motion.button
+                    onClick={() => { setShowTOTPLoginPrompt(false); setLoginOTPCode(''); }}
+                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Batal
+                  </motion.button>
+                  <motion.button
+                    onClick={handleVerifyLoginTOTP}
+                    disabled={loginOTPCode.length !== 6 || isVerifyingLoginOTP}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-xl font-bold hover:from-slate-900 hover:to-black disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {isVerifyingLoginOTP ? 'Memverifikasi...' : 'Verifikasi'}
+                  </motion.button>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Success Modal */}
+      <AnimatePresence>
+        {showSuccessModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-gray-100"
+            >
+              <div className="text-center">
+                <motion.div 
+                  className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 300, delay: 0.1 }}
+                >
+                  <CheckCircle2 className="w-10 h-10 text-green-600" />
+                </motion.div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">{modalTitle}</h3>
+                <p className="text-sm text-gray-600 mb-6">{modalMessage}</p>
+                <motion.button
+                  onClick={() => setShowSuccessModal(false)}
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-4 rounded-xl font-bold hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  OK
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Error Modal */}
+      <AnimatePresence>
+        {showErrorModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-gray-100"
+            >
+              <div className="text-center">
+                <motion.div 
+                  className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-red-100 to-pink-100 rounded-full flex items-center justify-center"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 300, delay: 0.1 }}
+                >
+                  <AlertTriangle className="w-10 h-10 text-red-600" />
+                </motion.div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">{modalTitle}</h3>
+                <p className="text-sm text-gray-600 mb-6">{modalMessage}</p>
+                <motion.button
+                  onClick={() => setShowErrorModal(false)}
+                  className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-4 rounded-xl font-bold hover:from-red-700 hover:to-pink-700 transition-colors shadow-lg"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  OK
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   );
-};
-
-export default UMKMProfilePage;
+}
