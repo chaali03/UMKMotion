@@ -15,7 +15,8 @@ export default defineConfig({
   // Netlify Adapter Configuration
   output: 'server',
   adapter: netlify({
-  // Configuration options go here
+    // Configuration options go here
+    edgeMiddleware: true,
   }),
 
   // Existing configurations
@@ -57,20 +58,57 @@ export default defineConfig({
     },
     build: {
       // Optimize bundle splitting
-      // Let Rollup decide chunking to avoid circular chunk deps causing TDZ
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vendor-icons': ['lucide-react'],
-            'vendor-motion': ['framer-motion'],
-            'vendor-ui': ['vaul']
-          }
+          manualChunks: (id) => {
+            // Firebase chunks
+            if (id.includes('firebase/app')) return 'vendor-firebase-app';
+            if (id.includes('firebase/auth')) return 'vendor-firebase-auth';
+            if (id.includes('firebase/firestore')) return 'vendor-firebase-firestore';
+            if (id.includes('firebase/storage')) return 'vendor-firebase-storage';
+            
+            // UI libraries
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            if (id.includes('framer-motion') || id.includes('motion')) return 'vendor-motion';
+            if (id.includes('vaul')) return 'vendor-ui';
+            if (id.includes('@radix-ui')) return 'vendor-radix';
+            
+            // React chunks
+            if (id.includes('react-dom')) return 'vendor-react-dom';
+            if (id.includes('react/') && !id.includes('react-dom')) return 'vendor-react';
+            
+            // Large dependencies
+            if (id.includes('node_modules')) {
+              if (id.includes('date-fns')) return 'vendor-date';
+              if (id.includes('qrcode')) return 'vendor-qrcode';
+              if (id.includes('maplibre-gl')) return 'vendor-maps';
+            }
+          },
+          // Optimize chunk names
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]'
         }
       },
       // Increase chunk size warning limit
       chunkSizeWarningLimit: 1000,
-      // Enable minification
-      minify: true
+      // Enable minification with terser
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+          pure_funcs: ['console.log', 'console.info', 'console.debug'],
+          passes: 2
+        },
+        format: {
+          comments: false
+        }
+      },
+      // Enable source maps only in dev
+      sourcemap: false,
+      // Optimize CSS
+      cssMinify: true
     },
     optimizeDeps: {
       include: [

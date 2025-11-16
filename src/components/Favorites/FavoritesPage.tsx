@@ -616,7 +616,7 @@ export default function FavoritesPage() {
                         <div className="flex gap-2 flex-shrink-0">
                           {item.favoriteType === 'consultant' ? (
                             <button
-              onClick={() => { window.location.href = `/ConsultantPage?chat=${encodeURIComponent(item.id)}`; }}
+                              onClick={() => { window.location.href = `/ConsultantChat?consultant=${item.id}`; }}
                               className="bg-gradient-to-r from-pink-500 to-red-500 text-white py-1 px-3 rounded-full font-semibold text-xs md:text-sm hover:shadow-md transition-all flex items-center gap-1"
                             >
                               💬 Chat

@@ -7,7 +7,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import '../mapbox-custom.css';
 import type { UMKMLocation } from '../types';
 import {
-  Layers, Search, X, Locate,
+  Layers, Locate,
   Star, Clock, Phone, ExternalLink, Maximize2, Minimize2,
   Navigation, Share2, Heart, Globe, Instagram, Mail,
   Award, TrendingUp, DollarSign, Calendar, MessageCircle,
@@ -23,17 +23,19 @@ if (typeof window !== 'undefined') {
     // Define __publicField if not exists
     if (typeof (window as any).__publicField === 'undefined') {
       (window as any).__publicField = function(obj: any, key: string, value: any) {
-        if (typeof obj === 'object' && obj !== null) {
-          try {
-            Object.defineProperty(obj, key, {
-              enumerable: true,
-              configurable: true,
-              writable: true,
-              value: value
-            });
-          } catch {
-            obj[key] = value;
-          }
+        // Safely handle undefined/null objects - return early
+        if (obj == null || typeof obj !== 'object') {
+          return value;
+        }
+        try {
+          Object.defineProperty(obj, key, {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: value
+          });
+        } catch {
+          if (obj != null) obj[key] = value;
         }
         return value;
       };
@@ -64,6 +66,13 @@ interface MapboxComponentProps {
   selectedUMKM: UMKMLocation | null;
   onSelectUMKM: (umkm: UMKMLocation) => void;
   zoom?: number;
+  user?: {
+    uid?: string;
+    email?: string | null;
+    displayName?: string | null;
+    nickname?: string | null;
+    photoURL?: string | null;
+  } | null;
 }
 
 // ========================================
@@ -490,12 +499,47 @@ const createGooglePopup = (umkm: UMKMLocation) => {
 // ========================================
 // MAIN COMPONENT
 // ========================================
+// Helper functions for avatar
+const getInitials = (name: string | null | undefined): string => {
+  if (!name) return 'U';
+  const cleanName = name.trim();
+  if (cleanName.length === 0) return 'U';
+  const words = cleanName.split(/\s+/).filter(word => word.length > 0);
+  if (words.length === 0) return 'U';
+  if (words.length === 1) {
+    return cleanName.substring(0, 2).toUpperCase();
+  }
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+};
+
+const getAvatarColor = (name: string | null | undefined): string => {
+  if (!name) return '#f97316'; // orange-500
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colors = [
+    '#f97316', // orange-500
+    '#3b82f6', // blue-500
+    '#a855f7', // purple-500
+    '#22c55e', // green-500
+    '#ec4899', // pink-500
+    '#6366f1', // indigo-500
+    '#14b8a6', // teal-500
+    '#ef4444', // red-500
+    '#f59e0b', // amber-500
+    '#06b6d4', // cyan-500
+  ];
+  return colors[Math.abs(hash) % colors.length];
+};
+
 export default function MapboxComponent({
   center,
   umkmLocations,
   selectedUMKM,
   onSelectUMKM,
-  zoom = 13
+  zoom = 13,
+  user = null
 }: MapboxComponentProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -506,13 +550,20 @@ export default function MapboxComponent({
   const [isInitializing, setIsInitializing] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentMapType, setCurrentMapType] = useState(MAP_TYPES[0]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isToolbarOpen, setIsToolbarOpen] = useState(true);
+  const [radius, setRadius] = useState(5); // Radius dalam km
+  const [showRadiusControl, setShowRadiusControl] = useState(false);
+  
+  // Default collapsed di mobile
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isMobile = window.innerWidth <= 640;
+      setShowRadiusControl(!isMobile);
+    }
+  }, []);
   const geoWatchId = useRef<number | null>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const lastUserLocationRef = useRef<{ lat: number; lon: number } | null>(null);
   const [overlayVisible, setOverlayVisible] = useState(true);
 
@@ -533,26 +584,26 @@ export default function MapboxComponent({
   const [nearestUMKM, setNearestUMKM] = useState<{ umkm: UMKMLocation; distance: number } | null>(null);
   const [compassHeading, setCompassHeading] = useState(0);
 
-  const filteredLocations = useMemo(() => {
-    const keyword = searchQuery.trim().toLowerCase();
-    if (!keyword) return umkmLocations;
-    return umkmLocations.filter((umkm) => {
-      const rawValues = [
-        umkm.name,
-        umkm.category,
-        umkm.address,
-        (umkm as any).city,
-        Array.isArray((umkm as any).tags) ? (umkm as any).tags.join(' ') : undefined
-      ];
-      const normalizedValues = rawValues
-        .filter((value): value is string => typeof value === 'string' && value.length > 0)
-        .map((value) => value.toLowerCase());
-
-      return normalizedValues.some((value) => value.includes(keyword));
-    });
-  }, [searchQuery, umkmLocations]);
-
   const validCenter: [number, number] = Array.isArray(center) && center.length === 2 ? center : [-6.2088, 106.8456];
+
+  // Filter UMKM berdasarkan radius dari lokasi user atau center map
+  const filteredLocations = useMemo(() => {
+    const searchCenter = userLocation 
+      ? { lat: userLocation.lat, lng: userLocation.lng }
+      : { lat: validCenter[0], lng: validCenter[1] };
+    
+    const radiusInMeters = radius * 1000; // Convert km to meters
+    
+    return umkmLocations.filter((umkm) => {
+      const distance = calculateDistance(
+        searchCenter.lat,
+        searchCenter.lng,
+        umkm.lat,
+        umkm.lng
+      );
+      return distance <= radiusInMeters;
+    });
+  }, [userLocation, umkmLocations, radius, validCenter]);
 
   useEffect(() => {
     if (userLocation && umkmLocations.length > 0) {
@@ -727,21 +778,88 @@ export default function MapboxComponent({
     };
   }, []);
 
+  // Update radius circle di map
   useEffect(() => {
     if (!map.current || !mapReady) return;
 
+    const searchCenter = userLocation 
+      ? { lat: userLocation.lat, lng: userLocation.lng }
+      : { lat: validCenter[0], lng: validCenter[1] };
+
+    // Add circle source and layer
+    const sourceId = 'radius-circle';
+    const layerId = 'radius-circle-layer';
+
+    if (map.current.getSource(sourceId)) {
+      // Update existing source data and radius
+      (map.current.getSource(sourceId) as maplibregl.GeoJSONSource).setData({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [searchCenter.lng, searchCenter.lat]
+        },
+        properties: {}
+      });
+      // Update circle radius
+      if (map.current.getLayer(layerId)) {
+        map.current.setPaintProperty(layerId, 'circle-radius', radius * 1000);
+      }
+    } else {
+      // Add new source and layer
+      map.current.addSource(sourceId, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [searchCenter.lng, searchCenter.lat]
+          },
+          properties: {}
+        }
+      });
+
+      map.current.addLayer({
+        id: layerId,
+        type: 'circle',
+        source: sourceId,
+        paint: {
+          'circle-radius': radius * 1000, // Radius dalam meter
+          'circle-color': '#4285f4',
+          'circle-opacity': 0.1,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#4285f4',
+          'circle-stroke-opacity': 0.3
+        }
+      });
+    }
+  }, [mapReady, userLocation, radius, validCenter]);
+
+  // Update markers berdasarkan filteredLocations
+  useEffect(() => {
+    if (!map.current || !mapReady) return;
+
+    // Remove markers that are not in filteredLocations
     Object.keys(markers.current).forEach(id => {
-      if (!umkmLocations.find(umkm => umkm.id === id)) {
+      if (!filteredLocations.find(umkm => umkm.id === id)) {
         markers.current[id].remove();
         delete markers.current[id];
       }
     });
 
-    umkmLocations.forEach(umkm => {
+    // Add or update markers for filtered locations
+    filteredLocations.forEach(umkm => {
       const isSelected = selectedUMKM?.id === umkm.id;
       
       if (markers.current[umkm.id]) {
         markers.current[umkm.id].setLngLat([umkm.lng, umkm.lat]);
+        // Update popup content
+        const popup = new maplibregl.Popup({ 
+          offset: 25,
+          closeButton: true,
+          className: 'gmap-popup-container-enhanced',
+          maxWidth: '380px'
+        }).setHTML(createGooglePopup(umkm));
+        markers.current[umkm.id].setPopup(popup);
       } else {
         const el = createGoogleMarker(umkm, isSelected);
         
@@ -765,7 +883,42 @@ export default function MapboxComponent({
         markers.current[umkm.id] = marker;
       }
     });
-  }, [umkmLocations, selectedUMKM, onSelectUMKM, mapReady]);
+  }, [filteredLocations, selectedUMKM, onSelectUMKM, mapReady]);
+
+  // Update user marker avatar when isFollowing or user changes
+  useEffect(() => {
+    if (!userMarker.current || !user) return;
+    
+    const getDisplayName = (): string => {
+      if (!user) return '';
+      if (user.nickname && user.nickname.trim()) return user.nickname.trim();
+      if (user.displayName && user.displayName.trim()) return user.displayName.trim();
+      if (user.email) return user.email.split('@')[0];
+      return '';
+    };
+    
+    const displayName = getDisplayName();
+    const showProfile = isFollowing && displayName;
+    const initials = showProfile ? getInitials(displayName) : '';
+    const avatarColor = showProfile ? getAvatarColor(displayName) : '';
+    
+    const userDot = userMarker.current.getElement().querySelector('.user-dot') as HTMLElement;
+    if (userDot) {
+      if (showProfile) {
+        userDot.innerHTML = `
+          <div class="user-profile-avatar" style="width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); border: 3px solid white; background-color: ${avatarColor};">
+            ${initials}
+          </div>
+          ${userLocation?.heading !== null && userLocation?.heading !== undefined ? `<div class="user-direction-arrow" style="transform: rotate(${userLocation.heading}deg)"></div>` : ''}
+        `;
+      } else {
+        userDot.innerHTML = `
+          <div class="user-dot-inner"></div>
+          ${userLocation?.heading !== null && userLocation?.heading !== undefined ? `<div class="user-direction-arrow" style="transform: rotate(${userLocation.heading}deg)"></div>` : ''}
+        `;
+      }
+    }
+  }, [isFollowing, user, userLocation?.heading]);
 
   useEffect(() => {
     if (!map.current || !mapReady) return;
@@ -790,6 +943,16 @@ export default function MapboxComponent({
         if (!userMarker.current) {
           const el = document.createElement('div');
           el.className = 'gmap-user-location';
+          
+          // Get user display info
+          const getDisplayName = (): string => {
+            if (!user) return '';
+            if (user.nickname && user.nickname.trim()) return user.nickname.trim();
+            if (user.displayName && user.displayName.trim()) return user.displayName.trim();
+            if (user.email) return user.email.split('@')[0];
+            return '';
+          };
+          
           el.innerHTML = `
             <div class="user-accuracy-circle" style="width: ${Math.min(Math.max(accuracy, 20), 120)}px; height: ${Math.min(Math.max(accuracy, 20), 120)}px;"></div>
             <div class="user-pulse-ring"></div>
@@ -798,35 +961,36 @@ export default function MapboxComponent({
               ${heading !== null ? `<div class="user-direction-arrow" style="transform: rotate(${heading}deg)"></div>` : ''}
             </div>
           `;
-          // Click-to-center instantly to user indicator
           el.addEventListener('click', () => {
-            const mInst = map.current;
-            const last = lastUserLocationRef.current;
-            if (!mInst || !last) return;
-            snapCenter(mInst, last.lon, last.lat);
+            if (!map.current || !lastUserLocationRef.current) return;
+            snapCenter(map.current, lastUserLocationRef.current.lon, lastUserLocationRef.current.lat);
           });
           userMarker.current = new maplibregl.Marker({ 
             element: el, 
             anchor: 'center',
-            offset: [0, 0],
-            pitchAlignment: 'map',
-            rotationAlignment: 'map'
+            offset: [0, -10],
           })
             .setLngLat([longitude, latitude])
             .addTo(map.current!);
         } else {
           userMarker.current.setLngLat([longitude, latitude]);
-          // Update accuracy circle size
           const accuracyCircle = userMarker.current.getElement().querySelector('.user-accuracy-circle') as HTMLElement;
           if (accuracyCircle) {
             const size = Math.min(Math.max(accuracy, 20), 120);
             accuracyCircle.style.width = size + 'px';
             accuracyCircle.style.height = size + 'px';
           }
-          // Update direction arrow
           const directionArrow = userMarker.current.getElement().querySelector('.user-direction-arrow') as HTMLElement;
           if (directionArrow && heading !== null) {
             directionArrow.style.transform = `rotate(${heading}deg)`;
+          } else if (heading !== null) {
+            const userDot = userMarker.current.getElement().querySelector('.user-dot') as HTMLElement;
+            if (userDot) {
+              const arrow = document.createElement('div');
+              arrow.className = 'user-direction-arrow';
+              arrow.style.transform = `rotate(${heading}deg)`;
+              userDot.appendChild(arrow);
+            }
           }
         }
       },
@@ -1034,10 +1198,19 @@ export default function MapboxComponent({
                     const opacity = Math.max(0.1, Math.min(0.3, (50 - acc) / 50));
                     accuracyCircle.style.backgroundColor = `rgba(66, 133, 244, ${opacity})`;
                   }
-                  // Update direction arrow
+                  // Update direction arrow (preserve avatar if exists)
                   const directionArrow = userMarker.current.getElement().querySelector('.user-direction-arrow') as HTMLElement;
                   if (directionArrow && typeof hdg === 'number') {
                     directionArrow.style.transform = `rotate(${hdg}deg)`;
+                  } else if (typeof hdg === 'number') {
+                    // If arrow doesn't exist, add it (preserve avatar)
+                    const userDot = userMarker.current.getElement().querySelector('.user-dot') as HTMLElement;
+                    if (userDot) {
+                      const arrow = document.createElement('div');
+                      arrow.className = 'user-direction-arrow';
+                      arrow.style.transform = `rotate(${hdg}deg)`;
+                      userDot.appendChild(arrow);
+                    }
                   }
                 }
 
@@ -1201,51 +1374,79 @@ export default function MapboxComponent({
         )}
       </AnimatePresence>
 
+      {/* Radius Control */}
       {mapReady && (
-        <div className="gmap-search-wrapper">
+        <div className="gmap-radius-control">
           <motion.div
-            className="gmap-search-box"
-            layout
-            initial={false}
-            animate={isSearchOpen ? 'open' : 'closed'}
-            variants={{
-              open: { width: 'min(280px, 70vw)', paddingLeft: 14, paddingRight: 8 },
-              closed: { width: 48, paddingLeft: 0, paddingRight: 0 }
-            }}
-            transition={{ duration: 0.18 }}
-            onClick={() => { if (!isSearchOpen) setIsSearchOpen(true); }}
+            className="radius-control-panel"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
           >
-            <Search className="gmap-search-icon" size={18} />
-            <motion.input
-              type="text"
-              placeholder="Cari UMKM"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="gmap-search-input"
-              ref={searchInputRef}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setIsSearchOpen(false);
-                  setSearchQuery('');
-                }
-              }}
-              animate={isSearchOpen ? { opacity: 1, width: 'auto' } : { opacity: 0, width: 0 }}
-            />
-            {isSearchOpen && searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="gmap-search-clear">
-                <X size={16} />
+            <div className="radius-header">
+              <button
+                className="radius-toggle-btn"
+                onClick={() => setShowRadiusControl(!showRadiusControl)}
+                title="Atur Radius Pencarian"
+              >
+                <Navigation size={18} className="radius-icon" />
+                <span className="radius-text">Radius: {radius} km</span>
+                <span className="radius-count">{filteredLocations.length}</span>
               </button>
-            )}
-            {isSearchOpen && !searchQuery && (
-              <button onClick={() => setIsSearchOpen(false)} className="gmap-search-close">
-                <X size={16} />
-              </button>
-            )}
+            </div>
+            
+            <AnimatePresence>
+              {showRadiusControl && (
+                <motion.div
+                  className="radius-control-content"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="radius-slider-wrapper">
+                    <label className="radius-label">
+                      Radius Pencarian: <strong>{radius} km</strong>
+                    </label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="20"
+                      step="1"
+                      value={radius}
+                      onChange={(e) => setRadius(Number(e.target.value))}
+                      className="radius-slider"
+                    />
+                    <div className="radius-presets">
+                      {[1, 3, 5, 10, 20].map((preset) => (
+                        <button
+                          key={preset}
+                          className={`radius-preset-btn ${radius === preset ? 'active' : ''}`}
+                          onClick={() => setRadius(preset)}
+                        >
+                          {preset} km
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="radius-info">
+                    <div className="radius-info-item">
+                      <span className="info-label">Lokasi Pencarian:</span>
+                      <span className="info-value">
+                        {userLocation ? 'Lokasi Saya' : 'Pusat Peta'}
+                      </span>
+                    </div>
+                    <div className="radius-info-item">
+                      <span className="info-label">UMKM Ditemukan:</span>
+                      <span className="info-value highlight">{filteredLocations.length}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       )}
-
-      {}
 
 
       
@@ -1334,20 +1535,20 @@ export default function MapboxComponent({
           .gmap-loader-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, #fff7ed 0%, #fde7d3 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
             z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(6px);
+            backdrop-filter: blur(8px);
           }
 
           .loader-wrap {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 18px;
-            color: #ea580c;
+            gap: 24px;
+            color: #202124;
             font-weight: 600;
           }
 
@@ -1355,57 +1556,231 @@ export default function MapboxComponent({
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #FD5701;
+            width: 80px;
+            height: 80px;
+            position: relative;
+          }
+
+          .loader-icon::before {
+            content: '';
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border: 4px solid #f0f0f0;
+            border-top: 4px solid #4285f4;
+            border-radius: 50%;
+            animation: spin-loader 1s linear infinite;
+          }
+
+          .loader-icon::after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 3px solid transparent;
+            border-right: 3px solid #34a853;
+            border-radius: 50%;
+            animation: spin-loader-reverse 1.5s linear infinite;
+            top: 10px;
+            left: 10px;
+          }
+
+          @keyframes spin-loader {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+
+          @keyframes spin-loader-reverse {
+            0% { transform: rotate(360deg); }
+            100% { transform: rotate(0deg); }
           }
 
           .loader-wrap p {
-            font-size: 15px;
+            font-size: 14px;
             margin: 0;
             letter-spacing: 0.02em;
+            color: #5f6368;
+            font-weight: 500;
           }
 
-          .gmap-search-wrapper {
+          .gmap-radius-control {
             position: absolute;
-            top: 10px;
+            top: 60px;
             left: 10px;
             z-index: 10;
+            min-width: 280px;
+            max-width: calc(100vw - 20px);
           }
 
-          .gmap-search-box {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0 16px;
+          .radius-control-panel {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            height: 46px;
-            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            overflow: hidden;
           }
 
-          .gmap-search-icon { color: #70757a; flex-shrink: 0; }
-          
-          .gmap-search-input {
-            flex: 1;
-            border: none;
-            outline: none;
-            font-size: 14px;
-            color: #202124;
-            background: transparent;
+          .radius-header {
+            padding: 0;
           }
 
-          .gmap-search-clear, .gmap-search-close {
-            background: none;
-            border: none;
-            padding: 4px;
-            cursor: pointer;
-            color: #70757a;
+          .radius-toggle-btn {
+            width: 100%;
             display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #202124;
+            transition: background 0.2s;
+          }
+
+          .radius-toggle-btn:hover {
+            background: #f8f9fa;
+          }
+
+          .radius-toggle-btn svg {
+            color: #4285f4;
+            flex-shrink: 0;
+          }
+
+          .radius-text {
+            flex: 1;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .radius-count {
+            background: #4285f4;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+          }
+
+          .radius-control-content {
+            padding: 16px;
+            border-top: 1px solid #e8eaed;
+            overflow: hidden;
+          }
+
+          .radius-slider-wrapper {
+            margin-bottom: 16px;
+          }
+
+          .radius-label {
+            display: block;
+            font-size: 13px;
+            color: #5f6368;
+            margin-bottom: 12px;
+            font-weight: 500;
+          }
+
+          .radius-label strong {
+            color: #4285f4;
+            font-size: 16px;
+          }
+
+          .radius-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e8eaed;
+            outline: none;
+            -webkit-appearance: none;
+            margin-bottom: 12px;
+          }
+
+          .radius-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4285f4;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+
+          .radius-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4285f4;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+
+          .radius-presets {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+          }
+
+          .radius-preset-btn {
+            flex: 1;
+            min-width: 50px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #5f6368;
+            cursor: pointer;
+            transition: all 0.2s;
+          }
+
+          .radius-preset-btn:hover {
+            background: #e8eaed;
+          }
+
+          .radius-preset-btn.active {
+            background: #4285f4;
+            color: white;
+            border-color: #4285f4;
+          }
+
+          .radius-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-top: 12px;
+            border-top: 1px solid #e8eaed;
+          }
+
+          .radius-info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+          }
+
+          .info-label {
+            color: #5f6368;
+            font-weight: 500;
+          }
+
+          .info-value {
+            color: #202124;
+            font-weight: 600;
+          }
+
+          .info-value.highlight {
+            color: #4285f4;
+            font-size: 16px;
           }
 
           .gps-status-indicator {
             position: absolute;
-            top: 10px;
+            top: 280px;
             left: 50%;
             transform: translateX(-50%);
             padding: 12px 18px;
@@ -1707,7 +2082,7 @@ export default function MapboxComponent({
 
           .gmap-toolbar {
             position: absolute;
-            top: 120px;
+            top: 140px;
             right: 10px;
             display: flex;
             flex-direction: column;
@@ -1830,11 +2205,12 @@ export default function MapboxComponent({
 
           .gmap-user-location {
             position: relative;
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: visible;
           }
 
           .user-accuracy-circle {
@@ -1999,8 +2375,137 @@ export default function MapboxComponent({
           }
 
           @media (max-width: 640px) {
-            .gmap-search-wrapper { width: calc(100% - 20px); }
-            .gmap-toolbar { top: 140px; }
+            .gmap-radius-control {
+              width: auto;
+              min-width: auto;
+              max-width: calc(100vw - 100px);
+              top: 50px;
+            }
+            
+            .gps-status-indicator {
+              top: 240px;
+            }
+            
+            .radius-control-panel {
+              border-radius: 8px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            }
+            
+            .radius-toggle-btn {
+              font-size: 10px;
+              padding: 4px 6px;
+              gap: 4px;
+              white-space: nowrap;
+            }
+            
+            .radius-toggle-btn .radius-icon {
+              width: 14px;
+              height: 14px;
+              flex-shrink: 0;
+            }
+            
+            .radius-text {
+              font-size: 9px;
+              flex: 0 1 auto;
+              min-width: 0;
+            }
+            
+            /* Hide text on very small screens, show only icon and count */
+            @media (max-width: 480px) {
+              .radius-text {
+                display: none;
+              }
+              
+              .radius-toggle-btn {
+                padding: 4px 5px;
+                gap: 3px;
+              }
+            }
+            
+            .radius-count {
+              font-size: 8px;
+              padding: 1px 4px;
+              border-radius: 4px;
+              flex-shrink: 0;
+              min-width: 18px;
+              text-align: center;
+            }
+            
+            .radius-control-content {
+              padding: 8px;
+            }
+            
+            .radius-slider-wrapper {
+              margin-bottom: 10px;
+            }
+            
+            .radius-label {
+              font-size: 11px;
+              margin-bottom: 6px;
+            }
+            
+            .radius-label strong {
+              font-size: 13px;
+            }
+            
+            .radius-slider {
+              margin-bottom: 6px;
+              height: 4px;
+            }
+            
+            .radius-slider::-webkit-slider-thumb {
+              width: 16px;
+              height: 16px;
+            }
+            
+            .radius-slider::-moz-range-thumb {
+              width: 16px;
+              height: 16px;
+            }
+            
+            .radius-presets {
+              gap: 3px;
+              display: grid;
+              grid-template-columns: repeat(5, 1fr);
+            }
+            
+            .radius-preset-btn {
+              font-size: 9px;
+              padding: 4px 2px;
+              min-width: auto;
+            }
+            
+            .radius-info {
+              padding-top: 8px;
+              gap: 4px;
+            }
+            
+            .radius-info-item {
+              font-size: 10px;
+              flex-wrap: wrap;
+            }
+            
+            .info-label {
+              font-size: 9px;
+            }
+            
+            .info-value {
+              font-size: 10px;
+            }
+            
+            .info-value.highlight {
+              font-size: 12px;
+            }
+            
+            .gmap-toolbar { 
+              top: 110px;
+              right: 8px;
+            }
+            
+            .toolbar-btn, .toolbar-icon {
+              width: 34px;
+              height: 34px;
+            }
           }
 
           /* Global Popup Styles */

@@ -284,7 +284,6 @@ const PerformanceChart: React.FC<{ data: Consultant['performance'] }> = ({ data 
 };
 
 const ConsultantHomePage: React.FC = () => {
-  const [showChatPage, setShowChatPage] = useState(false);
   const [selectedConsultant, setSelectedConsultant] = useState<Consultant | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -300,21 +299,6 @@ const ConsultantHomePage: React.FC = () => {
       setIsLoggedIn(!!user);
     });
     return () => unsub();
-  }, []);
-
-  // Baca query ?chat=<id> untuk langsung membuka chat di halaman konsultan
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const chatIdRaw = params.get('chat');
-    const chatId = chatIdRaw ? Number(chatIdRaw) : NaN;
-    if (Number.isFinite(chatId)) {
-      const c = CONSULTANTS.find((x) => x.id === chatId);
-      if (c) {
-        setSelectedConsultant(c);
-        setShowChatPage(true);
-      }
-    }
   }, []);
 
   const showToast = (type: 'favorite' | 'share', title: string, message: string) => {
@@ -346,16 +330,6 @@ const ConsultantHomePage: React.FC = () => {
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
   }, [mvX, mvY]);
-
-  const openChat = (c: Consultant) => {
-    setSelectedConsultant(c);
-    setShowChatPage(true);
-  };
-
-  const closeChat = () => {
-    setShowChatPage(false);
-    setSelectedConsultant(null);
-  };
 
   const openDetail = (c: Consultant) => {
     setSelectedConsultant(c);
@@ -401,7 +375,7 @@ const ConsultantHomePage: React.FC = () => {
       showToast('favorite', 'Ditambahkan ke Favorit!', consultant.name);
 
       try {
-        const url = `/ConsultantPage?chat=${encodeURIComponent(consultant.id)}`;
+        const url = `/ConsultantChat?consultant=${consultant.id}`;
         localStorage.setItem('lastConsultantChatId', String(consultant.id));
         window.location.href = url;
       } catch {}
@@ -416,7 +390,7 @@ const ConsultantHomePage: React.FC = () => {
 
   const handleShare = (e: React.MouseEvent, consultant: Consultant) => {
     e.stopPropagation();
-    const shareUrl = `${window.location.origin}/ConsultantPage?consultant=${consultant.id}`;
+    const shareUrl = `${window.location.origin}/ConsultantChat?consultant=${consultant.id}`;
     const shareText = `Lihat konsultan ${consultant.name} - ${consultant.specialty} di UMKMotion`;
 
     if (navigator.share) {
@@ -450,10 +424,6 @@ const ConsultantHomePage: React.FC = () => {
   });
 
   const specialties = Array.from(new Set(CONSULTANTS.map((c) => c.specialty)));
-
-  if (showChatPage && selectedConsultant) {
-    return <ConsultantChatPage consultant={selectedConsultant} onBack={closeChat} />;
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50/30 via-white to-amber-50/20 text-slate-900 antialiased relative">
@@ -814,12 +784,18 @@ const ConsultantHomePage: React.FC = () => {
                       <span>{c.responseTime}</span>
                     </div>
                   )}
+                  {c.clientsCount && (
+                    <div className="flex items-center gap-1 text-amber-600">
+                      <Users size={9} />
+                      <span>{c.clientsCount}+</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Buttons - Clean */}
                 <div className="mt-1.5 flex gap-1">
                   <button
-                    onClick={() => openChat(c)}
+                    onClick={() => window.location.href = `/ConsultantChat?consultant=${c.id}`}
                     className="flex-1 inline-flex items-center justify-center gap-1 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-[9px] px-2 py-1.5 rounded-lg font-semibold hover:brightness-95 hover:shadow-md transition-all shadow-sm"
                   >
                     <MessageCircle size={10} />
@@ -1107,7 +1083,9 @@ const ConsultantHomePage: React.FC = () => {
                       <button
                         onClick={() => {
                           closeDetail();
-                          openChat(selectedConsultant);
+                          if (typeof window !== 'undefined') {
+                            window.location.href = `/ConsultantChat?consultant=${selectedConsultant.id}`;
+                          }
                         }}
                         className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-sm px-4 py-2.5 rounded-xl font-semibold hover:brightness-95 hover:shadow-lg transition-all shadow-md"
                       >
@@ -1119,7 +1097,7 @@ const ConsultantHomePage: React.FC = () => {
                           const id = selectedConsultant.id;
                           closeDetail();
                           if (typeof window !== 'undefined') {
-                            window.location.href = `/ConsultantBooking?consultant=${id}`;
+                            window.location.href = `/consultantbooking?consultant=${id}`;
                           }
                         }}
                         className="flex-1 inline-flex items-center justify-center gap-2 border-2 border-orange-600 text-orange-600 text-sm px-4 py-2.5 rounded-xl font-semibold hover:bg-orange-50 transition-all"

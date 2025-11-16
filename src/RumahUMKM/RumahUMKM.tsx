@@ -12,6 +12,10 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 // Components
 import HomeHeader from '@/LandingPage/components/header/header';
+import NavbarHome from '../../Home/NavbarHome/NavbarHome';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 // Icons
 import { 
@@ -53,7 +57,7 @@ const JAKARTA_CENTER: [number, number] = [-6.2, 106.816];
 const VALID_CATEGORIES = new Set(["Kuliner", "Fashion", "Kerajinan", "Teknologi"]);
 
 // Parse open hours like "08:00 - 21:00" into today's status
-function isCurrentlyOpen(openHours?: string): boolean {
+function isCurrentlyOpen(openHours?: string): boolean { 
   if (!openHours) return false;
   // Accept formats: "08:00 - 21:00" or "08:00-21:00"
   const m = openHours.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
@@ -123,6 +127,8 @@ export default function RumahUMKM() {
   const [umkmList, setUmkmList] = useState<UMKMLocation[]>([]);
   const [loadingStores, setLoadingStores] = useState<boolean>(true);
   const [loadingProducts, setLoadingProducts] = useState<boolean>(false);
+  const [user, setUser] = useState<any>(null);
+  const [loadingUser, setLoadingUser] = useState<boolean>(true);
 
   // Helper: choose the best image for list cards
   const pickImage = (u: UMKMLocation): string => {
@@ -385,6 +391,49 @@ export default function RumahUMKM() {
 
   const [localTheme, setLocalTheme] = useState<"light" | "dark">("light");
 
+  // Check user authentication
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              displayName: firebaseUser.displayName || userData.displayName,
+              nickname: userData.nickname,
+              photoURL: firebaseUser.photoURL || userData.photoURL
+            });
+          } else {
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              displayName: firebaseUser.displayName,
+              nickname: null,
+              photoURL: firebaseUser.photoURL
+            });
+          }
+        } catch (error) {
+          console.error('Error loading user data:', error);
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            nickname: null,
+            photoURL: firebaseUser.photoURL
+          });
+        }
+      } else {
+        setUser(null);
+      }
+      setLoadingUser(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const calculateTime = (distance: number, routeType: 'car' | 'walk' | 'bike') => {
     const speeds = { car: 40, walk: 5, bike: 15 };
     const hours = distance / speeds[routeType];
@@ -489,10 +538,19 @@ export default function RumahUMKM() {
       {/* Header with Enhanced Glass Morphism Effect */}
       <div className="absolute top-0 left-0 right-0 z-30 bg-white/90 backdrop-blur-xl border-b border-orange-200/50 shadow-lg shadow-orange-100/50">
         <div className="container mx-auto px-4">
-          <HomeHeader 
-            localTheme={localTheme}
-            setLocalTheme={setLocalTheme}
-          />
+          {!loadingUser && user ? (
+            <NavbarHome 
+              localTheme={localTheme}
+              setLocalTheme={setLocalTheme}
+            />
+          ) : !loadingUser ? (
+            <HomeHeader 
+              localTheme={localTheme}
+              setLocalTheme={setLocalTheme}
+            />
+          ) : (
+            <div className="h-16 md:h-20 lg:h-24"></div>
+          )}
         </div>
       </div>
 
@@ -1133,6 +1191,7 @@ export default function RumahUMKM() {
               umkmLocations={filteredUMKM}
               selectedUMKM={selectedUMKM}
               onSelectUMKM={handleSelectUMKM}
+              user={user}
             />
           ) : (
             <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100">

@@ -135,7 +135,7 @@ export default function LoginPage() {
         setOtpCode("");
         const redirectTo = await processPendingAction();
         showNotification("success", "✅ 2FA Berhasil", redirectTo ? "Melanjutkan aksi Anda..." : "Verifikasi sukses. Mengalihkan ke Homepage...");
-        setTimeout(() => { window.location.href = redirectTo || "/homepage"; }, 600);
+        setTimeout(() => { window.location.href = redirectTo || "/etalase"; }, 600);
       } else {
         const data = await resp.json().catch(() => ({ error: 'Verifikasi gagal' }));
         showNotification("error", "Verifikasi 2FA Gagal", data.error || "Kode OTP tidak valid atau kedaluwarsa. Coba lagi.");
@@ -197,10 +197,10 @@ export default function LoginPage() {
       showNotification(
         "success", 
         "🎉 Login Berhasil!", 
-        redirectTo ? "Melanjutkan aksi Anda..." : "Selamat datang kembali! Mengalihkan ke Homepage...",
+        redirectTo ? "Melanjutkan aksi Anda..." : "Selamat datang kembali! Mengalihkan ke Rumah UMKM...",
         <CheckCircle2 size={24} />
       );
-      setTimeout(() => { window.location.href = redirectTo || "/homepage"; }, 600);
+      setTimeout(() => { window.location.href = redirectTo || "/rumah-umkm"; }, 600);
     } catch (err: any) {
       let errorMessage = "Login gagal. Periksa email/password dan coba lagi.";
       const fieldErrors: Record<string, string> = {};
@@ -346,7 +346,7 @@ export default function LoginPage() {
         redirectTo ? "Melanjutkan aksi Anda..." : "Selamat datang! Mengalihkan ke Homepage...",
         <CheckCircle2 size={24} />
       );
-      setTimeout(() => { window.location.href = redirectTo || "/homepage"; }, 600);
+      setTimeout(() => { window.location.href = redirectTo || "/etalase"; }, 600);
     } catch (err: any) {
       let errorMessage = "Login Google gagal. Silakan coba lagi.";
       if (err.code === 'auth/popup-closed-by-user') {

@@ -1,19 +1,48 @@
 "use client";
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, MessageCircle, X, Sparkles } from 'lucide-react';
 
 interface FloatingAIButtonProps {
   onClick?: () => void;
 }
 
+// Error boundary for hydration issues
+class FloatingAIErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error('FloatingAIButton error:', error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null;
+    }
+    return this.props.children;
+  }
+}
+
 const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
   const handleClick = () => {
-    if (onClick) {
-      onClick();
-    } else {
-      window.location.href = '/ai';
+    try {
+      if (onClick) {
+        onClick();
+      } else {
+        window.location.href = '/ai';
+      }
+    } catch (error) {
+      console.error('FloatingAIButton click error:', error);
     }
   };
   const [isHovered, setIsHovered] = useState(false);
@@ -23,22 +52,30 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
   const buttonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setIsMounted(true);
-    
-    if ((showTooltip || isHovered) && buttonRef.current) {
-      const updateTooltipPosition = () => {
-        if (buttonRef.current) {
-          const rect = buttonRef.current.getBoundingClientRect();
-          setTooltipPos({
-            top: rect.top - 78,
-            right: window.innerWidth - rect.right + 8
-          });
-        }
-      };
+    try {
+      setIsMounted(true);
       
-      updateTooltipPosition();
-      window.addEventListener('resize', updateTooltipPosition);
-      return () => window.removeEventListener('resize', updateTooltipPosition);
+      if ((showTooltip || isHovered) && buttonRef.current) {
+        const updateTooltipPosition = () => {
+          try {
+            if (buttonRef.current) {
+              const rect = buttonRef.current.getBoundingClientRect();
+              setTooltipPos({
+                top: rect.top - 78,
+                right: window.innerWidth - rect.right + 8
+              });
+            }
+          } catch (error) {
+            console.warn('Tooltip position update error:', error);
+          }
+        };
+        
+        updateTooltipPosition();
+        window.addEventListener('resize', updateTooltipPosition);
+        return () => window.removeEventListener('resize', updateTooltipPosition);
+      }
+    } catch (error) {
+      console.warn('FloatingAIButton effect error:', error);
     }
   }, [showTooltip, isHovered]);
 
@@ -167,4 +204,13 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
   );
 };
 
-export default FloatingAIButton;
+// Wrap with error boundary and suspense to prevent hydration errors
+const FloatingAIButtonWithBoundary = (props: FloatingAIButtonProps) => (
+  <FloatingAIErrorBoundary>
+    <Suspense fallback={null}>
+      <FloatingAIButton {...props} />
+    </Suspense>
+  </FloatingAIErrorBoundary>
+);
+
+export default FloatingAIButtonWithBoundary;

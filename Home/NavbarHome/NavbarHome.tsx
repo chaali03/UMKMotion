@@ -40,7 +40,7 @@ const NAV_ITEMS: NavItem[] = [
     description: "Lihat produk UMKM",
   },
   {
-    href: "",
+    href: "/rumah-umkm",
     label: "Rumah UMKM",
     icon: Building2,
     description: "Informasi tentang UMKM",
@@ -631,7 +631,7 @@ const MobileDrawer = ({
           <div className="dark:bg-gradient-to-br dark:from-neutral-950 dark:to-neutral-900 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 dark:border-neutral-800 p-5 h-full w-full grow flex flex-col rounded-2xl shadow-2xl">
             {/* Header */}
             <div className="w-full flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-neutral-800">
-              <a href="/homepage" className="flex items-center gap-2 pl-1 leading-none group">
+              <a href="/etalase" className="flex items-center gap-2 pl-1 leading-none group">
                 <img
                   src="/LogoNavbar.webp"
                   alt="UMKMotion"
@@ -718,7 +718,7 @@ const DesktopNavigation = ({ pathname }: { pathname: string }) => (
     <ul className="flex items-center gap-2 font-medium bg-gray-100/80 dark:bg-neutral-900/80 p-1.5 rounded-2xl backdrop-blur-xl border border-gray-200 dark:border-neutral-800 shadow-lg">
       {NAV_ITEMS.map((item, i) => {
         const active = item.href
-          ? (item.href === "/homepage" ? pathname === "/homepage" : pathname.startsWith(item.href))
+          ? (item.href === "/etalase" ? pathname === "/etalase" : pathname.startsWith(item.href))
           : false;
         return (
           <li key={item.href}>
@@ -827,7 +827,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
   // States
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [pathname, setPathname] = useState("/homepage");
+  const [pathname, setPathname] = useState("/etalase");
   const [isMobile, setIsMobile] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -963,7 +963,7 @@ export default function NavbarHome({ localTheme, setLocalTheme }: HomeHeaderProp
               <div className="hidden md:grid md:grid-cols-[1fr_auto_1fr] md:items-center w-full gap-8">
                 {/* Logo */}
                 <div className="flex items-center gap-3 justify-start">
-                  <a href="/homepage" className="flex items-center gap-2 leading-none group">
+                  <a href="/etalase" className="flex items-center gap-2 leading-none group">
                     <img
                       src="/LogoNavbar.webp"
                       alt="UMKMotion"

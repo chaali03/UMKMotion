@@ -7,51 +7,69 @@ import { useInView } from "framer-motion";
 
 const plans = [
   {
-    name: "Pemula",
-    description: "Cocok untuk UMKM yang baru mulai online dan butuh solusi sederhana",
-    priceMonthly: 12,
-    priceYearly: 99,
+    name: "Gratis",
+    description: "Mulai berjualan online tanpa biaya. Fitur e-commerce dasar untuk pemula.",
+    priceMonthly: 0,
+    priceYearly: 0,
     features: [
-      "Hingga 10 produk katalog",
-      "Penyimpanan cloud 5GB",
-      "Dukungan email 24/7",
-      "Template website dasar",
-      "Domain gratis 1 tahun",
-      "SSL certificate"
+      "Hingga 50 produk katalog",
+      "Penyimpanan 5GB",
+      "Toko online standar",
+      "Manajemen pesanan dasar",
+      "Laporan penjualan sederhana",
+      "Integrasi pembayaran (COD, Transfer)",
+      "Dukungan komunitas",
+      "SSL certificate gratis",
+      "Dashboard penjualan basic",
+      "Notifikasi pesanan real-time"
     ],
     popular: false
   },
   {
-    name: "Bisnis",
-    description: "Paket terbaik untuk bisnis yang berkembang pesat dengan fitur lengkap",
-    priceMonthly: 48,
-    priceYearly: 399,
+    name: "Pro",
+    description: "Kelola bisnis profesional dengan dashboard keuangan lengkap & analytics mendalam.",
+    priceMonthly: 99000,
+    priceYearly: 990000,
     features: [
-      "Produk tak terbatas",
+      "Produk katalog tak terbatas",
       "Penyimpanan 50GB",
-      "Analitik dashboard lengkap",
-      "Integrasi pembayaran digital",
-      "Marketing tools",
-      "Priority support",
-      "Backup otomatis",
-      "Team collaboration"
+      "Dashboard Management Keuangan LENGKAP",
+      "Laporan keuangan detail & export PDF/Excel",
+      "Analitik penjualan real-time & forecasting",
+      "Integrasi pembayaran digital (Stripe, GCash, Midtrans, dll)",
+      "Manajemen inventory otomatis",
+      "Diskon & promo management",
+      "Email & SMS marketing tools",
+      "Dukungan prioritas 24/7",
+      "Backup otomatis harian",
+      "Team collaboration (hingga 5 anggota)",
+      "Custom branding website",
+      "SEO tools & meta optimization"
     ],
     popular: true
   },
   {
-    name: "Perusahaan",
-    description: "Solusi enterprise dengan fitur premium dan dukungan khusus",
-    priceMonthly: 96,
-    priceYearly: 899,
+    name: "Plus",
+    description: "Solusi enterprise lengkap. Semua fitur Pro + Dashboard Keuangan Advanced + Konsultan Bisnis.",
+    priceMonthly: 199000,
+    priceYearly: 1990000,
     features: [
-      "Semua fitur Bisnis++",
+      "Semua fitur Pro +",
       "Penyimpanan unlimited",
-      "SLA 99.9% & support 24/7",
-      "Akses tim tak terbatas",
-      "Custom development",
-      "Advanced security",
+      "Dashboard Management Keuangan ADVANCED",
+      "Laporan pajak & compliance otomatis",
+      "Forecasting & predictive analytics",
+      "Konsultan Bisnis gratis 1x/bulan",
+      "Manajemen multi-toko/cabang",
+      "API access untuk integrasi custom",
       "White label solution",
-      "Dedicated account manager"
+      "Team collaboration unlimited",
+      "Advanced security & 2FA mandatory",
+      "Priority support 24/7 + dedicated account manager",
+      "Training gratis untuk tim Anda",
+      "Akses beta fitur terbaru",
+      "Custom report builder",
+      "Affiliate program management"
     ],
     popular: false
   },
@@ -98,6 +116,16 @@ function AnimatedSection({ children, className = "" }: { children: React.ReactNo
   );
 }
 
+function formatRupiah(amount: number): string {
+  if (amount === 0) return "Gratis";
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
+}
+
 export default function Harga({ hideFooter = false }: { hideFooter?: boolean }) {
   const [isYearly, setIsYearly] = useState(false);
 
@@ -125,7 +153,7 @@ export default function Harga({ hideFooter = false }: { hideFooter?: boolean }) 
 
           <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-gray-900 px-2">
             Pilih Paket{" "}
-            <span className="text-blue-600">Terbaik</span>
+            <span className="text-blue-600">Harga</span> Anda
           </h2>
           <motion.div
             initial={{ width: 0, opacity: 0 }}
@@ -247,7 +275,7 @@ export default function Harga({ hideFooter = false }: { hideFooter?: boolean }) 
                     {/* Pricing - Compact */}
                     <div className="text-center mb-4">
                       <div className="flex items-baseline justify-center gap-1">
-                        <span className="text-3xl md:text-4xl font-bold text-gray-900">${price}</span>
+                        <span className="text-3xl md:text-4xl font-bold text-gray-900">{formatRupiah(price)}</span>
                         <span className="text-gray-500 text-sm">/{isYearly ? 'tahun' : 'bulan'}</span>
                       </div>
                       
@@ -292,7 +320,7 @@ export default function Harga({ hideFooter = false }: { hideFooter?: boolean }) 
                           : "bg-gray-900 text-white hover:bg-gray-800"
                       }`}
                     >
-                      Mulai Sekarang
+                      {price === 0 ? "Daftar Gratis" : "Upgrade Sekarang"}
                       <ArrowRight className="h-3 w-3" />
                     </motion.button>
                   </div>
@@ -308,22 +336,22 @@ export default function Harga({ hideFooter = false }: { hideFooter?: boolean }) 
             <div className="inline-flex flex-wrap items-center justify-center gap-3 text-xs text-gray-600 bg-white rounded-xl px-3 py-2 border border-gray-200 shadow-sm ring-1 ring-orange-100/70">
               <span className="flex items-center gap-1">
                 <Check className="h-3 w-3 text-green-500" />
-                Free trial 14 hari
+                Coba gratis 14 hari
               </span>
               <span className="text-orange-400">•</span>
               <span className="flex items-center gap-1">
                 <Check className="h-3 w-3 text-green-500" />
-                No credit card
+                Tanpa kartu kredit
               </span>
               <span className="text-orange-400">•</span>
               <span className="flex items-center gap-1">
                 <Check className="h-3 w-3 text-green-500" />
-                Cancel anytime
+                Bisa dibatalkan kapan saja
               </span>
             </div>
             
             <p className="text-xs text-gray-500 mt-3 max-w-xl mx-auto">
-              Semua paket termasuk update fitur gratis. Harga dalam USD.
+              Semua paket termasuk update fitur gratis. Harga dalam Rupiah Indonesia (IDR). Cicilan tersedia untuk paket tahunan.
             </p>
           </AnimatedSection>
         )}

@@ -5,6 +5,7 @@ import { collection, getDocs, query, where, doc, getDoc } from "firebase/firesto
 import { followStore, unfollowStore, isFollowingStore, getFollowerCount } from "@/lib/follow";
 import { onAuthStateChanged } from "firebase/auth";
 import { trackUMKMVisit } from "@/lib/activity-tracker";
+// NavbarHome akan ditambahkan di halaman yang menggunakan component ini
 
 // === TIPE DATA ===
 interface Review {
@@ -52,6 +53,9 @@ export type Product = {
   persentase_diskon?: number;
   bonusText?: string;
   product_price?: string;
+  tags?: string[];
+  harga_asli?: number;
+  likes?: number;
 };
 
 // === STAR COMPONENT ===
@@ -87,14 +91,13 @@ const renderStars = (rating: number) => {
 export default function TokoDinamis() {
   const [activeTab, setActiveTab] = useState<'beranda' | 'produk' | 'ulasan'>('beranda');
   const [modalOpen, setModalOpen] = useState(false);
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const carouselWrapperRef = useRef<HTMLDivElement>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [trending, setTrending] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [store, setStore] = useState<StoreData | null>(null);
   const [allReviews, setAllReviews] = useState<Review[]>([]);
   const [filteredReviews, setFilteredReviews] = useState<Review[]>([]);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
@@ -224,8 +227,17 @@ export default function TokoDinamis() {
       const productsQuery = query(collection(db, "products"), where("toko", "==", storeName));
       const productsSnap = await getDocs(productsQuery);
 
+      console.log(`Found ${productsSnap.docs.length} products for store: ${storeName}`);
+
       const productsList: Product[] = productsSnap.docs.map(doc => {
         const data = doc.data();
+        const normalizeTags = (data: any): string[] | undefined => {
+          const cands = [data?.tags, data?.tag, data?.promoTags, data?.labels, data?.label, data?.promo_labels];
+          const arr = cands.find((v) => Array.isArray(v)) as string[] | undefined;
+          if (arr && arr.length) return arr.filter(Boolean).map((t) => String(t));
+          const single = [data?.promo, data?.badge, data?.labelText].find((v) => typeof v === 'string');
+          return single ? [String(single)] : undefined;
+        };
         return {
           ASIN: doc.id,
           nama_produk: data.nama_produk || "Produk",
@@ -239,14 +251,18 @@ export default function TokoDinamis() {
           rating_bintang: data.rating_bintang || 4.5 + Math.random() * 0.5,
           unit_terjual: data.unit_terjual || Math.floor(Math.random() * 1200),
           persentase_diskon: data.persentase_diskon || 0,
+          harga_asli: data.harga_asli || data.hargaAsli || data.original_price || null,
+          tags: normalizeTags(data) || ["Gratis Ongkir", "+Hadiah", "Cashback"].slice(0, Math.floor(Math.random() * 3) + 1),
           bonusText: ["Gratis Ongkir", "+Hadiah", "Cashback"][Math.floor(Math.random() * 3)],
           product_price: `Rp ${(data.harga_produk || 0).toLocaleString("id-ID")}`,
         } as Product;
       });
 
-      const sorted = productsList.sort((a, b) => b.ASIN.localeCompare(a.ASIN));
-      setProducts(sorted);
-      setTrending(sorted.slice(0, 8));
+      // Shuffle produk secara random (seperti FetchData.tsx)
+      const shuffled = [...productsList].sort(() => Math.random() - 0.5);
+      console.log(`Setting ${shuffled.length} products (all products from store)`);
+      setAllProducts(shuffled);
+      setProducts(shuffled);
 
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -263,6 +279,18 @@ export default function TokoDinamis() {
       setFilteredReviews(allReviews.filter(r => Math.floor(r.rating) === selectedRating));
     }
   }, [selectedRating, allReviews]);
+
+  // Filter produk berdasarkan kategori
+  useEffect(() => {
+    if (selectedCategory === 'all') {
+      setProducts(allProducts);
+    } else {
+      // Filter langsung dengan nama kategori dari produk
+      const filtered = allProducts.filter(p => p.kategori === selectedCategory);
+      console.log(`Filtering by category ${selectedCategory}: ${filtered.length} products`);
+      setProducts(filtered);
+    }
+  }, [selectedCategory, allProducts]);
 
   const checkFollowStatus = async () => {
     if (!currentUser?.uid || !storeId) return;
@@ -307,65 +335,354 @@ export default function TokoDinamis() {
     }
   };
 
-  // Carousel
-  const cardWidth = 316;
-  const maxIndex = Math.max(0, trending.length - 3);
-  const scrollCarousel = (dir: number) => {
-    setCarouselIndex(prev => Math.max(0, Math.min(maxIndex, prev + dir)));
+  // Get unique categories from products
+  const getCategories = () => {
+    const categories = new Set<string>();
+    allProducts.forEach(p => {
+      if (p.kategori) categories.add(p.kategori);
+    });
+    return Array.from(categories).sort();
   };
-  useEffect(() => {
-    if (carouselWrapperRef.current) {
-      carouselWrapperRef.current.style.transform = `translateX(-${carouselIndex * cardWidth}px)`;
-    }
-  }, [carouselIndex]);
 
-  // Render functions
-  const renderTrendingCard = (p: Product) => {
-    const short = p.nama_produk.length > 60 ? p.nama_produk.slice(0,57)+"..." : p.nama_produk;
-    return (
-      <div key={p.ASIN} className="trending-card" onClick={() => goToBuyingPage(p)}>
-        <div className="trending-badge">Terbaru</div>
-        <div className="trending-img">
-          <img src={p.thumbnail_produk || p.gambar_produk} alt={short} loading="lazy" />
-        </div>
-        <div className="trending-info">
-          <h3 className="trending-title">{short}</h3>
-          <div className="trending-price">{p.product_price}</div>
-          <div className="trending-rating">{renderStars(p.rating_bintang || 4.5)}</div>
-          <div className="trending-sold">
-            {(p.unit_terjual || 0) > 999 ? ((p.unit_terjual||0)/1000).toFixed(1)+"K" : p.unit_terjual} terjual
-          </div>
-        </div>
-      </div>
-    );
+  const categories = getCategories();
+
+  // Helper functions for product card
+  const formatToIDR = (harga: number) => {
+    return "Rp " + harga.toLocaleString("id-ID");
+  };
+
+  const getDiscount = (product: Product) => {
+    if (product.persentase_diskon != null && product.persentase_diskon > 0) {
+      return `${product.persentase_diskon}%`;
+    }
+    if (product.harga_asli && product.harga_asli > product.harga_produk) {
+      const diskon = Math.round(((product.harga_asli - product.harga_produk) / product.harga_asli) * 100);
+      return `${diskon}%`;
+    }
+    return "0%";
+  };
+
+  const renderStarsString = (rating: number | null | undefined) => {
+    if (!rating || rating === 0) return "☆☆☆☆☆";
+    const full = Math.min(5, Math.max(0, Math.round(rating)));
+    return "★★★★★".substring(0, full) + "☆☆☆☆☆".substring(0, 5 - full);
   };
 
   const renderProductCard = (p: Product) => {
-    const short = p.nama_produk.length > 60 ? p.nama_produk.slice(0,57)+"..." : p.nama_produk;
+    return <ProductCardComponent key={p.ASIN} product={p} onProductClick={goToBuyingPage} onAddToCart={handleAddToCart} currentUser={currentUser} />;
+  };
+
+  // Product Card Component (same as FetchData.tsx)
+  const ProductCardComponent = ({ product, onProductClick, onAddToCart, currentUser }: { product: Product; onProductClick: (p: Product) => void; onAddToCart: (p: Product, e: React.MouseEvent) => void; currentUser: any }) => {
+    const shortTitle = product.nama_produk.length > 50 ? product.nama_produk.slice(0, 47) + "..." : product.nama_produk;
+    const rating = renderStarsString(product.rating_bintang);
+    const sold = product.unit_terjual != null ? `${product.unit_terjual} terjual` : "0 terjual";
+    const toIDR = (n: number) => "Rp " + n.toLocaleString("id-ID");
+    const initialSrc = (product.thumbnail_produk && product.thumbnail_produk.trim()) || (product.gambar_produk && product.gambar_produk.trim()) || "https://via.placeholder.com/300x300?text=Produk";
+    const [imgSrc, setImgSrc] = useState<string>(initialSrc);
+    const [cartPop, setCartPop] = useState(false);
+    const [heartPop, setHeartPop] = useState(false);
+    const [imageLoaded, setImageLoaded] = useState(false);
+    
+    const handleImgError = () => {
+      const alt1 = product.gambar_produk;
+      if (imgSrc && alt1 && imgSrc !== alt1) {
+        setImgSrc(alt1);
+        return;
+      }
+      const thumb = product.thumbnail_produk;
+      if (thumb && imgSrc !== thumb) {
+        try {
+          const u = new URL(thumb, window.location.origin);
+          setImgSrc(u.origin + u.pathname);
+          return;
+        } catch {
+          setImgSrc(thumb);
+          return;
+        }
+      }
+      setImgSrc("https://via.placeholder.com/300x300?text=Produk");
+    };
+
+    const handleImageLoad = () => {
+      setImageLoaded(true);
+    };
+
+    const flyToNavbar = (target: 'cart' | 'favorites') => {
+      try {
+        const cardImg = (document.querySelector('.product-card img[src="' + imgSrc.replace(/"/g, '"') + '"]') as HTMLImageElement) || null;
+        const targetEl = document.getElementById(target === 'cart' ? 'nav-cart-btn-desktop' : 'nav-fav-btn-desktop')
+          || document.getElementById(target === 'cart' ? 'nav-cart-btn-mobile' : 'nav-fav-btn-mobile');
+        if (!targetEl) return;
+
+        const imgRect = (cardImg || (document.activeElement as any))?.getBoundingClientRect?.() || { top: window.innerHeight/2, left: window.innerWidth/2, width: 60, height: 60 } as DOMRect;
+        const targetRect = targetEl.getBoundingClientRect();
+
+        const flyImg = document.createElement('img');
+        flyImg.src = imgSrc;
+        flyImg.alt = 'flying';
+        Object.assign(flyImg.style, {
+          position: 'fixed',
+          zIndex: '9999',
+          pointerEvents: 'none',
+          top: imgRect.top + 'px',
+          left: imgRect.left + 'px',
+          width: imgRect.width + 'px',
+          height: imgRect.height + 'px',
+          borderRadius: '10px',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+          transform: 'scale(1)',
+          transition: 'transform 800ms cubic-bezier(0.25, 0.46, 0.45, 0.94), top 800ms cubic-bezier(0.25, 0.46, 0.45, 0.94), left 800ms cubic-bezier(0.25, 0.46, 0.45, 0.94), width 800ms, height 800ms, opacity 300ms',
+        } as CSSStyleDeclaration);
+        document.body.appendChild(flyImg);
+
+        requestAnimationFrame(() => {
+          const endTop = targetRect.top + targetRect.height / 2 - imgRect.height * 0.15;
+          const endLeft = targetRect.left + targetRect.width / 2 - imgRect.width * 0.15;
+          flyImg.style.top = endTop + 'px';
+          flyImg.style.left = endLeft + 'px';
+          flyImg.style.width = imgRect.width * 0.3 + 'px';
+          flyImg.style.height = imgRect.height * 0.3 + 'px';
+          flyImg.style.transform = 'scale(0.6) rotate(15deg)';
+          setTimeout(() => {
+            flyImg.style.opacity = '0';
+            setTimeout(() => flyImg.remove(), 300);
+          }, 820);
+        });
+
+        targetEl.classList.add('badge-pulse');
+        setTimeout(() => targetEl.classList.remove('badge-pulse'), 800);
+      } catch {}
+    };
+
+    const handleAddToCartClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onAddToCart(product, e);
+      flyToNavbar('cart');
+      setCartPop(true);
+      setTimeout(() => setCartPop(false), 500);
+    };
+
+    const handleAddToFavorites = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!currentUser) {
+        try {
+          const pending = {
+            type: 'favorites' as const,
+            product,
+            returnUrl: window.location.href,
+            createdAt: Date.now(),
+          };
+          localStorage.setItem('pendingAction', JSON.stringify(pending));
+        } catch {}
+        window.location.href = "/login";
+        return;
+      }
+      
+      let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+      const existing = favorites.find((p: Product) => p.ASIN === product.ASIN);
+      
+      if (existing) {
+        favorites = favorites.filter((p: Product) => p.ASIN !== product.ASIN);
+      } else {
+        favorites.push(product);
+      }
+      
+      localStorage.setItem("favorites", JSON.stringify(favorites));
+      flyToNavbar('favorites');
+
+      window.dispatchEvent(new CustomEvent('favoritesUpdated', {
+        detail: { type: 'favorites', count: favorites.length }
+      }));
+
+      setHeartPop(true);
+      setTimeout(() => setHeartPop(false), 600);
+    };
+
+    const isFavorited = () => {
+      const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+      return favorites.some((p: Product) => p.ASIN === product.ASIN);
+    };
+
+    const discount = getDiscount(product);
+    const hasDiscount = discount && discount !== "0%";
+    const parsePercent = (d?: string) => {
+      if (!d) return undefined;
+      const m = d.match(/(\d+(?:[.,]\d+)?)/);
+      return m ? parseFloat(m[1].replace(',', '.')) : undefined;
+    };
+
+    let originalPrice: number | null = null;
+    if (product.harga_asli && typeof product.harga_asli === 'number' && product.harga_asli > product.harga_produk) {
+      originalPrice = product.harga_asli;
+    }
+
+    const percent = (typeof product.persentase_diskon === 'number' ? product.persentase_diskon : parsePercent(discount)) || 0;
+    let discountedPrice = product.harga_produk;
+
+    if (hasDiscount) {
+      if (originalPrice && originalPrice > product.harga_produk) {
+        discountedPrice = product.harga_produk;
+      } else if (percent > 0) {
+        if (originalPrice) {
+          discountedPrice = Math.max(0, Math.round(originalPrice * (1 - percent / 100)));
+        } else {
+          originalPrice = product.harga_produk;
+          discountedPrice = Math.max(0, Math.round(originalPrice * (1 - percent / 100)));
+        }
+      }
+    }
+
+    const showOldPrice = hasDiscount && originalPrice && originalPrice > discountedPrice;
+
     return (
-      <div key={p.ASIN} className="product-card" onClick={() => goToBuyingPage(p)}>
-        {p.persentase_diskon && p.persentase_diskon > 0 && <div className="discount-badge">{p.persentase_diskon}%</div>}
-        <div className="cart-icon-badge" onClick={(e) => handleAddToCart(p, e)}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-            <circle cx="9" cy="21" r="1" />
-            <circle cx="20" cy="21" r="1" />
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-          </svg>
-        </div>
+      <div 
+        className="product-card" 
+        onClick={() => onProductClick(product)}
+      >
         <div className="product-image">
-          <img src={p.thumbnail_produk || p.gambar_produk} alt={short} loading="lazy" />
+          {!imageLoaded && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%)',
+              backgroundSize: '200% 100%',
+              borderRadius: 'inherit',
+              animation: 'shimmer 2s infinite linear'
+            }}></div>
+          )}
+          <img 
+            src={imgSrc} 
+            alt={shortTitle} 
+            loading="lazy" 
+            decoding="async" 
+            referrerPolicy="no-referrer" 
+            onError={handleImgError}
+            onLoad={handleImageLoad}
+            style={{ 
+              opacity: imageLoaded ? 1 : 0,
+              transition: 'opacity 0.4s ease'
+            }}
+          />
+          {hasDiscount && (
+            <div className="discount-chip-overlay" aria-label={`Diskon ${discount}`}>
+              <span className="discount-chip">🔥 {discount} OFF</span>
+            </div>
+          )}
+          {/* Favorite icon di atas gambar - hanya tampil di mobile */}
+          <div 
+            className={`favorite-icon-overlay ${heartPop ? 'heart-pop' : ''}`} 
+            onClick={handleAddToFavorites} 
+            aria-label="Tambah ke favorit" 
+            title="Favorit"
+          >
+            <svg 
+              viewBox="0 0 24 24" 
+              width="16" 
+              height="16" 
+              fill={isFavorited() ? 'currentColor' : 'none'} 
+              stroke="currentColor" 
+              strokeWidth="2"
+            >
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </div>
         </div>
+        
         <div className="product-info">
-          <h3 className="product-title">{short}</h3>
-          <div className="rating-sold">
-            <div className="rating">{renderStars(p.rating_bintang || 4.5)}</div>
-            <div className="sold">
-              {(p.unit_terjual || 0) > 999 ? ((p.unit_terjual||0)/1000).toFixed(1)+"K" : p.unit_terjual} terjual
+          <div>
+            <h3 className="product-title">{shortTitle}</h3>
+            
+            <div className="rating-sold">
+              <div className="rating" title={`Rating: ${product.rating_bintang || 0}/5`}>
+                <span>{rating}</span>
+                <span style={{ 
+                  fontSize: '0.65rem', 
+                  color: '#6b7280',
+                  marginLeft: '3px'
+                }}>
+                  {product.rating_bintang ? product.rating_bintang.toFixed(1) : '0.0'}
+                </span>
+              </div>
+              <div className="sold" title="Jumlah terjual">
+                {sold}
+              </div>
+            </div>
+            
+            <div className="price-container">
+              {showOldPrice ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                    <span className="price-large price-discounted">
+                      {toIDR(discountedPrice)}
+                    </span>
+                  </div>
+                  <span className="old-price">
+                    {toIDR(originalPrice as number)}
+                  </span>
+                </>
+              ) : (
+                <span className="price-large">{toIDR(discountedPrice)}</span>
+              )}
+            </div>
+            
+            {Array.isArray(product.tags) && product.tags.length > 0 && (
+              <div className="tag-list">
+                {product.tags
+                  .filter(tag => !/\bdiskon\b/i.test(tag))
+                  .slice(0, 2)
+                  .map((tag, idx) => (
+                    <span key={idx} className="tag-chip" title={tag}>
+                      {tag}
+                    </span>
+                  ))}
+              </div>
+            )}
+            
+            <p className="store-name" title={product.toko}>
+              {product.toko}
+            </p>
+          </div>
+          
+          <div className="action-buttons">
+            <button 
+              className="btn-buy" 
+              onClick={(e) => { e.stopPropagation(); onProductClick(product); }} 
+              aria-label="Beli produk"
+            >
+              <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 12l2 2 4-4" />
+                <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+              </svg>
+              Beli Sekarang
+            </button>
+            <div 
+              className={`cart-icon-badge ${cartPop ? 'cart-pop' : ''}`} 
+              onClick={handleAddToCartClick} 
+              aria-label="Tambah ke keranjang"
+              title="Keranjang"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+              </svg>
+            </div>
+            {/* Favorite icon di bawah - hanya tampil di desktop/tablet */}
+            <div 
+              className={`favorite-icon-badge ${isFavorited() ? 'favorited' : ''} ${heartPop ? 'heart-pop' : ''}`} 
+              onClick={handleAddToFavorites} 
+              aria-label="Tambah ke favorit"
+              title="Favorit"
+            >
+              <svg viewBox="0 0 24 24" fill={isFavorited() ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
             </div>
           </div>
-          <div className="price-large">{p.product_price}</div>
-          <p className="bonus-promo">{p.bonusText}</p>
-          <p className="store-name">{p.toko}</p>
         </div>
       </div>
     );
@@ -442,23 +759,29 @@ export default function TokoDinamis() {
         {/* BERANDA */}
         {activeTab === 'beranda' && (
           <>
-            <div className="trending-section">
-              <h2 className="section-title">Produk Terbaru</h2>
-              <div className="carousel-container">
-                <button className="carousel-btn prev" onClick={() => scrollCarousel(-1)} disabled={carouselIndex === 0}>
-                  <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2.5" fill="none"/></svg>
+            <div className="category-filter-section">
+              <h2 className="section-title">Produk Toko ({products.length})</h2>
+              <div className="category-filter">
+                <button 
+                  className={`category-filter-btn ${selectedCategory === 'all' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('all')}
+                >
+                  Semua
                 </button>
-                <div className="carousel-wrapper" ref={carouselWrapperRef}>
-                  {trending.length > 0 ? trending.map(renderTrendingCard) : <div style={{padding:'2rem', textAlign:'center', color:'#94a3b8'}}>Belum ada produk terbaru</div>}
-                </div>
-                <button className="carousel-btn next" onClick={() => scrollCarousel(1)} disabled={carouselIndex === maxIndex}>
-                  <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2.5" fill="none"/></svg>
-                </button>
+                {categories.map(cat => {
+                  return (
+                    <button
+                      key={cat}
+                      className={`category-filter-btn ${selectedCategory === cat ? 'active' : ''}`}
+                      onClick={() => setSelectedCategory(cat)}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-
-            <h2 className="section-title" style={{marginTop:'2rem'}}>Semua Produk</h2>
-            <div className="product-list">
+            <div className="product-list" style={{marginTop:'1rem'}}>
               {products.length > 0 ? products.map(renderProductCard) : <div style={{gridColumn:'1/-1', padding:'2rem', textAlign:'center', color:'#94a3b8'}}>Belum ada produk tersedia</div>}
             </div>
           </>
@@ -466,9 +789,33 @@ export default function TokoDinamis() {
 
         {/* PRODUK */}
         {activeTab === 'produk' && (
-          <div className="product-list" style={{marginTop:'1rem'}}>
-            {products.length > 0 ? products.map(renderProductCard) : <div style={{gridColumn:'1/-1', padding:'2rem', textAlign:'center', color:'#94a3b8'}}>Belum ada produk</div>}
-          </div>
+          <>
+            <div className="category-filter-section">
+              <h2 className="section-title">Produk Toko ({products.length})</h2>
+              <div className="category-filter">
+                <button 
+                  className={`category-filter-btn ${selectedCategory === 'all' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('all')}
+                >
+                  Semua
+                </button>
+                {categories.map(cat => {
+                  return (
+                    <button
+                      key={cat}
+                      className={`category-filter-btn ${selectedCategory === cat ? 'active' : ''}`}
+                      onClick={() => setSelectedCategory(cat)}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="product-list" style={{marginTop:'1rem'}}>
+              {products.length > 0 ? products.map(renderProductCard) : <div style={{gridColumn:'1/-1', padding:'2rem', textAlign:'center', color:'#94a3b8'}}>Belum ada produk</div>}
+            </div>
+          </>
         )}
 
         {/* ULASAN */}
@@ -493,8 +840,7 @@ export default function TokoDinamis() {
         )}
       </div>
 
-      {/* FLOATING CHAT */}
-      <div className="chat-float" onClick={() => alert('Chat dibuka!')}>Chat</div>
+
 
       {/* MODAL DETAIL TOKO */}
       {modalOpen && store && (
@@ -560,42 +906,102 @@ export default function TokoDinamis() {
         .section-title { font-family: 'Poppins', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
         .section-title::before { content: ''; width: 6px; height: 24px; background: var(--primary); border-radius: 3px; }
 
-        .carousel-container { position: relative; overflow: hidden; border-radius: 16px; box-shadow: var(--shadow-md); background: var(--white); }
-        .carousel-wrapper { display: flex; transition: transform 0.5s ease; }
-        .trending-card { min-width: 300px; background: var(--white); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-md); transition: all 0.3s ease; position: relative; cursor: pointer; margin: 0 8px; }
-        .trending-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
-        .trending-badge { position: absolute; top: 12px; left: 12px; background: var(--trending-badge); color: white; font-weight: 900; font-size: 0.75rem; padding: 6px 12px; border-radius: 8px; z-index: 10; }
-        .trending-img { height: 200px; overflow: hidden; }
-        .trending-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-        .trending-card:hover .trending-img img { transform: scale(1.06); }
-        .trending-info { padding: 1rem; }
-        .trending-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .trending-price { font-size: 1.2rem; font-weight: 800; color: var(--danger); margin-bottom: 0.4rem; }
-        .trending-rating { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--warning); font-weight: 600; }
-        .trending-sold { font-size: 0.8rem; color: var(--text-sold); margin-top: 0.3rem; }
-        .carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.95); color: var(--secondary); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-md); z-index: 10; transition: all 0.3s ease; }
-        .carousel-btn:hover { background: white; transform: translateY(-50%) scale(1.12); color: var(--primary); }
-        .carousel-btn.prev { left: 16px; }
-        .carousel-btn.next { right: 16px; }
+        .category-filter-section { margin-top: 1rem; margin-bottom: 1.5rem; }
+        .category-filter { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; padding: 0.5rem 0; }
+        .category-filter-btn { padding: 0.6rem 1.2rem; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.9rem; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .category-filter-btn:hover { background: #f1f5f9; border-color: var(--primary); transform: translateY(-2px); }
+        .category-filter-btn.active { background: linear-gradient(135deg, var(--primary) 0%, #22c55e 100%); border-color: var(--primary); color: white; font-weight: 700; box-shadow: 0 4px 12px rgba(0, 168, 68, 0.3); }
 
-        .product-list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 1rem; }
-        .product-card { background: var(--white); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow-sm); transition: all 0.2s ease; cursor: pointer; position: relative; border: 1px solid var(--border); }
-        .product-card:hover { transform: translateY(-2px) scale(1.01); box-shadow: var(--shadow-lg); }
-        .discount-badge { position: absolute; top: 6px; left: 6px; background: linear-gradient(135deg, var(--discount-from), var(--discount-to)); color: white; font-weight: 900; font-size: 0.70rem; padding: 4px 10px 4px 8px; border-radius: 6px 0 0 6px; z-index: 10; }
-        .cart-icon-badge { position: absolute; top: 6px; right: 6px; background: rgba(243,54,54,0.95); color: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 11; box-shadow: 0 2px 10px rgba(0,0,0,0.25); transition: all 0.25s ease; }
-        .cart-icon-badge:hover { background: #d72c2c; transform: scale(1.15); }
-        .product-image { width: 100%; height: 160px; background: #f8f8f8; overflow: hidden; }
-        .product-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
-        .product-card:hover .product-image img { transform: scale(1.04); }
-        .product-info { padding: 6px 8px 8px; }
-        .product-title { font-size: 0.98rem; font-weight: 700; line-height: 1.22; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .rating-sold { display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; color: var(--text-light); margin: 1px 0 0; }
-        .rating { display: flex; align-items: center; gap: 2px; color: var(--warning); font-weight: 600; }
-        .sold { color: var(--text-sold); font-size: 0.63rem; }
-        .price-large { font-size: 0.98rem; font-weight: 800; color: var(--danger); margin: 1px 0 0; }
-        .bonus-promo { font-size: 0.60rem; color: #d97706; font-weight: 600; background: var(--bonus-bg); padding: 1px 4px; border-radius: 3px; border: 1px solid var(--bonus-border); display: inline-block; margin: 1px 0 0; }
-        .store-name { font-size: 0.62rem; color: var(--primary); font-weight: 600; margin: 1px 0 0; }
-        .store-name::before { content: "Checkmark "; font-weight: bold; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes card-hover { 0% { transform: translateY(0) rotate(0); } 100% { transform: translateY(-8px) rotate(0.5deg); } }
+        @keyframes image-zoom { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+        @keyframes shimmer { 
+          0% { background-position: -1000px 0; } 
+          100% { background-position: 1000px 0; } 
+        }
+        @keyframes pop-bounce { 0% { transform: scale(1); } 25% { transform: scale(1.15); } 50% { transform: scale(0.95); } 75% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes heart-bounce { 0% { transform: scale(1); } 25% { transform: scale(1.3); } 50% { transform: scale(0.9); } 75% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        
+        .product-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 1rem; }
+        .product-card { background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%); border-radius: 16px; overflow: hidden; transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); cursor: pointer; position: relative; border: 1px solid rgba(255, 255, 255, 0.8); display: flex; flex-direction: column; height: 100%; min-height: 380px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08), 0 3px 12px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); animation: fadeInUp 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) backwards; will-change: transform; }
+        .product-card:hover { animation: card-hover 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; border-color: rgba(253, 87, 1, 0.3); box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15), 0 12px 25px rgba(253, 87, 1, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9); transform: translateY(-10px) scale(1.02) rotate(0.5deg); }
+        .product-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(253, 87, 1, 0.03) 0%, transparent 50%); opacity: 0; transition: opacity 0.4s ease; border-radius: 16px; pointer-events: none; }
+        .product-card:hover::before { opacity: 1; }
+        .product-card:nth-child(1) { animation-delay: 0.05s; }
+        .product-card:nth-child(2) { animation-delay: 0.1s; }
+        .product-card:nth-child(3) { animation-delay: 0.15s; }
+        .product-card:nth-child(4) { animation-delay: 0.2s; }
+        .product-card:nth-child(5) { animation-delay: 0.25s; }
+        .product-card:nth-child(6) { animation-delay: 0.3s; }
+        .product-card:nth-child(7) { animation-delay: 0.35s; }
+        .product-card:nth-child(8) { animation-delay: 0.4s; }
+        .product-card:nth-child(9) { animation-delay: 0.45s; }
+        .product-card:nth-child(10) { animation-delay: 0.5s; }
+        
+        .discount-chip-overlay { position: absolute; top: 10px; left: 10px; z-index: 15; }
+        .discount-chip { display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; color: white; background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 3px 12px rgba(239, 68, 68, 0.3); transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px); }
+        .product-card:hover .discount-chip { transform: scale(1.1) translateY(-2px); box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4); }
+        
+        .favorite-icon-overlay { position: absolute; top: 10px; right: 10px; z-index: 15; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 10px; background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 3px 15px rgba(0, 0, 0, 0.15); backdrop-filter: blur(20px); transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); cursor: pointer; }
+        .favorite-icon-overlay:hover { transform: scale(1.15) rotate(8deg); background: rgba(255, 255, 255, 1); box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2); }
+        .favorite-icon-overlay:active { transform: scale(1.05) rotate(0deg); }
+        
+        .product-image { width: 100%; height: 180px; background: linear-gradient(135deg, rgba(234, 88, 12, 0.08) 0%, rgba(251, 146, 60, 0.06) 50%, rgba(253, 186, 116, 0.04) 100%); overflow: hidden; position: relative; border-radius: 14px 14px 0 0; margin: 0; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5); }
+        .product-image::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 60%; background: linear-gradient(transparent, rgba(0, 0, 0, 0.02)); pointer-events: none; }
+        .product-image img { width: 100%; height: 100%; object-fit: cover; transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94); filter: brightness(0.98) contrast(1.05); transform-origin: center; }
+        .product-card:hover .product-image img { animation: image-zoom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; filter: brightness(1.05) contrast(1.1); }
+        
+        .product-info { padding: 16px; display: flex; flex-direction: column; gap: 10px; flex-grow: 1; background: linear-gradient(180deg, transparent 0%, rgba(248, 250, 252, 0.4) 100%); }
+        .product-title { font-size: 0.9rem; font-weight: 700; color: #0f172a; line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; min-height: 2.5rem; letter-spacing: -0.02em; transition: color 0.3s ease; }
+        .product-card:hover .product-title { color: #fd5701; background: linear-gradient(135deg, #fd5701 0%, #f97316 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .rating-sold { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+        .rating { display: flex; align-items: center; gap: 4px; color: #f59e0b; font-weight: 700; font-size: 0.75rem; text-shadow: 0 2px 4px rgba(245, 158, 11, 0.3); transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .product-card:hover .rating { transform: scale(1.08); text-shadow: 0 3px 6px rgba(245, 158, 11, 0.4); }
+        .sold { font-size: 0.7rem; color: #475569; background: rgba(255, 255, 255, 0.8); padding: 5px 8px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); backdrop-filter: saturate(180%) blur(10px); transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .product-card:hover .sold { transform: translateY(-2px); box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12); }
+        
+        .price-container { margin: 6px 0; }
+        .price-large { font-size: 1.1rem; font-weight: 900; color: #0f172a; margin: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.03em; line-height: 1.2; transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .product-card:hover .price-large { transform: scale(1.05); }
+        .price-discounted { color: #ef4444 !important; background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important; }
+        .old-price { text-decoration: line-through !important; color: #94a3b8 !important; font-weight: 500; font-size: 0.8rem; opacity: 0.8; letter-spacing: -0.01em; display: block; margin-top: 2px; transition: opacity 0.3s ease; }
+        .product-card:hover .old-price { opacity: 1; }
+        
+        .tag-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+        .tag-chip { display: inline-flex; align-items: center; padding: 5px 8px; border-radius: 8px; font-size: 0.65rem; font-weight: 700; color: #374151; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #e5e7eb 100%); border: 1px solid #d1d5db; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8); transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); cursor: pointer; animation: fadeInUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) backwards; }
+        .tag-chip:nth-child(1) { animation-delay: 0.2s; }
+        .tag-chip:nth-child(2) { animation-delay: 0.25s; }
+        .tag-chip:nth-child(3) { animation-delay: 0.3s; }
+        .tag-chip:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+        
+        .store-name { font-size: 0.75rem; color: #fd5701; font-weight: 700; margin: 6px 0 0; display: flex; align-items: center; gap: 5px; padding-top: 10px; border-top: 1px solid rgba(226, 232, 240, 0.8); letter-spacing: -0.01em; transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .product-card:hover .store-name { color: #f97316; transform: translateX(3px); }
+        .store-name::before { content: '✓'; background: linear-gradient(135deg, #fd5701 0%, #f97316 50%, #ea580c 100%); color: white; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 900; box-shadow: 0 2px 6px rgba(253, 87, 1, 0.3); border: 1px solid rgba(255, 255, 255, 0.3); transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .product-card:hover .store-name::before { transform: scale(1.2) rotate(360deg); }
+        
+        .action-buttons { margin-top: auto; padding-top: 14px; display: flex; gap: 6px; align-items: center; }
+        .btn-buy { flex: 1; padding: 12px 14px; border-radius: 12px; font-size: 0.8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); border: 1px solid rgba(255, 255, 255, 0.3); background: linear-gradient(135deg, #fd5701 0%, #f97316 50%, #ea580c 100%); color: white; box-shadow: 0 5px 15px rgba(253, 87, 1, 0.3); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); letter-spacing: -0.01em; position: relative; overflow: hidden; }
+        .btn-buy::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent); transition: left 0.6s ease; }
+        .btn-buy:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 25px rgba(253, 87, 1, 0.4); }
+        .btn-buy:hover::before { left: 100%; }
+        .btn-buy:active { transform: translateY(-1px) scale(1.01); }
+        .btn-icon { width: 14px; height: 14px; transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .btn-buy:hover .btn-icon { transform: rotate(15deg) scale(1.1); }
+        
+        .cart-icon-badge { width: 44px; height: 44px; background: linear-gradient(135deg, #64748b 0%, #475569 50%, #334155 100%); border-radius: 12px; box-shadow: 0 3px 15px rgba(100, 116, 139, 0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); border: 1px solid rgba(255, 255, 255, 0.2); position: relative; overflow: hidden; }
+        .cart-icon-badge:hover { transform: scale(1.1) rotate(5deg); box-shadow: 0 5px 20px rgba(100, 116, 139, 0.4); }
+        .cart-icon-badge:active { transform: scale(1.05) rotate(0deg); }
+        .cart-icon-badge svg { width: 18px; height: 18px; stroke: white; stroke-width: 2.5; transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .cart-icon-badge:hover svg { transform: scale(1.1); }
+        .cart-pop { animation: pop-bounce 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        
+        .favorite-icon-badge { width: 44px; height: 44px; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); border: 1px solid rgba(255, 255, 255, 0.8); position: relative; overflow: hidden; color: #64748b; box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1); }
+        .favorite-icon-badge.favorited { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; animation: pop-bounce 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .favorite-icon-badge:hover { transform: translateY(-2px) scale(1.08) rotate(-5deg); box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15); border-color: #ef4444; }
+        .favorite-icon-badge:active { transform: translateY(-1px) scale(1.05) rotate(0deg); }
+        .favorite-icon-badge svg { width: 18px; height: 18px; transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .favorite-icon-badge:hover svg { transform: scale(1.15); }
+        .heart-pop { animation: heart-bounce 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
 
         .chat-float { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--primary); color: white; width: 62px; height: 62px; border-radius: 50%; box-shadow: var(--shadow-lg); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.55rem; z-index: 100; transition: all 0.3s ease; font-weight: 700; }
         .chat-float:hover { transform: scale(1.12); background: var(--primary-dark); }
@@ -630,12 +1036,40 @@ export default function TokoDinamis() {
         .review-text-new { font-size: 0.95rem; color: #475569; line-height: 1.55; }
         .no-reviews { text-align: center; padding: 3rem; color: #94a3b8; }
 
+        @media (min-width: 769px) {
+          .favorite-icon-overlay { display: none; }
+        }
         @media (max-width: 768px) {
+          .favorite-icon-overlay { display: flex; }
+          .favorite-icon-badge { display: none; }
           .product-list { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-          .trending-card { min-width: 260px; }
           .store-header { flex-direction: column; text-align: center; }
           .store-actions { margin-top: 1rem; justify-content: center; }
-          .carousel-btn { width: 44px; height: 44px; }
+          .category-filter { gap: 0.5rem; }
+          .category-filter-btn { padding: 0.5rem 1rem; font-size: 0.85rem; }
+          .product-card { min-height: 320px; border-radius: 14px; }
+          .product-image { height: 140px; border-radius: 12px 12px 0 0; }
+          .product-info { padding: 12px; gap: 8px; }
+          .product-title { font-size: 0.85rem; min-height: 2.2rem; }
+          .price-large { font-size: 1rem; }
+          .action-buttons { padding-top: 12px; flex-direction: column; }
+          .btn-buy { padding: 10px 12px; font-size: 0.75rem; border-radius: 10px; }
+          .cart-icon-badge, .favorite-icon-badge { width: 100%; height: 38px; border-radius: 10px; }
+          .favorite-icon-overlay { width: 28px; height: 28px; border-radius: 6px; top: 6px; right: 6px; }
+        }
+        @media (max-width: 640px) {
+          .product-list { grid-template-columns: 1fr; gap: 8px; }
+          .product-card { min-height: auto; border-radius: 10px; }
+          .product-image { height: 120px; border-radius: 8px 8px 0 0; }
+          .product-info { padding: 10px; gap: 6px; }
+          .product-title { font-size: 0.8rem; min-height: 2rem; }
+          .price-large { font-size: 0.95rem; }
+          .action-buttons { padding-top: 10px; gap: 6px; flex-direction: row; }
+          .btn-buy { flex: 1; padding: 8px 10px; font-size: 0.7rem; border-radius: 6px; }
+          .cart-icon-badge, .favorite-icon-badge { width: 36px; height: 36px; border-radius: 6px; flex-shrink: 0; }
+          .btn-icon { width: 12px; height: 12px; }
+          .cart-icon-badge svg, .favorite-icon-badge svg { width: 16px; height: 16px; }
+          .discount-chip { padding: 4px 6px; font-size: 0.6rem; border-radius: 6px; }
         }
       `}</style>
     </>

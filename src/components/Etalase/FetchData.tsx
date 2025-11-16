@@ -513,11 +513,18 @@ function FetchData() {
         /* Grid produk - Responsif berdasarkan ukuran layar */
         .product-list {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          grid-template-columns: 1fr;
           gap: 16px;
           justify-content: center;
           padding: 16px 0;
           position: relative;
+        }
+        
+        /* Desktop/large: baru pakai layout banyak kolom */
+        @media (min-width: 1200px) {
+          .product-list {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          }
         }
         
         /* Kartu produk - Ukuran responsif */
@@ -1347,22 +1354,22 @@ function FetchData() {
         /* Mobile Portrait - Ukuran lebih kecil */
         @media (max-width: 640px) {
           .product-container {
-            padding: 12px 8px;
+            padding: 10px 6px;
           }
           
           .product-list {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            grid-template-columns: 1fr;
+            gap: 8px;
           }
           
           .product-card {
-            min-height: 280px;
-            border-radius: 12px;
+            min-height: auto;
+            border-radius: 10px;
           }
           
           .product-image {
             height: 120px;
-            border-radius: 10px 10px 0 0;
+            border-radius: 8px 8px 0 0;
           }
           
           .product-info {
@@ -1376,8 +1383,9 @@ function FetchData() {
           }
           
           .rating-sold {
-            flex-direction: column;
-            align-items: flex-start;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
             gap: 4px;
           }
           
@@ -1387,11 +1395,12 @@ function FetchData() {
           
           .sold {
             font-size: 0.65rem;
-            padding: 4px 6px;
+            padding: 3px 6px;
           }
           
           .price-large {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            font-weight: 900;
           }
           
           .old-price {
@@ -1400,24 +1409,28 @@ function FetchData() {
           
           .store-name {
             font-size: 0.7rem;
-            padding-top: 8px;
+            padding-top: 6px;
           }
           
           .action-buttons {
             padding-top: 10px;
-            gap: 5px;
+            gap: 6px;
+            flex-direction: row;
           }
           
           .btn-buy {
-            padding: 9px 10px;
+            flex: 1;
+            padding: 8px 10px;
             font-size: 0.7rem;
-            border-radius: 8px;
+            border-radius: 6px;
           }
           
           .cart-icon-badge,
           .favorite-icon-badge {
+            width: 36px;
             height: 36px;
-            border-radius: 8px;
+            border-radius: 6px;
+            flex-shrink: 0;
           }
           
           .btn-icon {
@@ -1432,114 +1445,22 @@ function FetchData() {
           }
           
           .discount-chip {
-            padding: 5px 8px;
-            font-size: 0.65rem;
-            border-radius: 8px;
+            padding: 4px 6px;
+            font-size: 0.6rem;
+            border-radius: 6px;
           }
           
           .favorite-icon-overlay {
             width: 28px;
             height: 28px;
-            border-radius: 8px;
+            border-radius: 6px;
+            top: 6px;
+            right: 6px;
           }
           
           .load-more-btn {
-            padding: 10px 25px;
-            font-size: 0.75rem;
-          }
-        }
-        
-        /* Mobile sangat kecil */
-        @media (max-width: 480px) {
-          .product-container {
-            padding: 10px 6px;
-          }
-          
-          .product-list {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-          }
-          
-          .product-card {
-            min-height: 260px;
-            border-radius: 10px;
-          }
-          
-          .product-image {
-            height: 110px;
-            border-radius: 8px 8px 0 0;
-          }
-          
-          .product-info {
-            padding: 8px;
-            gap: 5px;
-          }
-          
-          .product-title {
-            font-size: 0.75rem;
-            min-height: 1.8rem;
-          }
-          
-          .price-large {
-            font-size: 0.85rem;
-          }
-          
-          .action-buttons {
-            padding-top: 8px;
-          }
-          
-          .btn-buy {
-            padding: 8px;
-            font-size: 0.65rem;
-          }
-          
-          .cart-icon-badge,
-          .favorite-icon-badge {
-            height: 32px;
-          }
-          
-          .toast-container {
-            top: 80px;
-            right: 10px;
-          }
-          
-          .toast {
-            min-width: 250px;
-            padding: 12px 15px;
-          }
-        }
-        
-        /* Mobile ekstra kecil */
-        @media (max-width: 360px) {
-          .product-list {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 6px;
-          }
-          
-          .product-card {
-            min-height: 240px;
-          }
-          
-          .product-image {
-            height: 100px;
-          }
-          
-          .product-info {
-            padding: 6px;
-          }
-          
-          .product-title {
+            padding: 8px 20px;
             font-size: 0.7rem;
-            min-height: 1.6rem;
-          }
-          
-          .price-large {
-            font-size: 0.8rem;
-          }
-          
-          .btn-buy {
-            padding: 7px;
-            font-size: 0.6rem;
           }
         }
         
@@ -1702,7 +1623,7 @@ function FetchData() {
                 return (
                   <ProductCard
                     key={item.ASIN}
-                    image={item.thumbnail_produk || item.gambar_produk || "/asset/placeholder/product.webp"}
+                    image={item.thumbnail_produk || item.gambar_produk || "https://via.placeholder.com/300x300?text=Produk"}
                     shortTitle={shortTitle}
                     price={item.product_price || formatToIDR(item.harga_produk)}
                     rating={rating}
@@ -1794,7 +1715,7 @@ export function ProductCard({
   onHoverChange 
 }: ProductCardProps) {
   const toIDR = (n: number) => "Rp " + n.toLocaleString("id-ID");
-  const initialSrc = (image && image.trim()) || (product.thumbnail_produk as any) || (product.gambar_produk as any) || "/asset/placeholder/product.webp";
+  const initialSrc = (image && image.trim()) || (product.thumbnail_produk as any) || (product.gambar_produk as any) || "https://via.placeholder.com/300x300?text=Produk";
   const [imgSrc, setImgSrc] = React.useState<string>(initialSrc);
   const [cartPop, setCartPop] = React.useState(false);
   const [heartPop, setHeartPop] = React.useState(false);
@@ -1818,7 +1739,7 @@ export function ProductCard({
         return;
       }
     }
-    setImgSrc("/asset/placeholder/product.webp");
+    setImgSrc("https://via.placeholder.com/300x300?text=Produk");
   };
 
   const handleImageLoad = () => {

@@ -7,22 +7,101 @@ import FloatingAIButton from '@/components/FloatingAIButton';
 <html lang="id">
   <head>
     <meta charset="utf-8" />
+    <!-- CRITICAL: Define __publicField FIRST before any other scripts -->
+    <script is:inline type="text/javascript">
+      // CRITICAL: This must run before any React/vendor code loads
+      // Always override any existing version with our safe implementation
+      (function() {
+        'use strict';
+        // Safe __publicField implementation that handles undefined/null objects
+        function safePublicField(obj, key, value) {
+          // Safely handle undefined/null objects - return early to prevent errors
+          if (obj == null || typeof obj !== 'object') {
+            return value;
+          }
+          try {
+            Object.defineProperty(obj, key, {
+              enumerable: true,
+              configurable: true,
+              writable: true,
+              value: value
+            });
+          } catch (e) {
+            // Fallback: try direct assignment if defineProperty fails
+            if (obj != null && typeof obj === 'object') {
+              try {
+                obj[key] = value;
+              } catch (e2) {
+                // Silently fail if both methods fail
+              }
+            }
+          }
+          return value;
+        }
+        
+        // Override __publicField everywhere - always use our safe version
+        var __publicField = safePublicField;
+        
+        // Attach to all possible global contexts
+        try { window.__publicField = __publicField; } catch (e) {}
+        try { self.__publicField = __publicField; } catch (e) {}
+        try { globalThis.__publicField = __publicField; } catch (e) {}
+        try { if (typeof global !== 'undefined') global.__publicField = __publicField; } catch (e) {}
+        
+        // Create bare identifier in global scope for direct references
+        try {
+          (0, eval)("var __publicField = (function(obj, key, value) { if (obj == null || typeof obj !== 'object') return value; try { Object.defineProperty(obj, key, { enumerable: true, configurable: true, writable: true, value: value }); } catch { if (obj != null) obj[key] = value; } return value; });");
+        } catch (e) {}
+        
+        // CRITICAL: Re-apply safe version after vendor scripts load
+        // This ensures bundled vendor code uses our safe version
+        var reapplySafeVersion = function() {
+          try {
+            var safe = safePublicField;
+            // Override again in case vendor code overwrote it
+            window.__publicField = safe;
+            self.__publicField = safe;
+            globalThis.__publicField = safe;
+            if (typeof global !== 'undefined') global.__publicField = safe;
+            // Re-create bare identifier multiple times to ensure it sticks
+            try {
+              (0, eval)("var __publicField = (function(obj, key, value) { if (obj == null || typeof obj !== 'object') return value; try { Object.defineProperty(obj, key, { enumerable: true, configurable: true, writable: true, value: value }); } catch { if (obj != null) obj[key] = value; } return value; });");
+            } catch (e) {}
+            // Also try to make it non-configurable to prevent overwrites
+            try {
+              Object.defineProperty(window, '__publicField', {
+                value: safe,
+                writable: false,
+                configurable: false,
+                enumerable: true
+              });
+            } catch (e) {
+              // If that fails, at least keep it writable
+              try { window.__publicField = safe; } catch (e2) {}
+            }
+          } catch (e) {}
+        };
+        
+        // Re-apply immediately and also after DOM loads
+        reapplySafeVersion();
+        if (typeof document !== 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', reapplySafeVersion);
+          }
+          window.addEventListener('load', reapplySafeVersion);
+        }
+        // Also re-apply after delays to catch late-loading scripts
+        setTimeout(reapplySafeVersion, 0);
+        setTimeout(reapplySafeVersion, 50);
+        setTimeout(reapplySafeVersion, 100);
+        setTimeout(reapplySafeVersion, 250);
+        setTimeout(reapplySafeVersion, 500);
+        setTimeout(reapplySafeVersion, 1000);
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
-    <script is:inline type="text/javascript">
-      // Define as var and also attach to common globals to cover different eval contexts
-      // eslint-disable-next-line no-var
-      var __publicField = (typeof __publicField === 'function') ? __publicField : function(obj, key, value) {
-        try { Object.defineProperty(obj, key, { enumerable: true, configurable: true, writable: true, value }); }
-        catch { obj[key] = value; }
-        return value;
-      };
-      try { (window).__publicField = __publicField; } catch {}
-      try { (self).__publicField = __publicField; } catch {}
-      try { (globalThis).__publicField = __publicField; } catch {}
-      try { (0, eval)("this.__publicField = this.__publicField || window.__publicField; __publicField = this.__publicField;"); } catch {}
-    </script>
   </head>
   <body class="min-h-screen bg-gradient-to-br from-orange-50 via-white to-sky-50 text-slate-900 antialiased">
     <div class="relative min-h-screen flex flex-col">

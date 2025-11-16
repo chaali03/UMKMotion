@@ -285,34 +285,34 @@ const Feature1 = () => {
               <div className="p-2 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl shadow-lg">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent line-clamp-2">
                 Paket Keanggotaan
               </h1>
             </div>
-            <p className="text-base text-gray-600 ml-14">
-              Pilih paket yang sesuai untuk mengembangkan bisnis UMKM Anda
+            <p className="text-sm text-gray-600 ml-14">
+              Pilih paket yang sesuai untuk mengembangkan bisnis Anda
             </p>
           </motion.div>
 
           <div className="space-y-3 mt-8 relative z-10">
             {[
               {
-                title: "Starter",
+                title: "Gratis",
                 desc: "Gratis - Fitur dasar",
                 color: "green",
                 rotation: 0,
                 icon: "🌱",
               },
               {
-                title: "Business",
+                title: "Pro",
                 desc: "Rp 99.000/bulan",
                 color: "orange",
                 rotation: 3,
                 icon: "🚀",
               },
               {
-                title: "Premium",
-                desc: "Rp 999.000/tahun",
+                title: "Plus",
+                desc: "Rp 199.000/bulan",
                 color: "blue",
                 rotation: -1,
                 icon: "👑",
@@ -619,9 +619,9 @@ const Feature1 = () => {
                 <p className="text-sm leading-relaxed">
                   Sebagai member{" "}
                   <span className="font-bold text-blue-600 border-b-2 border-dashed border-blue-400 px-1">
-                    Business
+                    Pro
                   </span>
-                  , Anda mendapat diskon 15% untuk semua produk dan gratis ongkir ke seluruh Indonesia.
+                  , Anda mendapat akses dashboard keuangan lengkap dan analytics real-time untuk bisnis Anda.
                 </p>
                 <motion.button
                   className="absolute -bottom-3 right-2 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 px-3 py-1.5 text-xs font-semibold text-white shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 transition-all"

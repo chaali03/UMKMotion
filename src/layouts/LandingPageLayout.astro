@@ -14,28 +14,104 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
 <html lang="en" class="light">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="generator" content={Astro.generator} />
-    <meta name="description" content="UMKMotion – Direktori UMKM Indonesia. Temukan, jelajahi, dan dukung UMKM lokal dengan peta interaktif, kategori, dan fitur modern." />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; worker-src 'self' blob:; child-src 'self' blob: https:; frame-src 'self' blob: https://*.firebaseapp.com https://*.google.com https://*.gstatic.com https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https: data:; connect-src 'self' https: wss:; base-uri 'self'; form-action 'self'">
-    <title>{title}</title>
-
+    <!-- CRITICAL: Define __publicField FIRST before any other scripts -->
     <script is:inline type="text/javascript">
-      // Define as var so bare identifier resolves; also attach on globalThis and self
-      // to cover module and worker contexts that might eval in window scope.
-      // eslint-disable-next-line no-var
-      var __publicField = (typeof __publicField === 'function') ? __publicField : function(obj, key, value) {
-        try { Object.defineProperty(obj, key, { enumerable: true, configurable: true, writable: true, value }); }
-        catch { obj[key] = value; }
-        return value;
-      };
-      try { (window).__publicField = __publicField; } catch {}
-      try { (self).__publicField = __publicField; } catch {}
-      try { (globalThis).__publicField = __publicField; } catch {}
-      // Ensure the bare identifier exists in the global scope for any chunks evaluating it
-      try { (0, eval)("var __publicField = window.__publicField;"); } catch {}
+      // CRITICAL: This must run before any React/vendor code loads
+      // Always override any existing version with our safe implementation
+      (function() {
+        'use strict';
+        // Safe __publicField implementation that handles undefined/null objects
+        function safePublicField(obj, key, value) {
+          // Safely handle undefined/null objects - return early to prevent errors
+          if (obj == null || typeof obj !== 'object') {
+            return value;
+          }
+          try {
+            Object.defineProperty(obj, key, {
+              enumerable: true,
+              configurable: true,
+              writable: true,
+              value: value
+            });
+          } catch (e) {
+            // Fallback: try direct assignment if defineProperty fails
+            if (obj != null && typeof obj === 'object') {
+              try {
+                obj[key] = value;
+              } catch (e2) {
+                // Silently fail if both methods fail
+              }
+            }
+          }
+          return value;
+        }
+        
+        // Override __publicField everywhere - always use our safe version
+        var __publicField = safePublicField;
+        
+        // Attach to all possible global contexts
+        try { window.__publicField = __publicField; } catch (e) {}
+        try { self.__publicField = __publicField; } catch (e) {}
+        try { globalThis.__publicField = __publicField; } catch (e) {}
+        try { if (typeof global !== 'undefined') global.__publicField = __publicField; } catch (e) {}
+        
+        // Create bare identifier in global scope for direct references
+        try {
+          (0, eval)("var __publicField = (function(obj, key, value) { if (obj == null || typeof obj !== 'object') return value; try { Object.defineProperty(obj, key, { enumerable: true, configurable: true, writable: true, value: value }); } catch { if (obj != null) obj[key] = value; } return value; });");
+        } catch (e) {}
+        
+        // CRITICAL: Re-apply safe version after vendor scripts load
+        // This ensures bundled vendor code uses our safe version
+        var reapplySafeVersion = function() {
+          try {
+            var safe = safePublicField;
+            // Override again in case vendor code overwrote it
+            window.__publicField = safe;
+            self.__publicField = safe;
+            globalThis.__publicField = safe;
+            if (typeof global !== 'undefined') global.__publicField = safe;
+            // Re-create bare identifier multiple times to ensure it sticks
+            try {
+              (0, eval)("var __publicField = (function(obj, key, value) { if (obj == null || typeof obj !== 'object') return value; try { Object.defineProperty(obj, key, { enumerable: true, configurable: true, writable: true, value: value }); } catch { if (obj != null) obj[key] = value; } return value; });");
+            } catch (e) {}
+            // Also try to make it non-configurable to prevent overwrites
+            try {
+              Object.defineProperty(window, '__publicField', {
+                value: safe,
+                writable: false,
+                configurable: false,
+                enumerable: true
+              });
+            } catch (e) {
+              // If that fails, at least keep it writable
+              try { window.__publicField = safe; } catch (e2) {}
+            }
+          } catch (e) {}
+        };
+        
+        // Re-apply immediately and also after DOM loads
+        reapplySafeVersion();
+        if (typeof document !== 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', reapplySafeVersion);
+          }
+          window.addEventListener('load', reapplySafeVersion);
+        }
+        // Also re-apply after delays to catch late-loading scripts
+        setTimeout(reapplySafeVersion, 0);
+        setTimeout(reapplySafeVersion, 50);
+        setTimeout(reapplySafeVersion, 100);
+        setTimeout(reapplySafeVersion, 250);
+        setTimeout(reapplySafeVersion, 500);
+        setTimeout(reapplySafeVersion, 1000);
+      })();
     </script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description || "UMKMotion – Direktori UMKM Indonesia. Temukan, jelajahi, dan dukung UMKM lokal dengan peta interaktif, kategori, dan fitur modern."} />
+    <meta name="charset" content="utf-8" />
+    <title>{title}</title>
     
     <!-- Critical CSS - minimal for fastest FCP -->
     <style>
@@ -49,18 +125,15 @@ import FloatingAIButton from "../components/FloatingAIButton.tsx";
       @media (prefers-reduced-motion:reduce){*{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}}
     </style>
     
-    <!-- Critical resource hints for LCP optimization -->
+    <!-- Critical resource hints for LCP optimization - limit to 4 preconnects -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://i.pravatar.cc" />
-    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
-    <link rel="preconnect" href="https://randomuser.me" crossorigin />
-    <link rel="dns-prefetch" href="https://randomuser.me" />
     
-    <!-- Load fonts with display swap - no preload to avoid 404 -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" media="print" onload="this.media='all'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" /></noscript>
+    <!-- Load fonts asynchronously with display swap -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" /></noscript>
     
     
     

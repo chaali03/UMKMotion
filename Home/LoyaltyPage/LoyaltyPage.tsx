@@ -196,7 +196,7 @@ export default function LoyaltyPage() {
       >
         <div className="flex items-center gap-4 mb-6">
           <button
-            onClick={() => window.location.href = "/homepage"}
+            onClick={() => window.location.href = "/etalase"}
             className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-slate-600" />

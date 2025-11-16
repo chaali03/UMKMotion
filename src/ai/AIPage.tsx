@@ -714,7 +714,7 @@ const AIPage: React.FC = () => {
               <motion.a
                 whileHover={{ scale: 1.02, x: -2 }}
                 whileTap={{ scale: 0.98 }}
-                href={isAuthed ? '/homepage' : '/'}
+                href={isAuthed ? '/etalase' : '/'}
                 className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors text-sm"
                 aria-label="Kembali ke beranda"
               >

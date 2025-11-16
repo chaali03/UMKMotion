@@ -13,10 +13,14 @@ import RumahUMKM from '../RumahUMKM/RumahUMKM';
   // Define a global bare identifier and also attach to common globals
   // eslint-disable-next-line no-var
   var __publicField = (typeof __publicField === 'function') ? __publicField : function (obj, key, value) {
+    // Safely handle undefined/null objects - return early
+    if (obj == null || typeof obj !== 'object') {
+      return value;
+    }
     try {
       Object.defineProperty(obj, key, { enumerable: true, configurable: true, writable: true, value });
     } catch (error) {
-      obj[key] = value;
+      if (obj != null) obj[key] = value;
     }
     return value;
   };

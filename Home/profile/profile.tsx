@@ -176,11 +176,11 @@ export default function ProfilePage() {
         return;
       }
       
-      // Consultant chat - redirect to ConsultantHome
+      // Consultant chat - redirect to ConsultantChat
       if ((a.type === 'consult_chat' || a.type === 'consult_chat_message') && a.consultantId) {
         const consultantId = typeof a.consultantId === 'number' ? a.consultantId : parseInt(String(a.consultantId));
         if (!isNaN(consultantId) && consultantId > 0) {
-          window.location.href = `/ConsultantPage?consultant=${consultantId}`;
+          window.location.href = `/ConsultantChat?consultant=${consultantId}`;
           return;
         }
       }
@@ -271,6 +271,19 @@ export default function ProfilePage() {
               const data: any = d.data();
               const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : 
                                data.createdAt ? new Date(data.createdAt) : new Date();
+              
+              // Debug consultant data
+              if (data.type === 'consult_chat' || data.type === 'consult_chat_message') {
+                console.log('Loading consultant activity:', {
+                  id: d.id,
+                  type: data.type,
+                  consultantId: data.consultantId,
+                  consultantName: data.consultantName,
+                  image: data.image,
+                  title: data.title
+                });
+              }
+              
               return {
                 id: d.id,
                 type: data.type || 'other',
@@ -280,8 +293,8 @@ export default function ProfilePage() {
                 storeId: data.storeId || null,
                 productASIN: data.productASIN || null,
                 productName: data.productName || data.title || null,
-                consultantId: data.consultantId || null,
-                consultantName: data.consultantName || null,
+                consultantId: data.consultantId !== undefined && data.consultantId !== null ? Number(data.consultantId) : null,
+                consultantName: data.consultantName || data.title || null,
                 image: data.image || null,
                 category: data.category || null,
                 createdAt,
@@ -297,22 +310,36 @@ export default function ProfilePage() {
         // Load from localStorage as fallback
         try {
           const localActivities = JSON.parse(localStorage.getItem('user_activities') || '[]');
-          const localMapped = localActivities.map((a: any) => ({
-            id: a.id || `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            type: a.type || 'other',
-            title: a.title || '',
-            store: a.store || null,
-            storeName: a.store || a.storeName || null,
-            storeId: a.storeId || null,
-            productASIN: a.productASIN || null,
-            productName: a.productName || a.title || null,
-            consultantId: a.consultantId || null,
-            consultantName: a.consultantName || null,
-            image: a.image || null,
-            category: a.category || null,
-            createdAt: a.createdAt ? new Date(a.createdAt) : new Date(),
-            dateAdded: a.createdAt ? new Date(a.createdAt).toLocaleString('id-ID') : new Date().toLocaleString('id-ID')
-          }));
+          const localMapped = localActivities.map((a: any) => {
+            // Debug consultant data from localStorage
+            if (a.type === 'consult_chat' || a.type === 'consult_chat_message') {
+              console.log('Loading consultant activity from localStorage:', {
+                id: a.id,
+                type: a.type,
+                consultantId: a.consultantId,
+                consultantName: a.consultantName,
+                image: a.image,
+                title: a.title
+              });
+            }
+            
+            return {
+              id: a.id || `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              type: a.type || 'other',
+              title: a.title || '',
+              store: a.store || null,
+              storeName: a.store || a.storeName || null,
+              storeId: a.storeId || null,
+              productASIN: a.productASIN || null,
+              productName: a.productName || a.title || null,
+              consultantId: a.consultantId !== undefined && a.consultantId !== null ? Number(a.consultantId) : null,
+              consultantName: a.consultantName || a.title || null,
+              image: a.image || null,
+              category: a.category || null,
+              createdAt: a.createdAt ? new Date(a.createdAt) : new Date(),
+              dateAdded: a.createdAt ? new Date(a.createdAt).toLocaleString('id-ID') : new Date().toLocaleString('id-ID')
+            };
+          });
           
           // Merge and deduplicate (prioritize Firestore)
           // Only add local activities that don't exist in Firestore
@@ -1132,7 +1159,7 @@ export default function ProfilePage() {
         }}
       >
         {/* Logo Section */}
-        <div className="flex items-center justify-center h-24 pt-6 pb-4 border-b border-gray-100 px-4 flex-shrink-0">
+        <div className="flex items-center justify-center h-24 pt-12 pb-4 border-b border-gray-100 px-4 flex-shrink-0">
           <AnimatePresence mode="wait">
             {isSidebarOpen ? (
               <motion.img
@@ -1229,7 +1256,7 @@ export default function ProfilePage() {
               { label: 'Profil', icon: User, menu: 'profile', gradient: 'from-orange-500 to-red-500', bgHover: 'hover:bg-orange-50' },
               { label: 'Riwayat', icon: History, menu: 'history', gradient: 'from-blue-500 to-cyan-500', bgHover: 'hover:bg-blue-50' },
               { label: 'Toko', icon: Store, menu: 'store', gradient: 'from-green-500 to-emerald-500', bgHover: 'hover:bg-green-50' },
-              { label: 'Pricing', icon: DollarSign, menu: 'pricing', gradient: 'from-purple-500 to-pink-500', bgHover: 'hover:bg-purple-50' },
+              { label: 'Harga', icon: DollarSign, menu: 'pricing', gradient: 'from-purple-500 to-pink-500', bgHover: 'hover:bg-purple-50' },
             ].map((item) => (
               <motion.button
                 key={item.menu}
@@ -1406,7 +1433,7 @@ export default function ProfilePage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="mb-6 lg:mb-8"
+            className="mb-6 lg:mb-8 pr-16 sm:pr-0"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -2259,19 +2286,21 @@ export default function ProfilePage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 rounded-2xl p-6 text-white shadow-xl"
+                className="bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 rounded-2xl px-4 py-4 sm:px-6 sm:py-5 text-white shadow-xl"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <History size={32} className="text-white" />
-                    <div>
-                      <h2 className="text-2xl font-bold">Riwayat Aktivitas</h2>
-                      <p className="text-blue-100 text-sm mt-1">Jejak aktivitas Anda di platform</p>
+                <div className="flex items-start justify-between gap-3 sm:gap-4 mb-1 sm:mb-2">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="p-2.5 sm:p-3 rounded-xl bg-white/15 flex items-center justify-center">
+                      <History size={28} className="text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="text-lg sm:text-2xl font-bold leading-snug truncate">Riwayat Aktivitas</h2>
+                      <p className="text-blue-100 text-xs sm:text-sm mt-1">Jejak aktivitas Anda di platform</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-bold">{activities.length}</div>
-                    <div className="text-sm text-blue-100">Total Aktivitas</div>
+                  <div className="flex flex-col items-end flex-shrink-0">
+                    <div className="text-xl sm:text-3xl font-bold leading-none">{activities.length}</div>
+                    <div className="text-[11px] sm:text-sm text-blue-100 mt-0.5">Total Aktivitas</div>
                   </div>
                 </div>
               </motion.div>
@@ -2281,37 +2310,39 @@ export default function ProfilePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="flex flex-wrap gap-2 bg-white rounded-xl p-2 shadow-lg border border-gray-200"
+                className="bg-white rounded-xl px-2 py-2 shadow-lg border border-gray-200 overflow-hidden"
               >
-                {[
-                  { id: 'all', label: 'Semua', icon: History, count: activities.length },
-                  { id: 'product', label: 'Produk Dilihat', icon: Store, count: activities.filter(a => a.type === 'product_view' || a.productASIN).length },
-                  { id: 'visit', label: 'UMKM Dikunjungi', icon: Store, count: activities.filter(a => a.type === 'visit').length },
-                  { id: 'consultation', label: 'Konsultasi', icon: User, count: activities.filter(a => a.type === 'consult_chat' || a.type === 'consult_chat_message').length },
-                ].map((tab) => {
-                  const Icon = tab.icon;
-                  return (
-                    <motion.button
-                      key={tab.id}
-                      onClick={() => setHistoryTab(tab.id as any)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                        historyTab === tab.id
-                          ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Icon size={18} />
-                      {tab.label}
-                      <span className={`px-2 py-0.5 rounded-full text-xs ${
-                        historyTab === tab.id ? 'bg-white/20' : 'bg-gray-200 text-gray-600'
-                      }`}>
-                        {tab.count}
-                      </span>
-                    </motion.button>
-                  );
-                })}
+                <div className="flex gap-2 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-gray-100 pb-1" style={{ scrollBehavior: 'smooth' }}>
+                  {[
+                    { id: 'all', label: 'Semua', icon: History, count: activities.length },
+                    { id: 'product', label: 'Produk Dilihat', icon: Store, count: activities.filter(a => a.type === 'product_view' || a.productASIN).length },
+                    { id: 'visit', label: 'UMKM Dikunjungi', icon: Store, count: activities.filter(a => a.type === 'visit').length },
+                    { id: 'consultation', label: 'Konsultasi', icon: User, count: activities.filter(a => a.type === 'consult_chat' || a.type === 'consult_chat_message').length },
+                  ].map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <motion.button
+                        key={tab.id}
+                        onClick={() => setHistoryTab(tab.id as any)}
+                        className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm whitespace-nowrap transition-all ${
+                          historyTab === tab.id
+                            ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Icon size={18} />
+                        {tab.label}
+                        <span className={`px-2 py-0.5 rounded-full text-xs ${
+                          historyTab === tab.id ? 'bg-white/20' : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          {tab.count}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
               </motion.div>
 
               {/* Activities List */}
@@ -2319,7 +2350,7 @@ export default function ProfilePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="space-y-4"
+                className="space-y-3 sm:space-y-4"
               >
                 {(() => {
                   const filtered = activities.filter(a => {
@@ -2332,10 +2363,10 @@ export default function ProfilePage() {
 
                   if (filtered.length === 0) {
                     return (
-                      <div className="bg-white rounded-xl p-12 text-center shadow-lg border border-gray-200">
-                        <History size={64} className="mx-auto text-gray-300 mb-4" />
-                        <h3 className="text-xl font-bold text-gray-700 mb-2">Belum ada aktivitas</h3>
-                        <p className="text-gray-500">Mulai jelajahi produk, kunjungi UMKM, atau chat dengan konsultan</p>
+                      <div className="bg-white rounded-xl px-4 py-8 sm:p-12 text-center shadow-lg border border-gray-200">
+                        <History size={48} className="mx-auto text-gray-300 mb-3 sm:mb-4" />
+                        <h3 className="text-lg sm:text-xl font-bold text-gray-700 mb-2">Belum ada aktivitas</h3>
+                        <p className="text-sm sm:text-base text-gray-500">Mulai jelajahi produk, kunjungi UMKM, atau chat dengan konsultan</p>
                       </div>
                     );
                   }
@@ -2373,22 +2404,23 @@ export default function ProfilePage() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: idx * 0.05 }}
                         onClick={() => openActivity(activity)}
-                        className="bg-white rounded-xl p-5 shadow-lg border border-gray-200 hover:shadow-xl hover:border-blue-300 transition-all cursor-pointer group"
+                        className="bg-white rounded-xl p-4 sm:p-5 shadow-lg border border-gray-200 hover:shadow-xl hover:border-blue-300 transition-all cursor-pointer group"
                       >
-                        <div className="flex items-start gap-4">
+                        <div className="flex items-start gap-3 sm:gap-4">
                           {/* Image or Icon */}
                           {hasImage ? (
                             <div className="flex-shrink-0">
                               <img 
                                 src={activity.image} 
                                 alt={displayName}
-                                className="w-16 h-16 rounded-lg object-cover border-2 border-gray-200 group-hover:border-blue-300 transition-colors"
+                                className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover border-2 border-gray-200 group-hover:border-blue-300 transition-colors"
+
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).style.display = 'none';
                                   (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
                                 }}
                               />
-                              <div className={`hidden w-16 h-16 rounded-lg flex items-center justify-center ${
+                              <div className={`hidden w-14 h-14 sm:w-16 sm:h-16 rounded-lg flex items-center justify-center ${
                                 activity.type === 'product_view' || activity.productASIN ? 'bg-orange-100' :
                                 activity.type === 'visit' ? 'bg-green-100' :
                                 'bg-blue-100'
@@ -2403,7 +2435,7 @@ export default function ProfilePage() {
                               </div>
                             </div>
                           ) : (
-                            <div className={`flex-shrink-0 p-3 rounded-lg ${
+                            <div className={`flex-shrink-0 p-2.5 sm:p-3 rounded-lg ${
                               activity.type === 'product_view' || activity.productASIN ? 'bg-orange-100' :
                               activity.type === 'visit' ? 'bg-green-100' :
                               'bg-blue-100'
@@ -2417,13 +2449,12 @@ export default function ProfilePage() {
                               )}
                             </div>
                           )}
-                          
                           {/* Content */}
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-gray-900 mb-1 line-clamp-2">
+                            <h4 className="font-bold text-gray-900 mb-1 text-sm sm:text-base line-clamp-2">
                               {displayName}
                             </h4>
-                            <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
+                            <p className="text-xs sm:text-sm text-gray-600 mb-1.5 sm:mb-2 flex items-center gap-2 flex-wrap">
                               <span>{displayType}</span>
                               {activity.type === 'product_view' && activity.productASIN && (
                                 <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
@@ -2432,36 +2463,36 @@ export default function ProfilePage() {
                               )}
                             </p>
                             {activity.store && activity.type === 'product_view' && (
-                              <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                              <p className="text-[11px] sm:text-xs text-gray-500 mb-1.5 sm:mb-2 flex items-center gap-1">
                                 <Store size={12} />
                                 Toko: {activity.store}
                               </p>
                             )}
                             {activity.type === 'visit' && (activity.storeName || activity.store) && (
-                              <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                              <p className="text-[11px] sm:text-xs text-gray-500 mb-1.5 sm:mb-2 flex items-center gap-1">
                                 <Store size={12} />
                                 {activity.storeName || activity.store}
                               </p>
                             )}
                             {activity.consultantName && (activity.type === 'consult_chat' || activity.type === 'consult_chat_message') && (
-                              <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                              <p className="text-[11px] sm:text-xs text-gray-500 mb-1.5 sm:mb-2 flex items-center gap-1">
                                 <User size={12} />
                                 Konsultan: {activity.consultantName}
                               </p>
                             )}
-                            <div className="flex items-center gap-2 flex-wrap mb-2">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1.5 sm:mb-2">
                               {activity.category && (
-                                <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-[11px] sm:text-xs rounded-full">
                                   {activity.category}
                                 </span>
                               )}
                               {activity.storeId && activity.type === 'visit' && (
-                                <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                                <span className="inline-block px-2 py-0.5 bg-green-100 text-green-700 text-[11px] sm:text-xs rounded-full">
                                   ID: {activity.storeId}
                                 </span>
                               )}
                               {activity.consultantId && (activity.type === 'consult_chat' || activity.type === 'consult_chat_message') && (
-                                <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-[11px] sm:text-xs rounded-full">
                                   ID: {activity.consultantId}
                                 </span>
                               )}
