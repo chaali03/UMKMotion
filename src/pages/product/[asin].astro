@@ -9,12 +9,12 @@ const { asin } = Astro.params;
 
 <Layout title={`Detail Produk - UMKMotion`} description="Detail produk lengkap dengan variant, rating, dan ulasan">
   <script>
-    // Redirect semua /product/:asin ke /BuyingPage agar konsisten
+    // Redirect semua /product/:asin ke /buying agar konsisten
     (function() {
       try {
         const asin = window.PRODUCT_ASIN || (typeof Astro !== 'undefined' && Astro?.params?.asin);
         if (asin) {
-          // Seed minimal data untuk BuyingPage (hanya ASIN cukup, detail akan diambil kembali)
+          // Seed minimal data untuk buying page (hanya ASIN cukup, detail akan diambil kembali)
           const existing = localStorage.getItem('selectedProduct');
           let payload = { ASIN: asin };
           try {
@@ -24,7 +24,7 @@ const { asin } = Astro.params;
           localStorage.setItem('selectedProduct', JSON.stringify(payload));
         }
       } catch {}
-      window.location.replace('/BuyingPage');
+      window.location.replace('/buying');
     })();
   </script>
   <script define:vars={{
