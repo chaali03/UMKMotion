@@ -73,9 +73,11 @@ export default defineConfig({
             if (id.includes('vaul')) return 'vendor-ui';
             if (id.includes('@radix-ui')) return 'vendor-radix';
             
-            // React chunks
-            if (id.includes('react-dom')) return 'vendor-react-dom';
-            if (id.includes('react/') && !id.includes('react-dom')) return 'vendor-react';
+            // React chunks - keep ALL React code together to avoid internals issues
+            // Don't split React to prevent Activity property errors
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react/')) {
+              return 'vendor-react-all';
+            }
             
             // Large dependencies
             if (id.includes('node_modules')) {

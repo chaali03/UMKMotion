@@ -3,6 +3,28 @@ import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Guard against React internals access before React is fully loaded
+if (typeof window !== 'undefined') {
+  // Wait for React to be fully initialized
+  const initReact = () => {
+    try {
+      if (React && !(window as any).React) {
+        (window as any).React = React;
+      }
+    } catch (e) {
+      // Silently fail
+    }
+  };
+  
+  // Initialize immediately if possible
+  initReact();
+  
+  // Also try on next tick to ensure React is loaded
+  if (typeof requestAnimationFrame !== 'undefined') {
+    requestAnimationFrame(initReact);
+  }
+}
+
 interface FloatingAIButtonProps {
   onClick?: () => void;
 }
@@ -52,13 +74,16 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
   const buttonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Only run on client
+    if (typeof window === 'undefined') return;
+    
     try {
       setIsMounted(true);
       
       if ((showTooltip || isHovered) && buttonRef.current) {
         const updateTooltipPosition = () => {
           try {
-            if (buttonRef.current) {
+            if (buttonRef.current && typeof window !== 'undefined') {
               const rect = buttonRef.current.getBoundingClientRect();
               setTooltipPos({
                 top: rect.top - 78,
@@ -72,7 +97,11 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
         
         updateTooltipPosition();
         window.addEventListener('resize', updateTooltipPosition);
-        return () => window.removeEventListener('resize', updateTooltipPosition);
+        return () => {
+          if (typeof window !== 'undefined') {
+            window.removeEventListener('resize', updateTooltipPosition);
+          }
+        };
       }
     } catch (error) {
       console.warn('FloatingAIButton effect error:', error);
@@ -80,14 +109,17 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
   }, [showTooltip, isHovered]);
 
   // Don't render anything during SSR to prevent hydration mismatch
-  if (!isMounted) {
+  if (typeof window === 'undefined' || !isMounted) {
     return null;
   }
+
+  // Safe portal creation
+  const portalTarget = typeof document !== 'undefined' ? document.body : null;
 
   return (
     <>
       {/* Tooltip */}
-      {createPortal(
+      {portalTarget && createPortal(
         <AnimatePresence>
           {(showTooltip || isHovered) && (
             <motion.div
@@ -121,7 +153,7 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
             </motion.div>
           )}
         </AnimatePresence>,
-        document.body
+        portalTarget
       )}
 
       <div ref={buttonRef} className="fixed bottom-6 right-6 z-[9999]">
@@ -205,12 +237,19 @@ const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ onClick }) => {
 };
 
 // Wrap with error boundary and suspense to prevent hydration errors
-const FloatingAIButtonWithBoundary = (props: FloatingAIButtonProps) => (
-  <FloatingAIErrorBoundary>
-    <Suspense fallback={null}>
-      <FloatingAIButton {...props} />
-    </Suspense>
-  </FloatingAIErrorBoundary>
-);
+const FloatingAIButtonWithBoundary = (props: FloatingAIButtonProps) => {
+  // Only render on client to avoid hydration issues
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  
+  return (
+    <FloatingAIErrorBoundary>
+      <Suspense fallback={null}>
+        <FloatingAIButton {...props} />
+      </Suspense>
+    </FloatingAIErrorBoundary>
+  );
+};
 
 export default FloatingAIButtonWithBoundary;

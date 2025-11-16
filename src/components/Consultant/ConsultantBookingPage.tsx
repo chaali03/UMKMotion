@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { DayPicker } from "react-day-picker";
-import "react-day-picker/dist/style.css";
 import { format, addDays, isBefore, isAfter, setHours, setMinutes, differenceInMinutes } from "date-fns";
 import { Clock, Calendar, Video, MessageCircle, CheckCircle2, MapPin, Star, Globe, Timer, Check, ChevronRight, ArrowLeft, Bell, BellOff, Loader2, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
