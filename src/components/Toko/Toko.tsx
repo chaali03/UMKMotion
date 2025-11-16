@@ -840,7 +840,12 @@ export default function TokoDinamis() {
         )}
       </div>
 
+<<<<<<< HEAD
 
+=======
+      {/* FLOATING CHAT */}
+      <div className="chat-float" onClick={() => window.location.href='/chat'}>Chat</div>
+>>>>>>> a72f884ae0c3ec589cd40b32e166b1c7b53e68d6
 
       {/* MODAL DETAIL TOKO */}
       {modalOpen && store && (
