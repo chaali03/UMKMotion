@@ -1,5 +1,13 @@
 // src/components/Checkoutpage/Payment.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+
+declare global {
+  interface Window {
+    snap?: {
+      pay: (token: string, callbacks?: Record<string, (result?: unknown) => void>) => void;
+    };
+  }
+}
 
 interface CheckoutItem {
   asin: string;
@@ -15,6 +23,7 @@ interface CheckoutItem {
     lat: number;
     lng: number;
   };
+  weightKg?: number;
 }
 
 interface UserAddress {
@@ -56,7 +65,35 @@ interface DeliveryOption {
   color: string;
   isCOD: boolean;
   distance?: number;
+  source?: 'instant' | 'rajaongkir' | 'fallback';
 }
+
+type WeightCategory = 'light' | 'medium' | 'heavy';
+
+const getWeightCategory = (weightKg: number): WeightCategory => {
+  if (weightKg <= 1.5) return 'light';
+  if (weightKg <= 4) return 'medium';
+  return 'heavy';
+};
+
+const estimateWeightKg = (item: CheckoutItem): number => {
+  if (item.weightKg && item.weightKg > 0) return item.weightKg;
+  const base = item.product_price_num;
+  if (base <= 100_000) return 0.8;
+  if (base <= 300_000) return 1.6;
+  if (base <= 600_000) return 2.8;
+  return 4.5;
+};
+
+const formatWeightLabel = (weightKg: number, showCategory = true) => {
+  if (weightKg <= 0) return '0 kg';
+  const base = `${weightKg.toFixed(1)} kg`;
+  if (!showCategory) return base;
+  const category = getWeightCategory(weightKg);
+  const label =
+    category === 'light' ? 'Ringan' : category === 'medium' ? 'Sedang' : 'Berat';
+  return `${base} • ${label}`;
+};
 
 interface PaymentMethod {
   id: string;
@@ -66,6 +103,15 @@ interface PaymentMethod {
   cashback?: number;
   category: string;
 }
+
+type WarningModalState = {
+  title: string;
+  message: string;
+  icon?: string;
+  accent?: 'info' | 'danger' | 'success';
+  actionLabel?: string;
+  action?: () => void;
+};
 
 // ============= DUMMY DATA =============
 const dummyVouchers: Voucher[] = [
@@ -129,6 +175,8 @@ const paymentMethods: PaymentMethod[] = [
 const Payment: React.FC = () => {
   // ===== STATES =====
   const [checkoutItem, setCheckoutItem] = useState<CheckoutItem | null>(null);
+  const [checkoutItems, setCheckoutItems] = useState<CheckoutItem[] | null>(null);
+  
   const [userAddresses, setUserAddresses] = useState<UserAddress[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<UserAddress | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -138,6 +186,13 @@ const Payment: React.FC = () => {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
   const [isInsurance, setIsInsurance] = useState(true);
   const [distance, setDistance] = useState<number>(0);
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingError, setShippingError] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [isSnapReady, setIsSnapReady] = useState(false);
+  const [warningModal, setWarningModal] = useState<WarningModalState | null>(null);
+  const snapStateRef = useRef<'idle' | 'opening' | 'opened'>('idle');
   
   // ===== MODALS =====
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -168,6 +223,26 @@ const Payment: React.FC = () => {
   // ===== REFS =====
   const mapRef = useRef<HTMLDivElement>(null);
 
+  const buildActiveItems = useCallback((): CheckoutItem[] => {
+    if (checkoutItems && checkoutItems.length > 0) {
+      return checkoutItems;
+    }
+    if (checkoutItem) {
+      return [{ ...checkoutItem, quantity }];
+    }
+    return [];
+  }, [checkoutItems, checkoutItem, quantity]);
+
+  const activeItems = useMemo(() => buildActiveItems(), [buildActiveItems]);
+
+  const sellerLocation = useMemo(() => {
+    return activeItems[0]?.seller_location || null;
+  }, [activeItems]);
+
+  const primaryItem = useMemo(() => activeItems[0] || null, [activeItems]);
+
+  const isMultiCart = Boolean(checkoutItems && checkoutItems.length > 0);
+
   // ===== LOAD DATA =====
   useEffect(() => {
     loadCheckoutData();
@@ -175,22 +250,83 @@ const Payment: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedAddress && checkoutItem?.seller_location) {
-      calculateDistance();
+    if (typeof document === 'undefined' || !import.meta.env.DEV) return;
+    const policy = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.sandbox.midtrans.com https://*.midtrans.com",
+      "frame-src 'self' blob: https://app.sandbox.midtrans.com https://*.midtrans.com https://*.firebaseapp.com https://*.google.com https://*.gstatic.com https://accounts.google.com https://apis.google.com",
+      "connect-src 'self' https://app.sandbox.midtrans.com https://api.midtrans.com https://api.sandbox.midtrans.com",
+      "img-src 'self' data: blob: https:",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com data:"
+    ].join('; ');
+    let meta = document.head.querySelector<HTMLMetaElement>('meta[data-checkout-csp]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.httpEquiv = 'Content-Security-Policy';
+      meta.dataset.checkoutCsp = 'true';
+      document.head.appendChild(meta);
     }
-  }, [selectedAddress, checkoutItem]);
+    meta.content = policy;
+  }, []);
 
   useEffect(() => {
-    if (distance > 0) {
-      calculateDeliveryOptions();
+    if (typeof window === 'undefined') return;
+    const clientKey = import.meta.env.PUBLIC_MIDTRANS_CLIENT_KEY || import.meta.env.MIDTRANS_CLIENT_KEY;
+    if (!clientKey) return;
+
+    const existing = document.getElementById('midtrans-snap-script');
+    if (existing) {
+      setIsSnapReady(true);
+      return;
     }
-  }, [distance]);
+
+    const isProduction = (import.meta.env.PUBLIC_MIDTRANS_IS_PRODUCTION || import.meta.env.MIDTRANS_IS_PRODUCTION) === 'true';
+    const script = document.createElement('script');
+    script.src = `https://${isProduction ? 'app.midtrans.com' : 'app.sandbox.midtrans.com'}/snap/snap.js`;
+    script.setAttribute('data-client-key', clientKey);
+    script.async = true;
+    script.id = 'midtrans-snap-script';
+    script.onload = () => setIsSnapReady(true);
+    script.onerror = () => {
+      setPaymentError('Gagal memuat gateway pembayaran. Coba refresh halaman.');
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      script.remove();
+    };
+  }, []);
 
   const loadCheckoutData = () => {
+    const storedMulti = localStorage.getItem('checkoutItems');
+    if (storedMulti) {
+      try {
+        const list: CheckoutItem[] = JSON.parse(storedMulti);
+        if (Array.isArray(list) && list.length > 0) {
+          const withSeller = list.map((it) => {
+            const located = {
+              ...it,
+              seller_location: it.seller_location || {
+                address: 'Jakarta Selatan, DKI Jakarta',
+                lat: -6.2615,
+                lng: 106.8106
+              }
+            };
+            return {
+              ...located,
+              selectedImage: located.selectedImage || located.product_photo,
+              weightKg: estimateWeightKg(located)
+            };
+          });
+          setCheckoutItems(withSeller);
+          return;
+        }
+      } catch {}
+    }
     const stored = localStorage.getItem('checkoutItem');
     if (stored) {
       const item: CheckoutItem = JSON.parse(stored);
-      // Add dummy seller location if not exists
       if (!item.seller_location) {
         item.seller_location = {
           address: 'Jakarta Selatan, DKI Jakarta',
@@ -198,6 +334,8 @@ const Payment: React.FC = () => {
           lng: 106.8106
         };
       }
+      item.selectedImage = item.selectedImage || item.product_photo;
+      item.weightKg = estimateWeightKg(item);
       setCheckoutItem(item);
       setQuantity(item.quantity);
     }
@@ -217,142 +355,189 @@ const Payment: React.FC = () => {
   };
 
   // ===== CALCULATE DISTANCE =====
-  const calculateDistance = () => {
-    if (!selectedAddress || !checkoutItem?.seller_location) return;
+  const calculateDistance = useCallback(() => {
+    if (!selectedAddress || !sellerLocation) return 0;
 
     const R = 6371; // Radius bumi dalam km
-    const dLat = deg2rad(checkoutItem.seller_location.lat - selectedAddress.lat);
-    const dLng = deg2rad(checkoutItem.seller_location.lng - selectedAddress.lng);
+    const dLat = deg2rad(sellerLocation.lat - selectedAddress.lat);
+    const dLng = deg2rad(sellerLocation.lng - selectedAddress.lng);
     
     const a = 
       Math.sin(dLat/2) * Math.sin(dLat/2) +
       Math.cos(deg2rad(selectedAddress.lat)) * 
-      Math.cos(deg2rad(checkoutItem.seller_location.lat)) *
+      Math.cos(deg2rad(sellerLocation.lat)) *
       Math.sin(dLng/2) * Math.sin(dLng/2);
     
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     const dist = R * c;
+    const rounded = Math.round(dist * 10) / 10;
     
-    setDistance(Math.round(dist * 10) / 10);
-  };
+    setDistance(rounded);
+    return rounded;
+  }, [selectedAddress, sellerLocation]);
 
   const deg2rad = (deg: number) => deg * (Math.PI/180);
 
-  // ===== CALCULATE DELIVERY OPTIONS =====
-  const calculateDeliveryOptions = () => {
+  const generateFallbackOptions = useCallback((range: number) => {
     const options: DeliveryOption[] = [];
+    const safeRange = Math.max(1, range);
 
-    // Instant delivery (< 20km) - Gojek/Grab
-    if (distance < 20) {
-      // GoSend Instant
-      options.push({
-        id: 'gosend-instant',
-        name: 'GoSend Instant',
-        type: 'instant',
-        provider: 'Gojek',
-        price: Math.max(15000, distance * 2500),
-        estimatedTime: '1-2 jam',
-        icon: '🏍️',
-        color: '#00AA13',
-        isCOD: true,
-        distance
-      });
-
-      // GrabExpress
-      options.push({
-        id: 'grab-express',
-        name: 'GrabExpress',
-        type: 'instant',
-        provider: 'Grab',
-        price: Math.max(16000, distance * 2700),
-        estimatedTime: '1-2 jam',
-        icon: '🚗',
-        color: '#00B14F',
-        isCOD: true,
-        distance
-      });
-
-      // GoSend Same Day
-      options.push({
-        id: 'gosend-sameday',
-        name: 'GoSend Same Day',
-        type: 'same-day',
-        provider: 'Gojek',
-        price: Math.max(12000, distance * 1800),
-        estimatedTime: 'Hari ini',
-        icon: '🏍️',
-        color: '#00AA13',
-        isCOD: true,
-        distance
-      });
+    if (safeRange <= 30) {
+      options.push(
+        {
+          id: 'gosend-instant',
+          name: 'GoSend Instant',
+          type: safeRange <= 10 ? 'instant' : 'same-day',
+          provider: 'Gojek',
+          price: Math.max(15000, safeRange * 2500),
+          estimatedTime: safeRange <= 10 ? '1-2 jam' : 'Hari ini',
+          icon: '🏍️',
+          color: '#00AA13',
+          isCOD: true,
+          distance: safeRange,
+          source: 'instant',
+        },
+        {
+          id: 'grab-express',
+          name: 'GrabExpress',
+          type: safeRange <= 10 ? 'instant' : 'same-day',
+          provider: 'Grab',
+          price: Math.max(16000, safeRange * 2700),
+          estimatedTime: safeRange <= 10 ? '1-2 jam' : 'Hari ini',
+          icon: '🚗',
+          color: '#00B14F',
+          isCOD: true,
+          distance: safeRange,
+          source: 'instant',
+        },
+      );
     }
 
-    // Regular delivery - Always available
-    // JNE REG
-    options.push({
-      id: 'jne-reg',
-      name: 'JNE Regular',
-      type: 'regular',
-      provider: 'JNE',
-      price: distance < 50 ? 10000 : distance < 100 ? 15000 : 25000,
-      estimatedTime: '2-3 hari',
-      icon: '📦',
-      color: '#E31E24',
-      isCOD: true,
-      distance
+    const regularTiers = [
+      {
+        id: 'jne-reg',
+        name: 'JNE Regular',
+        provider: 'JNE',
+        price: safeRange < 50 ? 10000 : safeRange < 100 ? 15000 : 25000,
+        eta: '2-3 hari',
+      },
+      {
+        id: 'jne-yes',
+        name: 'JNE YES',
+        provider: 'JNE',
+        price: safeRange < 50 ? 20000 : safeRange < 100 ? 30000 : 45000,
+        eta: '1 hari',
+      },
+      {
+        id: 'sicepat-reg',
+        name: 'SiCepat REG',
+        provider: 'SiCepat',
+        price: safeRange < 50 ? 9000 : safeRange < 100 ? 14000 : 23000,
+        eta: '2-3 hari',
+      },
+      {
+        id: 'jnt-reg',
+        name: 'J&T Express',
+        provider: 'J&T',
+        price: safeRange < 50 ? 8000 : safeRange < 100 ? 13000 : 22000,
+        eta: '2-4 hari',
+      },
+    ];
+
+    regularTiers.forEach((tier) => {
+      options.push({
+        id: tier.id,
+        name: tier.name,
+        type: safeRange > 30 ? 'regular' : tier.name.toLowerCase().includes('yes') ? 'same-day' : 'regular',
+        provider: tier.provider,
+        price: tier.price,
+        estimatedTime: tier.eta,
+        icon: '📦',
+        color: tier.provider === 'JNE' ? '#E31E24' : tier.provider === 'J&T' ? '#E74C3C' : '#1E3A8A',
+        isCOD: tier.provider !== 'POS',
+        distance: safeRange,
+        source: 'fallback',
+      });
     });
 
-    // JNE YES
-    options.push({
-      id: 'jne-yes',
-      name: 'JNE YES',
-      type: 'same-day',
-      provider: 'JNE',
-      price: distance < 50 ? 20000 : distance < 100 ? 30000 : 45000,
-      estimatedTime: '1 hari',
-      icon: '📦',
-      color: '#E31E24',
-      isCOD: false,
-      distance
-    });
+    return options.sort((a, b) => a.price - b.price);
+  }, []);
 
-    // SiCepat
-    options.push({
-      id: 'sicepat-reg',
-      name: 'SiCepat REG',
-      type: 'regular',
-      provider: 'SiCepat',
-      price: distance < 50 ? 9000 : distance < 100 ? 14000 : 23000,
-      estimatedTime: '2-3 hari',
-      icon: '📦',
-      color: '#FFD700',
-      isCOD: true,
-      distance
-    });
+  const loadShippingOptions = useCallback(
+    async (currentDistance: number) => {
+      if (!selectedAddress) return;
+      const fallback = generateFallbackOptions(currentDistance);
+      setShippingLoading(true);
+      setShippingError(null);
 
-    // J&T
-    options.push({
-      id: 'jnt-reg',
-      name: 'J&T Express',
-      type: 'regular',
-      provider: 'J&T',
-      price: distance < 50 ? 8000 : distance < 100 ? 13000 : 22000,
-      estimatedTime: '2-4 hari',
-      icon: '📦',
-      color: '#E74C3C',
-      isCOD: true,
-      distance
-    });
+      try {
+        const snapshot = buildActiveItems();
+        const resolvedWeight = snapshot.reduce((sum, it) => {
+          const perUnit = it.weightKg || estimateWeightKg(it);
+          return sum + perUnit * (it.quantity || 1);
+        }, 0);
 
-    // Sort by price
-    options.sort((a, b) => a.price - b.price);
+        const weightGrams = Math.max(1, Math.round(Math.max(resolvedWeight, 0.5) * 1000));
 
-    setDeliveryOptions(options);
-    setSelectedDelivery(options[0] || null);
-  };
+        const payload = {
+          destinationCity: selectedAddress.city || selectedAddress.province || selectedAddress.fullAddress,
+          distanceKm: currentDistance,
+          weight: weightGrams,
+        };
+
+        const res = await fetch('/api/shipping/options', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          throw new Error(await res.text());
+        }
+
+        const data = await res.json();
+        const options: DeliveryOption[] = Array.isArray(data.options) ? data.options : [];
+        const normalized = options.length ? options.map((opt) => ({
+          ...opt,
+          distance: opt.distance ?? currentDistance,
+        })) : fallback;
+
+        setDeliveryOptions(normalized);
+        setSelectedDelivery(normalized[0] || null);
+      } catch (error: any) {
+        setShippingError(error?.message || 'Gagal memuat ongkos kirim otomatis. Menggunakan estimasi lokal.');
+        setDeliveryOptions(fallback);
+        setSelectedDelivery(fallback[0] || null);
+      } finally {
+        setShippingLoading(false);
+      }
+    },
+    [selectedAddress, generateFallbackOptions, buildActiveItems],
+  );
+
+  useEffect(() => {
+    const dist = calculateDistance();
+    if (dist > 0 && selectedAddress) {
+      loadShippingOptions(dist);
+    }
+  }, [selectedAddress, sellerLocation, calculateDistance, loadShippingOptions]);
 
   // ===== CALCULATIONS =====
-  const productTotal = checkoutItem ? checkoutItem.product_price_num * quantity : 0;
+  const productTotal = activeItems.reduce(
+    (sum, it) => sum + (it.product_price_num * (it.quantity || 1)),
+    0
+  );
+
+  const totalWeightKg = activeItems.reduce((sum, it) => {
+    const perUnit = it.weightKg || estimateWeightKg(it);
+    return sum + perUnit * (it.quantity || 1);
+  }, 0);
+
+  const totalQuantity = activeItems.reduce((sum, it) => sum + (it.quantity || 1), 0);
+  const totalWeightLabel = totalWeightKg > 0 ? formatWeightLabel(totalWeightKg) : '0 kg';
+  
   const insuranceCost = isInsurance ? 5000 : 0;
   const deliveryCost = selectedDelivery?.price || 0;
   
@@ -374,10 +559,34 @@ const Payment: React.FC = () => {
 
   const formatPrice = (price: number) => `Rp${price.toLocaleString('id-ID')}`;
 
+  const showWarning = useCallback(
+    (payload: WarningModalState) => {
+      setWarningModal(payload);
+    },
+    [],
+  );
+
+  const closeWarning = useCallback(() => setWarningModal(null), []);
+
   // ===== HANDLERS =====
+  const parseGatewayError = useCallback((err: any) => {
+    const raw = err?.message || err?.toString?.() || '';
+    if (!raw) return 'Terjadi kesalahan saat memproses pembayaran.';
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed?.error) return parsed.error as string;
+    } catch {}
+    return raw.replace('Error:', '').trim() || 'Terjadi kesalahan saat memproses pembayaran.';
+  }, []);
+
   const handleAddAddress = () => {
     if (!newAddress.name || !newAddress.phone || !newAddress.fullAddress) {
-      alert('Mohon lengkapi data alamat!');
+      showWarning({
+        title: 'Lengkapi alamat terlebih dahulu',
+        message: 'Nama penerima, nomor telepon, dan alamat lengkap wajib diisi.',
+        icon: '📮',
+        accent: 'info',
+      });
       return;
     }
 
@@ -412,23 +621,34 @@ const Payment: React.FC = () => {
     });
   };
 
-  const handlePayNow = () => {
-    if (!selectedAddress) {
-      alert('Pilih alamat pengiriman terlebih dahulu!');
-      return;
-    }
-    if (!selectedDelivery) {
-      alert('Pilih metode pengiriman!');
-      return;
-    }
-    if (!selectedPayment) {
-      alert('Pilih metode pembayaran!');
-      return;
-    }
+  const finalizeOrder = useCallback((orderId: string) => {
+    const snapshotItems = buildActiveItems();
+    if (!snapshotItems.length) return;
+
+    const orderWeight = snapshotItems.reduce((sum, item) => {
+      const perUnit = item.weightKg || estimateWeightKg(item);
+      return sum + perUnit * (item.quantity || 1);
+    }, 0);
+
+    const weightCategory = getWeightCategory(orderWeight);
+    const transportMode = orderWeight <= 3 ? 'motor' : 'truck';
+
+    const serializedItems = snapshotItems.map((item) => {
+      const totalItemWeight = (item.weightKg || estimateWeightKg(item)) * (item.quantity || 1);
+      return {
+        asin: item.asin,
+        title: item.product_title,
+        image: item.selectedImage || item.product_photo,
+        quantity: item.quantity || 1,
+        price: item.product_price_num,
+        weightKg: Number(totalItemWeight.toFixed(2)),
+      };
+    });
 
     const orderData = {
-      ...checkoutItem,
-      quantity,
+      orderId,
+      createdAt: new Date().toISOString(),
+      items: serializedItems,
       address: selectedAddress,
       delivery: selectedDelivery,
       voucher: selectedVoucher,
@@ -436,11 +656,209 @@ const Payment: React.FC = () => {
       insurance: isInsurance,
       cashback: cashbackAmount,
       total: totalPayment,
-      timestamp: new Date().toISOString()
+      weightKg: Number(orderWeight.toFixed(2)),
+      weightCategory,
+      transportMode,
+      statusSeed: Date.now(),
     };
 
     localStorage.setItem('lastOrder', JSON.stringify(orderData));
+    try {
+      const existing = JSON.parse(localStorage.getItem('userOrders') || '[]');
+      const next = [orderData, ...(Array.isArray(existing) ? existing : [])].slice(0, 20);
+      localStorage.setItem('userOrders', JSON.stringify(next));
+    } catch {}
+
+    window.dispatchEvent(new CustomEvent('ordersUpdated'));
     setShowSuccessModal(true);
+    setTimeout(() => {
+      window.location.href = '/profile#orders';
+    }, 2200);
+  }, [buildActiveItems, selectedAddress, selectedDelivery, selectedVoucher, selectedPayment, isInsurance, cashbackAmount, totalPayment]);
+
+  const handlePayNow = async () => {
+    if (!selectedAddress) {
+      showWarning({
+        title: 'Alamat belum dipilih',
+        message: 'Silakan pilih atau tambahkan alamat pengiriman sebelum melanjutkan.',
+        icon: '📍',
+        accent: 'info',
+      });
+      return;
+    }
+    if (!selectedDelivery) {
+      showWarning({
+        title: 'Metode pengiriman kosong',
+        message: 'Pilih salah satu layanan pengiriman agar pesanan bisa diproses.',
+        icon: '🚚',
+        accent: 'info',
+      });
+      return;
+    }
+    if (!selectedPayment) {
+      showWarning({
+        title: 'Metode pembayaran belum dipilih',
+        message: 'Pilih metode pembayaran favoritmu terlebih dahulu.',
+        icon: '💳',
+        accent: 'info',
+      });
+      return;
+    }
+
+    const itemsPayload = buildActiveItems();
+
+    if (!itemsPayload.length) {
+      showWarning({
+        title: 'Produk tidak ditemukan',
+        message: 'Keranjangmu kosong. Tambahkan produk sebelum checkout.',
+        icon: '🛒',
+        accent: 'info',
+      });
+      return;
+    }
+
+    setPaymentLoading(true);
+    setPaymentError(null);
+
+    const orderId = `UMKM-${Date.now()}`;
+    const derivedEmail = `${(selectedAddress.name || 'guest')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '.') || 'guest'}@guest.umkmotion.id`;
+
+    const itemDetails = itemsPayload.map((item) => ({
+      id: item.asin,
+      name: item.product_title.slice(0, 50),
+      price: Math.round(item.product_price_num),
+      quantity: item.quantity || 1,
+    }));
+
+    if (selectedDelivery) {
+      itemDetails.push({
+        id: 'shipping',
+        name: `Ongkir ${selectedDelivery.name}`,
+        price: selectedDelivery.price,
+        quantity: 1,
+      });
+    }
+
+    if (isInsurance && insuranceCost > 0) {
+      itemDetails.push({
+        id: 'insurance',
+        name: 'Asuransi Pengiriman',
+        price: insuranceCost,
+        quantity: 1,
+      });
+    }
+
+    if (voucherDiscount > 0 && selectedVoucher) {
+      itemDetails.push({
+        id: selectedVoucher.id,
+        name: `Voucher ${selectedVoucher.code}`,
+        price: -voucherDiscount,
+        quantity: 1,
+      });
+    }
+
+    try {
+      const res = await fetch('/api/payments/create-transaction', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId,
+          grossAmount: totalPayment,
+          items: itemDetails,
+          customer: {
+            name: selectedAddress.name,
+            email: derivedEmail,
+            phone: selectedAddress.phone,
+          },
+          shippingAddress: selectedAddress,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      const data = await res.json();
+      const snapToken: string | undefined = data.token;
+      const redirectUrl: string | undefined = data.redirect_url;
+
+    if (window.snap && snapToken && isSnapReady) {
+      if (snapStateRef.current !== 'idle') {
+        showWarning({
+          title: 'Jendela pembayaran masih terbuka',
+          message: 'Selesaikan atau tutup jendela Snap yang sudah muncul sebelum mencoba lagi.',
+          icon: '🪟',
+          accent: 'info',
+        });
+        setPaymentLoading(false);
+        return;
+      }
+      snapStateRef.current = 'opening';
+      try {
+        window.snap.pay(snapToken, {
+          onSuccess: () => {
+            snapStateRef.current = 'opened';
+            finalizeOrder(orderId);
+            snapStateRef.current = 'idle';
+          },
+          onPending: () => {
+            snapStateRef.current = 'opened';
+            finalizeOrder(orderId);
+            snapStateRef.current = 'idle';
+          },
+          onError: (result: any) => {
+            console.error('Midtrans error', result);
+            setPaymentError('Pembayaran gagal diproses. Coba lagi.');
+            snapStateRef.current = 'idle';
+          },
+          onClose: () => {
+            setPaymentError('Pembayaran dibatalkan sebelum selesai.');
+            snapStateRef.current = 'idle';
+          },
+        });
+      } catch (err) {
+        snapStateRef.current = 'idle';
+        const rawMessage = err instanceof Error ? err.message : String(err || '');
+        const friendly = rawMessage.includes('PopupInView')
+          ? 'Jendela pembayaran Snap masih terbuka. Tutup atau selesaikan jendela sebelumnya sebelum mencoba lagi.'
+          : parseGatewayError(err);
+        showWarning({
+          title: 'Tidak dapat membuka pembayaran',
+          message: friendly,
+          icon: '🪟',
+          accent: 'info',
+        });
+        console.error('snap.pay error', err);
+        setPaymentLoading(false);
+        return;
+      }
+      } else if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        throw new Error('Token pembayaran tidak tersedia.');
+      }
+    } catch (error: any) {
+      console.error('handlePayNow error', error);
+      const friendly = parseGatewayError(error);
+      setPaymentError(friendly);
+      showWarning({
+        title: 'Pembayaran gagal',
+        message: friendly.includes('Midtrans server key')
+          ? 'MIDTRANS_SERVER_KEY belum dikonfigurasi di server. Tambahkan env MIDTRANS_SERVER_KEY dan MIDTRANS_CLIENT_KEY lalu rebuild.'
+          : friendly,
+        icon: '⚠️',
+        accent: 'danger',
+      });
+    } finally {
+      if (snapStateRef.current !== 'opened') {
+        snapStateRef.current = 'idle';
+      }
+      setPaymentLoading(false);
+    }
   };
 
   const filteredPayments = paymentMethods.filter(p => {
@@ -449,7 +867,7 @@ const Payment: React.FC = () => {
     return matchSearch && matchCategory;
   });
 
-  if (!checkoutItem) {
+  if (!primaryItem) {
     return (
       <div className="loading-container">
         <div className="spinner"></div>
@@ -702,6 +1120,20 @@ const Payment: React.FC = () => {
           flex: 1;
         }
 
+        .product-weight {
+          margin-top: 0.85rem;
+          font-size: 0.95rem;
+          color: var(--dark);
+          font-weight: 600;
+        }
+
+        .product-weight span {
+          display: inline-block;
+          margin-left: 0.35rem;
+          color: var(--primary);
+          font-weight: 700;
+        }
+
         .product-seller {
           color: var(--gray);
           font-size: 0.9rem;
@@ -767,6 +1199,16 @@ const Payment: React.FC = () => {
           text-align: right;
           margin-top: 1rem;
         }
+
+        /* Multi item list */
+        .multi-list { display: flex; flex-direction: column; gap: 12px; }
+        .multi-row { display: grid; grid-template-columns: 56px 1fr auto; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--border); }
+        .multi-row:last-child { border-bottom: none; }
+        .multi-thumb { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; border: 1px solid var(--border); }
+        .multi-title { font-weight: 700; color: var(--dark); font-size: 0.95rem; }
+        .multi-meta { color: var(--gray); font-size: 0.8rem; }
+        .multi-weight { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #047857; font-weight: 600; font-size: 0.72rem; }
+        .multi-price { font-weight: 800; color: var(--primary); font-size: 1rem; }
 
         /* ===== DELIVERY SECTION ===== */
         .delivery-distance {
@@ -1164,6 +1606,51 @@ const Payment: React.FC = () => {
           justify-content: flex-end;
         }
 
+        .warning-modal {
+          text-align: center;
+          padding: 2.5rem 2rem;
+          max-width: 420px;
+        }
+
+        .warning-icon {
+          width: 72px;
+          height: 72px;
+          border-radius: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 2rem;
+          margin: 0 auto 1rem;
+        }
+
+        .warning-icon.info {
+          background: #eff6ff;
+          color: #2563eb;
+        }
+
+        .warning-icon.danger {
+          background: #fee2e2;
+          color: #b91c1c;
+        }
+
+        .warning-icon.success {
+          background: #dcfce7;
+          color: #15803d;
+        }
+
+        .warning-modal h3 {
+          font-size: 1.35rem;
+          font-weight: 800;
+          color: var(--dark);
+          margin-bottom: 0.5rem;
+        }
+
+        .warning-modal p {
+          color: #64748b;
+          font-size: 0.95rem;
+          margin-bottom: 1.5rem;
+        }
+
         /* ===== FORM ===== */
         .form-group {
           margin-bottom: 1.5rem;
@@ -1454,39 +1941,80 @@ const Payment: React.FC = () => {
                 Produk yang Dibeli
               </div>
 
-              <div className="product-item">
-                <img 
-                  src={checkoutItem.selectedImage} 
-                  alt={checkoutItem.product_title}
-                  className="product-image"
-                />
-                <div className="product-info">
-                  <div className="product-seller">
-                    🏪 {checkoutItem.seller_name || 'Official Store'}
-                  </div>
-                  <div className="product-title">{checkoutItem.product_title}</div>
-                  <div className="quantity-control">
-                    <button 
-                      className="qty-btn"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    >
-                      −
-                    </button>
-                    <input 
-                      type="number"
-                      className="qty-input"
-                      value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    />
-                    <button 
-                      className="qty-btn"
-                      onClick={() => setQuantity(quantity + 1)}
-                    >
-                      +
-                    </button>
+              {isMultiCart ? (
+                <div className="multi-list">
+                  {checkoutItems!.map((item) => {
+                    const totalItemWeight =
+                      (item.weightKg || estimateWeightKg(item)) * (item.quantity || 1);
+                    return (
+                      <div key={item.asin} className="multi-row">
+                        <img
+                          src={item.selectedImage || item.product_photo}
+                          alt={item.product_title}
+                          className="multi-thumb"
+                        />
+                        <div>
+                          <div className="multi-title">{item.product_title}</div>
+                          <div className="multi-meta">
+                            Qty {item.quantity || 1} • {formatPrice(item.product_price_num)}
+                            <span className="multi-weight">
+                              {formatWeightLabel(totalItemWeight, false)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="multi-price">
+                          {formatPrice(item.product_price_num * (item.quantity || 1))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="product-item">
+                  <img 
+                    src={primaryItem!.selectedImage || primaryItem!.product_photo} 
+                    alt={primaryItem!.product_title}
+                    className="product-image"
+                  />
+                  <div className="product-info">
+                    <div className="product-seller">
+                      🏪 {primaryItem!.seller_name || 'Official Store'}
+                    </div>
+                    <div className="product-title">{primaryItem!.product_title}</div>
+                    <div className="quantity-control">
+                      <button 
+                        className="qty-btn"
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        aria-label="Kurangi jumlah"
+                      >
+                        −
+                      </button>
+                      <input 
+                        type="number"
+                        className="qty-input"
+                        value={quantity}
+                        onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      />
+                      <button 
+                        className="qty-btn"
+                        onClick={() => setQuantity(quantity + 1)}
+                        aria-label="Tambah jumlah"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div className="product-weight">
+                      Berat estimasi:
+                      <span>
+                        {formatWeightLabel(
+                          (primaryItem!.weightKg || estimateWeightKg(primaryItem!)) *
+                            (primaryItem!.quantity || 1)
+                        )}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
               <div className="product-price">{formatPrice(productTotal)}</div>
             </div>
 
@@ -1499,11 +2027,13 @@ const Payment: React.FC = () => {
                 </div>
 
                 <div className="delivery-distance">
-                  📏 Jarak: <strong>{distance} km</strong> dari {checkoutItem.seller_location?.address}
+                  📏 Jarak: <strong>{distance} km</strong> dari {sellerLocation?.address || 'lokasi penjual'}
                 </div>
 
-                {deliveryOptions.length === 0 ? (
-                  <p className="text-center">Menghitung opsi pengiriman...</p>
+                {shippingLoading ? (
+                  <p style={{ textAlign: 'center', color: '#64748b' }}>Mengambil opsi pengiriman...</p>
+                ) : deliveryOptions.length === 0 ? (
+                  <p style={{ textAlign: 'center', color: '#64748b' }}>Belum ada opsi pengiriman tersedia.</p>
                 ) : (
                   <div>
                     {selectedDelivery && (
@@ -1536,6 +2066,11 @@ const Payment: React.FC = () => {
                       📋 Lihat Semua Opsi ({deliveryOptions.length})
                     </button>
                   </div>
+                )}
+                {shippingError && (
+                  <p style={{ color: '#dc2626', marginTop: '0.75rem', fontSize: '0.9rem' }}>
+                    {shippingError}
+                  </p>
                 )}
               </div>
             )}
@@ -1653,8 +2188,13 @@ const Payment: React.FC = () => {
               </div>
 
               <div className="summary-item">
-                <span>Subtotal Produk ({quantity} item)</span>
+                <span>Subtotal Produk ({totalQuantity} item)</span>
                 <span>{formatPrice(productTotal)}</span>
+              </div>
+
+              <div className="summary-item">
+                <span>Berat Total</span>
+                <span>{totalWeightLabel}</span>
               </div>
 
               {selectedDelivery && (
@@ -1693,11 +2233,17 @@ const Payment: React.FC = () => {
 
               <button 
                 className="btn btn-primary"
-                style={{ width: '100%', fontSize: '1.1rem', padding: '1rem' }}
+                style={{ width: '100%', fontSize: '1.1rem', padding: '1rem', opacity: paymentLoading ? 0.7 : 1 }}
                 onClick={handlePayNow}
+                disabled={paymentLoading}
               >
-                🚀 Bayar Sekarang
+                {paymentLoading ? 'Memproses Pembayaran...' : '🚀 Bayar Sekarang'}
               </button>
+              {paymentError && (
+                <p style={{ color: '#dc2626', marginTop: '0.75rem', fontSize: '0.9rem', textAlign: 'center' }}>
+                  {paymentError}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -2148,21 +2694,32 @@ const Payment: React.FC = () => {
                 <div className="success-subtitle">Pesananmu sedang diproses</div>
 
                 <div className="success-details">
-                  <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-                    <img 
-                      src={checkoutItem.selectedImage}
-                      alt={checkoutItem.product_title}
-                      style={{ width: '80px', height: '80px', borderRadius: '12px', marginBottom: '0.5rem' }}
-                    />
-                    <div style={{ fontWeight: 600 }}>{checkoutItem.product_title}</div>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--gray)' }}>{quantity} item</div>
-                  </div>
+                  {primaryItem && (
+                    <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+                      <img 
+                        src={primaryItem.selectedImage || primaryItem.product_photo}
+                        alt={primaryItem.product_title}
+                        style={{ width: '80px', height: '80px', borderRadius: '12px', marginBottom: '0.5rem' }}
+                      />
+                      <div style={{ fontWeight: 600 }}>{primaryItem.product_title}</div>
+                      <div style={{ fontSize: '0.9rem', color: 'var(--gray)' }}>
+                        {isMultiCart
+                          ? `${totalQuantity} item`
+                          : `${quantity} item`}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="summary-item">
                     <span>Total Pembayaran</span>
                     <span style={{ fontWeight: 700, color: 'var(--primary)' }}>
                       {formatPrice(totalPayment)}
                     </span>
+                  </div>
+
+                  <div className="summary-item">
+                    <span>Berat Total</span>
+                    <span>{totalWeightLabel}</span>
                   </div>
                   
                   {cashbackAmount > 0 && (
@@ -2178,14 +2735,44 @@ const Payment: React.FC = () => {
                   </div>
                 </div>
 
-                <button 
-                  className="btn btn-primary"
-                  style={{ width: '100%', marginTop: '1.5rem' }}
-                  onClick={() => window.location.href = '/etalase'}
-                >
-                  🛍️ Lanjut Belanja
-                </button>
+                <div className="flex flex-col sm:flex-row gap-3 w-full mt-4">
+                  <button 
+                    className="btn btn-secondary"
+                    style={{ width: '100%' }}
+                    onClick={() => window.location.href = '/etalase'}
+                  >
+                    🛍️ Lanjut Belanja
+                  </button>
+                  <button 
+                    className="btn btn-primary"
+                    style={{ width: '100%' }}
+                    onClick={() => window.location.href = '/profile#orders'}
+                  >
+                    📦 Lihat Pesananku
+                  </button>
+                </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {warningModal && (
+          <div className="modal-overlay" onClick={closeWarning}>
+            <div className="modal warning-modal" onClick={(e) => e.stopPropagation()}>
+              <div className={`warning-icon ${warningModal.accent || 'info'}`}>
+                {warningModal.icon || '⚠️'}
+              </div>
+              <h3>{warningModal.title}</h3>
+              <p>{warningModal.message}</p>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  warningModal.action?.();
+                  closeWarning();
+                }}
+              >
+                {warningModal.actionLabel || 'Mengerti'}
+              </button>
             </div>
           </div>
         )}

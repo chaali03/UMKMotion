@@ -281,22 +281,25 @@ export default function CommentSection() {
   if (loading) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-10">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-8"></div>
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="md:col-span-1 space-y-4">
-              <div className="h-32 bg-gray-200 rounded"></div>
-              <div className="space-y-3">
-                {[1,2,3,4,5].map(n => (
-                  <div key={n} className="h-4 bg-gray-200 rounded"></div>
-                ))}
-              </div>
-            </div>
-            <div className="md:col-span-3 space-y-4">
-              {[1,2,3].map(n => (
-                <div key={n} className="h-32 bg-gray-200 rounded"></div>
+        <style>{`
+          @keyframes shimmer { 0% { background-position: -1200px 0; opacity: 0.8; } 50% { opacity: 1; } 100% { background-position: 1200px 0; opacity: 0.8; } }
+          .sk-line { background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%); background-size: 1200px 100%; animation: shimmer 1.8s ease-in-out infinite; }
+          .sk-item { animation: fadeInUp 0.5s ease both; }
+        `}</style>
+        <div className="sk-line h-8 rounded w-1/3 mb-8" />
+        <div className="grid md:grid-cols-4 gap-8">
+          <div className="md:col-span-1 space-y-4">
+            <div className="sk-line h-32 rounded" style={{ animation: 'fadeInUp 0.5s ease both 0s' }} />
+            <div className="space-y-3">
+              {[1,2,3,4,5].map((n, i) => (
+                <div key={n} className="sk-line h-4 rounded" style={{ animation: `fadeInUp 0.5s ease both ${i * 0.08}s` }} />
               ))}
             </div>
+          </div>
+          <div className="md:col-span-3 space-y-4">
+            {[1,2,3].map((n, i) => (
+              <div key={n} className="sk-line h-32 rounded" style={{ animation: `fadeInUp 0.5s ease both ${(i + 1) * 0.08}s` }} />
+            ))}
           </div>
         </div>
       </div>
@@ -307,6 +310,7 @@ export default function CommentSection() {
     <div className="max-w-5xl mx-auto px-4 py-10">
       <h2 className="text-2xl font-bold text-slate-800 mb-8">Ulasan Pembeli</h2>
 
+      {/* ... */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
           {error}

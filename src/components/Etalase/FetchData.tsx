@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from "react";
+import { Heart, ShoppingCart } from 'lucide-react';
 
 import { db, auth } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -620,40 +621,34 @@ function FetchData() {
         .product-image {
           width: 100%;
           height: 180px;
-          background: linear-gradient(135deg, 
-            rgba(234, 88, 12, 0.08) 0%, 
-            rgba(251, 146, 60, 0.06) 50%, 
-            rgba(253, 186, 116, 0.04) 100%);
+          background: #ffffff;
           overflow: hidden;
           position: relative;
           border-radius: 14px 14px 0 0;
           margin: 0;
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         
-        .product-image::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 60%;
-          background: linear-gradient(transparent, rgba(0, 0, 0, 0.02));
-          pointer-events: none;
-        }
+        .product-image::after { display: none; }
         
         .product-image img {
           width: 100%;
           height: 100%;
-          object-fit: cover;
-          transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-          filter: brightness(0.98) contrast(1.05);
+          object-fit: contain;
+          object-position: center;
+          transition: all 0.3s ease;
+          filter: none;
           transform-origin: center;
+          background: transparent;
         }
         
         .product-card:hover .product-image img {
-          animation: image-zoom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-          filter: brightness(1.05) contrast(1.1);
+          animation: none;
+          filter: none;
+          transform: none;
         }
         
         /* Overlay icons - Hanya tampil di mobile */
@@ -1038,7 +1033,7 @@ function FetchData() {
         }
         
         .favorite-icon-badge.favorited {
-          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
           color: white;
           animation: pulse-glow 2s ease-in-out infinite;
         }
@@ -1046,7 +1041,7 @@ function FetchData() {
         .favorite-icon-badge:hover {
           transform: translateY(-2px) scale(1.08) rotate(-5deg);
           box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-          border-color: #ef4444;
+          border-color: #ec4899;
         }
         
         .favorite-icon-badge:active {
@@ -1208,8 +1203,8 @@ function FetchData() {
           animation: toast-slide-out 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         
-        .toast-success {
-          border-left: 4px solid #10b981;
+        .toast-favorite {
+          border-left: 4px solid #ec4899;
         }
         
         .toast-cart {
@@ -1228,8 +1223,8 @@ function FetchData() {
           box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
         }
         
-        .toast-success .toast-icon {
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        .toast-favorite .toast-icon {
+          background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
         }
         
         .toast-cart .toast-icon {
@@ -1495,9 +1490,9 @@ function FetchData() {
 
       <div className="toast-container">
         {toasts.map((toast) => (
-          <div key={toast.id} className={toast.type === 'cart' ? 'toast toast-cart' : 'toast toast-success'}>
+          <div key={toast.id} className={toast.type === 'cart' ? 'toast toast-cart' : 'toast toast-favorite'}>
             <div className="toast-icon">
-              {toast.type === 'cart' ? '🛒' : '❤️'}
+              {toast.type === 'cart' ? <ShoppingCart size={14} className="text-white" /> : <Heart size={14} className="text-white" />}
             </div>
             <div className="toast-content">
               <div className="toast-title">{toast.title}</div>
@@ -1814,7 +1809,7 @@ export function ProductCard({
     let cart = JSON.parse(localStorage.getItem("cart") || "[]");
     const existing = cart.find((p: Product) => p.ASIN === product.ASIN);
     if (existing) {
-      showToast('cart', 'Sudah di Keranjang', shortTitle);
+      showToast('cart', 'Jumlah diperbarui', shortTitle);
       setCartPop(true);
       setTimeout(() => setCartPop(false), 500);
       window.dispatchEvent(new CustomEvent('cartUpdated', {

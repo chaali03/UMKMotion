@@ -62,7 +62,7 @@ if (typeof window !== 'undefined') {
 
 interface MapboxComponentProps {
   center: [number, number];
-  umkmLocations: UMKMLocation[];
+  umkmLocations?: UMKMLocation[]; // Made optional with ?
   selectedUMKM: UMKMLocation | null;
   onSelectUMKM: (umkm: UMKMLocation) => void;
   zoom?: number;
@@ -535,7 +535,7 @@ const getAvatarColor = (name: string | null | undefined): string => {
 
 export default function MapboxComponent({
   center,
-  umkmLocations,
+  umkmLocations = [], // Default empty array
   selectedUMKM,
   onSelectUMKM,
   zoom = 13,
@@ -594,7 +594,7 @@ export default function MapboxComponent({
     
     const radiusInMeters = radius * 1000; // Convert km to meters
     
-    return umkmLocations.filter((umkm) => {
+    return (umkmLocations || []).filter((umkm) => {
       const distance = calculateDistance(
         searchCenter.lat,
         searchCenter.lng,
@@ -885,40 +885,23 @@ export default function MapboxComponent({
     });
   }, [filteredLocations, selectedUMKM, onSelectUMKM, mapReady]);
 
-  // Update user marker avatar when isFollowing or user changes
+  // Update user marker direction
   useEffect(() => {
-    if (!userMarker.current || !user) return;
-    
-    const getDisplayName = (): string => {
-      if (!user) return '';
-      if (user.nickname && user.nickname.trim()) return user.nickname.trim();
-      if (user.displayName && user.displayName.trim()) return user.displayName.trim();
-      if (user.email) return user.email.split('@')[0];
-      return '';
-    };
-    
-    const displayName = getDisplayName();
-    const showProfile = isFollowing && displayName;
-    const initials = showProfile ? getInitials(displayName) : '';
-    const avatarColor = showProfile ? getAvatarColor(displayName) : '';
+    if (!userMarker.current) return;
     
     const userDot = userMarker.current.getElement().querySelector('.user-dot') as HTMLElement;
-    if (userDot) {
-      if (showProfile) {
-        userDot.innerHTML = `
-          <div class="user-profile-avatar" style="width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); border: 3px solid white; background-color: ${avatarColor};">
-            ${initials}
-          </div>
-          ${userLocation?.heading !== null && userLocation?.heading !== undefined ? `<div class="user-direction-arrow" style="transform: rotate(${userLocation.heading}deg)"></div>` : ''}
-        `;
+    if (userDot && userLocation?.heading !== null && userLocation?.heading !== undefined) {
+      const arrow = userDot.querySelector('.user-direction-arrow') as HTMLElement;
+      if (arrow) {
+        arrow.style.transform = `rotate(${userLocation.heading}deg)`;
       } else {
-        userDot.innerHTML = `
-          <div class="user-dot-inner"></div>
-          ${userLocation?.heading !== null && userLocation?.heading !== undefined ? `<div class="user-direction-arrow" style="transform: rotate(${userLocation.heading}deg)"></div>` : ''}
-        `;
+        const arrowDiv = document.createElement('div');
+        arrowDiv.className = 'user-direction-arrow';
+        arrowDiv.style.transform = `rotate(${userLocation.heading}deg)`;
+        userDot.appendChild(arrowDiv);
       }
     }
-  }, [isFollowing, user, userLocation?.heading]);
+  }, [userLocation?.heading]);
 
   useEffect(() => {
     if (!map.current || !mapReady) return;
@@ -953,8 +936,9 @@ export default function MapboxComponent({
             return '';
           };
           
+          el.style.marginTop = '-20px';
           el.innerHTML = `
-            <div class="user-accuracy-circle" style="width: ${Math.min(Math.max(accuracy, 20), 120)}px; height: ${Math.min(Math.max(accuracy, 20), 120)}px;"></div>
+            <div class="user-accuracy-circle" style="width: ${Math.min(Math.max(accuracy, 60), 160)}px; height: ${Math.min(Math.max(accuracy, 60), 160)}px;"></div>
             <div class="user-pulse-ring"></div>
             <div class="user-dot">
               <div class="user-dot-inner"></div>
@@ -976,7 +960,7 @@ export default function MapboxComponent({
           userMarker.current.setLngLat([longitude, latitude]);
           const accuracyCircle = userMarker.current.getElement().querySelector('.user-accuracy-circle') as HTMLElement;
           if (accuracyCircle) {
-            const size = Math.min(Math.max(accuracy, 20), 120);
+            const size = Math.min(Math.max(accuracy, 60), 160);
             accuracyCircle.style.width = size + 'px';
             accuracyCircle.style.height = size + 'px';
           }
@@ -1368,7 +1352,7 @@ export default function MapboxComponent({
               <div className="loader-icon">
                 <Navigation2 size={48} strokeWidth={2} />
               </div>
-              <p>Memuat peta interaktif...</p>
+              <p>Memuat peta...</p>
             </motion.div>
           </motion.div>
         )}
@@ -2213,16 +2197,42 @@ export default function MapboxComponent({
             overflow: visible;
           }
 
+          .user-dot {
+            position: relative;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #1a73e8;
+            border: 3px solid #ffffff;
+            box-shadow: 0 2px 8px rgba(26, 115, 232, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            overflow: visible;
+            z-index: 5;
+          }
+
+          .user-dot-inner {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ffffff;
+          }
+
           .user-accuracy-circle {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            width: 150px;
+            height: 150px;
             background: rgba(66, 133, 244, 0.12);
             border: 1px solid rgba(66, 133, 244, 0.25);
             border-radius: 50%;
             pointer-events: none;
             transition: all 0.3s ease;
+            z-index: 1;
           }
 
           .user-pulse-ring {
