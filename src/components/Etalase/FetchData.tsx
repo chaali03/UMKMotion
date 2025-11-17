@@ -1495,7 +1495,7 @@ function FetchData() {
 
       <div className="toast-container">
         {toasts.map((toast) => (
-          <div key={toast.id} className={`toast toast-${toast.type}`}>
+          <div key={toast.id} className={toast.type === 'cart' ? 'toast toast-cart' : 'toast toast-success'}>
             <div className="toast-icon">
               {toast.type === 'cart' ? '🛒' : '❤️'}
             </div>
@@ -1605,7 +1605,8 @@ function FetchData() {
                   >
                     <span>Masuk Sekarang</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14m-7-7l7 7-7 7"/>
+                      <path d="M5 12h14"/>
+                      <path d="M12 5l7 7-7 7"/>
                     </svg>
                   </a>
                 </>
@@ -1661,7 +1662,8 @@ function FetchData() {
                       <>
                         <span>Lihat Lebih Banyak</span>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 5v14m-7-7h14"/>
+                          <path d="M12 5v14"/>
+                          <path d="M5 12h14"/>
                         </svg>
                       </>
                     )}
@@ -1670,7 +1672,8 @@ function FetchData() {
                   <a className="load-more-btn" href="/login">
                     <span>Masuk untuk Lihat Lebih Banyak</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14m-7-7l7 7-7 7"/>
+                      <path d="M5 12h14"/>
+                      <path d="M12 5l7 7-7 7"/>
                     </svg>
                   </a>
                 )}

@@ -4,163 +4,63 @@ import netlify from '@astrojs/netlify';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
-import os from 'os';
 import { fileURLToPath } from 'url';
-import viteCompression from 'vite-plugin-compression';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// https://astro.build/config
 export default defineConfig({
-  // Netlify Adapter Configuration
-  output: 'server',
+  // FIX: Use static output for better asset handling
+  output: 'static',
   adapter: netlify({
-    // Configuration options go here
-    edgeMiddleware: true,
+    edgeMiddleware: false,
   }),
 
-  // Existing configurations
   integrations: [react()],
 
-  // Performance optimizations
+  // FIX: Simplify build configuration
   build: {
-    inlineStylesheets: 'auto',
-    assets: '_astro',
-    // Use temp directory if dist is locked (OneDrive issue workaround)
-    ...(process.env.ASTRO_TEMP_OUTPUT ? { 
-      outDir: process.env.ASTRO_TEMP_OUTPUT 
-    } : {}),
-  },
-  
-  // Remove experimental config that doesn't exist
-
-  // Prefetch optimization
-  prefetch: {
-    prefetchAll: false,
-    defaultStrategy: 'tap'
+    assets: 'assets',
+    format: 'file'
   },
 
-  // Vite config
   vite: {
-    plugins: [
-      tailwindcss(),
-      // Pre-compress assets for better TTFB - cast to any to avoid type conflicts
-      ...(process.env.NODE_ENV === 'production' ? [
-        /** @type {any} */ (viteCompression({ algorithm: 'brotliCompress' })),
-        /** @type {any} */ (viteCompression({ algorithm: 'gzip' })),
-      ] : []),
-    ],
-    // Use a stable cache directory to avoid OS temp purges causing outdated optimize dep errors
-    cacheDir: path.resolve(process.cwd(), 'node_modules/.vite'), 
-    server: {
-      // OneDrive can lock files; polling reduces EPERM rename races
-      watch: { usePolling: true, interval: 500 },
-    },
+    plugins: [tailwindcss()],
+    
     build: {
-      // Optimize bundle splitting
+      // FIX: Ensure consistent asset naming
       rollupOptions: {
         output: {
-          manualChunks: (id) => {
-            // Firebase chunks
-            if (id.includes('firebase/app')) return 'vendor-firebase-app';
-            if (id.includes('firebase/auth')) return 'vendor-firebase-auth';
-            if (id.includes('firebase/firestore')) return 'vendor-firebase-firestore';
-            if (id.includes('firebase/storage')) return 'vendor-firebase-storage';
-            
-            // UI libraries
-            if (id.includes('lucide-react')) return 'vendor-icons';
-            if (id.includes('framer-motion') || id.includes('motion')) return 'vendor-motion';
-            if (id.includes('vaul')) return 'vendor-ui';
-            if (id.includes('@radix-ui')) return 'vendor-radix';
-            
-            // React chunks - keep ALL React code together to avoid internals issues
-            // Don't split React to prevent Activity property errors
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react/')) {
-              return 'vendor-react-all';
-            }
-            
-            // Large dependencies
-            if (id.includes('node_modules')) {
-              if (id.includes('date-fns')) return 'vendor-date';
-              if (id.includes('qrcode')) return 'vendor-qrcode';
-              if (id.includes('maplibre-gl')) return 'vendor-maps';
-            }
-          },
-          // Optimize chunk names
           chunkFileNames: 'assets/[name]-[hash].js',
           entryFileNames: 'assets/[name]-[hash].js',
-          assetFileNames: 'assets/[name]-[hash].[ext]'
+          assetFileNames: (assetInfo) => {
+            const ext = assetInfo.name.split('.').pop();
+            if (['css', 'js'].includes(ext)) {
+              return `assets/[name]-[hash].${ext}`;
+            }
+            return `assets/[name]-[hash].[ext]`;
+          }
         }
       },
-      // Increase chunk size warning limit
-      chunkSizeWarningLimit: 1000,
-      // Enable minification with terser
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_console: true,
-          drop_debugger: true,
-          pure_funcs: ['console.log', 'console.info', 'console.debug'],
-          passes: 2
-        },
-        format: {
-          comments: false
-        }
-      },
-      // Enable source maps only in dev
-      sourcemap: false,
-      // Optimize CSS
-      cssMinify: true
+      // FIX: Disable minification temporarily for debugging
+      minify: false,
+      cssMinify: false
     },
+    
     optimizeDeps: {
       include: [
         'react', 
-        'react-dom', 
-        'react-dom/client',
-        'react/jsx-runtime',
-        'react/jsx-dev-runtime',
-        'three', 
-        'firebase/app', 
-        'firebase/auth', 
+        'react-dom',
+        'firebase/app',
+        'firebase/auth',
         'firebase/firestore',
-        'firebase/storage',
-        // Ensure vaul is pre-bundled to avoid 504 Outdated Optimize Dep
-        'vaul',
-        // Ensure Motion (Framer Motion v12 package) is pre-bundled
-        'motion',
-        'motion/react',
-        // Add problematic dependencies
-        'lucide-react',
-        'framer-motion',
-        'react-loader-spinner',
-        // Prebundle qrcode to fix 504 Outdated Optimize Dep on dev
-        'qrcode',
-        // Prebundle date-fns and locales for CommentSection formatting
-        'date-fns',
-        'date-fns/locale',
-        'date-fns/locale/id',
-        // Fix 504 for UI utility libs used by components
-        'class-variance-authority',
-        '@radix-ui/react-slot',
-        // Optimize OGL used by CircularGallery to prevent 504
-        'ogl',
-        // MapLibre for map picker in Profile
-        'maplibre-gl'
       ],
-      // Force re-optimize on dev startup to invalidate any stale cache
-      force: true,
-      // Exclude problematic deps from optimization if needed
-      exclude: [],
+      force: false // FIX: Disable force optimization
     },
-    // Ensure SSR bundles vaul instead of treating it as external
-    ssr: {
-      noExternal: ['vaul', 'motion', 'ogl', 'maplibre-gl']
-    },
+    
     resolve: {
       dedupe: ['react', 'react-dom'],
       alias: {
         '@': path.resolve(__dirname, './src'),
-        'src': path.resolve(__dirname, './src')
       }
     }
   }

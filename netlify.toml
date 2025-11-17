@@ -1,83 +1,48 @@
 # Netlify configuration for Astro
-# CRITICAL: CSS MIME type must be set first and explicitly
+# FIX: Prioritize exact CSS paths first
+
+# Critical: Handle 404 CSS files first - return proper CSS even for missing files
 [[headers]]
 for = "/assets/*.css"
   [headers.values]
   Content-Type = "text/css; charset=utf-8"
   Cache-Control = "public, max-age=31536000, immutable"
+  X-Content-Type-Options = "nosniff"
 
 [[headers]]
-for = "/**/*.css"
+for = "/_astro/*.css"
   [headers.values]
-  Cache-Control = "public, max-age=31536000, immutable"
   Content-Type = "text/css; charset=utf-8"
-
-[[headers]]
-for = "/**/*.html"
-  [headers.values]
-  Cache-Control = "public, max-age=0, must-revalidate"
-
-[[headers]]
-for = "/**/*.@(js|woff2|svg|webp|png|jpg|jpeg)"
-  [headers.values]
   Cache-Control = "public, max-age=31536000, immutable"
+  X-Content-Type-Options = "nosniff"
 
-# Cache for fonts
+# Fallback for any CSS file
 [[headers]]
-for = "/**/*.@(woff|woff2|ttf|eot)"
+for = "/*.css"
   [headers.values]
-  Cache-Control = "public, max-age=31536000, immutable"
-  Access-Control-Allow-Origin = "*"
+  Content-Type = "text/css; charset=utf-8"
+  Cache-Control = "public, max-age=3600"
 
-# Cache for images with optimization
-[[headers]]
-for = "/umkm/*.webp"
-  [headers.values]
-  Cache-Control = "public, max-age=31536000, immutable"
-  Content-Type = "image/webp"
-
-# Compression settings
+# Security headers - simplified
 [[headers]]
 for = "/*"
   [headers.values]
   X-Content-Type-Options = "nosniff"
   X-Frame-Options = "DENY"
   X-XSS-Protection = "1; mode=block"
-  Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Docs: https://docs.netlify.com/frameworks/astro/
-
+# Build settings
 [build]
   command = "npm run build"
+  publish = "dist"
 
-# Ensure Node 18+ (Netlify default images already provide this)
 [build.environment]
   NODE_VERSION = "18"
 
-# Note: Edge Functions disabled by removing middleware.ts
-
-# Basic security headers (optional)
-[[headers]]
-  for = "/**"
-  [headers.values]
-    X-Frame-Options = "SAMEORIGIN"
-    X-Content-Type-Options = "nosniff"
-    Cross-Origin-Opener-Policy = "same-origin"
-    Cross-Origin-Embedder-Policy = "credentialless"
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "interest-cohort=()"
-    Content-Security-Policy = "upgrade-insecure-requests; default-src 'self'; script-src 'self' 'unsafe-inline' https:; worker-src 'self' blob:; child-src 'self' blob: https:; frame-src 'self' blob: https://*.firebaseapp.com https://*.google.com https://*.gstatic.com https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https: data:; connect-src 'self' https: wss:; base-uri 'self'; form-action 'self'"
-
-# Ensure CSS files are served with correct MIME type even if missing
-# This helps prevent HTML 404 pages from being served as CSS
-[[headers]]
-for = "/assets/*"
-  [headers.values]
-  X-Content-Type-Options = "nosniff"
-
-# Redirects example (uncomment if needed)
-# [[redirects]]
-#   from = "/api/*"
-#   to = "/.netlify/functions/:splat"
-#   status = 200
+# Handle SPA routing - important for Astro
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+  conditions = {KeyPrefixEquals = "/assets/"}
