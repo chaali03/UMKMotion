@@ -2075,4 +2075,4 @@ export function ProductCard({
   );
 }
 
-export default FetchData;
+export default FetchData; 

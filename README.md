@@ -1,80 +1,102 @@
-# UMKMotion - Astro + React + TypeScript + Tailwind CSS
+# UMKMotion - Platform UMKM Modern
 
-A modern web application built with Astro, React, TypeScript, and Tailwind CSS.
+Platform komprehensif untuk UMKM (Usaha Mikro Kecil Menengah) dengan fitur lengkap mulai dari katalog produk, manajemen pesanan, hingga analitik bisnis.
 
-## 🚀 Features
+## 🚀 Fitur Utama
 
-- **Astro** - Modern static site generator with excellent performance
-- **React** - Interactive UI components with full hydration support
-- **TypeScript** - Type-safe development with excellent IDE support
-- **Tailwind CSS** - Utility-first CSS framework for rapid styling
+- **Katalog Produk Digital** - Tampilkan produk dengan gambar dan deskripsi menarik
+- **Manajemen Pesanan** - Sistem pemesanan terintegrasi dengan pembayaran digital
+- **AI Assistant (Dina)** - Asisten virtual untuk membantu pelanggan 24/7
+- **Analitik Bisnis** - Pantau kinerja penjualan dan pertumbuhan bisnis
+- **Responsif** - Tampilan optimal di semua perangkat
 
-## 📦 Installation
+## 🛠️ Teknologi yang Digunakan
 
-The project is already set up with all dependencies installed. To get started:
+- **Frontend**: Astro, React, TypeScript, Tailwind CSS
+- **UI Components**: Framer Motion, React Icons
+- **State Management**: Zustand
+- **Form Handling**: React Hook Form
+- **Backend**: Firebase (Authentication, Firestore, Storage)
+- **AI Integration**: Gemini API
+- **Deployment**: Netlify
 
-```bash
-npm install
-```
+## 🚀 Cara Menjalankan
 
-## 🛠️ Development
+1. Clone repository ini
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Buat file `.env` berdasarkan `.env.example`
+4. Jalankan development server:
+   ```bash
+   npm run dev
+   ```
+5. Buka `http://localhost:4321` di browser
 
-Start the development server:
+## 🔗 Link Penting
 
-```bash
-npm run dev
-```
+- **Demo Aplikasi**: [https://umkmotion.netlify.app](https://umkmotion.netlify.app)
+- **Video Pitching**: [Tonton di YouTube](https://youtu.be/pRsn-8m_CXQ)
 
-The application will be available at `http://localhost:4321`
+## 🔐 Akses Login
 
-## 📁 Project Structure
+Gunakan kredensial berikut untuk login ke sistem:
+- **Email**: `umkmotion@gmail.com`
+- **Password**: `chaali_MwD0324`
+
+## 🏗️ Struktur Proyek
 
 ```
 src/
-├── components/          # React components
-│   ├── Button.tsx      # Reusable button component
-│   └── Card.tsx        # Card layout component
-├── pages/              # Astro pages
-│   ├── index.astro     # Home page
-│   └── demo.astro      # React components demo
-├── styles/
-│   └── global.css      # Global styles with Tailwind
-└── ...
+├── components/          # Komponen React yang dapat digunakan ulang
+│   ├── auth/          # Komponen autentikasi
+│   ├── etalase/       # Komponen katalog produk
+│   └── payment/       # Komponen pembayaran
+├── pages/              # Halaman Astro
+│   ├── index.astro     # Halaman utama
+│   └── auth/           # Halaman autentikasi
+├── layouts/           # Layout halaman
+├── styles/            # File gaya global
+└── utils/             # Utility functions
 ```
 
-## 🎨 Components
+## 🚀 Fitur Unggulan
 
-### Button Component
-A fully typed React button component with variants and sizes:
-- Variants: `primary`, `secondary`
-- Sizes: `sm`, `md`, `lg`
-- Full TypeScript support
+### Dina AI Assistant
+- Asisten virtual cerdas berbasis AI
+- Dapat diakses melalui tombol mengambang di sudut layar
+- Membantu pengguna menemukan produk dan informasi
 
-### Card Component
-A flexible card layout component for content organization.
+### Sistem Pembayaran
+- Dukungan berbagai metode pembayaran digital
+- Integrasi dengan sistem pembayaran populer
+- Proses checkout yang aman dan mudah
 
-## 🔧 Available Scripts
+### Manajemen Produk
+- Upload dan kelola katalog produk
+- Kategori dan tag untuk memudahkan pencarian
+- Preview produk dengan gambar berkualitas tinggi
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run astro` - Run Astro CLI commands
+## 🔧 Perintah yang Tersedia
 
-## 🌐 Pages
+- `npm run dev` - Menjalankan development server
+- `npm run build` - Build untuk produksi
+- `npm run preview` - Preview hasil build produksi
+- `npm run astro` - Menjalankan perintah Astro CLI
 
-- `/` - Home page with project overview
-- `/demo` - Interactive React components demonstration
+## 📚 Dokumentasi
 
-## 🎯 Next Steps
+- [Dokumentasi Astro](https://docs.astro.build/)
+- [Dokumentasi React](https://react.dev/)
+- [Dokumentasi TypeScript](https://www.typescriptlang.org/)
+- [Dokumentasi Tailwind CSS](https://tailwindcss.com/)
+- [Dokumentasi Firebase](https://firebase.google.com/docs)
 
-1. Add more React components as needed
-2. Implement routing with Astro's file-based routing
-3. Add state management if required
-4. Deploy to your preferred hosting platform
+## 🤝 Berkontribusi
 
-## 📚 Learn More
+Kami menerima kontribusi untuk pengembangan UMKMotion. Silakan buat issue atau pull request untuk fitur atau perbaikan bug.
 
-- [Astro Documentation](https://docs.astro.build/)
-- [React Documentation](https://react.dev/)
-- [TypeScript Documentation](https://www.typescriptlang.org/)
-- [Tailwind CSS Documentation](https://tailwindcss.com/)
+## 📄 Lisensi
+
+Proyek ini dilisensikan di bawah [MIT License](LICENSE).
