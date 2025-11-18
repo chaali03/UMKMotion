@@ -4,18 +4,28 @@ A modern web application built with Astro, React, TypeScript, and Tailwind CSS.
 
 ## 🚀 Features
 
-- **Astro** - Modern static site generator with excellent performance
-- **React** - Interactive UI components with full hydration support
-- **TypeScript** - Type-safe development with excellent IDE support
-- **Tailwind CSS** - Utility-first CSS framework for rapid styling
+* **Astro** - Modern static site generator with excellent performance
+* **React** - Interactive UI components with full hydration support
+* **TypeScript** - Type-safe development with excellent IDE support
+* **Tailwind CSS** - Utility-first CSS framework for rapid styling
 
 ## 📦 Installation
 
-The project is already set up with all dependencies installed. To get started:
+To get started:
 
 ```bash
 npm install
 ```
+
+### 🧩 Setup Environment Variables
+
+Copy the `.env.example` file to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+Then adjust the values inside `.env` based on your project requirements.
 
 ## 🛠️ Development
 
@@ -25,7 +35,7 @@ Start the development server:
 npm run dev
 ```
 
-The application will be available at `http://localhost:4321`
+The application will be available at `http://localhost:4321`.
 
 ## 📁 Project Structure
 
@@ -45,25 +55,28 @@ src/
 ## 🎨 Components
 
 ### Button Component
+
 A fully typed React button component with variants and sizes:
-- Variants: `primary`, `secondary`
-- Sizes: `sm`, `md`, `lg`
-- Full TypeScript support
+
+* Variants: `primary`, `secondary`
+* Sizes: `sm`, `md`, `lg`
+* Full TypeScript support
 
 ### Card Component
+
 A flexible card layout component for content organization.
 
 ## 🔧 Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run astro` - Run Astro CLI commands
+* `npm run dev` - Start development server
+* `npm run build` - Build for production
+* `npm run preview` - Preview production build
+* `npm run astro` - Run Astro CLI commands
 
 ## 🌐 Pages
 
-- `/` - Home page with project overview
-- `/demo` - Interactive React components demonstration
+* `/` - Home page with project overview
+* `/demo` - Interactive React components demonstration
 
 ## 🎯 Next Steps
 
@@ -74,7 +87,7 @@ A flexible card layout component for content organization.
 
 ## 📚 Learn More
 
-- [Astro Documentation](https://docs.astro.build/)
-- [React Documentation](https://react.dev/)
-- [TypeScript Documentation](https://www.typescriptlang.org/)
-- [Tailwind CSS Documentation](https://tailwindcss.com/)
+* Astro Documentation
+* React Documentation
+* TypeScript Documentation
+* Tailwind CSS Documentation

@@ -1538,29 +1538,50 @@ function FetchData() {
           </div>
         ) : displayedProducts.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-content">
-              <div style={{ 
-                fontSize: '2.5rem', 
-                marginBottom: '14px',
-                animation: 'float 3s ease-in-out infinite'
+            <div className="empty-state-content" style={{
+              background: 'linear-gradient(135deg, #fff5f5, #ffe0e0)',
+              padding: '35px 25px',
+              borderRadius: '18px',
+              margin: '0 auto',
+              maxWidth: '350px',
+              boxShadow: '0 8px 30px rgba(243, 54, 54, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.8)',
+              textAlign: 'center'
+            }}>
+              <div className="logo" style={{
+                width: '120px',
+                height: '120px',
+                margin: '0 auto 1.5rem',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                animation: 'pulse 2s infinite'
               }}>
-                🛍️
+                <img 
+                  src="/asset/Dina/upsDina.webp" 
+                  alt="Produk Tidak Ditemukan" 
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
               </div>
-              <p style={{ 
-                color: "#ef4444", 
-                fontSize: "1rem", 
-                fontWeight: "700",
-                marginBottom: "6px" 
+              <h2 style={{ 
+                color: '#ef4444',
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                marginBottom: '0.75rem'
               }}>
-                Tidak ada produk ditemukan
-              </p>
+                Produk Tidak Ditemukan
+              </h2>
               <p style={{ 
-                color: "#666", 
-                fontSize: "0.8rem", 
-                marginBottom: "18px",
+                color: '#6b7280', 
+                fontSize: '0.9rem',
+                marginBottom: '1.5rem',
                 lineHeight: 1.5
               }}>
-                Coba ubah kata kunci pencarian atau filter kategori
+                Maaf, kami tidak dapat menemukan produk yang sesuai dengan pencarian Anda.
               </p>
               {!isLoggedIn && (
                 <>

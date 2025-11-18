@@ -1,0 +1,21 @@
+---
+import ErrorLayout from '../layouts/ErrorLayout.astro';
+---
+
+<ErrorLayout title="Terjadi Kesalahan" message="Maaf, terjadi kesalahan pada server.">
+  <h1>500</h1>
+  <p>Maaf, terjadi kesalahan pada server. Silakan coba lagi nanti.</p>
+</ErrorLayout>
+
+<style>
+  h1 {
+    font-size: 2.5rem;
+    color: #EF4444;
+    margin-bottom: 1rem;
+  }
+  
+  p {
+    color: #6B7280;
+    margin-bottom: 2rem;
+  }
+</style>

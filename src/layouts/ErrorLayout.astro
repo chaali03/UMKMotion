@@ -1,0 +1,117 @@
+---
+interface Props {
+  title: string;
+  message: string;
+}
+
+const { title, message } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} - UMKMotion</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+      
+      :root {
+        --primary: #4F46E5;
+        --secondary: #6B7280;
+        --background: #F9FAFB;
+      }
+      
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Poppins', sans-serif;
+        background-color: var(--background);
+        color: #1F2937;
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+      }
+      
+      .container {
+        max-width: 28rem;
+        width: 100%;
+        margin: 0 auto;
+      }
+      
+      .logo {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 2rem;
+        border-radius: 50%;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+      
+      .logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      
+      h1 {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 1rem;
+      }
+      
+      p {
+        color: var(--secondary);
+        margin-bottom: 2rem;
+      }
+      
+      .btn {
+        display: inline-block;
+        background-color: var(--primary);
+        color: white;
+        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+      }
+      
+      .btn:hover {
+        background-color: #4338CA;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);
+      }
+      
+      .error-code {
+        font-size: 6rem;
+        font-weight: 800;
+        color: #E5E7EB;
+        margin: -2rem 0 -1rem;
+        line-height: 1;
+        position: relative;
+        z-index: -1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="/asset/Dina/upsDina.webp" alt="UMKMotion Logo" />
+      </div>
+      
+      <slot />
+      
+      <a href="/" class="btn">Kembali ke Beranda</a>
+    </div>
+  </body>
+</html>
