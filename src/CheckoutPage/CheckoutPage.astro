@@ -9,6 +9,18 @@ import CheckoutPageComponent from "src/components/PaymentPage/Payment"
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Detail Produk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.sandbox.midtrans.com https://*.midtrans.com;
+        frame-src 'self' blob: https://app.sandbox.midtrans.com https://*.midtrans.com https://*.firebaseapp.com https://*.google.com https://*.gstatic.com https://accounts.google.com https://apis.google.com;
+        connect-src 'self' https://api.midtrans.com https://api.sandbox.midtrans.com https://app.sandbox.midtrans.com;
+        img-src 'self' data: blob: https:;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com data:;
+      "
+    />
   </head>
   <body>
     <CheckoutPageComponent client:load />

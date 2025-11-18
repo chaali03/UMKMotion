@@ -197,10 +197,10 @@ export default function LoginPage() {
       showNotification(
         "success", 
         "🎉 Login Berhasil!", 
-        redirectTo ? "Melanjutkan aksi Anda..." : "Selamat datang kembali! Mengalihkan ke Rumah UMKM...",
+        redirectTo ? "Melanjutkan aksi Anda..." : "Selamat datang kembali! Mengalihkan ke Etalase...",
         <CheckCircle2 size={24} />
       );
-      setTimeout(() => { window.location.href = redirectTo || "/rumah-umkm"; }, 600);
+      setTimeout(() => { window.location.href = redirectTo || "/etalase"; }, 600);
     } catch (err: any) {
       let errorMessage = "Login gagal. Periksa email/password dan coba lagi.";
       const fieldErrors: Record<string, string> = {};

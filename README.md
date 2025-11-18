@@ -76,7 +76,6 @@ A flexible card layout component for content organization.
 ## 🌐 Pages
 
 * `/` - Home page with project overview
-* `/demo` - Interactive React components demonstration
 
 ## 🎯 Next Steps
 

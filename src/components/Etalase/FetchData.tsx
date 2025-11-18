@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from "react";
+import { Heart, ShoppingCart } from 'lucide-react';
 
 import { db, auth } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -620,40 +621,34 @@ function FetchData() {
         .product-image {
           width: 100%;
           height: 180px;
-          background: linear-gradient(135deg, 
-            rgba(234, 88, 12, 0.08) 0%, 
-            rgba(251, 146, 60, 0.06) 50%, 
-            rgba(253, 186, 116, 0.04) 100%);
+          background: #ffffff;
           overflow: hidden;
           position: relative;
           border-radius: 14px 14px 0 0;
           margin: 0;
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         
-        .product-image::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 60%;
-          background: linear-gradient(transparent, rgba(0, 0, 0, 0.02));
-          pointer-events: none;
-        }
+        .product-image::after { display: none; }
         
         .product-image img {
           width: 100%;
           height: 100%;
-          object-fit: cover;
-          transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-          filter: brightness(0.98) contrast(1.05);
+          object-fit: contain;
+          object-position: center;
+          transition: all 0.3s ease;
+          filter: none;
           transform-origin: center;
+          background: transparent;
         }
         
         .product-card:hover .product-image img {
-          animation: image-zoom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-          filter: brightness(1.05) contrast(1.1);
+          animation: none;
+          filter: none;
+          transform: none;
         }
         
         /* Overlay icons - Hanya tampil di mobile */
@@ -1038,7 +1033,7 @@ function FetchData() {
         }
         
         .favorite-icon-badge.favorited {
-          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
           color: white;
           animation: pulse-glow 2s ease-in-out infinite;
         }
@@ -1046,7 +1041,7 @@ function FetchData() {
         .favorite-icon-badge:hover {
           transform: translateY(-2px) scale(1.08) rotate(-5deg);
           box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-          border-color: #ef4444;
+          border-color: #ec4899;
         }
         
         .favorite-icon-badge:active {
@@ -1208,8 +1203,8 @@ function FetchData() {
           animation: toast-slide-out 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         
-        .toast-success {
-          border-left: 4px solid #10b981;
+        .toast-favorite {
+          border-left: 4px solid #ec4899;
         }
         
         .toast-cart {
@@ -1228,8 +1223,8 @@ function FetchData() {
           box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
         }
         
-        .toast-success .toast-icon {
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        .toast-favorite .toast-icon {
+          background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
         }
         
         .toast-cart .toast-icon {
@@ -1495,9 +1490,9 @@ function FetchData() {
 
       <div className="toast-container">
         {toasts.map((toast) => (
-          <div key={toast.id} className={toast.type === 'cart' ? 'toast toast-cart' : 'toast toast-success'}>
+          <div key={toast.id} className={toast.type === 'cart' ? 'toast toast-cart' : 'toast toast-favorite'}>
             <div className="toast-icon">
-              {toast.type === 'cart' ? '🛒' : '❤️'}
+              {toast.type === 'cart' ? <ShoppingCart size={14} className="text-white" /> : <Heart size={14} className="text-white" />}
             </div>
             <div className="toast-content">
               <div className="toast-title">{toast.title}</div>
@@ -1539,13 +1534,13 @@ function FetchData() {
         ) : displayedProducts.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-content" style={{
-              background: 'linear-gradient(135deg, #fff5f5, #ffe0e0)',
+              background: '#ffffff',
               padding: '35px 25px',
               borderRadius: '18px',
               margin: '0 auto',
               maxWidth: '350px',
-              boxShadow: '0 8px 30px rgba(243, 54, 54, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.8)',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              border: '1px solid #f1f5f9',
               textAlign: 'center'
             }}>
               <div className="logo" style={{
@@ -1554,8 +1549,7 @@ function FetchData() {
                 margin: '0 auto 1.5rem',
                 borderRadius: '50%',
                 overflow: 'hidden',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                animation: 'pulse 2s infinite'
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
               }}>
                 <img 
                   src="/asset/Dina/upsDina.webp" 
@@ -1568,9 +1562,9 @@ function FetchData() {
                 />
               </div>
               <h2 style={{ 
-                color: '#ef4444',
-                fontSize: '1.5rem',
-                fontWeight: 700,
+                color: '#1f2937',
+                fontSize: '1.25rem',
+                fontWeight: 600,
                 marginBottom: '0.75rem'
               }}>
                 Produk Tidak Ditemukan
@@ -1586,10 +1580,10 @@ function FetchData() {
               {!isLoggedIn && (
                 <>
                   <p style={{ 
-                    color: "#f33636", 
-                    fontWeight: "600", 
+                    color: "#4b5563", 
+                    fontWeight: "500", 
                     marginBottom: "10px", 
-                    fontSize: "0.8rem" 
+                    fontSize: "0.85rem" 
                   }}>
                      Ingin melihat lebih banyak produk?
                   </p>
@@ -1605,23 +1599,14 @@ function FetchData() {
                     display: "inline-flex", 
                     alignItems: "center",
                     gap: "6px",
-                    background: "linear-gradient(135deg, #ef4444, #f87171)", 
-                    color: "white", 
-                    padding: "10px 20px", 
-                    borderRadius: "10px", 
-                    textDecoration: "none", 
-                    fontWeight: "700", 
-                    fontSize: "0.8rem",
-                    transition: "all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-                    boxShadow: "0 3px 12px rgba(239, 68, 68, 0.3)"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                    e.currentTarget.style.boxShadow = '0 3px 12px rgba(239, 68, 68, 0.3)';
+                    background: '#f3f4f6', 
+                    color: '#4b5563', 
+                    padding: '10px 20px', 
+                    borderRadius: '8px', 
+                    textDecoration: 'none', 
+                    fontWeight: '500', 
+                    fontSize: '0.85rem',
+                    border: '1px solid #e5e7eb'
                   }}
                   >
                     <span>Masuk Sekarang</span>
@@ -1835,7 +1820,7 @@ export function ProductCard({
     let cart = JSON.parse(localStorage.getItem("cart") || "[]");
     const existing = cart.find((p: Product) => p.ASIN === product.ASIN);
     if (existing) {
-      showToast('cart', 'Sudah di Keranjang', shortTitle);
+      showToast('cart', 'Jumlah diperbarui', shortTitle);
       setCartPop(true);
       setTimeout(() => setCartPop(false), 500);
       window.dispatchEvent(new CustomEvent('cartUpdated', {
@@ -2096,4 +2081,4 @@ export function ProductCard({
   );
 }
 
-export default FetchData;
+export default FetchData; 

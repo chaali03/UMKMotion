@@ -1,7 +1,28 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { Store, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function SellPromotion() {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => setIsLoggedIn(!!user));
+    return () => unsub();
+  }, []);
+
+  const handleClick = () => {
+    if (isLoggedIn === null) return;
+
+    if (!isLoggedIn) {
+      window.location.href = '/login';
+      return;
+    }
+
+    // Sudah login: arahkan ke halaman profile bagian toko (gunakan hash/param supaya bisa di-handle di ProfilePage)
+    window.location.href = '/profile#toko';
+  };
+
   return (
     <>
       <section className="sell-promotion group">
@@ -22,7 +43,7 @@ export default function SellPromotion() {
         </div>
 
         {/* Tombol CTA */}
-        <button className="sell-cta">
+        <button className="sell-cta" onClick={handleClick}>
           Daftar Sekarang
           <ArrowRight className="cta-arrow" />
         </button>

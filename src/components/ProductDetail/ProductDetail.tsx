@@ -1,9 +1,10 @@
-'use client';
+        'use client';
 
 import React, { useState, useEffect } from "react";
 import { db, auth } from "@/lib/firebase";
 import { collection, getDocs, query, where, limit, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
-import { ShoppingCart, Star, ChevronLeft, ChevronRight, Store, Shield, Truck, ArrowLeft, Check, Minus, Plus } from "lucide-react";
+import { ShoppingCart, Star, ChevronLeft, ChevronRight, Store, Shield, Truck, ArrowLeft, Check, Minus, Plus, Heart } from "lucide-react";
+
 import { trackProductView } from "@/lib/activity-tracker";
 
 // === TIPE DATA ===
@@ -101,6 +102,7 @@ const fallbackFirebase: FirebaseProduct = {
 };
 
 export default function BuyingPage() {
+
   const [firebaseProduct, setFirebaseProduct] = useState<FirebaseProduct | null>(null);
   const [displayProduct, setDisplayProduct] = useState<DisplayProduct | null>(null);
   const [storeData, setStoreData] = useState<FirebaseStore | null>(null);
@@ -114,6 +116,15 @@ export default function BuyingPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const [toasts, setToasts] = useState<Array<{ id: string, type: 'cart' | 'favorite', title: string, message: string }>>([]);
+
+  const showToast = (type: 'cart' | 'favorite', title: string, message: string) => {
+    const id = Math.random().toString(36).slice(2);
+    setToasts(prev => [...prev, { id, type, title, message }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 3000);
+  };
 
   const allProductPhotos = displayProduct?.product_photos || [];
   const carouselImages = allProductPhotos.slice(0, 4);
@@ -152,14 +163,14 @@ export default function BuyingPage() {
           const params = new URLSearchParams(window.location.search);
           const fromQuery = params.get("asin");
           if (fromQuery) return fromQuery;
-        } catch {}
+        } catch { }
         try {
           const sel = localStorage.getItem('selectedProduct');
           if (sel) {
             const parsed = JSON.parse(sel);
             if (parsed && typeof parsed === 'object' && parsed.ASIN) return String(parsed.ASIN);
           }
-        } catch {}
+        } catch { }
         return null;
       };
 
@@ -172,7 +183,7 @@ export default function BuyingPage() {
               const data = snap.data() as FirebaseProduct;
               rawProduct = { ...data, ASIN: asinParam };
             }
-          } catch {}
+          } catch { }
           if (!rawProduct) {
             try {
               const q1 = query(collection(db, "products"), where("ASIN", "==", asinParam), limit(1));
@@ -181,7 +192,7 @@ export default function BuyingPage() {
                 const d = s1.docs[0];
                 rawProduct = { ...(d.data() as FirebaseProduct), ASIN: d.id };
               }
-            } catch {}
+            } catch { }
           }
         }
       } catch (err) {
@@ -198,7 +209,7 @@ export default function BuyingPage() {
               rawProduct = { ...(d.data() as FirebaseProduct), ASIN: d.id };
             }
           }
-        } catch {}
+        } catch { }
       }
 
       if (!rawProduct) {
@@ -307,7 +318,7 @@ export default function BuyingPage() {
   const handleRecommendationClick = (item: DisplayProduct) => {
     try {
       localStorage.setItem("selectedProduct", JSON.stringify({ ASIN: item.asin }));
-    } catch {}
+    } catch { }
     window.location.href = `/buying?asin=${encodeURIComponent(item.asin)}`;
   };
 
@@ -324,6 +335,12 @@ export default function BuyingPage() {
   const discount = displayProduct?.discount || "0%";
 
   const handleAddToCart = () => {
+    const user = auth?.currentUser;
+    if (!user) {
+      const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/login?redirect=${redirect}`;
+      return;
+    }
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
     const productToAdd = {
       ...displayProduct,
@@ -331,51 +348,30 @@ export default function BuyingPage() {
       selectedVariant: selectedVariant || null,
       product_price: selectedVariant ? formatRupiah(selectedVariant.harga) : displayProduct?.product_price
     };
-    
-    const existing = cart.find((p: any) => p.asin === displayProduct?.asin && 
+
+    const existing = cart.find((p: any) => p.asin === displayProduct?.asin &&
       JSON.stringify(p.selectedVariant) === JSON.stringify(selectedVariant));
-      
+
     if (existing) {
       existing.quantity = (existing.quantity || 1) + quantity;
+      showToast('cart', 'Jumlah diperbarui', `${quantity} item`);
     } else {
       cart.push(productToAdd);
+      showToast('cart', 'Ditambahkan ke Keranjang!', displayProduct?.product_title || 'Produk');
     }
-    
     localStorage.setItem("cart", JSON.stringify(cart));
-    
-    // Show success notification
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-      position: fixed;
-      top: 100px;
-      right: 20px;
-      background: #10b981;
-      color: white;
-      padding: 16px 20px;
-      border-radius: 8px;
-      z-index: 1000;
-      font-weight: 600;
-      transform: translateX(400px);
-      transition: transform 0.3s ease;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    `;
-    notification.textContent = `✓ Ditambahkan ke keranjang: ${quantity} item`;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => notification.style.transform = 'translateX(0)', 100);
-    setTimeout(() => {
-      notification.style.transform = 'translateX(400px)';
-      setTimeout(() => document.body.removeChild(notification), 300);
-    }, 3000);
+    window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { type: 'cart', count: cart.length } }));
   };
-  
+
   const toggleFavorite = async () => {
     if (!displayProduct || !firebaseProduct) return;
     const u = auth?.currentUser;
     if (!u) {
-      alert('Silakan login untuk menambahkan favorit');
+      const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/login?redirect=${redirect}`;
       return;
     }
+
     if (!firebaseProduct.ASIN) return;
     setFavLoading(true);
     try {
@@ -384,6 +380,7 @@ export default function BuyingPage() {
       if (isFavorite) {
         await deleteDoc(favRef);
         setIsFavorite(false);
+        showToast('favorite', 'Dihapus dari Favorit', displayProduct.product_title);
       } else {
         await setDoc(favRef, {
           uid: u.uid,
@@ -396,22 +393,34 @@ export default function BuyingPage() {
           createdAt: new Date().toISOString(),
         });
         setIsFavorite(true);
+        showToast('favorite', 'Ditambahkan ke Favorit!', displayProduct.product_title);
       }
+      try {
+        const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+        // no strict schema here; only update event count from length
+        window.dispatchEvent(new CustomEvent('favoritesUpdated', { detail: { type: 'favorites', count: favs.length } }));
+      } catch { }
     } catch (e) {
       console.error('Gagal toggle favorit:', e);
-      alert('Gagal mengubah favorit. Coba lagi.');
+      showToast('favorite', 'Gagal', 'Tidak dapat mengubah favorit');
     } finally {
       setFavLoading(false);
     }
   };
-  
+
   const handleBuyNow = () => {
+    const user = auth?.currentUser;
+    if (!user) {
+      const redirect = encodeURIComponent('/checkoutpage');
+      window.location.href = `/login?redirect=${redirect}`;
+      return;
+    }
     if (!displayProduct) return;
-    const checkoutItem = { 
-      ...displayProduct, 
-      quantity, 
+    const checkoutItem = {
+      ...displayProduct,
+      quantity,
       selectedVariant,
-      product_price_num: selectedVariant ? selectedVariant.harga : parseInt(displayProduct.product_price.replace(/\D/g, '')) || 0 
+      product_price_num: selectedVariant ? selectedVariant.harga : parseInt(displayProduct.product_price.replace(/\D/g, '')) || 0
     };
     localStorage.setItem("checkoutItem", JSON.stringify(checkoutItem));
     window.location.href = "/checkoutpage";
@@ -440,23 +449,34 @@ export default function BuyingPage() {
   if (loadingDetail || !displayProduct) {
     return (
       <div className="page-container">
-        <div className="skeleton-container">
-          <div className="skeleton-card">
-            <div className="skeleton-grid">
-              <div>
-                <div className="skeleton skeleton-image"></div>
-              </div>
-              <div className="skeleton-content">
-                <div className="skeleton skeleton-title"></div>
-                <div className="skeleton skeleton-text"></div>
-                <div className="skeleton skeleton-text"></div>
-                <div className="skeleton skeleton-price"></div>
-                <div className="skeleton skeleton-text"></div>
-                <div className="skeleton skeleton-text"></div>
-                <div className="skeleton-actions">
-                  <div className="skeleton skeleton-button"></div>
-                  <div className="skeleton skeleton-button"></div>
-                </div>
+        <style>{`
+          @keyframes shimmer{0%{background-position:-1200px 0;opacity:.8}50%{opacity:1}100%{background-position:1200px 0;opacity:.8}}
+          @keyframes fadeInUp{0%{opacity:0;transform:translateY(22px) scale(.97)}60%{opacity:1;transform:translateY(-3px) scale(1)}100%{opacity:1;transform:translateY(0) scale(1)}}
+          .sk-wrap{max-width:1200px;margin:0 auto 24px;background:#fff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,.12)}
+          .sk-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;padding:24px}
+          @media(max-width:768px){.sk-grid{grid-template-columns:1fr;gap:16px}}
+          .sk{border-radius:14px;background:linear-gradient(90deg,#f3f4f6 0%,#e5e7eb 50%,#f3f4f6 100%);background-size:1200px 100%;animation:shimmer 1.8s ease-in-out infinite;}
+          .sk-img{height:380px}
+          @media(max-width:768px){.sk-img{height:260px}}
+          .sk-line{height:14px;margin:10px 0}
+          .sk-title{height:22px;width:70%;margin:6px 0}
+          .sk-price{height:26px;width:40%;margin:10px 0}
+          .sk-btns{display:flex;gap:12px;margin-top:16px}
+          .sk-btn{height:42px;flex:1;border-radius:10px}
+        `}</style>
+        <div className="sk-wrap" style={{ animation: 'fadeInUp .4s ease both' as any }}>
+          <div className="sk-grid">
+            <div className="sk sk-img" />
+            <div>
+              <div className="sk sk-title" />
+              <div className="sk sk-line" />
+              <div className="sk sk-line" style={{ width: '85%' }} />
+              <div className="sk sk-price" />
+              <div className="sk sk-line" style={{ width: '60%' }} />
+              <div className="sk sk-line" style={{ width: '50%' }} />
+              <div className="sk-btns">
+                <div className="sk sk-btn" />
+                <div className="sk sk-btn" />
               </div>
             </div>
           </div>
@@ -476,14 +496,48 @@ export default function BuyingPage() {
 
   return (
     <>
-      <style >{`
+      {/* Toast styles and container */}
+      <style>{`
+        @keyframes toast-slide-in{0%{transform:translateX(100%) translateY(20px);opacity:0}100%{transform:translateX(0) translateY(0);opacity:1}}
+        .toast-container{position:fixed;top:90px;right:15px;z-index:100000;pointer-events:none}
+        .toast{background:rgba(255,255,255,0.95);border-radius:14px;padding:14px 18px;margin-bottom:10px;box-shadow:0 8px 30px rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.8);display:flex;align-items:center;gap:10px;min-width:280px;backdrop-filter:blur(20px);animation:toast-slide-in .4s cubic-bezier(.25,.46,.45,.94);transform-origin:right center}
+        .toast-favorite{border-left:4px solid #ec4899}
+        .toast-cart{border-left:4px solid #f59e0b}
+        .toast-icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,0.2)}
+        .toast-favorite .toast-icon{background:linear-gradient(135deg,#ec4899 0%,#db2777 100%)}
+        .toast-cart .toast-icon{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%)}
+        .toast-title{font-weight:700;color:#1f2937;margin-bottom:3px;font-size:.85rem}
+        .toast-message{font-size:.75rem;color:#6b7280}
+      `}</style>
+      <div className="toast-container">
+        {toasts.map(t => (
+          <div key={t.id} className={`toast ${t.type === 'favorite' ? 'toast-favorite' : 'toast-cart'}`}>
+            <div className="toast-icon">
+              {t.type === 'favorite' ? <Heart size={14} className="text-white" /> : <ShoppingCart size={14} className="text-white" />}
+            </div>
+            <div className="min-w-0">
+              <div className="toast-title">{t.title}</div>
+              <div className="toast-message truncate">{t.message}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <style>{`
+        @keyframes detail-card-in {
+          0% { opacity: 0; transform: translateY(18px) scale(0.97); }
+          55% { opacity: 1; transform: translateY(-2px) scale(1.01); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
         .page-container {
           padding-top: 88px;
+
           padding-left: 16px;
           padding-right: 16px;
           min-height: 100vh;
           background: #f8fafc;
         }
+
         
         @media (min-width: 769px) {
           .page-container {
@@ -515,6 +569,8 @@ export default function BuyingPage() {
           overflow: hidden;
           border: 1px solid #e2e8f0;
           box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+          transition: none !important;
+          animation: detail-card-in 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) both;
         }
 
         .product-grid {
@@ -545,12 +601,33 @@ export default function BuyingPage() {
           height: 400px;
           user-select: none;
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          transition: none !important;
         }
 
         @media (max-width: 768px) {
           .carousel-wrapper {
             height: 300px;
           }
+        }
+
+        /* Force-disable hover/touch stroke/outline changes */
+        .product-card, .carousel-wrapper { border-color: #e2e8f0 !important; outline: none !important; }
+        .product-card:hover, .product-card:active, .product-card:focus, .product-card:focus-within { 
+          border-color: #e2e8f0 !important; 
+          box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06) !important; 
+          outline: none !important;
+        }
+        .carousel-wrapper:hover, .carousel-wrapper:active, .carousel-wrapper:focus, .carousel-wrapper:focus-within {
+          border-color: #e2e8f0 !important;
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06) !important;
+          outline: none !important;
+        }
+        .product-card *, .carousel-wrapper * { transition: none !important; outline: none !important; }
+        .product-card:hover, .product-card:active,
+        .product-card *:hover, .product-card *:active,
+        .carousel-wrapper:hover, .carousel-wrapper:active,
+        .carousel-wrapper *:hover, .carousel-wrapper *:active {
+          transform: none !important;
         }
 
         .carousel {

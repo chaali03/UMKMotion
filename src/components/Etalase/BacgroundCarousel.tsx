@@ -183,7 +183,7 @@ export default function BackgroundCarousel() {
           max-width: 1000px;
           margin: 0 auto;
           aspect-ratio: 16 / 9;
-          max-height: 35vh;
+          max-height: 9vh;
           overflow: hidden;
           background: #000;
           border-radius: 0.5rem;
@@ -196,14 +196,14 @@ export default function BackgroundCarousel() {
         @media (max-width: 480px) {
           .carousel-container {
             aspect-ratio: 3 / 4;
-            max-height: 28vh;
+            max-height: 22vh;
             border-radius: 0.35rem;
           }
         }
 
         @media (max-width: 360px) {
           .carousel-container {
-            max-height: 26vh; /* ~228px */
+            max-height: 20vh; /* smaller on very small devices */
           }
         }
 
@@ -211,14 +211,14 @@ export default function BackgroundCarousel() {
         @media (orientation: landscape) and (max-height: 500px) {
           .carousel-container {
             aspect-ratio: 16 / 9;
-            max-height: 50vh;
+            max-height: 40vh;
           }
         }
 
         /* Tablet & Desktop */
         @media (min-width: 768px) {
           .carousel-container {
-            max-height: 45vh;
+            max-height: 35vh;
           }
         }
 

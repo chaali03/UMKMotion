@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 // @ts-ignore - qrcode does not ship TypeScript types in this project
 import QRCode from "qrcode";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
@@ -10,15 +10,13 @@ import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs, query, order
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getUserBadges, getUserGamificationStats } from "../../src/lib/gamification";
 import Harga from "../Pricing/harga";
-import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
 
 import {
   Camera, Loader2, LogOut, Save, User, Mail, Phone, FileText, Trophy,
-  Award, Star, Zap, CheckCircle, History, DollarSign, Store,
+  Award, Star, Zap, CheckCircle, History, DollarSign, Store, Package,
   Edit2, X, Shield, ShieldCheck, ShieldAlert, Lock, Smartphone, AlertTriangle,
   CheckCircle2, Clock, Key, Eye, EyeOff, Menu, ChevronLeft, ChevronRight, ArrowLeft,
-  MapPin, Plus, Users, Navigation, Search
+  MapPin, Plus, Users, Navigation, Search, Truck, Bike
 } from "lucide-react";
 import { followStore, unfollowStore, isFollowingStore, getFollowing, getFollowerCount, getUserFollowers } from "../../src/lib/follow";
 
@@ -78,6 +76,31 @@ interface AddressItem {
   updatedAt?: any;
 }
 
+interface OrderItemSummary {
+  asin: string;
+  title: string;
+  quantity: number;
+  price: number;
+  image?: string;
+  weightKg?: number;
+}
+
+interface OrderRecord {
+  orderId: string;
+  createdAt: string;
+  items: OrderItemSummary[];
+  total: number;
+  weightKg: number;
+  weightCategory?: 'light' | 'medium' | 'heavy';
+  transportMode?: 'motor' | 'truck';
+  delivery?: {
+    name?: string;
+    eta?: string;
+    provider?: string;
+  } | null;
+  cashback?: number;
+}
+
 export default function ProfilePage() {
   // State Management
   const [loading, setLoading] = useState(true);
@@ -89,7 +112,7 @@ export default function ProfilePage() {
   const [badges, setBadges] = useState<Badge[]>([]);
   const [gamificationStats, setGamificationStats] = useState<any>({});
   const [activeTab, setActiveTab] = useState<"profile" | "security" | "badges">("profile");
-  const [activeMenu, setActiveMenu] = useState<"profile" | "history" | "store" | "pricing">("profile");
+  const [activeMenu, setActiveMenu] = useState<"profile" | "history" | "orders" | "store" | "pricing">("profile");
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [securityScore, setSecurityScore] = useState(0);
@@ -119,9 +142,6 @@ export default function ProfilePage() {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState<AddressItem | null>(null);
   const [addrForm, setAddrForm] = useState<Partial<AddressItem>>({ label: '', recipient: '', phone: '', addressLine: '', city: '', province: '', postalCode: '', location: null });
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapInstanceRef = useRef<maplibregl.Map | null>(null);
-  const mapMarkerRef = useRef<maplibregl.Marker | null>(null);
   const [mapSearch, setMapSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -133,6 +153,102 @@ export default function ProfilePage() {
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
   const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
+
+  const formatCurrency = useCallback(
+    (value: number) => `Rp${(value || 0).toLocaleString('id-ID')}`,
+    []
+  );
+
+  const deriveWeightCategory = (weightKg: number): 'light' | 'medium' | 'heavy' => {
+    if (weightKg <= 1.5) return 'light';
+    if (weightKg <= 4) return 'medium';
+    return 'heavy';
+  };
+
+  const describeWeightCategory = (category?: string) => {
+    if (category === 'medium') return 'Sedang';
+    if (category === 'heavy') return 'Berat';
+    return 'Ringan';
+  };
+
+  const formatWeightLabel = useCallback((weightKg: number, includeCategory = true) => {
+    if (!weightKg || Number.isNaN(weightKg)) return '0 kg';
+    const base = `${weightKg.toFixed(1)} kg`;
+    if (!includeCategory) return base;
+    return `${base} • ${describeWeightCategory(deriveWeightCategory(weightKg))}`;
+  }, []);
+
+  const loadOrdersFromStorage = useCallback(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem('userOrders') || '[]');
+      if (!Array.isArray(raw)) {
+        setOrders([]);
+        return;
+      }
+      const normalized = raw.map((entry: OrderRecord) => {
+        const weight =
+          entry?.weightKg ??
+          entry?.items?.reduce((sum, item) => sum + (item.weightKg || 0), 0) ??
+          0;
+        const category = entry?.weightCategory || deriveWeightCategory(weight);
+        const transportMode = entry?.transportMode || (weight <= 3 ? 'motor' : 'truck');
+        return {
+          ...entry,
+          weightKg: Number((weight || 0).toFixed(2)),
+          weightCategory: category,
+          transportMode,
+        };
+      });
+      setOrders(normalized);
+    } catch {
+      setOrders([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadOrdersFromStorage();
+    const handler = () => loadOrdersFromStorage();
+    window.addEventListener('ordersUpdated', handler);
+    return () => window.removeEventListener('ordersUpdated', handler);
+  }, [loadOrdersFromStorage]);
+
+  const getOrderStage = useCallback((order: OrderRecord) => {
+    const created = new Date(order.createdAt).getTime();
+    const hoursElapsed = (Date.now() - created) / (1000 * 60 * 60);
+    if (hoursElapsed < 1) return 0;
+    if (hoursElapsed < 6) return 1;
+    if (hoursElapsed < 24) return 2;
+    return 3;
+  }, []);
+
+  const getOrderSteps = useCallback(
+    (order: OrderRecord) => [
+      {
+        key: 'placed',
+        title: 'Pesanan diterima',
+        desc: 'Kami telah menerima detail pesananmu',
+      },
+      {
+        key: 'packed',
+        title: 'Sedang dikemas',
+        desc: 'Tim gudang sedang menyiapkan barang',
+      },
+      {
+        key: 'shipped',
+        title: 'Sedang dikirim',
+        desc: order.delivery?.name
+          ? `Kurir ${order.delivery?.name} sedang menuju lokasimu`
+          : 'Kurir sedang menuju lokasimu',
+      },
+      {
+        key: 'delivered',
+        title: 'Pesanan tiba',
+        desc: 'Barang siap kamu terima',
+      },
+    ],
+    []
+  );
 
   // Open activity destination
   const openActivity = async (a: any) => {
@@ -208,6 +324,49 @@ export default function ProfilePage() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const syncHashToMenu = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const hash = (window.location.hash || '').toLowerCase();
+    if (hash === '#toko' || hash === '#store') {
+      setActiveMenu('store');
+    } else if (hash === '#orders' || hash === '#pesananku') {
+      setActiveMenu('orders');
+    }
+  }, []);
+
+  const updateHash = useCallback((hash?: string) => {
+    if (typeof window === 'undefined') return;
+    const { pathname, search } = window.location;
+    const newHash = hash ? `#${hash}` : '';
+    window.history.replaceState(null, '', `${pathname}${search}${newHash}`);
+  }, []);
+
+  useEffect(() => {
+    syncHashToMenu();
+    if (typeof window === 'undefined') return;
+    window.addEventListener('hashchange', syncHashToMenu);
+    return () => window.removeEventListener('hashchange', syncHashToMenu);
+  }, [syncHashToMenu]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (activeMenu === 'store') {
+      updateHash('toko');
+      requestAnimationFrame(() => {
+        const section = document.getElementById('profile-store-section');
+        section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    } else if (activeMenu === 'orders') {
+      updateHash('orders');
+      requestAnimationFrame(() => {
+        const section = document.getElementById('profile-orders-section');
+        section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    } else if (window.location.hash) {
+      updateHash(undefined);
+    }
+  }, [activeMenu, updateHash]);
 
   // Auth State Observer
   useEffect(() => {
@@ -475,14 +634,12 @@ export default function ProfilePage() {
       isPrimary: addresses.length === 0
     });
     setShowAddressModal(true);
-    setTimeout(initMap, 50);
   };
 
   const openEditAddress = (a: AddressItem) => {
     setEditingAddress(a);
     setAddrForm({ ...a });
     setShowAddressModal(true);
-    setTimeout(initMap, 50);
   };
 
   const saveAddress = async () => {
@@ -571,59 +728,7 @@ export default function ProfilePage() {
     } catch {}
   };
 
-  const initMap = () => {
-    try {
-      const center: [number, number] = addrForm.location ?
-        [addrForm.location.lng, addrForm.location.lat] :
-        [106.8166, -6.2000];
-
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.setCenter(center);
-        mapInstanceRef.current.setZoom(12);
-      } else if (mapContainerRef.current) {
-        mapInstanceRef.current = new maplibregl.Map({
-          container: mapContainerRef.current,
-          style: {
-            version: 8,
-            sources: {
-              osm: {
-                type: 'raster',
-                tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-                tileSize: 256,
-                attribution: ' OpenStreetMap contributors'
-              }
-            },
-            layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
-          },
-          center: center,
-          zoom: 12
-        });
-
-        mapInstanceRef.current.on('click', (e: maplibregl.MapMouseEvent) => {
-          const lat = e.lngLat.lat;
-          const lng = e.lngLat.lng;
-          placeMarker(lat, lng);
-        });
-      }
-
-      if (addrForm.location) {
-        placeMarker(addrForm.location.lat!, addrForm.location.lng!);
-      }
-    } catch {}
-  };
-
-  const placeMarker = (lat: number, lng: number) => {
-    if (!mapInstanceRef.current) return;
-
-    if (!mapMarkerRef.current) {
-      mapMarkerRef.current = new maplibregl.Marker({ color: '#ff6b35' });
-      mapMarkerRef.current.addTo(mapInstanceRef.current);
-    }
-
-    mapMarkerRef.current.setLngLat([lng, lat]);
-    setAddrForm(f => ({ ...f, location: { lat, lng } }));
-    mapInstanceRef.current.flyTo({ center: [lng, lat], zoom: 14 });
-  };
+  // Map removed – selection now sets location directly without a map
 
   const searchPlace = async (query?: string) => {
     const q = (query || mapSearch).trim();
@@ -659,8 +764,8 @@ export default function ProfilePage() {
     const lat = parseFloat(result.lat);
     const lon = parseFloat(result.lon);
     const addr = result.address || {};
-
-    placeMarker(lat, lon);
+    // Set location directly from search result
+    setAddrForm(f => ({ ...f, location: { lat, lng: lon } }));
 
     // Auto-fill address fields
     setAddrForm(f => ({
@@ -685,20 +790,48 @@ export default function ProfilePage() {
     }
 
     setIsLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        
-        placeMarker(lat, lng);
-        
-        // Reverse geocode to get address
+    const getPosition = (opts?: PositionOptions) => new Promise<GeolocationPosition>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, opts);
+    });
+
+    const watchForBetter = (initial: GeolocationPosition): Promise<GeolocationPosition> => {
+      return new Promise((resolve) => {
+        // If already good enough, return immediately
+        if (initial.coords.accuracy && initial.coords.accuracy <= 30) {
+          resolve(initial);
+          return;
+        }
+        let best = initial;
+        const watchId = navigator.geolocation.watchPosition((pos) => {
+          if (!best || (pos.coords.accuracy && pos.coords.accuracy < (best.coords.accuracy || Infinity))) {
+            best = pos;
+          }
+          if (pos.coords.accuracy && pos.coords.accuracy <= 30) {
+            navigator.geolocation.clearWatch(watchId);
+            resolve(pos);
+          }
+        }, () => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 });
+        // Stop after 8s and resolve best
+        setTimeout(() => {
+          navigator.geolocation.clearWatch(watchId);
+          resolve(best);
+        }, 8000);
+      });
+    };
+
+    (async () => {
+      try {
+        const pos = await getPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+        const bestPos = await watchForBetter(pos);
+        const lat = bestPos.coords.latitude;
+        const lng = bestPos.coords.longitude;
+
+        // Set location directly
+        setAddrForm(f => ({ ...f, location: { lat, lng } }));
+
         try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
-          );
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
           const data = await res.json();
-          
           if (data) {
             const addr = data.address || {};
             setAddrForm(f => ({
@@ -714,21 +847,14 @@ export default function ProfilePage() {
         } catch (error) {
           console.error('Error reverse geocoding:', error);
         }
-        
-        setIsLoadingLocation(false);
-      },
-      (error) => {
-        setIsLoadingLocation(false);
+      } catch (error) {
         setModalTitle('Gagal Mendapatkan Lokasi');
         setModalMessage('Tidak dapat mendapatkan lokasi Anda. Pastikan izin lokasi diaktifkan.');
         setShowErrorModal(true);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
+      } finally {
+        setIsLoadingLocation(false);
       }
-    );
+    })();
   };
 
   const handleMapSearchChange = (value: string) => {
@@ -1255,6 +1381,7 @@ export default function ProfilePage() {
             {[
               { label: 'Profil', icon: User, menu: 'profile', gradient: 'from-orange-500 to-red-500', bgHover: 'hover:bg-orange-50' },
               { label: 'Riwayat', icon: History, menu: 'history', gradient: 'from-blue-500 to-cyan-500', bgHover: 'hover:bg-blue-50' },
+              { label: 'Pesananku', icon: Package, menu: 'orders', gradient: 'from-amber-500 to-orange-500', bgHover: 'hover:bg-amber-50' },
               { label: 'Toko', icon: Store, menu: 'store', gradient: 'from-green-500 to-emerald-500', bgHover: 'hover:bg-green-50' },
               { label: 'Harga', icon: DollarSign, menu: 'pricing', gradient: 'from-purple-500 to-pink-500', bgHover: 'hover:bg-purple-50' },
             ].map((item) => (
@@ -1363,7 +1490,7 @@ export default function ProfilePage() {
       {!isMobile && (
         <motion.button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="hidden lg:flex fixed top-28 z-[60] w-11 h-11 rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white shadow-2xl hover:shadow-orange-500/50 transition-all items-center justify-center group"
+          className="hidden lg:flex fixed top-28 z-[60] w-9 h-9 rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white shadow-xl hover:shadow-orange-500/40 transition-all items-center justify-center group"
           animate={{
             left: isSidebarOpen ? '268px' : '68px'
           }}
@@ -1374,7 +1501,7 @@ export default function ProfilePage() {
             mass: 0.8
           }}
           whileHover={{
-            scale: 1.15,
+            scale: 1.08,
             rotate: isSidebarOpen ? -5 : 5,
             transition: { type: "spring", stiffness: 400, damping: 17 }
           }}
@@ -1388,7 +1515,7 @@ export default function ProfilePage() {
               damping: 20
             }}
           >
-            <ChevronLeft size={22} />
+            <ChevronLeft size={18} />
           </motion.div>
         </motion.button>
       )}
@@ -1404,9 +1531,9 @@ export default function ProfilePage() {
             damping: 20
           }}
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="fixed top-4 right-4 z-40 lg:hidden w-14 h-14 bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 text-white rounded-2xl shadow-2xl flex items-center justify-center"
+          className="fixed top-4 right-4 z-40 lg:hidden w-10 h-10 bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 text-white rounded-2xl shadow-xl flex items-center justify-center"
           whileHover={{
-            scale: 1.1,
+            scale: 1.06,
             rotate: 5,
             transition: { type: "spring", stiffness: 400, damping: 17 }
           }}
@@ -1420,7 +1547,7 @@ export default function ProfilePage() {
               damping: 20
             }}
           >
-            {isSidebarOpen ? <X size={26} /> : <Menu size={26} />}
+            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </motion.div>
         </motion.button>
       )}
@@ -2516,6 +2643,334 @@ export default function ProfilePage() {
             </motion.div>
           )}
 
+          {/* Orders */}
+          {activeMenu === 'orders' && (
+            <motion.div 
+              key="orders"
+              id="profile-orders-section"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="space-y-6"
+            >
+              <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Pesanan Terbaru</h2>
+                  <p className="text-gray-500 text-sm">Lacak status paketmu secara real-time</p>
+                </div>
+                <button
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+                  onClick={loadOrdersFromStorage}
+                >
+                  Segarkan Status
+                </button>
+              </div>
+
+              {orders.length === 0 ? (
+                <div className="orders-empty">
+                  <h3>Belum ada pesanan</h3>
+                  <p>Setelah kamu checkout, progres paketmu akan muncul di sini.</p>
+                  <button
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+                    onClick={() => (window.location.href = '/etalase')}
+                  >
+                    Mulai Belanja
+                  </button>
+                </div>
+              ) : (
+                <div className="orders-grid">
+                  {orders.map((order) => {
+                    const stage = getOrderStage(order);
+                    const steps = getOrderSteps(order);
+                    const stageLabels = ['Menunggu konfirmasi', 'Sedang dikemas', 'Sedang dikirim', 'Selesai'];
+                    const transportIcon = order.transportMode === 'motor' ? '🏍️' : '🚚';
+                    return (
+                      <motion.div
+                        key={order.orderId}
+                        className="order-card"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        <div className="order-card__head">
+                          <div>
+                            <div className="order-id">#{order.orderId}</div>
+                            <div className="order-date">
+                              {new Date(order.createdAt).toLocaleString('id-ID', {
+                                day: 'numeric',
+                                month: 'long',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </div>
+                          </div>
+                          <div className="order-badges">
+                            <span className={`weight-chip ${order.weightCategory}`}>
+                              {describeWeightCategory(order.weightCategory)} • {formatWeightLabel(order.weightKg || 0, false)}
+                            </span>
+                            <span className="status-chip">
+                              {stageLabels[stage]}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="order-items">
+                          {order.items.slice(0, 2).map((item) => (
+                            <div key={item.asin} className="order-item">
+                              <img
+                                src={item.image || '/LogoNavbar.webp'}
+                                alt={item.title}
+                                className="order-item__thumb"
+                              />
+                              <div className="order-item__meta">
+                                <div className="order-item__title">{item.title}</div>
+                                <div className="order-item__details">
+                                  Qty {item.quantity} • {formatWeightLabel(item.weightKg || 0, false)}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          {order.items.length > 2 && (
+                            <div className="order-more">
+                              +{order.items.length - 2} produk lainnya
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="order-summary">
+                          <div>
+                            <div className="order-total-label">Total Pembayaran</div>
+                            <div className="order-total-value">{formatCurrency(order.total)}</div>
+                          </div>
+                          {order.delivery?.name && (
+                            <div className="order-shipping">
+                              <div className="order-total-label">Kurir</div>
+                              <div className="order-total-value">{order.delivery.name}</div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className={`transport-track ${order.transportMode}`}>
+                          <div className={`transport-vehicle ${order.transportMode} stage-${stage}`}>
+                            {transportIcon}
+                          </div>
+                          <div className="transport-road"></div>
+                        </div>
+
+                        <div className="order-progress">
+                          {steps.map((step, idx) => (
+                            <div key={step.key} className={`order-step ${idx <= stage ? 'active' : ''}`}>
+                              <div className="order-step__dot" />
+                              <div>
+                                <div className="order-step__title">{step.title}</div>
+                                <div className="order-step__desc">{step.desc}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <style jsx>{`
+                .orders-grid {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                  gap: 1.5rem;
+                }
+                .order-card {
+                  background: white;
+                  border-radius: 1.5rem;
+                  padding: 1.5rem;
+                  border: 1px solid #f1f5f9;
+                  box-shadow: 0 20px 45px -20px rgba(15, 23, 42, 0.25);
+                }
+                .order-card__head {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  gap: 1rem;
+                  flex-wrap: wrap;
+                }
+                .order-id {
+                  font-weight: 800;
+                  font-size: 1.1rem;
+                  color: #0f172a;
+                }
+                .order-date {
+                  font-size: 0.85rem;
+                  color: #94a3b8;
+                }
+                .order-badges {
+                  display: flex;
+                  gap: 0.5rem;
+                  flex-wrap: wrap;
+                }
+                .weight-chip {
+                  padding: 0.35rem 0.75rem;
+                  border-radius: 999px;
+                  font-size: 0.8rem;
+                  font-weight: 600;
+                  background: #f1f5f9;
+                  color: #0f172a;
+                }
+                .weight-chip.light { background: #ecfdf5; color: #047857; }
+                .weight-chip.medium { background: #fefce8; color: #b45309; }
+                .weight-chip.heavy { background: #fef2f2; color: #b91c1c; }
+                .status-chip {
+                  padding: 0.35rem 0.75rem;
+                  border-radius: 999px;
+                  font-size: 0.8rem;
+                  font-weight: 600;
+                  background: #eef2ff;
+                  color: #4338ca;
+                }
+                .order-items {
+                  margin: 1rem 0;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.9rem;
+                }
+                .order-item {
+                  display: flex;
+                  gap: 0.85rem;
+                  align-items: center;
+                }
+                .order-item__thumb {
+                  width: 56px;
+                  height: 56px;
+                  border-radius: 16px;
+                  object-fit: cover;
+                  border: 1px solid #e2e8f0;
+                }
+                .order-item__title {
+                  font-weight: 600;
+                  color: #0f172a;
+                  font-size: 0.95rem;
+                }
+                .order-item__details {
+                  font-size: 0.8rem;
+                  color: #94a3b8;
+                }
+                .order-more {
+                  font-size: 0.85rem;
+                  color: #64748b;
+                  font-weight: 600;
+                }
+                .order-summary {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                  gap: 1rem;
+                  margin-bottom: 1.25rem;
+                }
+                .order-total-label {
+                  font-size: 0.8rem;
+                  color: #94a3b8;
+                  text-transform: uppercase;
+                  letter-spacing: 0.04em;
+                }
+                .order-total-value {
+                  font-size: 1.1rem;
+                  font-weight: 800;
+                  color: #0f172a;
+                }
+                .transport-track {
+                  position: relative;
+                  height: 60px;
+                  border-radius: 999px;
+                  background: linear-gradient(90deg, #e0f2fe, #fef9c3);
+                  margin-bottom: 1.25rem;
+                  overflow: hidden;
+                }
+                .transport-road {
+                  position: absolute;
+                  inset: auto 1rem 1.1rem 1rem;
+                  height: 4px;
+                  background: repeating-linear-gradient(90deg, #94a3b8, #94a3b8 20px, transparent 20px, transparent 40px);
+                  opacity: 0.5;
+                }
+                .transport-vehicle {
+                  position: absolute;
+                  top: 50%;
+                  left: 1rem;
+                  transform: translateY(-50%);
+                  font-size: 2rem;
+                  animation: ride 6s infinite ease-in-out;
+                }
+                .transport-vehicle.truck { font-size: 2.4rem; }
+                .order-progress {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                  gap: 1rem;
+                }
+                .order-step {
+                  display: flex;
+                  gap: 0.75rem;
+                  align-items: flex-start;
+                  padding: 0.75rem;
+                  border-radius: 1rem;
+                  background: #f8fafc;
+                  border: 1px solid #f1f5f9;
+                }
+                .order-step.active {
+                  background: #fefce8;
+                  border-color: #fde68a;
+                }
+                .order-step__dot {
+                  width: 14px;
+                  height: 14px;
+                  border-radius: 50%;
+                  background: #cbd5f5;
+                  margin-top: 0.3rem;
+                }
+                .order-step.active .order-step__dot {
+                  background: #f59e0b;
+                  box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.2);
+                }
+                .order-step__title {
+                  font-weight: 700;
+                  color: #0f172a;
+                  font-size: 0.95rem;
+                }
+                .order-step__desc {
+                  font-size: 0.8rem;
+                  color: #64748b;
+                }
+                .orders-empty {
+                  background: white;
+                  border-radius: 1.5rem;
+                  padding: 3rem 2rem;
+                  border: 1px dashed #e2e8f0;
+                  text-align: center;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.75rem;
+                  align-items: center;
+                }
+                .orders-empty h3 {
+                  font-size: 1.3rem;
+                  font-weight: 700;
+                  color: #0f172a;
+                }
+                .orders-empty p {
+                  color: #64748b;
+                  font-size: 0.95rem;
+                }
+                @keyframes ride {
+                  0% { transform: translate(0, -50%); }
+                  50% { transform: translate(calc(100% - 4rem), -60%); }
+                  100% { transform: translate(0, -50%); }
+                }
+                @media (max-width: 640px) {
+                  .order-card {
+                    padding: 1.25rem;
+                  }
+                }
+              `}</style>
+            </motion.div>
+          )}
+
           {/* Pricing */}
           {activeMenu === 'pricing' && (
             <motion.div 
@@ -2530,6 +2985,7 @@ export default function ProfilePage() {
           {/* Store */}
           {activeMenu === 'store' && (
             <motion.div 
+              id="profile-store-section"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="bg-white rounded-2xl shadow-2xl p-12 text-center border border-gray-200"
@@ -2586,7 +3042,7 @@ export default function ProfilePage() {
 
               {/* Modal Content */}
               <div className="flex-1 overflow-y-auto p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                   {/* Left Column - Form */}
                   <div className="space-y-4">
                     <div>
@@ -2630,7 +3086,7 @@ export default function ProfilePage() {
 
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Cari Lokasi di Peta <span className="text-red-500">*</span>
+                        Cari Lokasi
                       </label>
                       <div className="flex gap-2 mb-2">
                         <div className="relative flex-1">
@@ -2777,22 +3233,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {/* Right Column - Map */}
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Peta Lokasi
-                      </label>
-                      <div
-                        ref={mapContainerRef}
-                        className="w-full h-96 rounded-lg border border-gray-300 overflow-hidden bg-gray-100"
-                        style={{ minHeight: '384px' }}
-                      />
-                      <p className="text-xs text-gray-500 mt-2">
-                         Klik pada peta atau gunakan pencarian untuk menentukan lokasi
-                      </p>
-                    </div>
-                  </div>
+                  
                 </div>
               </div>
 

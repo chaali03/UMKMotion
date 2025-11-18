@@ -28,7 +28,7 @@ import {
   Users, ArrowLeft,
   Circle,
   MapPin, Clock, Copy,
-  Sparkles, Utensils, Wrench, Shirt, Palette, HeartPulse, Sprout, Laptop, Armchair, GraduationCap, ShoppingBag
+  Sparkles, Utensils, Wrench, Shirt, Palette, HeartPulse, Sprout, Laptop, Armchair, GraduationCap, ShoppingBag, ShoppingCart
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -112,6 +112,7 @@ export default function RumahUMKM() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [toasts, setToasts] = useState<Array<{id: string, type: 'favorite', title: string, message: string}>>([]);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [hasGeoPermission, setHasGeoPermission] = useState(false);
@@ -336,6 +337,17 @@ export default function RumahUMKM() {
     }
   }, [selectedUMKM]);
 
+  // Load persisted UMKM favorites on mount
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('favorites_umkm') || '[]');
+      if (Array.isArray(saved)) {
+        const ids = new Set<string>(saved.map((it: any) => String(it.id)));
+        setFavorites(ids);
+      }
+    } catch {}
+  }, []);
+
   // Sync gallery index with scroll position
   useEffect(() => {
     const track = galleryTrackRef.current;
@@ -377,15 +389,64 @@ export default function RumahUMKM() {
     return map;
   }, [umkmList]);
 
+  const showToast = (title: string, message: string) => {
+    const id = Math.random().toString(36).slice(2);
+    setToasts(prev => [...prev, { id, type: 'favorite', title, message }]);
+    window.setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 2500);
+  };
+
+  const persistFavorites = (setIds: Set<string>) => {
+    try {
+      const umkmFavs = umkmList.filter(u => setIds.has(u.id)).map(u => ({
+        id: u.id,
+        name: u.name,
+        image: pickImage(u),
+        seller: u.address,
+        rating: u.rating,
+        reviews: u.reviews,
+        category: u.category,
+        favoriteType: 'umkm' as const,
+        dateAdded: new Date().toISOString().split('T')[0]
+      }));
+      localStorage.setItem('favorites_umkm', JSON.stringify(umkmFavs));
+      const totalCount = umkmFavs.length + (JSON.parse(localStorage.getItem('favorites') || '[]').length || 0);
+      window.dispatchEvent(new CustomEvent('favoritesUpdated', { detail: { type: 'favorites', count: totalCount } }));
+    } catch {}
+  };
+
+  // Ensure user is logged in before allowing favorite action
+  const ensureLoggedIn = (): boolean => {
+    const current = auth?.currentUser;
+    if (!current) {
+      try {
+        localStorage.setItem('pendingAction', JSON.stringify({
+          type: 'favorite_umkm',
+          returnUrl: window.location.href,
+          createdAt: Date.now(),
+        }));
+      } catch {}
+      window.location.href = '/login';
+      return false;
+    }
+    return true;
+  };
+
   const toggleFavorite = (id: string) => {
+    if (!ensureLoggedIn()) return;
     setFavorites(prev => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(id)) {
-        newFavorites.delete(id);
+      const updated = new Set(prev);
+      const umkm = umkmList.find(u => u.id === id);
+      if (updated.has(id)) {
+        updated.delete(id);
+        if (umkm) showToast('Dihapus dari Favorit', umkm.name);
       } else {
-        newFavorites.add(id);
+        updated.add(id);
+        if (umkm) showToast('Ditambahkan ke Favorit', umkm.name);
       }
-      return newFavorites;
+      persistFavorites(updated);
+      return updated;
     });
   };
 
@@ -554,6 +615,33 @@ export default function RumahUMKM() {
         </div>
       </div>
 
+      {/* Toasts */}
+      <style>{`
+        @keyframes toast-slide-in{0%{transform:translateX(100%) translateY(20px);opacity:0}100%{transform:translateX(0) translateY(0);opacity:1}}
+        .toast-container{position:fixed;top:90px;right:15px;z-index:100000;pointer-events:none}
+        .toast{background:rgba(255,255,255,0.95);border-radius:14px;padding:14px 18px;margin-bottom:10px;box-shadow:0 8px 30px rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.8);display:flex;align-items:center;gap:10px;min-width:280px;backdrop-filter:blur(20px);animation:toast-slide-in .4s cubic-bezier(.25,.46,.45,.94);transform-origin:right center}
+        .toast-favorite{border-left:4px solid #ec4899}
+        .toast-cart{border-left:4px solid #f59e0b}
+        .toast-icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,0.2)}
+        .toast-favorite .toast-icon{background:linear-gradient(135deg,#ec4899 0%,#db2777 100%)}
+        .toast-cart .toast-icon{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%)}
+        .toast-title{font-weight:700;color:#1f2937;margin-bottom:3px;font-size:.85rem}
+        .toast-message{font-size:.75rem;color:#6b7280}
+      `}</style>
+      <div className="toast-container">
+        {toasts.map(t => (
+          <div key={t.id} className={`toast ${t.type === 'favorite' ? 'toast-favorite' : 'toast-cart'}`}>
+            <div className="toast-icon">
+              {t.type === 'favorite' ? <Heart size={14} className="text-white"/> : <ShoppingCart size={14} className="text-white"/>}
+            </div>
+            <div className="min-w-0">
+              <div className="toast-title">{t.title}</div>
+              <div className="toast-message truncate">{t.message}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Main Container - Lebih ke bawah lagi */}
       <div className="flex-1 flex relative overflow-hidden z-10 mt-16 md:mt-20 lg:mt-24 px-4 md:px-6 lg:px-8">
         
@@ -624,7 +712,7 @@ export default function RumahUMKM() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05, type: "spring", stiffness: 100 }}
                         onClick={() => handleSelectUMKM(umkm)}
-                        className="bg-white/90 backdrop-blur-sm border-2 border-orange-100/60 hover:border-orange-300 rounded-2xl p-3 cursor-pointer hover:shadow-2xl hover:shadow-orange-200/50 transition-all duration-300 group active:scale-[0.98] touch-manipulation hover:-translate-y-1"
+                        className="bg-white/90 backdrop-blur-sm border-2 border-orange-100/60 hover:border-orange-300 rounded-2xl p-3 cursor-pointer transition-all duration-300 group active:scale-[0.98] touch-manipulation"
                       >
                         <div className="flex gap-3">
                           <div className="relative flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
@@ -632,7 +720,7 @@ export default function RumahUMKM() {
                             <img 
                               src={pickImage(umkm)} 
                               alt={umkm.name}
-                              className="relative w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover object-[center_65%] ring-2 ring-orange-200/60 group-hover:ring-orange-400 transition-all duration-300 shadow-md"
+                              className="relative w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover object-[center_80%] ring-2 ring-orange-200/60 group-hover:ring-orange-400 transition-all duration-300"
                               width={80}
                               height={80}
                               loading={index === 0 ? 'eager' : 'lazy'}

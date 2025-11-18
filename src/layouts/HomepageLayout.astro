@@ -100,6 +100,17 @@ import FloatingAIButton from '@/components/FloatingAIButton';
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.sandbox.midtrans.com https://*.midtrans.com https://*.gstatic.com https://*.google.com https://fonts.googleapis.com;
+      frame-src 'self' blob: https://app.sandbox.midtrans.com https://*.midtrans.com https://*.firebaseapp.com https://*.google.com https://*.gstatic.com https://accounts.google.com https://apis.google.com;
+      connect-src 'self' https://app.sandbox.midtrans.com https://api.sandbox.midtrans.com https://*.midtrans.com https://*.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com;
+      img-src 'self' data: blob: https:;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com 'unsafe-hashes';
+      font-src 'self' https://fonts.gstatic.com data:;
+      child-src 'self' https://app.sandbox.midtrans.com https://*.midtrans.com;
+      form-action 'self' https://app.sandbox.midtrans.com;
+    "/>
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
   </head>
